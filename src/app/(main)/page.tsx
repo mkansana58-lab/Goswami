@@ -6,7 +6,7 @@ import { InspirationalMessages } from '@/components/home/inspirational-messages'
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLanguage } from '@/hooks/use-language';
-import { BookText, ClipboardCheck, PlaySquare, Users, Cpu, ShieldCheck } from 'lucide-react';
+import { BookText, ClipboardCheck, PlaySquare, Users, Cpu, ShieldCheck, GraduationCap, Star } from 'lucide-react';
 import Image from 'next/image';
 
 const featureLinks = [
@@ -14,6 +14,9 @@ const featureLinks = [
   { href: '/tests', labelKey: 'navTests', icon: ClipboardCheck, descriptionKey: 'Find mock tests and previous year papers.' },
   { href: '/videos', labelKey: 'navVideos', icon: PlaySquare, descriptionKey: 'Watch video lectures for various subjects.' },
   { href: '/scholarship', labelKey: 'navScholarship', icon: Users, descriptionKey: 'Register for our scholarship exams.' },
+  { href: '/sainik-school-course', labelKey: 'navSainikSchoolCourse', icon: GraduationCap, descriptionKey: 'sainikSchoolCourseDesc' },
+  { href: '/military-school-course', labelKey: 'navMilitarySchoolCourse', icon: GraduationCap, descriptionKey: 'militarySchoolCourseDesc' },
+  { href: '/premium-courses', labelKey: 'navPremiumCourses', icon: Star, descriptionKey: 'premiumCoursesDesc' },
   { href: '/ai-tutor', labelKey: 'navAITutor', icon: Cpu, descriptionKey: 'Get AI help with problem difficulty.' },
 ];
 
@@ -62,14 +65,14 @@ export default function HomePage() {
       
       {/* Placeholder image section */}
       <section className="py-8">
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden shadow-lg rounded-lg">
           <Image 
             src="https://placehold.co/1200x400.png" 
             alt="Defence academy students" 
             width={1200} 
             height={400} 
             className="w-full h-auto object-cover"
-            data-ai-hint="military training" 
+            data-ai-hint="military students" 
           />
         </Card>
       </section>

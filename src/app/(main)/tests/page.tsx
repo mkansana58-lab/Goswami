@@ -6,7 +6,7 @@ import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { FileUp, ListFilter, Download } from 'lucide-react';
+import { FileUp, Download } from 'lucide-react';
 
 // Placeholder data
 const mockTestsData = {
@@ -33,6 +33,10 @@ const previousPapersData = {
   ]
 };
 
+// NOTE: This is a placeholder for actual admin authentication.
+// In a real application, this value would come from a secure authentication context.
+const isAdmin = true;
+
 export default function TestsPage() {
   const { t, language } = useLanguage();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -47,7 +51,7 @@ export default function TestsPage() {
     if (selectedFile) {
       // Placeholder for upload logic
       alert(`${t('uploadTest')}: ${selectedFile.name}`);
-      setSelectedFile(null);
+      setSelectedFile(null); // Reset after mock upload
     }
   };
 
@@ -55,21 +59,28 @@ export default function TestsPage() {
     <div className="space-y-8">
       <h1 className="text-3xl font-bold font-headline text-primary mb-6">{t('navTests')}</h1>
 
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl font-headline text-primary">{t('uploadTest')}</CardTitle>
-          <CardDescription>Upload new mock tests or papers for students.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Input type="file" onChange={handleFileChange} className="max-w-sm" />
-            <Button onClick={handleUpload} disabled={!selectedFile} className="bg-accent text-accent-foreground hover:bg-accent/90">
-              <FileUp className="mr-2 h-4 w-4" /> {t('uploadTest')}
-            </Button>
-          </div>
-          {selectedFile && <p className="text-sm text-muted-foreground">{t('selectFile')}: {selectedFile.name}</p>}
-        </CardContent>
-      </Card>
+      {isAdmin && (
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-2xl font-headline text-primary">{t('uploadTest')}</CardTitle>
+            <CardDescription>{t('adminUploadOnly')}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Input 
+                type="file" 
+                onChange={handleFileChange} 
+                className="max-w-sm border-input focus:ring-primary" 
+                aria-label={t('selectFile')}
+              />
+              <Button onClick={handleUpload} disabled={!selectedFile} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                <FileUp className="mr-2 h-4 w-4" /> {t('uploadTest')}
+              </Button>
+            </div>
+            {selectedFile && <p className="text-sm text-muted-foreground">{t('selectFile')}: {selectedFile.name}</p>}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid md:grid-cols-2 gap-8">
         <Card className="shadow-lg">
