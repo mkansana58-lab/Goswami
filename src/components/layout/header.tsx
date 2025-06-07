@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, Tv2, LogIn, LogOut } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'; // Removed SheetHeader
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import React, { useEffect, useState } from 'react';
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 
 const navLinks = [
   { href: '/', labelKey: 'navHome', icon: ShieldCheck },
@@ -130,7 +131,9 @@ export function Header() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[280px] bg-card p-4">
-                <SheetTitle className="sr-only">{t('mobileMenuTitle')}</SheetTitle> 
+                <SheetTitle asChild>
+                  <VisuallyHidden.Root>{t('mobileMenuTitle')}</VisuallyHidden.Root>
+                </SheetTitle>
                 <div className="flex flex-col space-y-3 pt-4">
                   {navLinks.map((link) => (
                     <Link
