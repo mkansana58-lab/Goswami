@@ -22,7 +22,6 @@ interface PaperItem {
   year: string;
 }
 
-// Hardcoded initial data
 const initialMockTestsData = {
   en: [
     { id: 'h_mt001', name: "Full Syllabus Mock Test 1", date: "15th July 2024", subject: "All Subjects" },
@@ -49,9 +48,7 @@ const initialPreviousPapersData = {
 
 const USER_MOCK_TESTS_STORAGE_KEY = 'userAddedMockTests';
 const USER_PREVIOUS_PAPERS_STORAGE_KEY = 'userAddedPreviousPapers';
-
-// NOTE: This is a placeholder for actual admin authentication.
-const isAdmin = true;
+const ADMIN_LOGGED_IN_KEY = 'adminLoggedInGoSwami';
 
 export default function TestsPage() {
   const { t, language } = useLanguage();
@@ -60,37 +57,43 @@ export default function TestsPage() {
 
   const [mockTests, setMockTests] = useState<TestItem[]>([]);
   const [previousPapers, setPreviousPapers] = useState<PaperItem[]>([]);
+  const [showAdminFeatures, setShowAdminFeatures] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // Load and combine mock tests
-    const storedUserMockTestsString = localStorage.getItem(USER_MOCK_TESTS_STORAGE_KEY);
-    let userMockTests: TestItem[] = [];
-    if (storedUserMockTestsString) {
-      try {
-        userMockTests = JSON.parse(storedUserMockTestsString);
-      } catch (e) {
-        console.error("Error parsing user mock tests from localStorage", e);
-      }
+    setIsClient(true);
+    if (typeof window !== 'undefined') {
+      setShowAdminFeatures(localStorage.getItem(ADMIN_LOGGED_IN_KEY) === 'true');
     }
-    // For this prototype, user-added tests are language-agnostic and shown for current language
-    // A more complex system would store language-specific user tests or allow selection
-    const currentLangInitialMockTests = initialMockTestsData[language] || [];
-    setMockTests([...currentLangInitialMockTests, ...userMockTests]);
+  }, []);
 
-    // Load and combine previous papers
-    const storedUserPreviousPapersString = localStorage.getItem(USER_PREVIOUS_PAPERS_STORAGE_KEY);
-    let userPreviousPapers: PaperItem[] = [];
-    if (storedUserPreviousPapersString) {
-      try {
-        userPreviousPapers = JSON.parse(storedUserPreviousPapersString);
-      } catch (e) {
-        console.error("Error parsing user previous papers from localStorage", e);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedUserMockTestsString = localStorage.getItem(USER_MOCK_TESTS_STORAGE_KEY);
+      let userMockTests: TestItem[] = [];
+      if (storedUserMockTestsString) {
+        try {
+          userMockTests = JSON.parse(storedUserMockTestsString);
+        } catch (e) {
+          console.error("Error parsing user mock tests from localStorage", e);
+        }
       }
-    }
-    const currentLangInitialPreviousPapers = initialPreviousPapersData[language] || [];
-    setPreviousPapers([...currentLangInitialPreviousPapers, ...userPreviousPapers]);
+      const currentLangInitialMockTests = initialMockTestsData[language] || [];
+      setMockTests([...currentLangInitialMockTests, ...userMockTests]);
 
-  }, [language]);
+      const storedUserPreviousPapersString = localStorage.getItem(USER_PREVIOUS_PAPERS_STORAGE_KEY);
+      let userPreviousPapers: PaperItem[] = [];
+      if (storedUserPreviousPapersString) {
+        try {
+          userPreviousPapers = JSON.parse(storedUserPreviousPapersString);
+        } catch (e) {
+          console.error("Error parsing user previous papers from localStorage", e);
+        }
+      }
+      const currentLangInitialPreviousPapers = initialPreviousPapersData[language] || [];
+      setPreviousPapers([...currentLangInitialPreviousPapers, ...userPreviousPapers]);
+    }
+  }, [language, isClient]);
 
   const saveToLocalStorage = (data: any[], key: string) => {
     if (typeof window !== 'undefined') {
@@ -105,14 +108,12 @@ export default function TestsPage() {
   };
 
   const handleUpload = () => {
-    if (selectedFile && isAdmin) {
-      // For simplicity, uploaded tests are added to the "Mock Tests" list
-      // And are considered language-neutral in terms of their content for this prototype
+    if (selectedFile && showAdminFeatures) {
       const newTest: TestItem = {
         id: `user_mt_${Date.now()}`,
         name: selectedFile.name,
         date: new Date().toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-CA', { year: 'numeric', month: 'long', day: 'numeric' }),
-        subject: t('subject') || "Uploaded", // Generic subject
+        subject: t('subject') || "Uploaded", 
       };
 
       const storedUserMockTestsString = localStorage.getItem(USER_MOCK_TESTS_STORAGE_KEY);
@@ -126,7 +127,6 @@ export default function TestsPage() {
       const updatedUserMockTests = [...userMockTests, newTest];
       saveToLocalStorage(updatedUserMockTests, USER_MOCK_TESTS_STORAGE_KEY);
       
-      // Refresh the displayed list
       const currentLangInitialMockTests = initialMockTestsData[language] || [];
       setMockTests([...currentLangInitialMockTests, ...updatedUserMockTests]);
       
@@ -135,14 +135,21 @@ export default function TestsPage() {
         description: `${selectedFile.name} ${t('liveClassAddedSuccess') || 'added successfully.'}`,
       });
       setSelectedFile(null); 
+      if (event.target && typeof (event.target as HTMLInputElement).value !== 'undefined') {
+        (event.target as HTMLInputElement).value = ""; 
+      }
     }
   };
+
+  if (!isClient) {
+    return <div className="flex justify-center items-center h-screen"><p>{t('loading')}</p></div>;
+  }
 
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold font-headline text-primary mb-6">{t('navTests')}</h1>
 
-      {isAdmin && (
+      {showAdminFeatures && (
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl font-headline text-primary">{t('uploadTest')}</CardTitle>
@@ -151,6 +158,7 @@ export default function TestsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-2">
               <Input 
+                id="test-file-upload"
                 type="file" 
                 onChange={handleFileChange} 
                 className="max-w-sm border-input focus:ring-primary" 

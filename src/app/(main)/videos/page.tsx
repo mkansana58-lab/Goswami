@@ -20,7 +20,6 @@ interface VideoItem {
   dataAiHint: string;
 }
 
-// Hardcoded initial data
 const initialVideoData = {
   en: [
     { id: 'h_vid001', title: "Algebra Basics - Part 1", subject: "Mathematics", type: "youtube" as "youtube", url: "https://www.youtube.com/embed/ மதுரைவீரன்", thumbnailUrl: "https://placehold.co/600x400.png", dataAiHint: "math algebra" },
@@ -35,9 +34,8 @@ const initialVideoData = {
 };
 
 const USER_VIDEOS_STORAGE_KEY = 'userAddedVideos';
+const ADMIN_LOGGED_IN_KEY = 'adminLoggedInGoSwami';
 
-// NOTE: This is a placeholder for actual admin authentication.
-const isAdmin = true;
 
 export default function VideosPage() {
   const { t, language } = useLanguage();
@@ -45,22 +43,31 @@ export default function VideosPage() {
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [videosToDisplay, setVideosToDisplay] = useState<VideoItem[]>([]);
+  const [showAdminFeatures, setShowAdminFeatures] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    const storedUserVideosString = localStorage.getItem(USER_VIDEOS_STORAGE_KEY);
-    let userVideos: VideoItem[] = [];
-    if (storedUserVideosString) {
-      try {
-        userVideos = JSON.parse(storedUserVideosString);
-      } catch (e) {
-        console.error("Error parsing user videos from localStorage", e);
-      }
+    setIsClient(true);
+    if (typeof window !== 'undefined') {
+      setShowAdminFeatures(localStorage.getItem(ADMIN_LOGGED_IN_KEY) === 'true');
     }
-    // For this prototype, user-added videos are language-agnostic and shown for current language.
-    // A more complex system would store language-specific user videos.
-    const currentLangInitialVideos = initialVideoData[language] || [];
-    setVideosToDisplay([...currentLangInitialVideos, ...userVideos]);
-  }, [language]);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedUserVideosString = localStorage.getItem(USER_VIDEOS_STORAGE_KEY);
+      let userVideos: VideoItem[] = [];
+      if (storedUserVideosString) {
+        try {
+          userVideos = JSON.parse(storedUserVideosString);
+        } catch (e) {
+          console.error("Error parsing user videos from localStorage", e);
+        }
+      }
+      const currentLangInitialVideos = initialVideoData[language] || [];
+      setVideosToDisplay([...currentLangInitialVideos, ...userVideos]);
+    }
+  }, [language, isClient]);
 
   const saveUserVideosToLocalStorage = (data: VideoItem[]) => {
     if (typeof window !== 'undefined') {
@@ -75,13 +82,13 @@ export default function VideosPage() {
   };
 
   const handleUploadVideo = () => {
-    if (uploadFile && isAdmin) {
+    if (uploadFile && showAdminFeatures) {
       const newVideo: VideoItem = {
         id: `user_vid_${Date.now()}`,
         title: uploadFile.name,
         subject: t('subject') || "Uploaded Video",
-        type: "local", // Assume uploaded files are local
-        url: `/uploads/prototype_${uploadFile.name}`, // Mock URL, won't play
+        type: "local", 
+        url: `/uploads/prototype_${uploadFile.name}`, 
         thumbnailUrl: "https://placehold.co/600x400.png",
         dataAiHint: "uploaded video",
       };
@@ -102,16 +109,23 @@ export default function VideosPage() {
         description: `${uploadFile.name} ${t('liveClassAddedSuccess') || 'added successfully.'}`,
       });
       setUploadFile(null);
+       if (event.target && typeof (event.target as HTMLInputElement).value !== 'undefined') {
+        (event.target as HTMLInputElement).value = "";
+      }
     }
   };
 
   const currentVideoForPlayer = videosToDisplay.find(v => v.url === selectedVideoUrl);
 
+  if (!isClient) {
+    return <div className="flex justify-center items-center h-screen"><p>{t('loading')}</p></div>;
+  }
+
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold font-headline text-primary mb-6">{t('navVideos')}</h1>
 
-      {isAdmin && (
+      {showAdminFeatures && (
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl font-headline text-primary">{t('uploadVideo') || 'Upload New Video'}</CardTitle>
@@ -119,7 +133,8 @@ export default function VideosPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-2">
-              <Input 
+              <Input
+                id="video-file-upload"
                 type="file" 
                 accept="video/*" 
                 onChange={handleFileChange} 
@@ -148,7 +163,7 @@ export default function VideosPage() {
                 <iframe
                   width="100%"
                   height="100%"
-                  src={currentVideoForPlayer.url} // Use currentVideoForPlayer.url here
+                  src={currentVideoForPlayer.url} 
                   title="YouTube video player"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -158,14 +173,7 @@ export default function VideosPage() {
               </div>
             ) : (
                <div className="aspect-video bg-black flex items-center justify-center rounded-md">
-                {/* For local videos, actual playback won't work with mock URL. Show placeholder. */}
                 <p className="text-background/70">{t('videoLectures')} ({currentVideoForPlayer.title}) - {t('adminUploadOnly')}</p>
-                {/* 
-                <video width="100%" height="100%" controls className="rounded-md">
-                  <source src={currentVideoForPlayer.url} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video> 
-                */}
               </div>
             )}
              <Button onClick={() => setSelectedVideoUrl(null)} className="mt-4" variant="outline">Close Player</Button>

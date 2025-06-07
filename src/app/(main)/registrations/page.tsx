@@ -5,7 +5,9 @@ import { useEffect, useState } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Users } from 'lucide-react';
+import { Users, AlertTriangle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Alert, AlertTitle } from '@/components/ui/alert';
 
 interface RegistrationData {
   id: string;
@@ -18,43 +20,58 @@ interface RegistrationData {
 }
 
 const LOCAL_STORAGE_KEY = 'scholarshipRegistrations';
-
-// NOTE: This is a placeholder for actual admin authentication.
-// In a real application, this page would be protected and only accessible to admins.
-const isAdmin = true; 
+const ADMIN_LOGGED_IN_KEY = 'adminLoggedInGoSwami';
 
 export default function RegistrationsPage() {
   const { t } = useLanguage();
+  const router = useRouter();
   const [registrations, setRegistrations] = useState<RegistrationData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') { // Ensure localStorage is available
-      const storedRegistrationsString = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (storedRegistrationsString) {
-        try {
-          const parsedRegistrations = JSON.parse(storedRegistrationsString);
-          if (Array.isArray(parsedRegistrations)) {
-            setRegistrations(parsedRegistrations);
+    if (typeof window !== 'undefined') {
+      const isAdminLoggedIn = localStorage.getItem(ADMIN_LOGGED_IN_KEY) === 'true';
+      if (!isAdminLoggedIn) {
+        router.replace('/login');
+      } else {
+        setIsAuthorized(true);
+        const storedRegistrationsString = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (storedRegistrationsString) {
+          try {
+            const parsedRegistrations = JSON.parse(storedRegistrationsString);
+            if (Array.isArray(parsedRegistrations)) {
+              setRegistrations(parsedRegistrations);
+            }
+          } catch (error) {
+            console.error("Error parsing registrations from localStorage:", error);
+            setRegistrations([]); 
           }
-        } catch (error) {
-          console.error("Error parsing registrations from localStorage:", error);
-          setRegistrations([]); // Fallback to empty array on error
         }
       }
+      setIsLoading(false);
     }
-  }, []);
+  }, [router]);
 
-  if (!isAdmin) {
-    // In a real app, you might redirect or show an access denied message.
-    // For this prototype, we'll assume the link in header won't be shown if not admin.
+  if (isLoading) {
     return (
+      <div className="flex justify-center items-center h-screen">
+        <p>{t('loading')}</p>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+     return (
         <div className="max-w-4xl mx-auto space-y-8 text-center py-10">
             <Card className="shadow-xl">
                 <CardHeader>
-                    <CardTitle className="text-2xl text-destructive">Access Denied</CardTitle>
+                    <CardTitle className="text-2xl text-destructive flex items-center justify-center gap-2">
+                        <AlertTriangle /> {t('accessDenied')}
+                    </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p>You do not have permission to view this page.</p>
+                    <p>{t('accessDeniedMessage')}</p>
                 </CardContent>
             </Card>
         </div>
@@ -92,7 +109,7 @@ export default function RegistrationsPage() {
                     <TableCell>{reg.phoneNumber}</TableCell>
                     <TableCell>{reg.currentClass}</TableCell>
                     <TableCell>{reg.address}</TableCell>
-                    <TableCell className="text-right">{reg.registrationDate}</TableCell>
+                    <TableCell className="text-right">{new Date(reg.registrationDate).toLocaleDateString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

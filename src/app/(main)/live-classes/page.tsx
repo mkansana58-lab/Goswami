@@ -13,9 +13,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Tv2, Calendar, Clock, LinkIcon, PlusCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
-// Placeholder for actual admin authentication
-const isAdmin = true; 
 const LIVE_CLASSES_STORAGE_KEY = 'liveClassesSchedule';
+const ADMIN_LOGGED_IN_KEY = 'adminLoggedInGoSwami';
 
 interface LiveClass {
   id: string;
@@ -40,6 +39,8 @@ export default function LiveClassesPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [liveClasses, setLiveClasses] = useState<LiveClass[]>([]);
+  const [showAdminFeatures, setShowAdminFeatures] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   
   const currentFormSchema = formSchemaDefinition(t);
 
@@ -55,6 +56,13 @@ export default function LiveClassesPage() {
   });
 
   useEffect(() => {
+    setIsClient(true);
+    if (typeof window !== 'undefined') {
+      setShowAdminFeatures(localStorage.getItem(ADMIN_LOGGED_IN_KEY) === 'true');
+    }
+  }, []);
+
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedClassesString = localStorage.getItem(LIVE_CLASSES_STORAGE_KEY);
       if (storedClassesString) {
@@ -68,7 +76,7 @@ export default function LiveClassesPage() {
         }
       }
     }
-  }, []);
+  }, [isClient]);
 
   const saveLiveClassesToLocalStorage = (classes: LiveClass[]) => {
     if (typeof window !== 'undefined') {
@@ -77,7 +85,7 @@ export default function LiveClassesPage() {
   };
 
   const onSubmit: SubmitHandler<LiveClassFormValues> = (data) => {
-    if (!isAdmin) return;
+    if (!showAdminFeatures) return;
     const newClass: LiveClass = {
       id: `lc-${Date.now()}`,
       ...data,
@@ -91,6 +99,10 @@ export default function LiveClassesPage() {
     form.reset();
   };
 
+  if (!isClient) {
+    return <div className="flex justify-center items-center h-screen"><p>{t('loading')}</p></div>;
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <Card className="shadow-xl">
@@ -102,7 +114,7 @@ export default function LiveClassesPage() {
           <CardDescription className="text-lg">{t('liveClassesDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
-          {isAdmin && (
+          {showAdminFeatures && (
             <Card className="mb-8 bg-muted/30">
               <CardHeader>
                 <CardTitle className="text-xl text-secondary-foreground flex items-center">

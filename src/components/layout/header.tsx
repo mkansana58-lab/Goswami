@@ -2,14 +2,14 @@
 "use client";
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, Tv2 } from 'lucide-react';
+import { BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, Tv2, LogIn, LogOut } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 const navLinks = [
   { href: '/', labelKey: 'navHome', icon: ShieldCheck },
@@ -24,14 +24,36 @@ const navLinks = [
   { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2 },
 ];
 
-// NOTE: This is a placeholder for actual admin authentication.
-// In a real application, this value would come from a secure authentication context.
-const isAdmin = true; 
+const ADMIN_LOGGED_IN_KEY = 'adminLoggedInGoSwami';
 
 export function Header() {
   const { language, setLanguage, t } = useLanguage();
   const pathname = usePathname();
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    if (typeof window !== 'undefined') {
+      setIsAdminLoggedIn(localStorage.getItem(ADMIN_LOGGED_IN_KEY) === 'true');
+    }
+  }, [pathname]); // Re-check on route change
+
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(ADMIN_LOGGED_IN_KEY);
+    }
+    setIsAdminLoggedIn(false);
+    setIsMobileMenuOpen(false);
+    router.push('/login');
+  };
+
+  const handleLoginNav = () => {
+    setIsMobileMenuOpen(false);
+    router.push('/login');
+  }
 
   return (
     <header className="bg-primary text-primary-foreground sticky top-0 z-50 shadow-md">
@@ -54,7 +76,7 @@ export function Header() {
               {t(link.labelKey as any)}
             </Link>
           ))}
-          {isAdmin && (
+          {isClient && isAdminLoggedIn && (
             <Link
               href="/registrations"
               className={cn(
@@ -68,6 +90,20 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
+          {isClient && (
+            isAdminLoggedIn ? (
+              <Button variant="outline" size="icon" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary hidden md:inline-flex" onClick={handleLogout} title={t('logoutButton')}>
+                <LogOut className="h-5 w-5" />
+                <span className="sr-only">{t('logoutButton')}</span>
+              </Button>
+            ) : (
+              <Button variant="outline" size="icon" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary hidden md:inline-flex" onClick={() => router.push('/login')} title={t('loginButton')}>
+                <LogIn className="h-5 w-5" />
+                <span className="sr-only">{t('loginButton')}</span>
+              </Button>
+            )
+          )}
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
@@ -109,7 +145,7 @@ export function Header() {
                       {t(link.labelKey as any)}
                     </Link>
                   ))}
-                  {isAdmin && (
+                  {isClient && isAdminLoggedIn && (
                     <Link
                       href="/registrations"
                       className={cn(
@@ -120,6 +156,17 @@ export function Header() {
                     >
                       <ClipboardList className="h-5 w-5" /> {t('navViewRegistrations')}
                     </Link>
+                  )}
+                   {isClient && (
+                    isAdminLoggedIn ? (
+                      <Button variant="ghost" className="w-full justify-start flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted" onClick={handleLogout}>
+                        <LogOut className="h-5 w-5" /> {t('logoutButton')}
+                      </Button>
+                    ) : (
+                      <Button variant="ghost" className="w-full justify-start flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted" onClick={handleLoginNav}>
+                        <LogIn className="h-5 w-5" /> {t('loginButton')}
+                      </Button>
+                    )
                   )}
                 </div>
               </SheetContent>
