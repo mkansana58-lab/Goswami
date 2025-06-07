@@ -1,3 +1,4 @@
+
 export type Language = 'en' | 'hi';
 
 export const translations = {
@@ -102,6 +103,7 @@ export const translations = {
     loginError: "Invalid username or password.",
     accessDenied: "Access Denied",
     accessDeniedMessage: "You do not have permission to view this page. Please login as admin.",
+    mobileMenuTitle: "Navigation Menu",
   },
   hi: {
     appName: "गो स्वामी डिफेंस अकादमी",
@@ -204,5 +206,6 @@ export const translations = {
     loginError: "अमान्य यूज़रनेम या पासवर्ड।",
     accessDenied: "पहुंच की अनुमति नहीं है",
     accessDeniedMessage: "आपको यह पेज देखने की अनुमति नहीं है। कृपया एडमिन के रूप में लॉगिन करें।",
+    mobileMenuTitle: "नेविगेशन मेनू",
   }
 };
