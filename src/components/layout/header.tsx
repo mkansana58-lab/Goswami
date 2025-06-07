@@ -7,7 +7,7 @@ import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu } from 'lucide-react';
+import { BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, Tv2 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import React from 'react';
 
@@ -21,6 +21,7 @@ const navLinks = [
   { href: '/military-school-course', labelKey: 'navMilitarySchoolCourse', icon: GraduationCap },
   { href: '/premium-courses', labelKey: 'navPremiumCourses', icon: Star },
   { href: '/ai-tutor', labelKey: 'navAITutor', icon: Cpu },
+  { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2 },
 ];
 
 // NOTE: This is a placeholder for actual admin authentication.
