@@ -1,19 +1,23 @@
 
 "use client";
 
+import { useEffect, useState } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Users } from 'lucide-react';
 
-// Mock data for scholarship registrations
-// In a real application, this data would be fetched from a database.
-const mockRegistrations = [
-  { id: 'reg001', studentName: "Amit Kumar", emailAddress: "amit.k@example.com", phoneNumber: "9876543210", currentClass: "10th", address: "123, Main Street, Delhi", registrationDate: "2024-07-15" },
-  { id: 'reg002', studentName: "Priya Sharma", emailAddress: "priya.s@example.com", phoneNumber: "9123456780", currentClass: "9th", address: "45, Sector 5, Gurgaon", registrationDate: "2024-07-16" },
-  { id: 'reg003', studentName: "Rajesh Singh", emailAddress: "rajesh.s@example.com", phoneNumber: "9998887770", currentClass: "11th", address: "78, Civil Lines, Jaipur", registrationDate: "2024-07-17" },
-  { id: 'reg004', studentName: "Sunita Devi", emailAddress: "sunita.d@example.com", phoneNumber: "9000011122", currentClass: "10th", address: "Plot 11, Rohini, New Delhi", registrationDate: "2024-07-18" },
-];
+interface RegistrationData {
+  id: string;
+  studentName: string;
+  emailAddress: string;
+  phoneNumber: string;
+  currentClass: string;
+  address: string;
+  registrationDate: string;
+}
+
+const LOCAL_STORAGE_KEY = 'scholarshipRegistrations';
 
 // NOTE: This is a placeholder for actual admin authentication.
 // In a real application, this page would be protected and only accessible to admins.
@@ -21,6 +25,24 @@ const isAdmin = true;
 
 export default function RegistrationsPage() {
   const { t } = useLanguage();
+  const [registrations, setRegistrations] = useState<RegistrationData[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') { // Ensure localStorage is available
+      const storedRegistrationsString = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (storedRegistrationsString) {
+        try {
+          const parsedRegistrations = JSON.parse(storedRegistrationsString);
+          if (Array.isArray(parsedRegistrations)) {
+            setRegistrations(parsedRegistrations);
+          }
+        } catch (error) {
+          console.error("Error parsing registrations from localStorage:", error);
+          setRegistrations([]); // Fallback to empty array on error
+        }
+      }
+    }
+  }, []);
 
   if (!isAdmin) {
     // In a real app, you might redirect or show an access denied message.
@@ -50,7 +72,7 @@ export default function RegistrationsPage() {
           <CardDescription className="text-lg">{t('viewRegistrationsDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
-          {mockRegistrations.length > 0 ? (
+          {registrations.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -63,7 +85,7 @@ export default function RegistrationsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockRegistrations.map((reg) => (
+                {registrations.map((reg) => (
                   <TableRow key={reg.id}>
                     <TableCell className="font-medium">{reg.studentName}</TableCell>
                     <TableCell>{reg.emailAddress}</TableCell>
@@ -81,7 +103,7 @@ export default function RegistrationsPage() {
         </CardContent>
       </Card>
       <p className="text-center text-sm text-muted-foreground">
-        Note: This page displays mock data for demonstration purposes. True admin functionality and data storage require backend development.
+        Note: This page displays data stored in your browser's local storage for demonstration.
       </p>
     </div>
   );

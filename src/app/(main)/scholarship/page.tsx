@@ -12,8 +12,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from 'react';
 
-const formSchemaDefinition = (t: (key: any) => string) => z.object({
+const formSchemaDefinition = (t: (key: string) => string) => z.object({
   studentName: z.string().min(2, { message: t('studentNameValidation') || "Name must be at least 2 characters." }),
   emailAddress: z.string().email({ message: t('emailValidation') || "Invalid email address." }),
   phoneNumber: z.string().min(10, { message: t('phoneValidation') || "Phone number must be at least 10 digits." }).regex(/^\+?[0-9\s-()]*$/, { message: t('phoneInvalidChars') || "Invalid characters in phone number." }),
@@ -22,6 +23,8 @@ const formSchemaDefinition = (t: (key: any) => string) => z.object({
 });
 
 type ScholarshipFormValues = z.infer<ReturnType<typeof formSchemaDefinition>>;
+
+const LOCAL_STORAGE_KEY = 'scholarshipRegistrations';
 
 export default function ScholarshipPage() {
   const { t } = useLanguage();
@@ -41,13 +44,32 @@ export default function ScholarshipPage() {
   });
 
   const onSubmit: SubmitHandler<ScholarshipFormValues> = (data) => {
-    console.log("Scholarship Registration Data:", data);
-    // Placeholder for form submission logic
-    toast({
-      title: t('registrationSuccess'),
-      description: t('registrationSuccessMessage'),
-    });
-    form.reset();
+    try {
+      const existingRegistrationsString = localStorage.getItem(LOCAL_STORAGE_KEY);
+      const existingRegistrations: ScholarshipFormValues[] = existingRegistrationsString ? JSON.parse(existingRegistrationsString) : [];
+      
+      const newRegistration = {
+        ...data,
+        id: `reg${Date.now()}${Math.floor(Math.random() * 1000)}`, // Simple unique ID
+        registrationDate: new Date().toISOString().split('T')[0] // YYYY-MM-DD
+      };
+
+      existingRegistrations.push(newRegistration);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(existingRegistrations));
+      
+      toast({
+        title: t('registrationSuccess'),
+        description: t('registrationSuccessMessage'),
+      });
+      form.reset();
+    } catch (error) {
+      console.error("Error saving to localStorage:", error);
+      toast({
+        title: t('errorOccurred'),
+        description: "Could not save registration.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -135,11 +157,3 @@ export default function ScholarshipPage() {
     </div>
   );
 }
-
-// Add these validation message keys to translations.ts
-// studentNameValidation: "Name must be at least 2 characters."
-// emailValidation: "Invalid email address."
-// phoneValidation: "Phone number must be at least 10 digits."
-// phoneInvalidChars: "Invalid characters in phone number."
-// classValidation: "Current class is required."
-// addressValidation: "Address must be at least 5 characters."
