@@ -7,23 +7,30 @@ import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, Tv2, LogIn, LogOut } from 'lucide-react';
+import { BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, Tv2, LogIn, LogOut, LayoutDashboard, AlertTriangle } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import React, { useEffect, useState } from 'react';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 
+
 const navLinks = [
-  { href: '/', labelKey: 'navHome', icon: ShieldCheck },
-  { href: '/schedule', labelKey: 'navSchedule', icon: BookText },
-  { href: '/tests', labelKey: 'navTests', icon: ClipboardCheck },
-  { href: '/videos', labelKey: 'navVideos', icon: PlaySquare },
-  { href: '/scholarship', labelKey: 'navScholarship', icon: Users },
-  { href: '/sainik-school-course', labelKey: 'navSainikSchoolCourse', icon: GraduationCap },
-  { href: '/military-school-course', labelKey: 'navMilitarySchoolCourse', icon: GraduationCap },
-  { href: '/premium-courses', labelKey: 'navPremiumCourses', icon: Star },
-  { href: '/ai-tutor', labelKey: 'navAITutor', icon: Cpu },
-  { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2 },
+  { href: '/', labelKey: 'navHome', icon: ShieldCheck, adminOnly: false },
+  { href: '/schedule', labelKey: 'navSchedule', icon: BookText, adminOnly: false },
+  { href: '/tests', labelKey: 'navTests', icon: ClipboardCheck, adminOnly: false },
+  { href: '/videos', labelKey: 'navVideos', icon: PlaySquare, adminOnly: false },
+  { href: '/scholarship', labelKey: 'navScholarship', icon: Users, adminOnly: false },
+  { href: '/sainik-school-course', labelKey: 'navSainikSchoolCourse', icon: GraduationCap, adminOnly: false },
+  { href: '/military-school-course', labelKey: 'navMilitarySchoolCourse', icon: GraduationCap, adminOnly: false },
+  { href: '/premium-courses', labelKey: 'navPremiumCourses', icon: Star, adminOnly: false },
+  { href: '/ai-tutor', labelKey: 'navAITutor', icon: Cpu, adminOnly: false },
+  { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2, adminOnly: false },
 ];
+
+const adminNavLinks = [
+  { href: '/admin', labelKey: 'navAdminPanel', icon: LayoutDashboard, adminOnly: true },
+  { href: '/registrations', labelKey: 'navViewRegistrations', icon: ClipboardList, adminOnly: true },
+];
+
 
 const ADMIN_LOGGED_IN_KEY = 'adminLoggedInGoSwami';
 
@@ -40,7 +47,7 @@ export function Header() {
     if (typeof window !== 'undefined') {
       setIsAdminLoggedIn(localStorage.getItem(ADMIN_LOGGED_IN_KEY) === 'true');
     }
-  }, [pathname]); // Re-check on route change
+  }, [pathname]); 
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
@@ -55,6 +62,10 @@ export function Header() {
     setIsMobileMenuOpen(false);
     router.push('/login');
   }
+
+  const allNavLinks = isAdminLoggedIn ? [...navLinks, ...adminNavLinks] : navLinks;
+  const desktopAdminLinks = adminNavLinks;
+
 
   return (
     <header className="bg-primary text-primary-foreground sticky top-0 z-50 shadow-md">
@@ -77,17 +88,18 @@ export function Header() {
               {t(link.labelKey as any)}
             </Link>
           ))}
-          {isClient && isAdminLoggedIn && (
+          {isClient && isAdminLoggedIn && desktopAdminLinks.map((link) => (
             <Link
-              href="/registrations"
+              key={link.href}
+              href={link.href}
               className={cn(
                 "px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-primary-foreground hover:text-primary flex items-center gap-1",
-                pathname === "/registrations" ? "bg-primary-foreground text-primary" : ""
+                pathname === link.href ? "bg-primary-foreground text-primary" : ""
               )}
             >
-              <ClipboardList className="h-4 w-4" /> {t('navViewRegistrations')}
+              <link.icon className="h-4 w-4" /> {t(link.labelKey as any)}
             </Link>
-          )}
+          ))}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -131,36 +143,27 @@ export function Header() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[280px] bg-card p-4">
-                <SheetTitle asChild>
-                  <VisuallyHidden.Root>{t('mobileMenuTitle')}</VisuallyHidden.Root>
-                </SheetTitle>
+                 <VisuallyHidden.Root asChild>
+                    <SheetTitle>{t('mobileMenuTitle')}</SheetTitle>
+                 </VisuallyHidden.Root>
                 <div className="flex flex-col space-y-3 pt-4">
-                  {navLinks.map((link) => (
-                    <Link
-                      key={`mobile-${link.href}`}
-                      href={link.href}
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium transition-colors hover:bg-muted",
-                        pathname === link.href ? "bg-muted text-primary" : "text-foreground"
-                      )}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <link.icon className="h-5 w-5" />
-                      {t(link.labelKey as any)}
-                    </Link>
-                  ))}
-                  {isClient && isAdminLoggedIn && (
-                    <Link
-                      href="/registrations"
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium transition-colors hover:bg-muted",
-                        pathname === "/registrations" ? "bg-muted text-primary" : "text-foreground"
-                      )}
-                       onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <ClipboardList className="h-5 w-5" /> {t('navViewRegistrations')}
-                    </Link>
-                  )}
+                  {allNavLinks.map((link) => {
+                    if (link.adminOnly && !isAdminLoggedIn && isClient) return null;
+                    return (
+                      <Link
+                        key={`mobile-${link.href}`}
+                        href={link.href}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium transition-colors hover:bg-muted",
+                          pathname === link.href ? "bg-muted text-primary" : "text-foreground"
+                        )}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <link.icon className="h-5 w-5" />
+                        {t(link.labelKey as any)}
+                      </Link>
+                    );
+                  })}
                    {isClient && (
                     isAdminLoggedIn ? (
                       <Button variant="ghost" className="w-full justify-start flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted" onClick={handleLogout}>
@@ -181,3 +184,5 @@ export function Header() {
     </header>
   );
 }
+
+    
