@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 
+// Corresponds to the 9 items in the image grid
 const featureGridLinks = [
   { href: '/premium-courses', labelKey: 'paidCourses', icon: ShoppingBag, descriptionKey: 'premiumCoursesDesc' },
   { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck, descriptionKey: 'navTests' },
@@ -35,7 +36,7 @@ export default function HomePage() {
   const { t } = useLanguage();
 
   return (
-    <div className="space-y-6 md:space-y-8 pb-16 md:pb-8"> {/* Added padding bottom for simulated bottom nav */}
+    <div className="space-y-6 md:space-y-8 pb-16 md:pb-8">
       
       <section className="text-left py-4">
         <h2 className="text-xl font-semibold text-foreground mb-4">
@@ -54,7 +55,7 @@ export default function HomePage() {
       </section>
 
       <section>
-        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+        <div className="grid grid-cols-3 gap-3 md:gap-4">
           {featureGridLinks.map((link) => (
             <Link href={link.href} key={`${link.href}-${link.labelKey}`} passHref>
               <Card className="hover:shadow-xl hover:border-primary transition-all duration-300 cursor-pointer h-full flex flex-col items-center text-center p-2 md:p-3 shadow-md rounded-lg">
@@ -62,18 +63,12 @@ export default function HomePage() {
                   <link.icon className="h-8 w-8 md:h-10 md:w-10 text-primary mb-1 md:mb-2" />
                   <CardTitle className="text-xs md:text-sm font-medium text-foreground">{t(link.labelKey as any)}</CardTitle>
                 </CardHeader>
-                {/* Optional: Add CardContent for description if needed, but image is compact */}
-                {/* <CardContent className="flex-grow p-1 md:p-2">
-                  <p className="text-xs text-muted-foreground">{t(link.descriptionKey as any) || link.descriptionKey}</p>
-                </CardContent> */}
               </Card>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* Simulated Bottom Navigation for larger screens - hidden on small screens where header menu is used */}
-      {/* This is just a visual simulation, not a fixed bottom bar */}
       <section className="hidden md:block pt-8">
         <h3 className="text-lg font-semibold text-center text-primary mb-4">{t('exploreSections')}</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -88,26 +83,6 @@ export default function HomePage() {
             ))}
         </div>
       </section>
-
-
-      {/* Commenting out old sections, can be removed if not needed
-      <section className="text-center py-12 bg-card rounded-lg shadow-xl">
-        <div className="flex flex-col items-center">
-          <ShieldCheck className="h-24 w-24 text-primary mb-4" />
-          <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary mb-4">
-            {t('heroTitle')}
-          </h1>
-          <p className="text-lg md:text-xl text-foreground max-w-2xl mx-auto mb-8">
-            {t('heroSubtitle')}
-          </p>
-          <Button size="lg" asChild className="bg-accent text-accent-foreground hover:bg-accent/90 text-lg px-8 py-6 rounded-full">
-            <Link href="/scholarship">{t('navScholarship')}</Link>
-          </Button>
-        </div>
-      </section>
-
-      <InspirationalMessages /> 
-      */}
     </div>
   );
 }

@@ -23,7 +23,7 @@ export const translations = {
     navStudyMaterial: "Study Material",
     navChat: "Chat",
     navJobAlerts: "Job Alerts",
-    navStudyBooks: "Study Books",
+    navStudyBooks: "Study Books", // Corresponds to "Our Books" in image
     navQuiz: "Quiz",
     navSyllabus: "Syllabus",
     language: "Language",
@@ -31,7 +31,7 @@ export const translations = {
     hindi: "Hindi",
     heroTitle: "Shape Your Future, Defend The Nation",
     heroSubtitle: "Join Go Swami Defence Academy and embark on a journey of discipline, courage, and excellence.",
-    exploreSections: "Explore Our Academy",
+    exploreSections: "Explore Our Academy", // For simulated bottom nav heading
     classScheduleTitle: "Daily Class Schedule",
     homeworkAssignments: "Homework Assignments",
     importantUpdates: "Important Updates",
@@ -67,8 +67,8 @@ export const translations = {
     militarySchoolCourseDesc: "Dedicated coaching for Rashtriya Military Schools (RMS) entrance.",
     premiumCoursesTitle: "Premium Courses",
     premiumCoursesDesc: "Unlock exclusive content and personalized mentorship.",
-    premiumSainikPrice: "Sainik School Premium Module: ₹20",
-    premiumMilitaryPrice: "Military School Premium Module: ₹20",
+    premiumSainikPrice: "Sainik School Premium Module: ₹20", // Price not shown in this image, keeping generic
+    premiumMilitaryPrice: "Military School Premium Module: ₹20", // Price not shown in this image, keeping generic
     viewRegistrationsTitle: "Scholarship Registrations",
     viewRegistrationsDesc: "View all students who have registered for the scholarship exam.",
     registrationsTableDate: "Registration Date",
@@ -181,7 +181,7 @@ export const translations = {
     studyMaterialDesc: "Access curated study materials and notes.",
     chatDesc: "Connect with teachers and fellow students.",
     jobAlertsDesc: "Get alerts for defence job openings.",
-    studyBooksDesc: "Recommended books and e-books.",
+    studyBooksDesc: "Recommended books and e-books.", // Already exists
     quizDesc: "Test your knowledge with various quizzes.",
     syllabusDesc: "View detailed syllabus for all courses.",
     // New keys for image redesign
@@ -189,14 +189,14 @@ export const translations = {
     paidCourses: "Paid Course",
     testSeries: "Test Series",
     freeCourses: "Free Courses",
-    previousPapersNav: "Previous Papers", // Renamed to avoid conflict if 'previousYearPapers' is used differently
+    previousPapersNav: "Previous Papers", 
     currentAffairs: "Current Affairs",
     notifications: "Notifications",
-    navFreeCourses: "Free Courses", // For page title
-    navCurrentAffairs: "Current Affairs", // For page title
+    navFreeCourses: "Free Courses", 
+    navCurrentAffairs: "Current Affairs", 
     freeCoursesDesc: "Explore our free courses and learning materials.",
     currentAffairsDesc: "Stay updated with the latest current affairs.",
-    placeholderBanner: "Placeholder Banner",
+    placeholderBanner: "Promotional Banner",
     typeYourMessage: "Type your message...",
     sendButton: "Send",
     author: "Author",
@@ -208,29 +208,29 @@ export const translations = {
 
   },
   hi: {
-    appName: "गो स्वामी डिफेंस अकादमी",
+    appName: "गो स्वामी डिफेंस अकादमी", // Image shows "WINNERS App", but keeping current for consistency unless asked to change
     navHome: "होम",
     navSchedule: "कक्षा सारणी",
-    navTests: "टेस्ट पेपर",
+    navTests: "टेस्ट एक्सेस", // "Test Series" in image
     navVideos: "वीडियो क्लास",
     navScholarship: "छात्रवृत्ति",
     navAITutor: "AI ट्यूटर",
     navSainikSchoolCourse: "सैनिक स्कूल कोर्स",
     navMilitarySchoolCourse: "मिलिट्री स्कूल कोर्स",
-    navPremiumCourses: "प्रीमियम कोर्स",
+    navPremiumCourses: "प्रीमियम कोर्स", // "Paid Course" in image
     navViewRegistrations: "पंजीकरण देखें",
-    navLiveClasses: "लाइव क्लासें",
+    navLiveClasses: "लाइव क्लास", // "Live Class" in image
     navAdminPanel: "एडमिन पैनल",
-    navMyCourse: "मेरा कोर्स",
-    navDownloads: "डाउनलोड",
+    navMyCourse: "मेरा कोर्स", // "My Courses" in image
+    navDownloads: "डाउनलोड", // "Downloads" in image
     navCutOffChecker: "कट ऑफ चेकर",
     navChanceChecking: "चांस चेकिंग",
     navStudyMaterial: "स्टडी मटेरियल",
     navChat: "चैट",
-    navJobAlerts: "जॉब अलर्ट्स",
-    navStudyBooks: "स्टडी बुक्स",
-    navQuiz: "क्विज़",
-    navSyllabus: "सिलेबस",
+    navJobAlerts: "जॉब अलर्ट्स", // "Job Alerts" in image
+    navStudyBooks: "स्टडी बुक्स", // "Our Books" in image
+    navQuiz: "क्विज़", // "Quiz" in image
+    navSyllabus: "सिलेबस", // "Syllabus" in image
     language: "भाषा",
     english: "English",
     hindi: "हिंदी",
@@ -241,7 +241,7 @@ export const translations = {
     homeworkAssignments: "होमवर्क",
     importantUpdates: "महत्वपूर्ण सूचनाएँ",
     mockTests: "मॉक टेस्ट",
-    previousYearPapers: "पिछले वर्ष के पेपर",
+    previousYearPapers: "पिछले वर्ष के पेपर", // "Previous Papers" in image
     uploadTest: "नया टेस्ट अपलोड करें",
     adminUploadOnly: "यह अनुभाग केवल एडमिन उपयोग के लिए है।",
     availableTests: "उपलब्ध टेस्ट",
@@ -357,7 +357,7 @@ export const translations = {
     noUpdateItems: "फिलहाल कोई अपडेट या घोषणा नहीं है।",
     validationMin2Chars: "कम से कम 2 अक्षर का होना चाहिए।",
     validationMin3Chars: "कम से कम 3 अक्षर का होना चाहिए।",
-    validationMin5Chars: "कम से कम 5 अक्षर का होना चाहिए।",
+    validationMin5Chars: "कम से कम 5 अक्षर का होना चाहिए。",
     validationMin10Chars: "कम से कम 10 अक्षर का होना चाहिए।",
     validationRequired: "आवश्यक है।",
     deleteButton: "हटाएं",
@@ -397,11 +397,11 @@ export const translations = {
     previousPapersNav: "पिछले पेपर्स",
     currentAffairs: "करेंट अफेयर्स",
     notifications: "सूचनाएं",
-    navFreeCourses: "फ्री कोर्स",
-    navCurrentAffairs: "करेंट अफेयर्स",
+    navFreeCourses: "फ्री कोर्स", 
+    navCurrentAffairs: "करेंट अफेयर्स", 
     freeCoursesDesc: "हमारे फ्री कोर्स और अध्ययन सामग्री का अन्वेषण करें।",
     currentAffairsDesc: "नवीनतम करेंट अफेयर्स से अपडेट रहें।",
-    placeholderBanner: "उदाहरण बैनर",
+    placeholderBanner: "प्रचार बैनर",
     typeYourMessage: "अपना संदेश लिखें...",
     sendButton: "भेजें",
     author: "लेखक",
