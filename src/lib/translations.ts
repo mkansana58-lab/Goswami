@@ -184,6 +184,28 @@ export const translations = {
     studyBooksDesc: "Recommended books and e-books.",
     quizDesc: "Test your knowledge with various quizzes.",
     syllabusDesc: "View detailed syllabus for all courses.",
+    // New keys for image redesign
+    helloTeam: "Hello, Team winners!",
+    paidCourses: "Paid Course",
+    testSeries: "Test Series",
+    freeCourses: "Free Courses",
+    previousPapersNav: "Previous Papers", // Renamed to avoid conflict if 'previousYearPapers' is used differently
+    currentAffairs: "Current Affairs",
+    notifications: "Notifications",
+    navFreeCourses: "Free Courses", // For page title
+    navCurrentAffairs: "Current Affairs", // For page title
+    freeCoursesDesc: "Explore our free courses and learning materials.",
+    currentAffairsDesc: "Stay updated with the latest current affairs.",
+    placeholderBanner: "Placeholder Banner",
+    typeYourMessage: "Type your message...",
+    sendButton: "Send",
+    author: "Author",
+    fileType: "File Type",
+    questions: "Questions",
+    startQuiz: "Start Quiz",
+    lastDateApply: "Last Date to Apply",
+    viewDetails: "View Details",
+
   },
   hi: {
     appName: "गो स्वामी डिफेंस अकादमी",
@@ -367,5 +389,26 @@ export const translations = {
     studyBooksDesc: "अनुशंसित पुस्तकें और ई-पुस्तकें।",
     quizDesc: "विभिन्न क्विज़ के साथ अपने ज्ञान का परीक्षण करें।",
     syllabusDesc: "सभी कोर्स के लिए विस्तृत सिलेबस देखें।",
+    // New keys for image redesign - Hindi
+    helloTeam: "नमस्ते, टीम विनर्स!",
+    paidCourses: "पेड कोर्स",
+    testSeries: "टेस्ट सीरीज",
+    freeCourses: "फ्री कोर्स",
+    previousPapersNav: "पिछले पेपर्स",
+    currentAffairs: "करेंट अफेयर्स",
+    notifications: "सूचनाएं",
+    navFreeCourses: "फ्री कोर्स",
+    navCurrentAffairs: "करेंट अफेयर्स",
+    freeCoursesDesc: "हमारे फ्री कोर्स और अध्ययन सामग्री का अन्वेषण करें।",
+    currentAffairsDesc: "नवीनतम करेंट अफेयर्स से अपडेट रहें।",
+    placeholderBanner: "उदाहरण बैनर",
+    typeYourMessage: "अपना संदेश लिखें...",
+    sendButton: "भेजें",
+    author: "लेखक",
+    fileType: "फ़ाइल का प्रकार",
+    questions: "प्रश्न",
+    startQuiz: "क्विज़ शुरू करें",
+    lastDateApply: "आवेदन की अंतिम तिथि",
+    viewDetails: "विवरण देखें",
   }
 };

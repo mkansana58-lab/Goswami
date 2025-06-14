@@ -4,97 +4,97 @@
 
 @layer base {
   :root {
-    --background: 210 60% 98%; /* Very light blue/almost white */
-    --foreground: 210 20% 25%; /* Dark grayish blue */
+    --background: 0 0% 100%; /* White */
+    --foreground: 210 20% 25%; /* Dark grayish blue for text */
 
-    --muted: 210 30% 90%; /* Light grayish blue */
-    --muted-foreground: 210 20% 45%; /* Medium grayish blue */
+    --muted: 210 40% 95%; /* Lighter grayish blue for muted backgrounds/borders */
+    --muted-foreground: 210 20% 45%; /* Medium grayish blue for muted text */
 
     --popover: 0 0% 100%; /* White */
-    --popover-foreground: 210 20% 25%; /* Dark grayish blue */
+    --popover-foreground: 210 20% 25%; 
 
     --card: 0 0% 100%; /* White */
-    --card-foreground: 210 20% 25%; /* Dark grayish blue */
+    --card-foreground: 210 20% 25%; 
 
-    --border: 210 20% 85%; /* Light blue-gray border */
-    --input: 210 20% 88%; /* Slightly darker light blue-gray for input borders */
+    --border: 210 30% 88%; /* Light blue-gray border */
+    --input: 210 30% 90%; /* Slightly darker light blue-gray for input borders */
 
-    --primary: 210 80% 50%; /* Professional Blue */
-    --primary-foreground: 0 0% 100%; /* White */
+    --primary: 210 85% 50%; /* Bright Blue - similar to image banner */
+    --primary-foreground: 0 0% 100%; /* White text on primary */
 
-    --secondary: 210 60% 70%; /* Lighter Professional Blue */
-    --secondary-foreground: 210 20% 25%; /* Dark grayish blue */
+    --secondary: 210 60% 75%; /* Lighter Professional Blue */
+    --secondary-foreground: 210 20% 25%; 
 
-    --accent: 0 80% 55%; /* Bright Red */
-    --accent-foreground: 0 0% 100%; /* White for text on accent */
+    --accent: 45 90% 55%; /* Yellow/Gold - similar to image banner text/highlights */
+    --accent-foreground: 210 20% 25%; /* Dark text on accent yellow */
 
-    --destructive: 350 72% 51%; /* Slightly different Red for Destructive to distinguish from Accent */
-    --destructive-foreground: 0 0% 98%; /* Light Gray/White for text on Destructive */
+    --destructive: 0 80% 55%; /* Retaining a red for destructive, distinct from image's illustrative red */
+    --destructive-foreground: 0 0% 100%; 
 
-    --ring: 210 80% 50%; /* Professional Blue for focus rings */
+    --ring: 210 85% 50%; /* Bright Blue for focus rings */
 
-    --radius: 0.75rem; /* Increased for rounder elements */
+    --radius: 0.75rem; 
 
-    --chart-1: 210 80% 50%;
-    --chart-2: 0 80% 55%; /* Bright Red for chart */
-    --chart-3: 120 60% 50%; /* Green */
-    --chart-4: 280 70% 60%; /* Purple */
-    --chart-5: 0 0% 60%;   /* Gray */
+    --chart-1: 210 85% 50%;
+    --chart-2: 45 90% 55%; 
+    --chart-3: 120 60% 50%; 
+    --chart-4: 280 70% 60%; 
+    --chart-5: 0 0% 60%;   
 
-    --sidebar-background: 210 30% 96%; 
+    --sidebar-background: 210 40% 97%; 
     --sidebar-foreground: 210 20% 25%;
-    --sidebar-primary: 210 80% 50%;
+    --sidebar-primary: 210 85% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 80% 55%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 210 20% 80%;
-    --sidebar-ring: 210 80% 50%;
+    --sidebar-accent: 45 90% 55%;
+    --sidebar-accent-foreground: 210 20% 25%;
+    --sidebar-border: 210 30% 85%;
+    --sidebar-ring: 210 85% 50%;
   }
 
   .dark {
-    --background: 210 20% 10%; /* Dark Blue */
-    --foreground: 210 30% 90%; /* Light Grayish Blue */
+    --background: 210 20% 10%; 
+    --foreground: 210 30% 90%; 
 
-    --muted: 210 15% 25%; /* Darker Muted Blue */
-    --muted-foreground: 210 25% 70%; /* Lighter Grayish Blue */
+    --muted: 210 15% 25%; 
+    --muted-foreground: 210 25% 70%; 
 
-    --popover: 210 20% 12%; /* Very Dark Blue */
-    --popover-foreground: 210 30% 90%; /* Light Grayish Blue */
+    --popover: 210 20% 12%; 
+    --popover-foreground: 210 30% 90%; 
 
-    --card: 210 20% 12%; /* Very Dark Blue */
-    --card-foreground: 210 30% 90%; /* Light Grayish Blue */
+    --card: 210 20% 12%; 
+    --card-foreground: 210 30% 90%; 
 
-    --border: 210 15% 30%; /* Dark Blue-Gray Border */
-    --input: 210 15% 30%; /* Dark Blue-Gray Input */
+    --border: 210 15% 30%; 
+    --input: 210 15% 30%; 
 
-    --primary: 210 70% 60%; /* Brighter Blue for Dark Mode */
-    --primary-foreground: 210 20% 15%; /* Dark for text on primary */
+    --primary: 210 75% 60%; /* Brighter Blue for Dark Mode */
+    --primary-foreground: 210 20% 15%; 
 
-    --secondary: 210 50% 40%; /* Medium Dark Blue */
-    --secondary-foreground: 210 30% 90%; /* Light Grayish Blue */
+    --secondary: 210 50% 40%; 
+    --secondary-foreground: 210 30% 90%; 
 
-    --accent: 0 70% 60%; /* Bright Red for Dark Mode */
-    --accent-foreground: 0 0% 10%; /* Very Dark for text on accent */
+    --accent: 45 80% 60%; /* Brighter Yellow for Dark Mode */
+    --accent-foreground: 0 0% 10%; 
 
-    --destructive: 350 60% 50%; 
+    --destructive: 0 70% 60%; 
     --destructive-foreground: 0 0% 98%;
     
-    --ring: 210 70% 60%; /* Brighter Blue for focus rings */
+    --ring: 210 75% 60%; 
 
-    --chart-1: 210 70% 60%;
-    --chart-2: 0 70% 60%;
+    --chart-1: 210 75% 60%;
+    --chart-2: 45 80% 60%;
     --chart-3: 120 50% 60%;
     --chart-4: 280 60% 70%;
     --chart-5: 0 0% 70%;
 
     --sidebar-background: 210 20% 12%; 
     --sidebar-foreground: 210 30% 90%;
-    --sidebar-primary: 210 70% 60%;
+    --sidebar-primary: 210 75% 60%;
     --sidebar-primary-foreground: 210 20% 15%;
-    --sidebar-accent: 0 70% 60%;
+    --sidebar-accent: 45 80% 60%;
     --sidebar-accent-foreground: 0 0% 10%;
     --sidebar-border: 210 15% 30%;
-    --sidebar-ring: 210 70% 60%;
+    --sidebar-ring: 210 75% 60%;
   }
 }
 
