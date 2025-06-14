@@ -24,6 +24,7 @@ export const translations = {
     navChat: "Chat",
     navJobAlerts: "Job Alerts",
     navStudyBooks: "Study Books", 
+    ourBooks: "Our Books", // Added from image
     navQuiz: "Quiz",
     navSyllabus: "Syllabus",
     language: "Language",
@@ -213,7 +214,7 @@ export const translations = {
     appName: "गो स्वामी डिफेंस अकादमी", 
     navHome: "होम",
     navSchedule: "कक्षा सारणी",
-    navTests: "टेस्ट एक्सेस", 
+    navTests: "टेस्ट सीरीज", // Changed from Test Access to match image
     navVideos: "वीडियो क्लास",
     navScholarship: "छात्रवृत्ति",
     navAITutor: "AI ट्यूटर",
@@ -231,6 +232,7 @@ export const translations = {
     navChat: "चैट",
     navJobAlerts: "जॉब अलर्ट्स", 
     navStudyBooks: "स्टडी बुक्स", 
+    ourBooks: "हमारी पुस्तकें", // Added from image
     navQuiz: "क्विज़", 
     navSyllabus: "सिलेबस", 
     language: "भाषा",
@@ -391,14 +393,14 @@ export const translations = {
     studyBooksDesc: "अनुशंसित पुस्तकें और ई-पुस्तकें।",
     quizDesc: "विभिन्न क्विज़ के साथ अपने ज्ञान का परीक्षण करें।",
     syllabusDesc: "सभी कोर्स के लिए विस्तृत सिलेबस देखें।",
-    helloTeam: "नमस्ते, टीम विनर्स!",
-    paidCourses: "पेड कोर्स",
-    testSeries: "टेस्ट सीरीज",
-    freeCourses: "फ्री कोर्स",
-    previousPapersNav: "पिछले पेपर्स",
-    currentAffairs: "करेंट अफेयर्स",
+    helloTeam: "नमस्ते, टीम विनर्स!", // From image
+    paidCourses: "पेड कोर्स", // From image
+    testSeries: "टेस्ट सीरीज", // From image
+    freeCourses: "फ्री कोर्सेस", // From image
+    previousPapersNav: "पिछले पेपर्स", // From image
+    currentAffairs: "करेंट अफेयर्स", // From image
     notifications: "सूचनाएं",
-    navFreeCourses: "फ्री कोर्स", 
+    navFreeCourses: "फ्री कोर्सेस", 
     navCurrentAffairs: "करेंट अफेयर्स", 
     freeCoursesDesc: "हमारे फ्री कोर्स और अध्ययन सामग्री का अन्वेषण करें।",
     currentAffairsDesc: "नवीनतम करेंट अफेयर्स से अपडेट रहें।",
@@ -416,4 +418,3 @@ export const translations = {
     chatSimulationNote: "ध्यान दें: यह एक नकली चैट है। संदेश आपके ब्राउज़र में स्थानीय रूप से संग्रहीत होते हैं।",
   }
 };
-

@@ -17,6 +17,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle as RadixSheetTitle } from
 import React, { useEffect, useState } from 'react';
 
 
+// Primary Nav visible in Desktop Header & Mobile Menu (matches image bottom nav)
 const primaryNavLinks = [
   { href: '/', labelKey: 'navHome', icon: Home, adminOnly: false },
   { href: '/my-course', labelKey: 'navMyCourse', icon: GraduationCap, adminOnly: false },
@@ -24,17 +25,19 @@ const primaryNavLinks = [
   { href: '/downloads', labelKey: 'navDownloads', icon: DownloadCloud, adminOnly: false },
 ];
 
+// Secondary links appear in "More" dropdown on desktop and in mobile menu
 // Corresponds to the image grid, excluding those already in primaryNavLinks
 const secondaryNavLinks = [
   { href: '/premium-courses', labelKey: 'paidCourses', icon: ShoppingBag, adminOnly: false },
   { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck, adminOnly: false },
   { href: '/free-courses', labelKey: 'freeCourses', icon: Gift, adminOnly: false },
-  { href: '/tests', labelKey: 'previousPapersNav', icon: History, adminOnly: false },
+  { href: '/tests', labelKey: 'previousPapersNav', icon: History, adminOnly: false }, // Points to /tests
   { href: '/current-affairs', labelKey: 'currentAffairs', icon: Newspaper, adminOnly: false },
   { href: '/quiz', labelKey: 'navQuiz', icon: FileQuestion, adminOnly: false },
   { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks, adminOnly: false },
-  { href: '/study-books', labelKey: 'navStudyBooks', icon: BookOpen, adminOnly: false },
+  { href: '/study-books', labelKey: 'ourBooks', icon: BookOpen, adminOnly: false }, // Uses 'ourBooks' labelKey
   { href: '/job-alerts', labelKey: 'navJobAlerts', icon: Briefcase, adminOnly: false },
+  // Other existing links not in the image grid but useful
   { href: '/schedule', labelKey: 'navSchedule', icon: BookText, adminOnly: false },
   { href: '/videos', labelKey: 'navVideos', icon: PlaySquare, adminOnly: false },
   { href: '/scholarship', labelKey: 'navScholarship', icon: Users, adminOnly: false },
@@ -67,7 +70,7 @@ export function Header() {
     if (typeof window !== 'undefined') {
       setIsAdminLoggedIn(localStorage.getItem(ADMIN_LOGGED_IN_KEY) === 'true');
     }
-  }, [pathname]); // Re-check on pathname change if needed, or on a global state change
+  }, [pathname]); 
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
@@ -84,17 +87,15 @@ export function Header() {
     router.push('/login');
   }
 
-  // Combine all links for the mobile menu, filtering admin links if not logged in.
   const allMobileNavLinks = [
     ...primaryNavLinks,
-    ...secondaryNavLinks.filter(link => !primaryNavLinks.some(pLink => pLink.href === link.href && pLink.labelKey === link.labelKey)), // Avoid duplicates from primary
+    ...secondaryNavLinks.filter(link => !primaryNavLinks.some(pLink => pLink.href === link.href && pLink.labelKey === link.labelKey)), 
     ...(isClient && isAdminLoggedIn ? adminNavLinks : [])
-  ].filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === link.labelKey)); // Ensure unique items
+  ].filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === link.labelKey)); 
 
-  // For desktop "More" dropdown, only include secondary links not already in primary.
   const uniqueSecondaryLinksForDesktop = secondaryNavLinks.filter(
     link => !primaryNavLinks.some(pLink => pLink.href === link.href && pLink.labelKey === link.labelKey)
-  ).filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === link.labelKey)); // Ensure unique items
+  ).filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === link.labelKey)); 
 
 
   return (
@@ -109,14 +110,14 @@ export function Header() {
                   <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[280px] bg-background p-0 flex flex-col border-r">
-                 <VisuallyHidden.Root>
+              <SheetContent side="left" className="w-[280px] bg-sidebar p-0 flex flex-col border-r">
+                <VisuallyHidden.Root>
                   <RadixSheetTitle>{t('mobileMenuTitle')}</RadixSheetTitle>
                 </VisuallyHidden.Root>
-                <div className="p-4 border-b">
+                <div className="p-4 border-b border-sidebar-border">
                   <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-                    <ShieldCheck className="h-8 w-8 text-primary" />
-                    <h2 className="text-xl font-headline font-bold text-primary">{t('appName')}</h2>
+                    <ShieldCheck className="h-8 w-8 text-sidebar-primary" />
+                    <h2 className="text-xl font-headline font-bold text-sidebar-primary">{t('appName')}</h2>
                   </Link>
                 </div>
                 <div className="flex-grow overflow-y-auto p-4 space-y-1">
@@ -125,24 +126,24 @@ export function Header() {
                         key={`mobile-${link.href}-${link.labelKey}`}
                         href={link.href}
                         className={cn(
-                          "flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium transition-colors hover:bg-muted",
-                          pathname === link.href ? "bg-muted text-primary" : "text-foreground"
+                          "flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium transition-colors hover:bg-sidebar-accent/10",
+                          pathname === link.href ? "bg-sidebar-accent/20 text-sidebar-primary font-semibold" : "text-sidebar-foreground"
                         )}
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        <link.icon className="h-5 w-5 text-primary" />
+                        <link.icon className="h-5 w-5 text-sidebar-primary" />
                         {t(link.labelKey as any)}
                       </Link>
                   ))}
                 </div>
-                <div className="p-4 border-t">
+                <div className="p-4 border-t border-sidebar-border">
                    {isClient && (
                     isAdminLoggedIn ? (
-                      <Button variant="outline" className="w-full justify-start flex items-center gap-3 text-base font-medium hover:bg-destructive hover:text-destructive-foreground border-destructive text-destructive" onClick={handleLogout}>
+                      <Button variant="outline" className="w-full justify-start flex items-center gap-3 text-base font-medium border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground" onClick={handleLogout}>
                         <LogOut className="h-5 w-5" /> {t('logoutButton')}
                       </Button>
                     ) : (
-                      <Button variant="outline" className="w-full justify-start flex items-center gap-3 text-base font-medium bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleLoginNav}>
+                      <Button variant="default" className="w-full justify-start flex items-center gap-3 text-base font-medium bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleLoginNav}>
                         <LogIn className="h-5 w-5" /> {t('loginButton')}
                       </Button>
                     )
@@ -161,7 +162,7 @@ export function Header() {
         <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
           {primaryNavLinks.map((link) => (
             <Link
-              key={link.href}
+              key={`${link.href}-desktop-primary`}
               href={link.href}
               className={cn(
                 "px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary",
@@ -173,7 +174,7 @@ export function Header() {
           ))}
           {isClient && isAdminLoggedIn && adminNavLinks.map((link) => (
              <Link
-              key={link.href}
+              key={`${link.href}-desktop-admin`}
               href={link.href}
               className={cn(
                 "px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary flex items-center gap-1",
@@ -192,10 +193,10 @@ export function Header() {
                   <span className="sr-only">More</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="max-h-96 overflow-y-auto bg-background border-border shadow-lg">
+              <DropdownMenuContent align="end" className="max-h-96 overflow-y-auto bg-popover border-border shadow-lg">
                 {uniqueSecondaryLinksForDesktop.map((link) => (
-                  <DropdownMenuItem key={`desktop-more-${link.href}-${link.labelKey}`} asChild className="focus:bg-muted focus:text-primary">
-                    <Link href={link.href} className={cn(pathname === link.href ? "bg-muted text-primary" : "text-foreground", "w-full justify-start")}>
+                  <DropdownMenuItem key={`desktop-more-${link.href}-${link.labelKey}`} asChild className="focus:bg-muted focus:text-primary cursor-pointer">
+                    <Link href={link.href} className={cn(pathname === link.href ? "bg-muted text-primary" : "text-popover-foreground", "w-full justify-start flex items-center")}>
                       <link.icon className="mr-2 h-4 w-4 text-primary/80" />{t(link.labelKey as any)}
                     </Link>
                   </DropdownMenuItem>
@@ -218,11 +219,11 @@ export function Header() {
                 <span className="sr-only">{t('language')}</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-background border-border shadow-lg">
-              <DropdownMenuItem onClick={() => setLanguage('en')} disabled={language === 'en'} className="focus:bg-muted focus:text-primary">
+            <DropdownMenuContent align="end" className="bg-popover border-border shadow-lg">
+              <DropdownMenuItem onClick={() => setLanguage('en')} disabled={language === 'en'} className="focus:bg-muted focus:text-primary cursor-pointer">
                 {t('english')}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setLanguage('hi')} disabled={language === 'hi'} className="focus:bg-muted focus:text-primary">
+              <DropdownMenuItem onClick={() => setLanguage('hi')} disabled={language === 'hi'} className="focus:bg-muted focus:text-primary cursor-pointer">
                 {t('hindi')}
               </DropdownMenuItem>
             </DropdownMenuContent>
