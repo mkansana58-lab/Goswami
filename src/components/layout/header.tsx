@@ -7,12 +7,12 @@ import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { 
+import {
   BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, Tv2, LogIn, LogOut, LayoutDashboard,
   Home, HardDriveDownload, MoreHorizontal, ScissorsLineDashed, HelpingHand, FileText, MessageSquare, Briefcase, BookOpen, FileQuestion, ListChecks, Info, Bell,
-  ShoppingBag, Gift, Newspaper, // Added ShoppingBag, Gift, Newspaper
+  ShoppingBag, Gift, Newspaper,
 } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle as RadixSheetTitle } from '@/components/ui/sheet'; // Added SheetHeader for title
+import { Sheet, SheetContent, SheetTrigger, SheetTitle as RadixSheetTitle } from '@/components/ui/sheet';
 import React, { useEffect, useState } from 'react';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 
@@ -30,7 +30,7 @@ const secondaryNavLinks = [
   { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck, adminOnly: false },
   { href: '/free-courses', labelKey: 'freeCourses', icon: Gift, adminOnly: false },
   // '/tests' already covers previous papers; using a distinct key for label if needed.
-  // { href: '/tests', labelKey: 'previousPapersNav', icon: History, adminOnly: false }, 
+  // { href: '/tests', labelKey: 'previousPapersNav', icon: History, adminOnly: false },
   { href: '/current-affairs', labelKey: 'currentAffairs', icon: Newspaper, adminOnly: false },
   { href: '/quiz', labelKey: 'navQuiz', icon: FileQuestion, adminOnly: false },
   { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks, adminOnly: false },
@@ -69,7 +69,7 @@ export function Header() {
     if (typeof window !== 'undefined') {
       setIsAdminLoggedIn(localStorage.getItem(ADMIN_LOGGED_IN_KEY) === 'true');
     }
-  }, [pathname]); 
+  }, [pathname]);
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
@@ -78,7 +78,7 @@ export function Header() {
     setIsAdminLoggedIn(false);
     setIsMobileMenuOpen(false); // Close menu on logout
     router.push('/login');
-    router.refresh(); 
+    router.refresh();
   };
 
   const handleLoginNav = () => {
@@ -87,7 +87,7 @@ export function Header() {
   }
 
   const allMobileNavLinks = isAdminLoggedIn ? [...primaryNavLinks, ...secondaryNavLinks, ...adminNavLinks] : [...primaryNavLinks, ...secondaryNavLinks];
-  
+
   // Filter out duplicates for desktop "More" menu if any
   const uniqueSecondaryLinksForDesktop = secondaryNavLinks.filter(
     (link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === link.labelKey)
@@ -101,7 +101,7 @@ export function Header() {
           <ShieldCheck className="h-8 w-8 text-primary" />
           <h1 className="text-lg md:text-xl font-headline font-bold text-primary">{t('appName')}</h1>
         </Link>
-        
+
         <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
           {primaryNavLinks.map((link) => (
             <Link
@@ -171,7 +171,7 @@ export function Header() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          
+
           <div className="md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
@@ -181,7 +181,7 @@ export function Header() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[280px] bg-background p-0 flex flex-col border-r">
-                <VisuallyHidden.Root asChild>
+                <VisuallyHidden.Root>
                   <RadixSheetTitle>{t('mobileMenuTitle')}</RadixSheetTitle>
                 </VisuallyHidden.Root>
                 <div className="p-4 border-b">
@@ -245,5 +245,3 @@ export function Header() {
     </header>
   );
 }
-
-import * as SheetPrimitive from "@radix-ui/react-dialog";
