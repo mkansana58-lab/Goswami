@@ -6,10 +6,20 @@ import { InspirationalMessages } from '@/components/home/inspirational-messages'
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLanguage } from '@/hooks/use-language';
-import { BookText, ClipboardCheck, PlaySquare, Users, Cpu, ShieldCheck, GraduationCap, Star, Tv2 } from 'lucide-react';
+import { 
+  BookText, ClipboardCheck, PlaySquare, Users, Cpu, ShieldCheck, GraduationCap, Star, Tv2,
+  ScissorsLineDashed, HelpingHand, FileText, MessageSquare, Briefcase, BookOpen, FileQuestion, ListChecks, DownloadCloud, Info
+} from 'lucide-react';
 import Image from 'next/image';
 
-const featureLinks = [
+const mainFeatureLinks = [
+  { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2, descriptionKey: 'liveClassesDesc' },
+  { href: '/study-material', labelKey: 'navStudyMaterial', icon: FileText, descriptionKey: 'studyMaterialDesc' },
+  { href: '/quiz', labelKey: 'navQuiz', icon: FileQuestion, descriptionKey: 'quizDesc' },
+  { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks, descriptionKey: 'syllabusDesc' },
+];
+
+const secondaryFeatureLinks = [
   { href: '/schedule', labelKey: 'navSchedule', icon: BookText, descriptionKey: 'Access daily class schedules and homework.' },
   { href: '/tests', labelKey: 'navTests', icon: ClipboardCheck, descriptionKey: 'Find mock tests and previous year papers.' },
   { href: '/videos', labelKey: 'navVideos', icon: PlaySquare, descriptionKey: 'Watch video lectures for various subjects.' },
@@ -18,8 +28,15 @@ const featureLinks = [
   { href: '/military-school-course', labelKey: 'navMilitarySchoolCourse', icon: GraduationCap, descriptionKey: 'militarySchoolCourseDesc' },
   { href: '/premium-courses', labelKey: 'navPremiumCourses', icon: Star, descriptionKey: 'premiumCoursesDesc' },
   { href: '/ai-tutor', labelKey: 'navAITutor', icon: Cpu, descriptionKey: 'Get AI help with problem difficulty.' },
-  { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2, descriptionKey: 'liveClassesDesc' },
+  { href: '/cutoff-checker', labelKey: 'navCutOffChecker', icon: ScissorsLineDashed, descriptionKey: 'cutOffCheckerDesc' },
+  { href: '/chance-checking', labelKey: 'navChanceChecking', icon: HelpingHand, descriptionKey: 'chanceCheckingDesc' },
+  { href: '/chat', labelKey: 'navChat', icon: MessageSquare, descriptionKey: 'chatDesc' },
+  { href: '/job-alerts', labelKey: 'navJobAlerts', icon: Briefcase, descriptionKey: 'jobAlertsDesc' },
+  { href: '/study-books', labelKey: 'navStudyBooks', icon: BookOpen, descriptionKey: 'studyBooksDesc' },
+  { href: '/my-course', labelKey: 'navMyCourse', icon: Info, descriptionKey: 'myCourseDesc' }, // Placeholder icon
+  { href: '/downloads', labelKey: 'navDownloads', icon: DownloadCloud, descriptionKey: 'downloadsDesc' },
 ];
+
 
 export default function HomePage() {
   const { t } = useLanguage();
@@ -36,23 +53,23 @@ export default function HomePage() {
           <p className="text-lg md:text-xl text-foreground max-w-2xl mx-auto mb-8">
             {t('heroSubtitle')}
           </p>
-          <Button size="lg" asChild className="bg-accent text-accent-foreground hover:bg-accent/90 text-lg px-8 py-6">
+          <Button size="lg" asChild className="bg-accent text-accent-foreground hover:bg-accent/90 text-lg px-8 py-6 rounded-full">
             <Link href="/scholarship">{t('navScholarship')}</Link>
           </Button>
         </div>
       </section>
 
-      {/* Explore Sections */}
+      {/* Main Explore Sections */}
       <section>
         <h2 className="text-3xl font-bold font-headline text-center text-primary mb-8">
           {t('exploreSections')}
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featureLinks.map((link) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {mainFeatureLinks.map((link) => (
             <Link href={link.href} key={link.href} passHref>
-              <Card className="hover:shadow-2xl hover:border-accent transition-all duration-300 cursor-pointer h-full flex flex-col">
-                <CardHeader className="flex flex-row items-center space-x-4 pb-2">
-                  <link.icon className="h-10 w-10 text-accent" />
+              <Card className="hover:shadow-2xl hover:border-accent transition-all duration-300 cursor-pointer h-full flex flex-col items-center text-center p-4">
+                <CardHeader className="flex flex-col items-center justify-center space-y-2 pb-2">
+                  <link.icon className="h-12 w-12 text-accent" />
                   <CardTitle className="text-xl font-headline text-primary">{t(link.labelKey as any)}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex-grow">
@@ -64,6 +81,26 @@ export default function HomePage() {
         </div>
       </section>
       
+       {/* Secondary Explore Sections */}
+      <section>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {secondaryFeatureLinks.map((link) => (
+            <Link href={link.href} key={link.href} passHref>
+              <Card className="hover:shadow-2xl hover:border-accent transition-all duration-300 cursor-pointer h-full flex flex-col">
+                <CardHeader className="flex flex-row items-start space-x-3 pb-2">
+                  <link.icon className="h-8 w-8 text-accent mt-1" />
+                  <div>
+                    <CardTitle className="text-lg font-headline text-primary">{t(link.labelKey as any)}</CardTitle>
+                     <p className="text-xs text-muted-foreground pt-1">{t(link.descriptionKey as any) || link.descriptionKey}</p>
+                  </div>
+                </CardHeader>
+                 {/* Removed CardContent for a more compact look in secondary items or ensure it has meaningful content */}
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* Placeholder image section */}
       <section className="py-8">
         <Card className="overflow-hidden shadow-lg rounded-lg">

@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%; /* Very light blue/almost white */
+    --background: 210 60% 98%; /* Very light blue/almost white */
     --foreground: 210 20% 25%; /* Dark grayish blue */
 
     --muted: 210 30% 90%; /* Light grayish blue */
@@ -25,18 +25,18 @@
     --secondary: 210 60% 70%; /* Lighter Professional Blue */
     --secondary-foreground: 210 20% 25%; /* Dark grayish blue */
 
-    --accent: 30 90% 55%; /* Vibrant Orange/Gold */
-    --accent-foreground: 210 20% 15%; /* Dark color for text on accent */
+    --accent: 0 80% 55%; /* Bright Red */
+    --accent-foreground: 0 0% 100%; /* White for text on accent */
 
-    --destructive: 0 72% 51%; /* Default Destructive Red */
+    --destructive: 350 72% 51%; /* Slightly different Red for Destructive to distinguish from Accent */
     --destructive-foreground: 0 0% 98%; /* Light Gray/White for text on Destructive */
 
     --ring: 210 80% 50%; /* Professional Blue for focus rings */
 
-    --radius: 0.5rem;
+    --radius: 0.75rem; /* Increased for rounder elements */
 
     --chart-1: 210 80% 50%;
-    --chart-2: 30 90% 55%;
+    --chart-2: 0 80% 55%; /* Bright Red for chart */
     --chart-3: 120 60% 50%; /* Green */
     --chart-4: 280 70% 60%; /* Purple */
     --chart-5: 0 0% 60%;   /* Gray */
@@ -45,14 +45,13 @@
     --sidebar-foreground: 210 20% 25%;
     --sidebar-primary: 210 80% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 30 90% 55%;
-    --sidebar-accent-foreground: 210 20% 15%;
+    --sidebar-accent: 0 80% 55%;
+    --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 210 20% 80%;
     --sidebar-ring: 210 80% 50%;
   }
 
   .dark {
-    /* Adjusted Dark Theme */
     --background: 210 20% 10%; /* Dark Blue */
     --foreground: 210 30% 90%; /* Light Grayish Blue */
 
@@ -74,16 +73,16 @@
     --secondary: 210 50% 40%; /* Medium Dark Blue */
     --secondary-foreground: 210 30% 90%; /* Light Grayish Blue */
 
-    --accent: 30 80% 60%; /* Slightly Muted Orange/Gold for Dark Mode */
-    --accent-foreground: 210 20% 10%; /* Very Dark for text on accent */
+    --accent: 0 70% 60%; /* Bright Red for Dark Mode */
+    --accent-foreground: 0 0% 10%; /* Very Dark for text on accent */
 
-    --destructive: 0 60% 50%; 
+    --destructive: 350 60% 50%; 
     --destructive-foreground: 0 0% 98%;
     
     --ring: 210 70% 60%; /* Brighter Blue for focus rings */
 
     --chart-1: 210 70% 60%;
-    --chart-2: 30 80% 60%;
+    --chart-2: 0 70% 60%;
     --chart-3: 120 50% 60%;
     --chart-4: 280 60% 70%;
     --chart-5: 0 0% 70%;
@@ -92,8 +91,8 @@
     --sidebar-foreground: 210 30% 90%;
     --sidebar-primary: 210 70% 60%;
     --sidebar-primary-foreground: 210 20% 15%;
-    --sidebar-accent: 30 80% 60%;
-    --sidebar-accent-foreground: 210 20% 10%;
+    --sidebar-accent: 0 70% 60%;
+    --sidebar-accent-foreground: 0 0% 10%;
     --sidebar-border: 210 15% 30%;
     --sidebar-ring: 210 70% 60%;
   }
