@@ -56,7 +56,7 @@ export default function HomePage() {
       <section>
         <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
           {featureGridLinks.map((link) => (
-            <Link href={link.href} key={link.href} passHref>
+            <Link href={link.href} key={`${link.href}-${link.labelKey}`} passHref>
               <Card className="hover:shadow-xl hover:border-primary transition-all duration-300 cursor-pointer h-full flex flex-col items-center text-center p-2 md:p-3 shadow-md rounded-lg">
                 <CardHeader className="flex flex-col items-center justify-center p-2 md:p-3">
                   <link.icon className="h-8 w-8 md:h-10 md:w-10 text-primary mb-1 md:mb-2" />
