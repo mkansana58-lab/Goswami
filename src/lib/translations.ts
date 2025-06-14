@@ -23,7 +23,7 @@ export const translations = {
     navStudyMaterial: "Study Material",
     navChat: "Chat",
     navJobAlerts: "Job Alerts",
-    navStudyBooks: "Study Books", // Corresponds to "Our Books" in image
+    navStudyBooks: "Study Books", 
     navQuiz: "Quiz",
     navSyllabus: "Syllabus",
     language: "Language",
@@ -31,7 +31,7 @@ export const translations = {
     hindi: "Hindi",
     heroTitle: "Shape Your Future, Defend The Nation",
     heroSubtitle: "Join Go Swami Defence Academy and embark on a journey of discipline, courage, and excellence.",
-    exploreSections: "Explore Our Academy", // For simulated bottom nav heading
+    exploreSections: "Explore Our Academy", 
     classScheduleTitle: "Daily Class Schedule",
     homeworkAssignments: "Homework Assignments",
     importantUpdates: "Important Updates",
@@ -67,8 +67,8 @@ export const translations = {
     militarySchoolCourseDesc: "Dedicated coaching for Rashtriya Military Schools (RMS) entrance.",
     premiumCoursesTitle: "Premium Courses",
     premiumCoursesDesc: "Unlock exclusive content and personalized mentorship.",
-    premiumSainikPrice: "Sainik School Premium Module: ₹20", // Price not shown in this image, keeping generic
-    premiumMilitaryPrice: "Military School Premium Module: ₹20", // Price not shown in this image, keeping generic
+    premiumSainikPrice: "Sainik School Premium Module: ₹20", 
+    premiumMilitaryPrice: "Military School Premium Module: ₹20", 
     viewRegistrationsTitle: "Scholarship Registrations",
     viewRegistrationsDesc: "View all students who have registered for the scholarship exam.",
     registrationsTableDate: "Registration Date",
@@ -181,10 +181,9 @@ export const translations = {
     studyMaterialDesc: "Access curated study materials and notes.",
     chatDesc: "Connect with teachers and fellow students.",
     jobAlertsDesc: "Get alerts for defence job openings.",
-    studyBooksDesc: "Recommended books and e-books.", // Already exists
+    studyBooksDesc: "Recommended books and e-books.", 
     quizDesc: "Test your knowledge with various quizzes.",
     syllabusDesc: "View detailed syllabus for all courses.",
-    // New keys for image redesign
     helloTeam: "Hello, Team winners!",
     paidCourses: "Paid Course",
     testSeries: "Test Series",
@@ -205,32 +204,35 @@ export const translations = {
     startQuiz: "Start Quiz",
     lastDateApply: "Last Date to Apply",
     viewDetails: "View Details",
+    chatPlaceholderBotReply: "Thanks for your message! This is a simulated reply.",
+    chatStartConversation: "Type a message to start the conversation.",
+    chatSimulationNote: "Note: This is a simulated chat. Messages are stored locally in your browser.",
 
   },
   hi: {
-    appName: "गो स्वामी डिफेंस अकादमी", // Image shows "WINNERS App", but keeping current for consistency unless asked to change
+    appName: "गो स्वामी डिफेंस अकादमी", 
     navHome: "होम",
     navSchedule: "कक्षा सारणी",
-    navTests: "टेस्ट एक्सेस", // "Test Series" in image
+    navTests: "टेस्ट एक्सेस", 
     navVideos: "वीडियो क्लास",
     navScholarship: "छात्रवृत्ति",
     navAITutor: "AI ट्यूटर",
     navSainikSchoolCourse: "सैनिक स्कूल कोर्स",
     navMilitarySchoolCourse: "मिलिट्री स्कूल कोर्स",
-    navPremiumCourses: "प्रीमियम कोर्स", // "Paid Course" in image
+    navPremiumCourses: "प्रीमियम कोर्स", 
     navViewRegistrations: "पंजीकरण देखें",
-    navLiveClasses: "लाइव क्लास", // "Live Class" in image
+    navLiveClasses: "लाइव क्लास", 
     navAdminPanel: "एडमिन पैनल",
-    navMyCourse: "मेरा कोर्स", // "My Courses" in image
-    navDownloads: "डाउनलोड", // "Downloads" in image
+    navMyCourse: "मेरा कोर्स", 
+    navDownloads: "डाउनलोड", 
     navCutOffChecker: "कट ऑफ चेकर",
     navChanceChecking: "चांस चेकिंग",
     navStudyMaterial: "स्टडी मटेरियल",
     navChat: "चैट",
-    navJobAlerts: "जॉब अलर्ट्स", // "Job Alerts" in image
-    navStudyBooks: "स्टडी बुक्स", // "Our Books" in image
-    navQuiz: "क्विज़", // "Quiz" in image
-    navSyllabus: "सिलेबस", // "Syllabus" in image
+    navJobAlerts: "जॉब अलर्ट्स", 
+    navStudyBooks: "स्टडी बुक्स", 
+    navQuiz: "क्विज़", 
+    navSyllabus: "सिलेबस", 
     language: "भाषा",
     english: "English",
     hindi: "हिंदी",
@@ -241,7 +243,7 @@ export const translations = {
     homeworkAssignments: "होमवर्क",
     importantUpdates: "महत्वपूर्ण सूचनाएँ",
     mockTests: "मॉक टेस्ट",
-    previousYearPapers: "पिछले वर्ष के पेपर", // "Previous Papers" in image
+    previousYearPapers: "पिछले वर्ष के पेपर", 
     uploadTest: "नया टेस्ट अपलोड करें",
     adminUploadOnly: "यह अनुभाग केवल एडमिन उपयोग के लिए है।",
     availableTests: "उपलब्ध टेस्ट",
@@ -357,7 +359,7 @@ export const translations = {
     noUpdateItems: "फिलहाल कोई अपडेट या घोषणा नहीं है।",
     validationMin2Chars: "कम से कम 2 अक्षर का होना चाहिए।",
     validationMin3Chars: "कम से कम 3 अक्षर का होना चाहिए।",
-    validationMin5Chars: "कम से कम 5 अक्षर का होना चाहिए。",
+    validationMin5Chars: "कम से कम 5 अक्षर का होना चाहिए।",
     validationMin10Chars: "कम से कम 10 अक्षर का होना चाहिए।",
     validationRequired: "आवश्यक है।",
     deleteButton: "हटाएं",
@@ -389,7 +391,6 @@ export const translations = {
     studyBooksDesc: "अनुशंसित पुस्तकें और ई-पुस्तकें।",
     quizDesc: "विभिन्न क्विज़ के साथ अपने ज्ञान का परीक्षण करें।",
     syllabusDesc: "सभी कोर्स के लिए विस्तृत सिलेबस देखें।",
-    // New keys for image redesign - Hindi
     helloTeam: "नमस्ते, टीम विनर्स!",
     paidCourses: "पेड कोर्स",
     testSeries: "टेस्ट सीरीज",
@@ -410,5 +411,9 @@ export const translations = {
     startQuiz: "क्विज़ शुरू करें",
     lastDateApply: "आवेदन की अंतिम तिथि",
     viewDetails: "विवरण देखें",
+    chatPlaceholderBotReply: "आपके संदेश के लिए धन्यवाद! यह एक नकली उत्तर है।",
+    chatStartConversation: "बातचीत शुरू करने के लिए एक संदेश लिखें।",
+    chatSimulationNote: "ध्यान दें: यह एक नकली चैट है। संदेश आपके ब्राउज़र में स्थानीय रूप से संग्रहीत होते हैं।",
   }
 };
+
