@@ -3,48 +3,45 @@
 
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { PlayCircle, UploadCloud } from 'lucide-react';
+import { PlayCircle, UploadCloud, Loader2, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, type ChangeEvent } from 'react';
 import { useToast } from "@/hooks/use-toast";
+import { db } from '@/lib/firebase';
+import { collection, addDoc, getDocs, Timestamp, query, orderBy } from 'firebase/firestore';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-interface VideoItem {
-  id: string;
+interface VideoItemFirestore {
+  id: string; // Firestore document ID
   title: string;
   subject: string;
-  type: "youtube" | "local";
-  url: string;
-  thumbnailUrl: string;
-  dataAiHint: string;
+  type: "youtube" | "local"; // "local" means placeholder for future direct upload
+  url: string; // YouTube embed URL or placeholder path
+  thumbnailUrl: string; // URL for the thumbnail image
+  dataAiHint: string; // Hint for AI image generation if thumbnail is placeholder
+  addedAt: Timestamp;
+  fileName?: string; // For user uploaded "local" type videos (metadata only)
 }
 
-const initialVideoData = {
-  en: [
-    { id: 'h_vid001', title: "Algebra Basics - Part 1", subject: "Mathematics", type: "youtube" as "youtube", url: "https://www.youtube.com/embed/ மதுரைவீரன்", thumbnailUrl: "https://placehold.co/600x400.png", dataAiHint: "math algebra" },
-    { id: 'h_vid002', title: "Indian History: Freedom Struggle", subject: "General Knowledge", type: "local" as "local", url: "/videos/history.mp4", thumbnailUrl: "https://placehold.co/600x400.png", dataAiHint: "history india" },
-    { id: 'h_vid003', title: "English Grammar: Tenses", subject: "English", type: "youtube" as "youtube", url: "https://www.youtube.com/embed/ மதுரைவீரன்", thumbnailUrl: "https://placehold.co/600x400.png", dataAiHint: "english grammar" },
-  ],
-  hi: [
-    { id: 'h_vid001', title: "बीजगणित मूल बातें - भाग 1", subject: "गणित", type: "youtube" as "youtube", url: "https://www.youtube.com/embed/ மதுரைவீரன்", thumbnailUrl: "https://placehold.co/600x400.png", dataAiHint: "math algebra" },
-    { id: 'h_vid002', title: "भारतीय इतिहास: स्वतंत्रता संग्राम", subject: "सामान्य ज्ञान", type: "local" as "local", url: "/videos/history.mp4", thumbnailUrl: "https://placehold.co/600x400.png", dataAiHint: "history india" },
-    { id: 'h_vid003', title: "अंग्रेजी व्याकरण: काल", subject: "अंग्रेज़ी", type: "youtube" as "youtube", url: "https://www.youtube.com/embed/ மதுரைவீரன்", thumbnailUrl: "https://placehold.co/600x400.png", dataAiHint: "english grammar" },
-  ]
-};
-
-const USER_VIDEOS_STORAGE_KEY = 'userAddedVideos';
+const VIDEOS_COLLECTION = 'videosFS';
 const ADMIN_LOGGED_IN_KEY = 'adminLoggedInGoSwami';
-
 
 export default function VideosPage() {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [videosToDisplay, setVideosToDisplay] = useState<VideoItem[]>([]);
+  const [inputKey, setInputKey] = useState(Date.now()); // To reset file input
+
+  const [videosToDisplay, setVideosToDisplay] = useState<VideoItemFirestore[]>([]);
   const [showAdminFeatures, setShowAdminFeatures] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
 
   useEffect(() => {
     setIsClient(true);
@@ -53,72 +50,91 @@ export default function VideosPage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedUserVideosString = localStorage.getItem(USER_VIDEOS_STORAGE_KEY);
-      let userVideos: VideoItem[] = [];
-      if (storedUserVideosString) {
-        try {
-          userVideos = JSON.parse(storedUserVideosString);
-        } catch (e) {
-          console.error("Error parsing user videos from localStorage", e);
-        }
-      }
-      const currentLangInitialVideos = initialVideoData[language] || [];
-      setVideosToDisplay([...currentLangInitialVideos, ...userVideos]);
-    }
-  }, [language, isClient]);
-
-  const saveUserVideosToLocalStorage = (data: VideoItem[]) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(USER_VIDEOS_STORAGE_KEY, JSON.stringify(data));
+  const fetchVideos = async () => {
+    setIsLoading(true);
+    setFetchError(null);
+    try {
+      const videosQuery = query(collection(db, VIDEOS_COLLECTION), orderBy("addedAt", "desc"));
+      const videosSnapshot = await getDocs(videosQuery);
+      const fetchedVideos: VideoItemFirestore[] = [];
+      videosSnapshot.forEach((doc) => {
+        fetchedVideos.push({ id: doc.id, ...doc.data() } as VideoItemFirestore);
+      });
+      setVideosToDisplay(fetchedVideos);
+    } catch (error) {
+      console.error("Error fetching videos from Firestore:", error);
+      setFetchError(t('errorOccurred') + " " + "Could not load video data from Firestore. Please check console and Firebase setup.");
+      toast({
+        title: t('errorOccurred'),
+        description: "Failed to load videos.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
+  
+  useEffect(() => {
+    if (isClient) {
+      fetchVideos();
+    }
+  }, [isClient, language]);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setUploadFile(event.target.files[0]);
+    } else {
+      setUploadFile(null);
     }
   };
 
-  const handleUploadVideo = () => {
+  const handleUploadVideo = async () => {
     if (uploadFile && showAdminFeatures) {
-      const newVideo: VideoItem = {
-        id: `user_vid_${Date.now()}`,
-        title: uploadFile.name,
-        subject: t('subject') || "Uploaded Video",
-        type: "local", 
-        url: `/uploads/prototype_${uploadFile.name}`, 
-        thumbnailUrl: "https://placehold.co/600x400.png",
-        dataAiHint: "uploaded video",
-      };
+      setIsSubmitting(true);
+      try {
+        const newVideoPayload: Omit<VideoItemFirestore, 'id'> = {
+          title: uploadFile.name.replace(/\.[^/.]+$/, ""), // Use file name as title (without extension)
+          subject: t('subject') || "Uploaded Video",
+          type: "local", // Mark as local, actual file not uploaded to storage in prototype
+          url: `/uploads/prototype_${uploadFile.name}`, // Placeholder URL
+          thumbnailUrl: "https://placehold.co/600x400.png", // Default placeholder
+          dataAiHint: "uploaded video",
+          addedAt: Timestamp.now(),
+          fileName: uploadFile.name,
+        };
 
-      const storedUserVideosString = localStorage.getItem(USER_VIDEOS_STORAGE_KEY);
-      let userVideos: VideoItem[] = [];
-      if (storedUserVideosString) {
-         try { userVideos = JSON.parse(storedUserVideosString); } catch(e) { console.error("Error parsing videos", e)}
-      }
-      const updatedUserVideos = [...userVideos, newVideo];
-      saveUserVideosToLocalStorage(updatedUserVideos);
-
-      const currentLangInitialVideos = initialVideoData[language] || [];
-      setVideosToDisplay([...currentLangInitialVideos, ...updatedUserVideos]);
-      
-      toast({
-        title: t('uploadVideo') + " " + (t('registrationSuccess') || "Successful!"),
-        description: `${uploadFile.name} ${t('liveClassAddedSuccess') || 'added successfully.'}`,
-      });
-      setUploadFile(null);
-       if (event.target && typeof (event.target as HTMLInputElement).value !== 'undefined') {
-        (event.target as HTMLInputElement).value = "";
+        await addDoc(collection(db, VIDEOS_COLLECTION), newVideoPayload);
+        
+        toast({
+          title: t('uploadVideo') + " " + (t('registrationSuccess') || "Successful!"),
+          description: `${uploadFile.name} ${t('liveClassAddedSuccess') || 'metadata added successfully.'}`,
+        });
+        setUploadFile(null);
+        setInputKey(Date.now()); // Reset file input
+        fetchVideos(); // Refresh list
+      } catch (error) {
+         console.error("Error adding video to Firestore:", error);
+        toast({
+          title: t('errorOccurred'),
+          description: "Could not save video metadata. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
 
   const currentVideoForPlayer = videosToDisplay.find(v => v.url === selectedVideoUrl);
 
-  if (!isClient) {
-    return <div className="flex justify-center items-center h-screen"><p>{t('loading')}</p></div>;
+  if (!isClient || isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2">{t('loading')}</p>
+      </div>
+    );
   }
 
   return (
@@ -126,14 +142,15 @@ export default function VideosPage() {
       <h1 className="text-3xl font-bold font-headline text-primary mb-6">{t('navVideos')}</h1>
 
       {showAdminFeatures && (
-        <Card className="shadow-lg">
+        <Card className="shadow-lg bg-muted/30">
           <CardHeader>
             <CardTitle className="text-2xl font-headline text-primary">{t('uploadVideo') || 'Upload New Video'}</CardTitle>
-            <CardDescription>{t('uploadVideoDesc') || 'Upload new video lectures for students. (Admin only)'}</CardDescription>
+            <CardDescription>{t('uploadVideoDesc') || 'Upload new video lectures for students. (Admin only)'} (This will add video metadata to Firestore. Actual file upload is not implemented.)</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-2">
               <Input
+                key={inputKey} // Used to reset input
                 id="video-file-upload"
                 type="file" 
                 accept="video/*" 
@@ -141,13 +158,22 @@ export default function VideosPage() {
                 className="max-w-sm border-input focus:ring-primary"
                 aria-label={t('selectFile')}
               />
-              <Button onClick={handleUploadVideo} disabled={!uploadFile} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                <UploadCloud className="mr-2 h-4 w-4" /> {t('uploadVideo') || 'Upload Video'}
+              <Button onClick={handleUploadVideo} disabled={!uploadFile || isSubmitting} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
+                {isSubmitting ? t('loading') : (t('uploadVideo') || 'Upload Video')}
               </Button>
             </div>
             {uploadFile && <p className="text-sm text-muted-foreground">{t('selectFile')}: {uploadFile.name}</p>}
           </CardContent>
         </Card>
+      )}
+
+      {fetchError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>{t('errorOccurred')}</AlertTitle>
+          <AlertDescription>{fetchError}</AlertDescription>
+        </Alert>
       )}
       
       {selectedVideoUrl && currentVideoForPlayer && (
@@ -156,6 +182,7 @@ export default function VideosPage() {
             <CardTitle className="text-xl font-headline text-primary">
               {currentVideoForPlayer.title}
             </CardTitle>
+             <CardDescription>{t('subject')}: {currentVideoForPlayer.subject}</CardDescription>
           </CardHeader>
           <CardContent>
             {currentVideoForPlayer.type === 'youtube' ? (
@@ -163,7 +190,7 @@ export default function VideosPage() {
                 <iframe
                   width="100%"
                   height="100%"
-                  src={currentVideoForPlayer.url} 
+                  src={currentVideoForPlayer.url} // Assumes valid YouTube embed URL
                   title="YouTube video player"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -171,9 +198,12 @@ export default function VideosPage() {
                   className="rounded-md"
                 ></iframe>
               </div>
-            ) : (
-               <div className="aspect-video bg-black flex items-center justify-center rounded-md">
-                <p className="text-background/70">{t('videoLectures')} ({currentVideoForPlayer.title}) - {t('adminUploadOnly')}</p>
+            ) : ( // For 'local' type or any other
+               <div className="aspect-video bg-muted flex items-center justify-center rounded-md">
+                <p className="text-muted-foreground p-4 text-center">
+                  {t('videoLectures')} ({currentVideoForPlayer.title}) - Playback for locally added videos is not implemented in this prototype.
+                  {currentVideoForPlayer.fileName && <span className="block text-sm">File: {currentVideoForPlayer.fileName}</span>}
+                </p>
               </div>
             )}
              <Button onClick={() => setSelectedVideoUrl(null)} className="mt-4" variant="outline">Close Player</Button>
@@ -193,25 +223,27 @@ export default function VideosPage() {
                   height={400}
                   className="w-full h-full object-cover"
                   data-ai-hint={video.dataAiHint}
+                  onError={(e) => e.currentTarget.src = 'https://placehold.co/600x400.png'} // Fallback
                 />
                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <PlayCircle className="h-16 w-16 text-white" />
                 </div>
               </div>
               <CardHeader>
-                <CardTitle className="text-lg font-headline text-primary">{video.title}</CardTitle>
+                <CardTitle className="text-lg font-headline text-primary truncate" title={video.title}>{video.title}</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription>{t('subject') || 'Subject'}: {video.subject}</CardDescription>
+                {video.fileName && video.type === 'local' && <p className="text-xs text-muted-foreground truncate">File: {video.fileName}</p>}
               </CardContent>
             </Card>
           ))}
         </div>
       ) : (
-         <p className="text-center text-muted-foreground py-8">{t('noRegistrations')}</p> 
+         !fetchError && <p className="text-center text-muted-foreground py-8">{t('noRegistrations').replace('registrations', 'videos')}</p> 
       )}
        <p className="text-center text-sm text-muted-foreground">
-        Note: Video data you add is stored in your browser's local storage. Videos are not actually uploaded or playable if added locally in this prototype.
+        {t('localStorageNote').replace('local storage', 'Firebase Firestore')}. Videos are not actually uploaded or fully playable if added locally in this prototype.
       </p>
     </div>
   );
