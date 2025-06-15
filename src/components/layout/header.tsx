@@ -13,11 +13,12 @@ import {
   Home, DownloadCloud, MoreHorizontal, ScissorsLineDashed, HelpingHand, FileText, MessageSquare, Briefcase, BookOpen, FileQuestion, ListChecks, Info, Bell,
   ShoppingBag, Gift, Newspaper, History, UserCircle
 } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle as RadixSheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle as RadixSheetTitle } from '@/components/ui/sheet';
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/auth-context'; // Import useAuth
+import { useAuth } from '@/contexts/auth-context';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import Image from 'next/image';
 
 const primaryNavLinks = [
   { href: '/', labelKey: 'navHome', icon: Home, adminOnly: false, studentOnly: false },
@@ -48,7 +49,7 @@ const secondaryNavLinks = [
   { href: '/chat', labelKey: 'navChat', icon: MessageSquare, adminOnly: false, studentOnly: true },
 ];
 
-const adminConsoleNavLinks = [ // Renamed from adminNavLinks to avoid conflict
+const adminConsoleNavLinks = [
   { href: '/admin', labelKey: 'navAdminPanel', icon: LayoutDashboard, adminOnly: true, studentOnly: false },
   { href: '/registrations', labelKey: 'navViewRegistrations', icon: ClipboardList, adminOnly: true, studentOnly: false },
 ];
@@ -62,12 +63,13 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const { user: studentUser, studentData, setStudentData } = useAuth(); // Get student user from AuthContext
+  const { user: studentUser, studentData, setStudentData } = useAuth();
 
   useEffect(() => {
     setIsClient(true);
     if (typeof window !== 'undefined') {
-      setIsAdminLoggedIn(localStorage.getItem(ADMIN_LOGGED_IN_KEY) === 'true');
+      const adminStatus = localStorage.getItem(ADMIN_LOGGED_IN_KEY) === 'true';
+      setIsAdminLoggedIn(adminStatus);
     }
   }, [pathname, studentUser]); 
 
@@ -77,7 +79,7 @@ export function Header() {
     }
     setIsAdminLoggedIn(false);
     setIsMobileMenuOpen(false);
-    router.push('/login'); // Admin login
+    router.push('/'); 
     router.refresh(); 
   };
 
@@ -85,8 +87,7 @@ export function Header() {
     await signOut(auth);
     setStudentData(null);
     setIsMobileMenuOpen(false);
-    // router.push('/student-login'); // Student login
-    router.push('/'); // or redirect to home
+    router.push('/'); 
     router.refresh();
   };
 
@@ -100,8 +101,8 @@ export function Header() {
     ...secondaryNavLinks.filter(link => !primaryNavLinks.some(pLink => pLink.href === link.href && pLink.labelKey === link.labelKey)), 
     ...(isClient && isAdminLoggedIn ? adminConsoleNavLinks : [])
   ]
-  .filter(link => (!link.adminOnly || (link.adminOnly && isAdminLoggedIn))) // Show admin links only if admin
-  .filter(link => (!link.studentOnly || (link.studentOnly && studentUser))) // Show student links only if student logged in
+  .filter(link => (!link.adminOnly || (link.adminOnly && isAdminLoggedIn)))
+  .filter(link => (!link.studentOnly || (link.studentOnly && studentUser)))
   .filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === link.labelKey)); 
 
   const uniqueSecondaryLinksForDesktop = secondaryNavLinks.filter(
@@ -178,9 +179,6 @@ export function Header() {
                       <>
                         <Button variant="default" className="w-full justify-start flex items-center gap-3 text-base font-medium bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => handleLoginNav('/student-login')}>
                           <LogIn className="h-5 w-5" /> {t('studentLoginNav')}
-                        </Button>
-                         <Button variant="outline" className="w-full justify-start flex items-center gap-3 text-base font-medium" onClick={() => handleLoginNav('/login')}>
-                          <LayoutDashboard className="h-5 w-5" /> {t('adminLoginNav')}
                         </Button>
                       </>
                     )
@@ -279,7 +277,7 @@ export function Header() {
                         alt="User Profile"
                         width={32}
                         height={32}
-                        className="rounded-full object-cover"
+                        className="rounded-full object-cover border-2 border-primary/50"
                         data-ai-hint="avatar person"
                        />
                     </Button>
@@ -299,21 +297,9 @@ export function Header() {
                   <LogOut className="mr-2 h-4 w-4" /> {t('adminLogout')}
                 </Button>
               ) : (
-                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <LogIn className="mr-2 h-4 w-4" /> {t('loginButton')}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleLoginNav('/student-login')}>
-                      {t('studentLoginNav')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleLoginNav('/login')}>
-                     {t('adminLoginNav')}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                 <Button variant="outline" size="sm" onClick={() => handleLoginNav('/student-login')}>
+                    <LogIn className="mr-2 h-4 w-4" /> {t('studentLoginNav')}
+                 </Button>
               )
             )}
           </div>

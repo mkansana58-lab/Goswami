@@ -37,7 +37,9 @@ export default function AdminPanelPage() {
     if (typeof window !== 'undefined') {
       const isAdminLoggedIn = localStorage.getItem(ADMIN_LOGGED_IN_KEY) === 'true';
       if (!isAdminLoggedIn) {
-        router.replace('/login');
+        // If not authorized, don't redirect. Just show the access denied message.
+        // The mechanism to log in as admin is now external.
+        setIsAuthorized(false); 
       } else {
         setIsAuthorized(true);
       }
@@ -65,9 +67,10 @@ export default function AdminPanelPage() {
                 </CardHeader>
                 <CardContent>
                     <p>{t('accessDeniedMessage')}</p>
-                    <Button onClick={() => router.push('/login')} className="mt-4 bg-primary hover:bg-primary/90">
-                        {t('loginButton')}
-                    </Button>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {/* Admin login mechanism is now external. Provide guidance if necessary. */}
+                      To access this panel, ensure you are logged in as an administrator through the designated portal.
+                    </p>
                 </CardContent>
             </Card>
         </div>
@@ -108,5 +111,3 @@ export default function AdminPanelPage() {
     </div>
   );
 }
-
-    

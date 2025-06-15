@@ -1,21 +1,20 @@
 
 "use client";
 
+import { useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { db } from '@/lib/firebase'; // Import Firestore instance
+import { db } from '@/lib/firebase';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
-
 
 const formSchemaDefinition = (t: (key: string) => string) => z.object({
   studentName: z.string().min(2, { message: t('studentNameValidation') || "Name must be at least 2 characters." }),
@@ -30,6 +29,7 @@ type ScholarshipFormValues = z.infer<ReturnType<typeof formSchemaDefinition>>;
 export default function ScholarshipPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   
   const currentFormSchema = formSchemaDefinition(t);
 
@@ -45,13 +45,13 @@ export default function ScholarshipPage() {
   });
 
   const onSubmit: SubmitHandler<ScholarshipFormValues> = async (data) => {
+    setIsLoading(true);
     try {
       const newRegistration = {
         ...data,
-        registrationDate: Timestamp.fromDate(new Date()), // Use Firestore Timestamp
+        registrationDate: Timestamp.fromDate(new Date()),
       };
 
-      // Add a new document with a generated ID to the "scholarshipRegistrations" collection.
       await addDoc(collection(db, "scholarshipRegistrations"), newRegistration);
       
       toast({
@@ -63,9 +63,11 @@ export default function ScholarshipPage() {
       console.error("Error adding document to Firestore: ", error);
       toast({
         title: t('errorOccurred'),
-        description: "Could not save registration. Please try again.",
+        description: "Could not save registration. Please try again. Check console for details.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -144,8 +146,8 @@ export default function ScholarshipPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg h-14" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? (
+              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg h-14" disabled={isLoading}>
+                {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     {t('loading')}
