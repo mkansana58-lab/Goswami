@@ -4,24 +4,36 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { MessageSquare, Send } from 'lucide-react';
+import { MessageSquare, Send, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, query, orderBy, onSnapshot, Timestamp, serverTimestamp } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+
+const CHAT_COLLECTION_NAME = 'chatMessages';
+const USER_ID_KEY = 'goSwamiChatUserId';
+const DISPLAY_NAME_KEY = 'goSwamiChatDisplayName';
 
 interface ChatMessage {
-  id: string;
+  id: string; // Firestore document ID
   text: string;
-  sender: 'user' | 'bot';
-  timestamp: number;
+  userId: string;
+  displayName: string;
+  timestamp: Timestamp; // Firestore Timestamp
 }
-
-const CHAT_MESSAGES_STORAGE_KEY = 'goSwamiChatMessages';
 
 export default function ChatPage() {
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
+  const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [currentDisplayName, setCurrentDisplayName] = useState<string>('');
+  const [tempDisplayName, setTempDisplayName] = useState<string>('');
+  const [isDisplayNameSet, setIsDisplayNameSet] = useState(false);
+
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [isClient, setIsClient] = useState(false);
 
@@ -31,60 +43,99 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (isClient) {
-      const storedMessages = localStorage.getItem(CHAT_MESSAGES_STORAGE_KEY);
-      if (storedMessages) {
-        try {
-          const parsedMessages = JSON.parse(storedMessages);
-          if (Array.isArray(parsedMessages)) {
-            setMessages(parsedMessages);
-          }
-        } catch (error) {
-          console.error("Error parsing chat messages from localStorage:", error);
-        }
+      let userId = localStorage.getItem(USER_ID_KEY);
+      if (!userId) {
+        userId = Math.random().toString(36).substring(2, 15);
+        localStorage.setItem(USER_ID_KEY, userId);
+      }
+      setCurrentUserId(userId);
+
+      const storedDisplayName = localStorage.getItem(DISPLAY_NAME_KEY);
+      if (storedDisplayName) {
+        setCurrentDisplayName(storedDisplayName);
+        setTempDisplayName(storedDisplayName);
+        setIsDisplayNameSet(true);
+      } else {
+        setCurrentDisplayName(t('anonymousUser') || 'Anonymous');
       }
     }
-  }, [isClient]);
+  }, [isClient, t]);
 
   useEffect(() => {
-    if (isClient) {
-      localStorage.setItem(CHAT_MESSAGES_STORAGE_KEY, JSON.stringify(messages));
-    }
-    // Scroll to bottom when messages change
+    if (!isClient || !currentUserId) return;
+
+    const q = query(collection(db, CHAT_COLLECTION_NAME), orderBy("timestamp", "asc"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const fetchedMessages: ChatMessage[] = [];
+      querySnapshot.forEach((doc) => {
+        fetchedMessages.push({ id: doc.id, ...doc.data() } as ChatMessage);
+      });
+      setMessages(fetchedMessages);
+    }, (error) => {
+      console.error("Error fetching chat messages from Firestore:", error);
+      toast({
+        title: t('errorOccurred'),
+        description: t('fetchErrorDetails') + (error.message ? ` (${error.message})` : ''),
+        variant: "destructive",
+      });
+    });
+
+    return () => unsubscribe();
+  }, [isClient, currentUserId, t, toast]);
+
+  useEffect(() => {
     if (scrollAreaRef.current) {
-        const viewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
-        if (viewport) {
-            viewport.scrollTop = viewport.scrollHeight;
-        }
+      const viewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight;
+      }
     }
-  }, [messages, isClient]);
+  }, [messages]);
 
-  const handleSendMessage = () => {
-    if (inputValue.trim() === '') return;
-
-    const newMessage: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      text: inputValue.trim(),
-      sender: 'user',
-      timestamp: Date.now(),
-    };
-
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
-    setInputValue('');
-
-    // Simulate bot reply
-    setTimeout(() => {
-      const botReply: ChatMessage = {
-        id: `msg-${Date.now() + 1}`,
-        text: t('chatPlaceholderBotReply') || "Thanks for your message! This is a simulated reply.",
-        sender: 'bot',
-        timestamp: Date.now() + 1,
-      };
-      setMessages((prevMessages) => [...prevMessages, botReply]);
-    }, 1000);
+  const handleSetDisplayName = () => {
+    if (tempDisplayName.trim() === '') {
+      toast({ title: t('errorOccurred'), description: t('displayNameCannotBeEmpty') || "Display name cannot be empty.", variant: "destructive" });
+      return;
+    }
+    setCurrentDisplayName(tempDisplayName.trim());
+    localStorage.setItem(DISPLAY_NAME_KEY, tempDisplayName.trim());
+    setIsDisplayNameSet(true);
+    toast({ title: t('displayNameSetSuccess') || "Display name updated!"});
   };
 
-  const formatTimestamp = (timestamp: number) => {
-    return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const handleSendMessage = async () => {
+    if (inputValue.trim() === '') {
+        toast({ title: t('errorOccurred'), description: t('messageCannotBeEmpty') || "Message cannot be empty.", variant: "destructive" });
+        return;
+    }
+    if (!isDisplayNameSet && !currentDisplayName) {
+        toast({ title: t('errorOccurred'), description: t('setDisplayNamePrompt') || "Please set your display name first.", variant: "destructive"});
+        return;
+    }
+
+    const newMessage = {
+      text: inputValue.trim(),
+      userId: currentUserId,
+      displayName: currentDisplayName || (t('anonymousUser') || 'Anonymous'),
+      timestamp: serverTimestamp()
+    };
+
+    try {
+      await addDoc(collection(db, CHAT_COLLECTION_NAME), newMessage);
+      setInputValue('');
+    } catch (error: any) {
+      console.error("Error sending message to Firestore:", error);
+      toast({
+        title: t('errorOccurred'),
+        description: t('saveErrorDetails') + (error.message ? ` (${error.message})` : ''),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const formatTimestamp = (timestamp: Date | null) => {
+    if (!timestamp) return '';
+    return timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -95,28 +146,55 @@ export default function ChatPage() {
             <MessageSquare className="h-10 w-10 text-primary" />
           </div>
           <CardTitle className="text-2xl font-bold font-headline text-primary">{t('navChat')}</CardTitle>
-          <CardDescription className="text-md">{t('chatDesc')}</CardDescription>
+          <CardDescription className="text-md">{t('chatRoomDesc') || "Join the conversation! Messages are shared with everyone."}</CardDescription>
         </CardHeader>
         <CardContent className="p-0 flex-grow flex flex-col">
+          {!isDisplayNameSet && isClient && (
+            <div className="p-4 border-b bg-muted/50">
+              <Label htmlFor="displayNameInput" className="text-sm font-medium">{t('displayNameLabel') || "Set Your Display Name:"}</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  id="displayNameInput"
+                  placeholder={t('displayNamePlaceholder') || "Enter your name"}
+                  value={tempDisplayName}
+                  onChange={(e) => setTempDisplayName(e.target.value)}
+                  className="flex-grow text-sm"
+                />
+                <Button onClick={handleSetDisplayName} size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
+                  {t('setDisplayNameButton') || "Set Name"}
+                </Button>
+              </div>
+            </div>
+          )}
+           {isDisplayNameSet && isClient && (
+             <div className="p-2 text-xs text-center text-muted-foreground border-b">
+                {t('chattingAs') || "Chatting as:"} <strong className="text-primary">{currentDisplayName}</strong>
+                <Button variant="link" size="sm" className="h-auto p-0 ml-1 text-xs" onClick={() => setIsDisplayNameSet(false)}>{t('changeNameButton') || "(Change)"}</Button>
+            </div>
+           )}
+
           <ScrollArea className="flex-grow p-4 space-y-4" ref={scrollAreaRef}>
             {messages.map((msg) => (
               <div
                 key={msg.id}
                 className={`flex flex-col mb-3 ${
-                  msg.sender === 'user' ? 'items-end' : 'items-start'
+                  msg.userId === currentUserId ? 'items-end' : 'items-start'
                 }`}
               >
                 <div
-                  className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg shadow-md ${
-                    msg.sender === 'user'
+                  className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg shadow-md break-words ${
+                    msg.userId === currentUserId
                       ? 'bg-primary text-primary-foreground rounded-br-none'
                       : 'bg-muted text-foreground rounded-bl-none'
                   }`}
                 >
+                  {msg.userId !== currentUserId && (
+                    <p className="text-xs font-semibold mb-0.5 opacity-70">{msg.displayName}</p>
+                  )}
                   <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                 </div>
                 <span className="text-xs text-muted-foreground mt-1 px-1">
-                  {formatTimestamp(msg.timestamp)}
+                  {msg.timestamp ? formatTimestamp(msg.timestamp.toDate()) : t('sending') || 'Sending...'}
                 </span>
               </div>
             ))}
@@ -127,21 +205,23 @@ export default function ChatPage() {
           <div className="border-t p-4 bg-background">
             <div className="flex gap-2 items-center">
               <Input
-                placeholder={t('typeYourMessage') || "अपना संदेश लिखें..."}
+                placeholder={isDisplayNameSet ? (t('typeYourMessage') || "अपना संदेश लिखें...") : (t('setDisplayNameFirst') || "Set your name to chat")}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    handleSendMessage();
+                    if(isDisplayNameSet) handleSendMessage();
                   }
                 }}
                 className="flex-grow text-sm"
+                disabled={!isDisplayNameSet && isClient}
               />
               <Button 
                 onClick={handleSendMessage} 
                 className="bg-accent text-accent-foreground hover:bg-accent/90"
                 aria-label={t('sendButton') || "भेजें"}
+                disabled={!isDisplayNameSet && isClient}
               >
                 <Send className="h-5 w-5" />
               </Button>
@@ -149,17 +229,8 @@ export default function ChatPage() {
           </div>
         </CardContent>
       </Card>
-       <p className="text-center text-xs text-muted-foreground pt-2">
-         {t('chatSimulationNote') || "Note: This is a simulated chat. Messages are stored locally in your browser."}
-      </p>
     </div>
   );
 }
 
-// Add these keys to translations.ts if they don't exist:
-// chatPlaceholderBotReply: "Thanks for your message! This is a simulated reply." (EN)
-// chatPlaceholderBotReply: "आपके संदेश के लिए धन्यवाद! यह एक नकली उत्तर है।" (HI)
-// chatStartConversation: "Type a message to start the conversation." (EN)
-// chatStartConversation: "बातचीत शुरू करने के लिए एक संदेश लिखें।" (HI)
-// chatSimulationNote: "Note: This is a simulated chat. Messages are stored locally in your browser." (EN)
-// chatSimulationNote: "ध्यान दें: यह एक नकली चैट है। संदेश आपके ब्राउज़र में स्थानीय रूप से संग्रहीत होते हैं।" (HI)
+    
