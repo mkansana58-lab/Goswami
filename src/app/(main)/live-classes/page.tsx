@@ -10,26 +10,40 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Tv2, Calendar, Clock, LinkIcon, PlusCircle } from 'lucide-react';
+import { Tv2, Calendar, Clock, LinkIcon, PlusCircle, Trash2, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { db } from '@/lib/firebase';
+import { collection, addDoc, getDocs, Timestamp, orderBy, query, doc, deleteDoc } from 'firebase/firestore';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
-const LIVE_CLASSES_STORAGE_KEY = 'liveClassesSchedule';
+const LIVE_CLASSES_COLLECTION_NAME = 'liveClasses';
 const ADMIN_LOGGED_IN_KEY = 'adminLoggedInGoSwami';
 
 interface LiveClass {
-  id: string;
+  id: string; // Firestore document ID
   title: string;
   subject: string;
-  date: string;
-  time: string;
+  date: string; // YYYY-MM-DD for input
+  time: string; // HH:MM for input
   link: string;
+  scheduledAt: Timestamp; // Combined datetime for sorting
 }
 
 const formSchemaDefinition = (t: (key: string) => string) => z.object({
   title: z.string().min(5, { message: t('liveClassTitleLabel') + " must be at least 5 characters." }),
   subject: z.string().min(3, { message: t('liveClassSubjectLabel') + " must be at least 3 characters." }),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Date must be in YYYY-MM-DD format."}),
-  time: z.string().regex(/^\d{2}:\d{2}$/, { message: "Time must be in HH:MM format."}),
+  time: z.string().regex(/^\d{2}:\d{2}$/, { message: "Time must be in HH:MM format (24-hour)."}),
   link: z.string().url({ message: "Please enter a valid URL for the meeting link." }),
 });
 
@@ -41,6 +55,8 @@ export default function LiveClassesPage() {
   const [liveClasses, setLiveClasses] = useState<LiveClass[]>([]);
   const [showAdminFeatures, setShowAdminFeatures] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [isLoadingClasses, setIsLoadingClasses] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const currentFormSchema = formSchemaDefinition(t);
 
@@ -62,45 +78,104 @@ export default function LiveClassesPage() {
     }
   }, []);
 
+  const fetchLiveClasses = async () => {
+    setIsLoadingClasses(true);
+    try {
+      const q = query(collection(db, LIVE_CLASSES_COLLECTION_NAME), orderBy("scheduledAt", "asc"));
+      const querySnapshot = await getDocs(q);
+      const fetchedClasses: LiveClass[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        fetchedClasses.push({
+          id: doc.id,
+          title: data.title,
+          subject: data.subject,
+          date: data.date,
+          time: data.time,
+          link: data.link,
+          scheduledAt: data.scheduledAt as Timestamp,
+        });
+      });
+      setLiveClasses(fetchedClasses);
+    } catch (error) {
+      console.error("Error fetching live classes from Firestore:", error);
+      toast({
+        title: t('errorOccurred'),
+        description: "Failed to load live classes.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingClasses(false);
+    }
+  };
+
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedClassesString = localStorage.getItem(LIVE_CLASSES_STORAGE_KEY);
-      if (storedClassesString) {
-        try {
-          const parsedClasses = JSON.parse(storedClassesString);
-          if (Array.isArray(parsedClasses)) {
-            setLiveClasses(parsedClasses);
-          }
-        } catch (error) {
-          console.error("Error parsing live classes from localStorage:", error);
-        }
-      }
+    if (isClient) {
+      fetchLiveClasses();
     }
   }, [isClient]);
 
-  const saveLiveClassesToLocalStorage = (classes: LiveClass[]) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(LIVE_CLASSES_STORAGE_KEY, JSON.stringify(classes));
+
+  const onSubmit: SubmitHandler<LiveClassFormValues> = async (data) => {
+    if (!showAdminFeatures) return;
+    setIsSubmitting(true);
+    try {
+      const [year, month, day] = data.date.split('-').map(Number);
+      const [hours, minutes] = data.time.split(':').map(Number);
+      // Note: JavaScript months are 0-indexed (0 for January, 11 for December)
+      const scheduledDate = new Date(year, month - 1, day, hours, minutes);
+      
+      const newClass = {
+        title: data.title,
+        subject: data.subject,
+        date: data.date,
+        time: data.time,
+        link: data.link,
+        scheduledAt: Timestamp.fromDate(scheduledDate),
+      };
+      await addDoc(collection(db, LIVE_CLASSES_COLLECTION_NAME), newClass);
+      toast({
+        title: t('liveClassAddedSuccess'),
+      });
+      form.reset();
+      fetchLiveClasses(); // Refresh the list
+    } catch (error) {
+      console.error("Error adding live class to Firestore: ", error);
+      toast({
+        title: t('errorOccurred'),
+        description: "Could not save live class. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const onSubmit: SubmitHandler<LiveClassFormValues> = (data) => {
+  const handleDeleteClass = async (classId: string) => {
     if (!showAdminFeatures) return;
-    const newClass: LiveClass = {
-      id: `lc-${Date.now()}`,
-      ...data,
-    };
-    const updatedClasses = [...liveClasses, newClass];
-    setLiveClasses(updatedClasses);
-    saveLiveClassesToLocalStorage(updatedClasses);
-    toast({
-      title: t('liveClassAddedSuccess'),
-    });
-    form.reset();
+    try {
+      await deleteDoc(doc(db, LIVE_CLASSES_COLLECTION_NAME, classId));
+      toast({
+        title: t('itemDeletedSuccess'),
+      });
+      fetchLiveClasses(); // Refresh the list
+    } catch (error) {
+      console.error("Error deleting live class from Firestore: ", error);
+      toast({
+        title: t('errorOccurred'),
+        description: "Could not delete live class. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  if (!isClient) {
-    return <div className="flex justify-center items-center h-screen"><p>{t('loading')}</p></div>;
+  if (!isClient || isLoadingClasses) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2">{t('loading')}</p>
+      </div>
+    );
   }
 
   return (
@@ -191,8 +266,13 @@ export default function LiveClassesPage() {
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={form.formState.isSubmitting}>
-                      {form.formState.isSubmitting ? t('loading') : t('addLiveClassButton')}
+                    <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          {t('loading')}
+                        </>
+                      ) : t('addLiveClassButton')}
                     </Button>
                   </form>
                 </Form>
@@ -203,15 +283,38 @@ export default function LiveClassesPage() {
           <h2 className="text-2xl font-bold font-headline text-primary mb-4">{t('upcomingLiveClasses')}</h2>
           {liveClasses.length > 0 ? (
             <div className="space-y-4">
-              {liveClasses.sort((a,b) => new Date(a.date + 'T' + a.time).getTime() - new Date(b.date + 'T' + b.time).getTime()).map((liveClass) => (
+              {liveClasses.map((liveClass) => (
                 <Card key={liveClass.id} className="shadow-md hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <CardTitle className="text-xl text-primary">{liveClass.title}</CardTitle>
-                    <CardDescription>{t('subject')}: {liveClass.subject}</CardDescription>
+                  <CardHeader className="flex flex-row justify-between items-start">
+                    <div>
+                      <CardTitle className="text-xl text-primary">{liveClass.title}</CardTitle>
+                      <CardDescription>{t('subject')}: {liveClass.subject}</CardDescription>
+                    </div>
+                    {showAdminFeatures && (
+                       <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t('confirmDeleteTitle')}</AlertDialogTitle>
+                            <AlertDialogDescription>{t('confirmDeleteMessage')}</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t('cancelButton')}</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteClass(liveClass.id)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                              {t('deleteButton')}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </CardHeader>
                   <CardContent className="space-y-2">
                     <div className="flex items-center text-sm text-muted-foreground">
-                      <Calendar className="mr-2 h-4 w-4" /> {new Date(liveClass.date + 'T00:00:00').toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                      <Calendar className="mr-2 h-4 w-4" /> {new Date(liveClass.date + 'T00:00:00').toLocaleDateString(language === 'hi' ? 'hi-IN' : undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                     </div>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <Clock className="mr-2 h-4 w-4" /> {liveClass.time}
@@ -230,10 +333,11 @@ export default function LiveClassesPage() {
           )}
         </CardContent>
       </Card>
-        <p className="text-center text-sm text-muted-foreground">
-        Note: Live class data is stored in your browser's local storage for demonstration.
+      <p className="text-center text-sm text-muted-foreground">
+        {t('localStorageNote').replace('local storage', 'Firebase Firestore')}
       </p>
     </div>
   );
 }
 
+    
