@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -64,15 +63,16 @@ export default function StudentRegisterPage() {
         updatedAt: Timestamp.now(),
       });
     } else {
-      // If user doc exists, perhaps update displayName if it changed or wasn't set
       const updateData: { displayName?: string; photoURL?: string | null; updatedAt: Timestamp } = { updatedAt: Timestamp.now() };
-      if (user.displayName && user.displayName !== userDocSnap.data()?.displayName) {
-        updateData.displayName = user.displayName;
+      if ((user.displayName || additionalData?.displayName) && (user.displayName || additionalData?.displayName) !== userDocSnap.data()?.displayName) {
+        updateData.displayName = user.displayName || additionalData?.displayName;
       }
       if (user.photoURL && user.photoURL !== userDocSnap.data()?.photoURL) {
         updateData.photoURL = user.photoURL;
       }
-      await setDoc(userDocRef, updateData, { merge: true });
+      if (Object.keys(updateData).length > 1) { // Only update if there's more than just updatedAt
+        await setDoc(userDocRef, updateData, { merge: true });
+      }
     }
     toast({ title: t('registrationSuccess') });
     router.push('/profile');
@@ -84,10 +84,32 @@ export default function StudentRegisterPage() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       await updateProfile(userCredential.user, { displayName: data.displayName });
-      await handleUserCreation(userCredential.user, { displayName: data.displayName });
+      // Refresh user object to get the updated displayName
+      await userCredential.user.reload();
+      const refreshedUser = auth.currentUser;
+      if (refreshedUser) {
+        await handleUserCreation(refreshedUser, { displayName: data.displayName });
+      } else {
+        throw new Error("Failed to refresh user data after profile update.");
+      }
     } catch (error: any) {
-      console.error("Firebase Registration Error:", error);
-      const errorMessage = error.code ? `${error.message} (Code: ${error.code})` : error.message;
+      console.error("Firebase Registration Error (Email/Password):", error);
+      let errorMessage = error.message;
+      if (error.code) {
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            errorMessage = 'This email is already registered. Please login or use a different email.'; // TODO: Translate
+            break;
+          case 'auth/weak-password':
+            errorMessage = t('passwordValidationMin') || 'Password must be at least 6 characters.';
+            break;
+          case 'auth/network-request-failed':
+            errorMessage = 'Network error. Please check your internet connection.'; // TODO: Translate
+            break;
+          default:
+            errorMessage = `${error.message} (Code: ${error.code})`;
+        }
+      }
       setAuthError(errorMessage);
       toast({ title: t('errorOccurred'), description: errorMessage, variant: "destructive" });
     } finally {
@@ -104,7 +126,19 @@ export default function StudentRegisterPage() {
       await handleUserCreation(result.user);
     } catch (error: any) {
       console.error("Google Sign-In Error (Register):", error);
-      const errorMessage = error.code ? `${error.message} (Code: ${error.code})` : error.message;
+      let errorMessage = error.message;
+       if (error.code) {
+        switch (error.code) {
+          case 'auth/popup-closed-by-user':
+            errorMessage = 'Google Sign-In cancelled by user.'; // TODO: Translate
+            break;
+          case 'auth/network-request-failed':
+            errorMessage = 'Network error. Please check your internet connection.'; // TODO: Translate
+            break;
+          default:
+            errorMessage = `${error.message} (Code: ${error.code})`;
+        }
+      }
       setAuthError(errorMessage);
       toast({ title: t('errorOccurred'), description: errorMessage, variant: "destructive" });
     } finally {
@@ -217,5 +251,3 @@ export default function StudentRegisterPage() {
     </div>
   );
 }
-
-    

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -70,8 +69,22 @@ export default function StudentLoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       await handleUserLoginSuccess(userCredential.user);
     } catch (error: any) {
-      console.error("Firebase Login Error:", error);
-      const errorMessage = error.code ? `${error.message} (Code: ${error.code})` : error.message;
+      console.error("Firebase Login Error (Email/Password):", error);
+      let errorMessage = error.message;
+      if (error.code) {
+        switch (error.code) {
+          case 'auth/invalid-credential':
+          case 'auth/user-not-found':
+          case 'auth/wrong-password':
+            errorMessage = t('loginError') || 'Invalid username or password.';
+            break;
+          case 'auth/network-request-failed':
+            errorMessage = 'Network error. Please check your internet connection.'; // TODO: Translate
+            break;
+          default:
+            errorMessage = `${error.message} (Code: ${error.code})`;
+        }
+      }
       setAuthError(errorMessage);
       toast({ title: t('errorOccurred'), description: errorMessage, variant: "destructive" });
     } finally {
@@ -88,7 +101,19 @@ export default function StudentLoginPage() {
       await handleUserLoginSuccess(result.user);
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
-      const errorMessage = error.code ? `${error.message} (Code: ${error.code})` : error.message;
+      let errorMessage = error.message;
+      if (error.code) {
+        switch (error.code) {
+          case 'auth/popup-closed-by-user':
+            errorMessage = 'Google Sign-In cancelled by user.'; // TODO: Translate
+            break;
+          case 'auth/network-request-failed':
+            errorMessage = 'Network error. Please check your internet connection.'; // TODO: Translate
+            break;
+          default:
+            errorMessage = `${error.message} (Code: ${error.code})`;
+        }
+      }
       setAuthError(errorMessage);
       toast({ title: t('errorOccurred'), description: errorMessage, variant: "destructive" });
     } finally {
@@ -175,5 +200,3 @@ export default function StudentLoginPage() {
     </div>
   );
 }
-
-    
