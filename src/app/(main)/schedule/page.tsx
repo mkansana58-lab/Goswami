@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, type ChangeEvent } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -12,7 +12,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { CalendarDays, ListChecks, Megaphone, PlusCircle, Trash2 } from 'lucide-react';
+import { CalendarDays, ListChecks, Megaphone, PlusCircle, Trash2, Loader2 } from 'lucide-react';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, Timestamp, serverTimestamp } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,9 +28,9 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const ADMIN_LOGGED_IN_KEY = 'adminLoggedInGoSwami';
-const SCHEDULE_ITEMS_STORAGE_KEY = 'goSwamiScheduleItems';
-const HOMEWORK_ITEMS_STORAGE_KEY = 'goSwamiHomeworkItems';
-const UPDATE_ITEMS_STORAGE_KEY = 'goSwamiUpdateItems';
+const SCHEDULE_COLLECTION = 'classSchedules';
+const HOMEWORK_COLLECTION = 'homeworkAssignments';
+const UPDATES_COLLECTION = 'academyUpdates';
 
 interface ScheduleItem {
   id: string;
@@ -36,6 +38,7 @@ interface ScheduleItem {
   time: string;
   subject: string;
   teacher: string;
+  createdAt: Timestamp;
 }
 
 interface HomeworkItem {
@@ -43,13 +46,15 @@ interface HomeworkItem {
   subject: string;
   task: string;
   dueDate: string;
+  createdAt: Timestamp;
 }
 
 interface UpdateItem {
   id: string;
   title: string;
   message: string;
-  date: string;
+  date: string; // Event/effective date for the update
+  createdAt: Timestamp;
 }
 
 const scheduleFormSchemaDefinition = (t: (key: string) => string) => z.object({
@@ -80,6 +85,7 @@ export default function SchedulePage() {
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
   const [showAdminFeatures, setShowAdminFeatures] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
   const [homeworkItems, setHomeworkItems] = useState<HomeworkItem[]>([]);
@@ -92,81 +98,111 @@ export default function SchedulePage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (isClient) {
-      const loadItems = <T,>(key: string, setter: React.Dispatch<React.SetStateAction<T[]>>) => {
-        const storedItems = localStorage.getItem(key);
-        if (storedItems) {
-          try {
-            const parsedItems = JSON.parse(storedItems);
-            if (Array.isArray(parsedItems)) {
-               setter(parsedItems);
-            }
-          } catch (error) {
-            console.error(`Error parsing ${key} from localStorage:`, error);
-          }
-        }
-      };
-      loadItems(SCHEDULE_ITEMS_STORAGE_KEY, setScheduleItems);
-      loadItems(HOMEWORK_ITEMS_STORAGE_KEY, setHomeworkItems);
-      loadItems(UPDATE_ITEMS_STORAGE_KEY, setUpdateItems);
+  const fetchData = async () => {
+    if(!isClient) return;
+    setIsLoadingData(true);
+    try {
+      const scheduleQuery = query(collection(db, SCHEDULE_COLLECTION), orderBy("createdAt", "desc"));
+      const scheduleSnapshot = await getDocs(scheduleQuery);
+      setScheduleItems(scheduleSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScheduleItem)));
+
+      const homeworkQuery = query(collection(db, HOMEWORK_COLLECTION), orderBy("createdAt", "desc"));
+      const homeworkSnapshot = await getDocs(homeworkQuery);
+      setHomeworkItems(homeworkSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as HomeworkItem)));
+
+      const updatesQuery = query(collection(db, UPDATES_COLLECTION), orderBy("createdAt", "desc"));
+      const updatesSnapshot = await getDocs(updatesQuery);
+      setUpdateItems(updatesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UpdateItem)));
+
+    } catch (error: any) {
+      console.error("Error fetching schedule data from Firestore:", error.message, error.code, error.stack);
+      toast({
+        title: t('errorOccurred'),
+        description: `${t('fetchErrorDetails')} ${error.message ? `(${error.message})` : ''}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingData(false);
     }
+  };
+
+  useEffect(() => {
+    fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isClient]);
 
-  const saveItemsToLocalStorage = <T,>(key: string, items: T[]) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(key, JSON.stringify(items));
+  const scheduleForm = useForm<ScheduleFormValues>({ resolver: zodResolver(scheduleFormSchemaDefinition(t)), defaultValues: { title: "", time: "", subject: "", teacher: "" }});
+  const homeworkForm = useForm<HomeworkFormValues>({ resolver: zodResolver(homeworkFormSchemaDefinition(t)), defaultValues: { subject: "", task: "", dueDate: "" }});
+  const updateForm = useForm<UpdateFormValues>({ resolver: zodResolver(updateFormSchemaDefinition(t)), defaultValues: { title: "", message: "", date: "" }});
+
+  const handleAddItem = async <FormValues,>(
+    data: FormValues,
+    collectionName: string,
+    successMessageKey: string,
+    formReset: () => void,
+    formInstance: any // To access formState.isSubmitting
+  ) => {
+    if (!showAdminFeatures) return;
+    formInstance.control.fieldsRef.current = {}; // Manually trigger isSubmitting for the specific form
+
+    try {
+      const docRef = await addDoc(collection(db, collectionName), { ...data, createdAt: serverTimestamp() });
+      console.log(`${collectionName} item added with ID: `, docRef.id);
+      
+      // Add notification
+      try {
+        await addDoc(collection(db, "notifications"), {
+          message: `${t(successMessageKey)}: ${(data as any).title || (data as any).subject || 'New Item'}`,
+          type: collectionName,
+          link: '/schedule',
+          timestamp: serverTimestamp(),
+          autoGenerated: true
+        });
+      } catch (notifError) {
+        console.error("Error adding notification for schedule item:", notifError);
+      }
+
+      toast({ title: t(successMessageKey) });
+      formReset();
+      fetchData(); // Refresh data
+    } catch (error: any) {
+      console.error(`Error adding item to ${collectionName}: `, error.message, error.code, error.stack);
+      toast({
+        title: t('errorOccurred'),
+        description: `${t('saveErrorDetails')} ${error.message ? `(${error.message})` : ''}`,
+        variant: "destructive",
+      });
+    } finally {
+       // Manually reset isSubmitting for the specific form. This is a workaround.
+       // A better solution might involve managing submitting state per form.
+       if (formInstance.formState.isSubmitting) {
+         setTimeout(() => formInstance.reset(undefined, { keepValues: false, keepDirty: false, keepErrors: false, keepIsSubmitted: false, keepTouched: false, keepIsValid: false, keepSubmitCount: false }), 0);
+       }
+    }
+  };
+  
+  const handleDeleteItem = async (itemId: string, collectionName: string) => {
+    if (!showAdminFeatures) return;
+    try {
+      await deleteDoc(doc(db, collectionName, itemId));
+      toast({ title: t('itemDeletedSuccess') });
+      fetchData(); // Refresh data
+    } catch (error: any) {
+      console.error(`Error deleting item from ${collectionName}: `, error.message, error.code, error.stack);
+      toast({
+        title: t('errorOccurred'),
+        description: `${t('deleteErrorDetails')} ${error.message ? `(${error.message})` : ''}`,
+        variant: "destructive",
+      });
     }
   };
 
-  const scheduleForm = useForm<ScheduleFormValues>({
-    resolver: zodResolver(scheduleFormSchemaDefinition(t)),
-    defaultValues: { title: "", time: "", subject: "", teacher: "" },
-  });
-  const homeworkForm = useForm<HomeworkFormValues>({
-    resolver: zodResolver(homeworkFormSchemaDefinition(t)),
-    defaultValues: { subject: "", task: "", dueDate: "" },
-  });
-  const updateForm = useForm<UpdateFormValues>({
-    resolver: zodResolver(updateFormSchemaDefinition(t)),
-    defaultValues: { title: "", message: "", date: "" },
-  });
-
-  const handleAddItem = <T, FormValues>(
-    newItemData: FormValues,
-    currentItems: T[],
-    setter: React.Dispatch<React.SetStateAction<T[]>>,
-    storageKey: string,
-    successMessageKey: string,
-    formReset: () => void
-  ) => {
-    const newItem = { id: `item-${Date.now()}`, ...newItemData } as unknown as T;
-    const updatedItems = [newItem, ...currentItems];
-    setter(updatedItems);
-    saveItemsToLocalStorage(storageKey, updatedItems);
-    toast({ title: t(successMessageKey) });
-    formReset();
-  };
+  const onScheduleSubmit: SubmitHandler<ScheduleFormValues> = (data) => handleAddItem(data, SCHEDULE_COLLECTION, 'scheduleAddedSuccess', scheduleForm.reset, scheduleForm);
+  const onHomeworkSubmit: SubmitHandler<HomeworkFormValues> = (data) => handleAddItem(data, HOMEWORK_COLLECTION, 'homeworkAddedSuccess', homeworkForm.reset, homeworkForm);
+  const onUpdateSubmit: SubmitHandler<UpdateFormValues> = (data) => handleAddItem(data, UPDATES_COLLECTION, 'updateAddedSuccess', updateForm.reset, updateForm);
   
-  const handleDeleteItem = <T,>(
-    itemId: string,
-    currentItems: T[],
-    setter: React.Dispatch<React.SetStateAction<T[]>>,
-    storageKey: string
-  ) => {
-    const updatedItems = currentItems.filter(item => (item as any).id !== itemId);
-    setter(updatedItems);
-    saveItemsToLocalStorage(storageKey, updatedItems);
-    toast({ title: t('itemDeletedSuccess') });
-  };
-
-
-  const onScheduleSubmit: SubmitHandler<ScheduleFormValues> = (data) => handleAddItem(data, scheduleItems, setScheduleItems, SCHEDULE_ITEMS_STORAGE_KEY, 'scheduleAddedSuccess', scheduleForm.reset);
-  const onHomeworkSubmit: SubmitHandler<HomeworkFormValues> = (data) => handleAddItem(data, homeworkItems, setHomeworkItems, HOMEWORK_ITEMS_STORAGE_KEY, 'homeworkAddedSuccess', homeworkForm.reset);
-  const onUpdateSubmit: SubmitHandler<UpdateFormValues> = (data) => handleAddItem(data, updateItems, setUpdateItems, UPDATE_ITEMS_STORAGE_KEY, 'updateAddedSuccess', updateForm.reset);
-  
-  if (!isClient) {
-    return <div className="flex justify-center items-center h-screen"><p>{t('loading')}</p></div>;
+  if (!isClient || isLoadingData) {
+    return <div className="flex justify-center items-center h-screen"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">{t('loading')}</p></div>;
   }
 
   return (
@@ -177,11 +213,7 @@ export default function SchedulePage() {
         <div className="space-y-6 mb-10">
           {/* Add Schedule Item Form */}
           <Card className="bg-muted/30">
-            <CardHeader>
-              <CardTitle className="text-xl text-secondary-foreground flex items-center">
-                <PlusCircle className="mr-2 h-6 w-6 text-accent" /> {t('addScheduleTitle')}
-              </CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-xl text-secondary-foreground flex items-center"><PlusCircle className="mr-2 h-6 w-6 text-accent" /> {t('addScheduleTitle')}</CardTitle></CardHeader>
             <CardContent>
               <Form {...scheduleForm}>
                 <form onSubmit={scheduleForm.handleSubmit(onScheduleSubmit)} className="space-y-4">
@@ -189,17 +221,12 @@ export default function SchedulePage() {
                     <FormItem><FormLabel>{t('scheduleItemTitleLabel')}</FormLabel><FormControl><Input placeholder={t('scheduleItemTitlePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <div className="grid md:grid-cols-3 gap-4">
-                    <FormField control={scheduleForm.control} name="time" render={({ field }) => (
-                      <FormItem><FormLabel>{t('scheduleTimeLabel')}</FormLabel><FormControl><Input placeholder={t('scheduleTimePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={scheduleForm.control} name="subject" render={({ field }) => (
-                      <FormItem><FormLabel>{t('scheduleSubjectLabel')}</FormLabel><FormControl><Input placeholder={t('scheduleSubjectPlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={scheduleForm.control} name="teacher" render={({ field }) => (
-                      <FormItem><FormLabel>{t('scheduleTeacherLabel')}</FormLabel><FormControl><Input placeholder={t('scheduleTeacherPlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
+                    <FormField control={scheduleForm.control} name="time" render={({ field }) => ( <FormItem><FormLabel>{t('scheduleTimeLabel')}</FormLabel><FormControl><Input placeholder={t('scheduleTimePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                    <FormField control={scheduleForm.control} name="subject" render={({ field }) => (<FormItem><FormLabel>{t('scheduleSubjectLabel')}</FormLabel><FormControl><Input placeholder={t('scheduleSubjectPlaceholder')} {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                    <FormField control={scheduleForm.control} name="teacher" render={({ field }) => (<FormItem><FormLabel>{t('scheduleTeacherLabel')}</FormLabel><FormControl><Input placeholder={t('scheduleTeacherPlaceholder')} {...field} /></FormControl><FormMessage /></FormItem> )}/>
                   </div>
                   <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90" disabled={scheduleForm.formState.isSubmitting}>
+                    {scheduleForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     {scheduleForm.formState.isSubmitting ? t('loading') : t('addScheduleButton')}
                   </Button>
                 </form>
@@ -209,26 +236,17 @@ export default function SchedulePage() {
 
           {/* Add Homework Item Form */}
           <Card className="bg-muted/30">
-            <CardHeader>
-              <CardTitle className="text-xl text-secondary-foreground flex items-center">
-                <PlusCircle className="mr-2 h-6 w-6 text-accent" /> {t('addHomeworkTitle')}
-              </CardTitle>
-            </CardHeader>
+             <CardHeader><CardTitle className="text-xl text-secondary-foreground flex items-center"><PlusCircle className="mr-2 h-6 w-6 text-accent" /> {t('addHomeworkTitle')}</CardTitle></CardHeader>
             <CardContent>
               <Form {...homeworkForm}>
                 <form onSubmit={homeworkForm.handleSubmit(onHomeworkSubmit)} className="space-y-4">
                    <div className="grid md:grid-cols-2 gap-4">
-                    <FormField control={homeworkForm.control} name="subject" render={({ field }) => (
-                        <FormItem><FormLabel>{t('homeworkSubjectLabel')}</FormLabel><FormControl><Input placeholder={t('homeworkSubjectPlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={homeworkForm.control} name="dueDate" render={({ field }) => (
-                        <FormItem><FormLabel>{t('homeworkDueDateLabel')}</FormLabel><FormControl><Input placeholder={t('homeworkDueDatePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
+                    <FormField control={homeworkForm.control} name="subject" render={({ field }) => ( <FormItem><FormLabel>{t('homeworkSubjectLabel')}</FormLabel><FormControl><Input placeholder={t('homeworkSubjectPlaceholder')} {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                    <FormField control={homeworkForm.control} name="dueDate" render={({ field }) => ( <FormItem><FormLabel>{t('homeworkDueDateLabel')}</FormLabel><FormControl><Input placeholder={t('homeworkDueDatePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem> )}/>
                   </div>
-                  <FormField control={homeworkForm.control} name="task" render={({ field }) => (
-                    <FormItem><FormLabel>{t('homeworkTaskLabel')}</FormLabel><FormControl><Textarea placeholder={t('homeworkTaskPlaceholder')} {...field} rows={3} /></FormControl><FormMessage /></FormItem>
-                  )} />
+                  <FormField control={homeworkForm.control} name="task" render={({ field }) => ( <FormItem><FormLabel>{t('homeworkTaskLabel')}</FormLabel><FormControl><Textarea placeholder={t('homeworkTaskPlaceholder')} {...field} rows={3} /></FormControl><FormMessage /></FormItem> )}/>
                   <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90" disabled={homeworkForm.formState.isSubmitting}>
+                     {homeworkForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     {homeworkForm.formState.isSubmitting ? t('loading') : t('addHomeworkButton')}
                   </Button>
                 </form>
@@ -238,26 +256,17 @@ export default function SchedulePage() {
 
           {/* Add Update Item Form */}
           <Card className="bg-muted/30">
-            <CardHeader>
-              <CardTitle className="text-xl text-secondary-foreground flex items-center">
-                <PlusCircle className="mr-2 h-6 w-6 text-accent" /> {t('addUpdateTitle')}
-              </CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-xl text-secondary-foreground flex items-center"><PlusCircle className="mr-2 h-6 w-6 text-accent" /> {t('addUpdateTitle')}</CardTitle></CardHeader>
             <CardContent>
               <Form {...updateForm}>
                 <form onSubmit={updateForm.handleSubmit(onUpdateSubmit)} className="space-y-4">
                   <div className="grid md:grid-cols-2 gap-4">
-                    <FormField control={updateForm.control} name="title" render={({ field }) => (
-                        <FormItem><FormLabel>{t('updateTitleLabel')}</FormLabel><FormControl><Input placeholder={t('updateTitlePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                     <FormField control={updateForm.control} name="date" render={({ field }) => (
-                        <FormItem><FormLabel>{t('updateDateLabel')}</FormLabel><FormControl><Input placeholder={t('updateDatePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
+                    <FormField control={updateForm.control} name="title" render={({ field }) => ( <FormItem><FormLabel>{t('updateTitleLabel')}</FormLabel><FormControl><Input placeholder={t('updateTitlePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                     <FormField control={updateForm.control} name="date" render={({ field }) => ( <FormItem><FormLabel>{t('updateDateLabel')}</FormLabel><FormControl><Input placeholder={t('updateDatePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem> )}/>
                   </div>
-                  <FormField control={updateForm.control} name="message" render={({ field }) => (
-                    <FormItem><FormLabel>{t('updateMessageLabel')}</FormLabel><FormControl><Textarea placeholder={t('updateMessagePlaceholder')} {...field} rows={3}/></FormControl><FormMessage /></FormItem>
-                  )} />
+                  <FormField control={updateForm.control} name="message" render={({ field }) => ( <FormItem><FormLabel>{t('updateMessageLabel')}</FormLabel><FormControl><Textarea placeholder={t('updateMessagePlaceholder')} {...field} rows={3}/></FormControl><FormMessage /></FormItem> )}/>
                   <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90" disabled={updateForm.formState.isSubmitting}>
+                    {updateForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     {updateForm.formState.isSubmitting ? t('loading') : t('addUpdateButton')}
                   </Button>
                 </form>
@@ -268,147 +277,30 @@ export default function SchedulePage() {
       )}
 
       <Card className="shadow-lg">
-        <CardHeader className="flex flex-row items-center space-x-3">
-          <CalendarDays className="h-8 w-8 text-accent" />
-          <div>
-            <CardTitle className="text-2xl font-headline text-primary">{t('classScheduleTitle')}</CardTitle>
-            <CardDescription>{t('dynamicScheduleDesc')}</CardDescription>
-          </div>
-        </CardHeader>
+        <CardHeader className="flex flex-row items-center space-x-3"><CalendarDays className="h-8 w-8 text-accent" /><div><CardTitle className="text-2xl font-headline text-primary">{t('classScheduleTitle')}</CardTitle><CardDescription>{t('dynamicScheduleDesc')}</CardDescription></div></CardHeader>
         <CardContent>
-          {scheduleItems.length > 0 ? (
-            <ul className="space-y-3">
-              {scheduleItems.map((item) => (
-                <li key={item.id} className="p-3 bg-muted/50 rounded-md flex justify-between items-start">
-                  <div>
-                    <p className="font-semibold text-secondary-foreground">{item.title} ({item.time})</p>
-                    <p className="text-sm text-muted-foreground">{t('subject')}: {item.subject}</p>
-                    <p className="text-sm text-muted-foreground">{t('scheduleTeacherLabel')}: {item.teacher}</p>
-                  </div>
-                  {showAdminFeatures && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>{t('confirmDeleteTitle')}</AlertDialogTitle>
-                          <AlertDialogDescription>{t('confirmDeleteMessage')}</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>{t('cancelButton')}</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDeleteItem(item.id, scheduleItems, setScheduleItems, SCHEDULE_ITEMS_STORAGE_KEY)} className="bg-destructive hover:bg-destructive/90">
-                            {t('deleteButton')}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-                </li>
-              ))}
-            </ul>
-          ) : <p className="text-center text-muted-foreground py-4">{t('noScheduleItems')}</p>}
+          {scheduleItems.length > 0 ? (<ul className="space-y-3">{scheduleItems.map((item) => (<li key={item.id} className="p-3 bg-muted/50 rounded-md flex justify-between items-start"><div><p className="font-semibold text-secondary-foreground">{item.title} ({item.time})</p><p className="text-sm text-muted-foreground">{t('subject')}: {item.subject}</p><p className="text-sm text-muted-foreground">{t('scheduleTeacherLabel')}: {item.teacher}</p></div>{showAdminFeatures && (<AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('confirmDeleteTitle')}</AlertDialogTitle><AlertDialogDescription>{t('confirmDeleteMessage')}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t('cancelButton')}</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteItem(item.id, SCHEDULE_COLLECTION)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">{t('deleteButton')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>)}</li>))}</ul>) : <p className="text-center text-muted-foreground py-4">{t('noScheduleItems')}</p>}
         </CardContent>
       </Card>
 
       <div className="grid md:grid-cols-2 gap-8">
         <Card className="shadow-lg">
-          <CardHeader className="flex flex-row items-center space-x-3">
-            <ListChecks className="h-8 w-8 text-accent" />
-            <div>
-              <CardTitle className="text-2xl font-headline text-primary">{t('homeworkAssignments')}</CardTitle>
-              <CardDescription>{t('dynamicHomeworkDesc')}</CardDescription>
-            </div>
-          </CardHeader>
+          <CardHeader className="flex flex-row items-center space-x-3"><ListChecks className="h-8 w-8 text-accent" /><div><CardTitle className="text-2xl font-headline text-primary">{t('homeworkAssignments')}</CardTitle><CardDescription>{t('dynamicHomeworkDesc')}</CardDescription></div></CardHeader>
           <CardContent>
-            {homeworkItems.length > 0 ? (
-              <ul className="space-y-3">
-                {homeworkItems.map((item) => (
-                  <li key={item.id} className="p-3 bg-muted/50 rounded-md flex justify-between items-start">
-                    <div>
-                      <p className="font-semibold text-secondary-foreground">{item.subject}: {item.task}</p>
-                      <p className="text-sm text-muted-foreground">{t('homeworkDueDateLabel')}: {item.dueDate}</p>
-                    </div>
-                    {showAdminFeatures && (
-                       <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{t('confirmDeleteTitle')}</AlertDialogTitle>
-                            <AlertDialogDescription>{t('confirmDeleteMessage')}</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{t('cancelButton')}</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteItem(item.id, homeworkItems, setHomeworkItems, HOMEWORK_ITEMS_STORAGE_KEY)} className="bg-destructive hover:bg-destructive/90">
-                              {t('deleteButton')}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            ) : <p className="text-center text-muted-foreground py-4">{t('noHomeworkItems')}</p>}
+            {homeworkItems.length > 0 ? (<ul className="space-y-3">{homeworkItems.map((item) => (<li key={item.id} className="p-3 bg-muted/50 rounded-md flex justify-between items-start"><div><p className="font-semibold text-secondary-foreground">{item.subject}: {item.task}</p><p className="text-sm text-muted-foreground">{t('homeworkDueDateLabel')}: {item.dueDate}</p></div>{showAdminFeatures && (<AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('confirmDeleteTitle')}</AlertDialogTitle><AlertDialogDescription>{t('confirmDeleteMessage')}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t('cancelButton')}</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteItem(item.id, HOMEWORK_COLLECTION)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">{t('deleteButton')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>)}</li>))}</ul>) : <p className="text-center text-muted-foreground py-4">{t('noHomeworkItems')}</p>}
           </CardContent>
         </Card>
 
         <Card className="shadow-lg">
-          <CardHeader className="flex flex-row items-center space-x-3">
-            <Megaphone className="h-8 w-8 text-accent" />
-            <div>
-              <CardTitle className="text-2xl font-headline text-primary">{t('importantUpdates')}</CardTitle>
-              <CardDescription>{t('dynamicUpdatesDesc')}</CardDescription>
-            </div>
-          </CardHeader>
+          <CardHeader className="flex flex-row items-center space-x-3"><Megaphone className="h-8 w-8 text-accent" /><div><CardTitle className="text-2xl font-headline text-primary">{t('importantUpdates')}</CardTitle><CardDescription>{t('dynamicUpdatesDesc')}</CardDescription></div></CardHeader>
           <CardContent>
-            {updateItems.length > 0 ? (
-              <ul className="space-y-3">
-                {updateItems.map((item) => (
-                  <li key={item.id} className="p-3 bg-muted/50 rounded-md flex justify-between items-start">
-                    <div>
-                      <p className="font-semibold text-secondary-foreground">{item.title} ({item.date})</p>
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{item.message}</p>
-                    </div>
-                     {showAdminFeatures && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>{t('confirmDeleteTitle')}</AlertDialogTitle>
-                              <AlertDialogDescription>{t('confirmDeleteMessage')}</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>{t('cancelButton')}</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteItem(item.id, updateItems, setUpdateItems, UPDATE_ITEMS_STORAGE_KEY)} className="bg-destructive hover:bg-destructive/90">
-                                {t('deleteButton')}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            ) : <p className="text-center text-muted-foreground py-4">{t('noUpdateItems')}</p>}
+            {updateItems.length > 0 ? (<ul className="space-y-3">{updateItems.map((item) => (<li key={item.id} className="p-3 bg-muted/50 rounded-md flex justify-between items-start"><div><p className="font-semibold text-secondary-foreground">{item.title} ({item.date})</p><p className="text-sm text-muted-foreground whitespace-pre-wrap">{item.message}</p></div>{showAdminFeatures && (<AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('confirmDeleteTitle')}</AlertDialogTitle><AlertDialogDescription>{t('confirmDeleteMessage')}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t('cancelButton')}</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteItem(item.id, UPDATES_COLLECTION)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">{t('deleteButton')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>)}</li>))}</ul>) : <p className="text-center text-muted-foreground py-4">{t('noUpdateItems')}</p>}
           </CardContent>
         </Card>
       </div>
       <p className="text-center text-sm text-muted-foreground">
-        {t('localStorageNote')}
+        {t('localStorageNote').replace('local storage', 'Firebase Firestore')}
       </p>
     </div>
   );
 }
-
-    

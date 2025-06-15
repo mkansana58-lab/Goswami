@@ -5,52 +5,64 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import {
   BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, Tv2, LogOut, LayoutDashboard,
   Home, DownloadCloud, MoreHorizontal, ScissorsLineDashed, HelpingHand, FileText, MessageSquare, Briefcase, BookOpen, FileQuestion, ListChecks, Bell, LogIn,
-  Gift, History, Newspaper, CalendarDays // Added Gift, History, Newspaper, CalendarDays
+  Gift, History, Newspaper, CalendarDays, CheckCircle, XCircle, Info
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle as RadixSheetTitle } from '@/components/ui/sheet';
 import React, { useEffect, useState } from 'react';
+import { db } from '@/lib/firebase';
+import { collection, query, orderBy, limit, getDocs, Timestamp, serverTimestamp, addDoc } from 'firebase/firestore';
 
 const primaryNavLinks = [
-  { href: '/', labelKey: 'navHome', icon: Home, adminOnly: false },
-  { href: '/my-course', labelKey: 'navMyCourse', icon: GraduationCap, adminOnly: false },
-  { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2, adminOnly: false },
-  { href: '/downloads', labelKey: 'navDownloads', icon: DownloadCloud, adminOnly: false },
+  { href: '/', labelKey: 'navHome', icon: Home },
+  { href: '/my-course', labelKey: 'navMyCourse', icon: GraduationCap }, // Will show generic info as no student login
+  { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2 },
+  { href: '/downloads', labelKey: 'navDownloads', icon: DownloadCloud },
 ];
 
 const secondaryNavLinks = [
-  { href: '/premium-courses', labelKey: 'paidCourses', icon: Star, adminOnly: false },
-  { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck, adminOnly: false },
-  { href: '/free-courses', labelKey: 'freeCourses', icon: Gift, adminOnly: false },
-  { href: '/tests', labelKey: 'previousPapersNav', icon: History, adminOnly: false },
-  { href: '/current-affairs', labelKey: 'currentAffairs', icon: Newspaper, adminOnly: false },
-  { href: '/quiz', labelKey: 'navQuiz', icon: FileQuestion, adminOnly: false },
-  { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks, adminOnly: false },
-  { href: '/study-books', labelKey: 'ourBooks', icon: BookOpen, adminOnly: false },
-  { href: '/job-alerts', labelKey: 'navJobAlerts', icon: Briefcase, adminOnly: false },
-  { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays, adminOnly: false },
-  { href: '/videos', labelKey: 'navVideos', icon: PlaySquare, adminOnly: false },
-  { href: '/scholarship', labelKey: 'navScholarship', icon: Users, adminOnly: false },
-  { href: '/sainik-school-course', labelKey: 'navSainikSchoolCourse', icon: GraduationCap, adminOnly: false },
-  { href: '/military-school-course', labelKey: 'navMilitarySchoolCourse', icon: ShieldCheck, adminOnly: false },
-  { href: '/ai-tutor', labelKey: 'navAITutor', icon: Cpu, adminOnly: false },
-  { href: '/cutoff-checker', labelKey: 'navCutOffChecker', icon: ScissorsLineDashed, adminOnly: false },
-  { href: '/chance-checking', labelKey: 'navChanceChecking', icon: HelpingHand, adminOnly: false },
-  { href: '/study-material', labelKey: 'navStudyMaterial', icon: FileText, adminOnly: false },
-  { href: '/chat', labelKey: 'navChat', icon: MessageSquare, adminOnly: false },
+  { href: '/premium-courses', labelKey: 'paidCourses', icon: Star },
+  { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck },
+  { href: '/free-courses', labelKey: 'freeCourses', icon: Gift },
+  { href: '/tests', labelKey: 'previousPapersNav', icon: History }, // Points to /tests
+  { href: '/current-affairs', labelKey: 'currentAffairs', icon: Newspaper },
+  { href: '/quiz', labelKey: 'navQuiz', icon: FileQuestion },
+  { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks },
+  { href: '/study-books', labelKey: 'ourBooks', icon: BookOpen },
+  { href: '/job-alerts', labelKey: 'navJobAlerts', icon: Briefcase },
+  { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays },
+  { href: '/videos', labelKey: 'navVideos', icon: PlaySquare },
+  { href: '/scholarship', labelKey: 'navScholarship', icon: Users },
+  { href: '/sainik-school-course', labelKey: 'navSainikSchoolCourse', icon: GraduationCap },
+  { href: '/military-school-course', labelKey: 'navMilitarySchoolCourse', icon: ShieldCheck },
+  { href: '/ai-tutor', labelKey: 'navAITutor', icon: Cpu },
+  { href: '/cutoff-checker', labelKey: 'navCutOffChecker', icon: ScissorsLineDashed },
+  { href: '/chance-checking', labelKey: 'navChanceChecking', icon: HelpingHand },
+  { href: '/study-material', labelKey: 'navStudyMaterial', icon: FileText },
+  { href: '/chat', labelKey: 'navChat', icon: MessageSquare }, // Will be generic chat as no student login
 ];
 
 const adminConsoleNavLinks = [
-  { href: '/admin', labelKey: 'navAdminPanel', icon: LayoutDashboard, adminOnly: true },
-  { href: '/registrations', labelKey: 'navViewRegistrations', icon: ClipboardList, adminOnly: true },
+  { href: '/admin', labelKey: 'navAdminPanel', icon: LayoutDashboard },
+  { href: '/registrations', labelKey: 'navViewRegistrations', icon: ClipboardList },
 ];
 
 const ADMIN_LOGGED_IN_KEY = 'adminLoggedInGoSwami';
+const NOTIFICATIONS_COLLECTION = 'notifications';
+
+interface AppNotification {
+  id: string;
+  message: string;
+  type: string;
+  link?: string;
+  timestamp: Timestamp;
+  autoGenerated?: boolean;
+}
 
 export function Header() {
   const { language, setLanguage, t } = useLanguage();
@@ -59,6 +71,8 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -68,14 +82,43 @@ export function Header() {
     }
   }, [pathname]);
 
+  useEffect(() => {
+    if (!isClient) return;
+
+    const fetchNotifications = async () => {
+      try {
+        const q = query(collection(db, NOTIFICATIONS_COLLECTION), orderBy("timestamp", "desc"), limit(5));
+        const querySnapshot = await getDocs(q);
+        const fetchedNotifications: AppNotification[] = [];
+        querySnapshot.forEach((doc) => {
+          fetchedNotifications.push({ id: doc.id, ...doc.data() } as AppNotification);
+        });
+        setNotifications(fetchedNotifications);
+        // Basic unread check: if any notification is newer than last view time (not implemented yet)
+        // For now, just assume new ones are unread if list is not empty
+        if (fetchedNotifications.length > 0) {
+            // A more sophisticated check would involve localStorage for last viewed timestamp
+            setHasUnreadNotifications(true); 
+        }
+
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
+    };
+
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000); // Refresh notifications every minute
+    return () => clearInterval(interval);
+  }, [isClient]);
+
   const handleAdminLogout = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(ADMIN_LOGGED_IN_KEY);
     }
     setIsAdminLoggedIn(false);
     setIsMobileMenuOpen(false);
-    router.push('/');
-    router.refresh();
+    router.push('/'); 
+    router.refresh(); 
   };
   
   const allMobileNavLinks = [
@@ -91,6 +134,22 @@ export function Header() {
   )
   .filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === link.labelKey));
 
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'new_live_class':
+      case 'liveClasses':
+        return <Tv2 className="h-4 w-4 text-blue-500" />;
+      case SCHEDULE_COLLECTION:
+      case HOMEWORK_COLLECTION:
+      case UPDATES_COLLECTION:
+        return <CalendarDays className="h-4 w-4 text-green-500" />;
+      case 'important':
+        return <Info className="h-4 w-4 text-yellow-500" />;
+      default:
+        return <Bell className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
 
   return (
     <header className="bg-background text-foreground sticky top-0 z-50 shadow-md border-b">
@@ -105,28 +164,19 @@ export function Header() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[280px] bg-sidebar p-0 flex flex-col border-r">
-                <VisuallyHidden.Root>
-                  <RadixSheetTitle>{t('mobileMenuTitle')}</RadixSheetTitle>
-                </VisuallyHidden.Root>
+                <VisuallyHidden.Root><RadixSheetTitle>{t('mobileMenuTitle')}</RadixSheetTitle></VisuallyHidden.Root>
                 <div className="p-4 border-b border-sidebar-border">
                   <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-                    <ShieldCheck className="h-8 w-8 text-sidebar-primary" />
-                    <h2 className="text-xl font-headline font-bold text-sidebar-primary">{t('appName')}</h2>
+                    <ShieldCheck className="h-8 w-8 text-sidebar-primary" /><h2 className="text-xl font-headline font-bold text-sidebar-primary">{t('appName')}</h2>
                   </Link>
                 </div>
                 <div className="flex-grow overflow-y-auto p-4 space-y-1">
                   {allMobileNavLinks.map((link) => (
-                     <Link
-                        key={`mobile-${link.href}-${link.labelKey}`}
-                        href={link.href}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium transition-colors hover:bg-sidebar-accent/10",
+                     <Link key={`mobile-${link.href}-${link.labelKey}`} href={link.href}
+                        className={cn("flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium transition-colors hover:bg-sidebar-accent/10",
                           pathname === link.href ? "bg-sidebar-accent/20 text-sidebar-primary font-semibold" : "text-sidebar-foreground"
-                        )}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        <link.icon className="h-5 w-5 text-sidebar-primary" />
-                        {t(link.labelKey as any)}
+                        )} onClick={() => setIsMobileMenuOpen(false)}>
+                        <link.icon className="h-5 w-5 text-sidebar-primary" />{t(link.labelKey as any)}
                       </Link>
                   ))}
                 </div>
@@ -137,7 +187,7 @@ export function Header() {
                       </Button>
                     )
                   }
-                  {isClient && !isAdminLoggedIn && (
+                   {isClient && !isAdminLoggedIn && (
                      <Button variant="outline" className="w-full justify-start" asChild>
                         <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
                           <LogIn className="mr-2 h-5 w-5" /> {t('adminLoginNav')}
@@ -149,44 +199,29 @@ export function Header() {
             </Sheet>
           </div>
           <Link href="/" className="flex items-center gap-2">
-            <ShieldCheck className="h-8 w-8 text-primary" />
-            <h1 className="text-lg md:text-xl font-headline font-bold text-primary hidden sm:block">{t('appName')}</h1>
+            <ShieldCheck className="h-8 w-8 text-primary" /><h1 className="text-lg md:text-xl font-headline font-bold text-primary hidden sm:block">{t('appName')}</h1>
           </Link>
         </div>
 
         <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
-          {primaryNavLinks
-            .map((link) => (
-            <Link
-              key={`${link.href}-desktop-primary-${link.labelKey}`}
-              href={link.href}
-              className={cn(
-                "px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary",
+          {primaryNavLinks.map((link) => (
+            <Link key={`${link.href}-desktop-primary-${link.labelKey}`} href={link.href}
+              className={cn("px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary",
                 pathname === link.href ? "bg-muted text-primary font-semibold" : "text-foreground"
-              )}
-            >
-              {t(link.labelKey as any)}
-            </Link>
+              )}>{t(link.labelKey as any)}</Link>
           ))}
           {isClient && isAdminLoggedIn && adminConsoleNavLinks.map((link) => (
-             <Link
-              key={`${link.href}-desktop-admin`}
-              href={link.href}
-              className={cn(
-                "px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary flex items-center gap-1",
+             <Link key={`${link.href}-desktop-admin`} href={link.href}
+              className={cn("px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary flex items-center gap-1",
                 pathname === link.href ? "bg-muted text-primary font-semibold" : "text-foreground"
-              )}
-            >
-              <link.icon className="h-4 w-4" /> {t(link.labelKey as any)}
-            </Link>
+              )}><link.icon className="h-4 w-4" /> {t(link.labelKey as any)}</Link>
           ))}
 
           {uniqueSecondaryLinksForDesktop.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium hover:bg-muted hover:text-primary">
-                  <MoreHorizontal className="h-5 w-5" />
-                  <span className="sr-only">More</span>
+                  <MoreHorizontal className="h-5 w-5" /><span className="sr-only">More</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="max-h-96 overflow-y-auto bg-popover border-border shadow-lg">
@@ -202,44 +237,76 @@ export function Header() {
           )}
         </nav>
 
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="text-foreground hover:bg-muted hover:text-primary" title={t('notifications')}>
-            <Bell className="h-5 w-5" />
-            <span className="sr-only">{t('notifications')}</span>
-          </Button>
+        <div className="flex items-center gap-1 md:gap-2">
+          <DropdownMenu onOpenChange={() => setHasUnreadNotifications(false)}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-foreground hover:bg-muted hover:text-primary relative" title={t('notifications')}>
+                <Bell className="h-5 w-5" />
+                {isClient && hasUnreadNotifications && notifications.length > 0 && (
+                  <span className="absolute top-1 right-1.5 flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
+                  </span>
+                )}
+                <span className="sr-only">{t('notifications')}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 md:w-96 bg-popover border-border shadow-lg">
+              <DropdownMenuLabel className="flex justify-between items-center">
+                {t('notifications')}
+                {/* Placeholder for "Mark all as read" if needed later */}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {notifications.length === 0 ? (
+                <DropdownMenuItem disabled className="text-muted-foreground text-center py-4">
+                  {t('noNewNotifications') || "No new notifications"}
+                </DropdownMenuItem>
+              ) : (
+                notifications.map(notif => (
+                  <DropdownMenuItem key={notif.id} asChild className="cursor-pointer focus:bg-muted p-2">
+                    <Link href={notif.link || '#'} className="flex items-start gap-2 text-sm">
+                      {getNotificationIcon(notif.type)}
+                      <div className="flex-1">
+                        <p className="font-medium text-popover-foreground leading-tight line-clamp-2">{notif.message}</p>
+                        <p className="text-xs text-muted-foreground">{notif.timestamp?.toDate().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})} - {notif.timestamp?.toDate().toLocaleDateString()}</p>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                ))
+              )}
+              {/* Placeholder for "View all notifications" link if needed later */}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="text-foreground hover:bg-muted hover:text-primary">
-                <Languages className="h-5 w-5" />
-                <span className="sr-only">{t('language')}</span>
+                <Languages className="h-5 w-5" /><span className="sr-only">{t('language')}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-popover border-border shadow-lg">
-              <DropdownMenuItem onClick={() => setLanguage('en')} disabled={language === 'en'} className="focus:bg-muted focus:text-primary cursor-pointer">
-                {t('english')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setLanguage('hi')} disabled={language === 'hi'} className="focus:bg-muted focus:text-primary cursor-pointer">
-                {t('hindi')}
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('en')} disabled={language === 'en'} className="focus:bg-muted focus:text-primary cursor-pointer">{t('english')}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('hi')} disabled={language === 'hi'} className="focus:bg-muted focus:text-primary cursor-pointer">{t('hindi')}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           
-          {isClient && (
-            isAdminLoggedIn ? (
-              <Button variant="outline" size="sm" onClick={handleAdminLogout} className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
+          {isClient && isAdminLoggedIn && (
+              <Button variant="outline" size="sm" onClick={handleAdminLogout} className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground hidden md:flex">
                 <LogOut className="mr-2 h-4 w-4" /> {t('adminLogout')}
               </Button>
-            ) : (
-              <Button variant="outline" size="sm" asChild>
+          )}
+           {isClient && !isAdminLoggedIn && (
+              <Button variant="outline" size="sm" asChild className="hidden md:flex">
                 <Link href="/login">
                   <LogIn className="mr-2 h-4 w-4" /> {t('adminLoginNav')}
                 </Link>
               </Button>
             )
-          )}
+          }
         </div>
       </div>
     </header>
   );
 }
+// Add to translations:
+// noNewNotifications: "No new notifications" (EN/HI)

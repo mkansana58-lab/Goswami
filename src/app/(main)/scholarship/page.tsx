@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
 const formSchemaDefinition = (t: (key: string) => string) => z.object({
@@ -35,38 +35,26 @@ export default function ScholarshipPage() {
 
   const form = useForm<ScholarshipFormValues>({
     resolver: zodResolver(currentFormSchema),
-    defaultValues: {
-      studentName: "",
-      emailAddress: "",
-      phoneNumber: "",
-      currentClass: "",
-      address: "",
-    },
+    defaultValues: { studentName: "", emailAddress: "", phoneNumber: "", currentClass: "", address: "" },
   });
 
   const onSubmit: SubmitHandler<ScholarshipFormValues> = async (data) => {
     console.log("Attempting to submit scholarship registration:", data);
     setIsSubmitting(true);
     try {
-      const newRegistration = {
-        ...data,
-        registrationDate: Timestamp.fromDate(new Date()),
-      };
+      const newRegistration = { ...data, registrationDate: serverTimestamp() };
       console.log("New scholarship registration payload for Firestore:", newRegistration);
 
-      await addDoc(collection(db, "scholarshipRegistrations"), newRegistration);
-      console.log("Scholarship registration added to Firestore successfully.");
+      const docRef = await addDoc(collection(db, "scholarshipRegistrations"), newRegistration);
+      console.log("Scholarship registration added to Firestore successfully with ID:", docRef.id);
       
-      toast({
-        title: t('registrationSuccess'),
-        description: t('registrationSuccessMessage'),
-      });
+      toast({ title: t('registrationSuccess'), description: t('registrationSuccessMessage') });
       form.reset();
     } catch (error: any) { 
-      console.error("Error adding scholarship registration to Firestore: ", error.message, error.code, error.stack, error);
+      console.error("Error adding scholarship registration to Firestore. Config issue? Rules? Network?", { message: error.message, code: error.code, stack: error.stack, fullError: error });
       toast({
         title: t('errorOccurred'),
-        description: `${t('saveErrorDetails') || "Could not save registration."} ${error.message ? `(${error.message})` : "Please try again."}`,
+        description: `${t('saveErrorDetails') || "Could not save registration."} ${error.message ? `(${error.message})` : "Please check console and Firebase setup."}`,
         variant: "destructive",
       });
     } finally {
@@ -85,78 +73,13 @@ export default function ScholarshipPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="studentName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('studentName')}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t('studentName')} {...field} className="text-base md:text-sm h-12"/>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="emailAddress"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('emailAddress')}</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder={t('emailAddress')} {...field} className="text-base md:text-sm h-12"/>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phoneNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('phoneNumber')}</FormLabel>
-                    <FormControl>
-                      <Input type="tel" placeholder={t('phoneNumber')} {...field} className="text-base md:text-sm h-12"/>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="currentClass"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('currentClass')}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t('currentClass')} {...field} className="text-base md:text-sm h-12"/>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('address')}</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder={t('address')} {...field} className="text-base md:text-sm min-h-[100px]"/>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormField control={form.control} name="studentName" render={({ field }) => (<FormItem><FormLabel>{t('studentName')}</FormLabel><FormControl><Input placeholder={t('studentName')} {...field} className="text-base md:text-sm h-12"/></FormControl><FormMessage /></FormItem>)}/>
+              <FormField control={form.control} name="emailAddress" render={({ field }) => (<FormItem><FormLabel>{t('emailAddress')}</FormLabel><FormControl><Input type="email" placeholder={t('emailAddress')} {...field} className="text-base md:text-sm h-12"/></FormControl><FormMessage /></FormItem>)}/>
+              <FormField control={form.control} name="phoneNumber" render={({ field }) => (<FormItem><FormLabel>{t('phoneNumber')}</FormLabel><FormControl><Input type="tel" placeholder={t('phoneNumber')} {...field} className="text-base md:text-sm h-12"/></FormControl><FormMessage /></FormItem>)}/>
+              <FormField control={form.control} name="currentClass" render={({ field }) => (<FormItem><FormLabel>{t('currentClass')}</FormLabel><FormControl><Input placeholder={t('currentClass')} {...field} className="text-base md:text-sm h-12"/></FormControl><FormMessage /></FormItem>)}/>
+              <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>{t('address')}</FormLabel><FormControl><Textarea placeholder={t('address')} {...field} className="text-base md:text-sm min-h-[100px]"/></FormControl><FormMessage /></FormItem>)}/>
               <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg h-14" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    {t('loading')}
-                  </>
-                ) : t('submitRegistration')}
+                {isSubmitting ? (<><Loader2 className="mr-2 h-5 w-5 animate-spin" />{t('loading')}</>) : t('submitRegistration')}
               </Button>
             </form>
           </Form>
@@ -165,6 +88,3 @@ export default function ScholarshipPage() {
     </div>
   );
 }
-    
-
-    
