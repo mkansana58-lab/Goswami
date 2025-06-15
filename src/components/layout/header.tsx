@@ -16,11 +16,11 @@ import {
 import { Sheet, SheetContent, SheetTrigger, SheetTitle as RadixSheetTitle } from '@/components/ui/sheet';
 import React, { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, limit, getDocs, Timestamp, serverTimestamp, addDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, Timestamp, serverTimestamp, addDoc, onSnapshot } from 'firebase/firestore';
 
 const primaryNavLinks = [
   { href: '/', labelKey: 'navHome', icon: Home },
-  { href: '/my-course', labelKey: 'navMyCourse', icon: GraduationCap }, // Will show generic info as no student login
+  { href: '/my-course', labelKey: 'navMyCourse', icon: GraduationCap }, 
   { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2 },
   { href: '/downloads', labelKey: 'navDownloads', icon: DownloadCloud },
 ];
@@ -29,7 +29,7 @@ const secondaryNavLinks = [
   { href: '/premium-courses', labelKey: 'paidCourses', icon: Star },
   { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck },
   { href: '/free-courses', labelKey: 'freeCourses', icon: Gift },
-  { href: '/tests', labelKey: 'previousPapersNav', icon: History }, // Points to /tests
+  { href: '/tests', labelKey: 'previousPapersNav', icon: History }, 
   { href: '/current-affairs', labelKey: 'currentAffairs', icon: Newspaper },
   { href: '/quiz', labelKey: 'navQuiz', icon: FileQuestion },
   { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks },
@@ -44,7 +44,7 @@ const secondaryNavLinks = [
   { href: '/cutoff-checker', labelKey: 'navCutOffChecker', icon: ScissorsLineDashed },
   { href: '/chance-checking', labelKey: 'navChanceChecking', icon: HelpingHand },
   { href: '/study-material', labelKey: 'navStudyMaterial', icon: FileText },
-  { href: '/chat', labelKey: 'navChat', icon: MessageSquare }, // Will be generic chat as no student login
+  { href: '/chat', labelKey: 'navChat', icon: MessageSquare }, 
 ];
 
 const adminConsoleNavLinks = [
@@ -54,6 +54,8 @@ const adminConsoleNavLinks = [
 
 const ADMIN_LOGGED_IN_KEY = 'adminLoggedInGoSwami';
 const NOTIFICATIONS_COLLECTION = 'notifications';
+const LAST_NOTIFICATION_VIEW_KEY = 'lastNotificationViewTimeGoSwami';
+
 
 interface AppNotification {
   id: string;
@@ -84,31 +86,40 @@ export function Header() {
 
   useEffect(() => {
     if (!isClient) return;
+    console.log("Header: Setting up notifications listener...");
 
-    const fetchNotifications = async () => {
-      try {
-        const q = query(collection(db, NOTIFICATIONS_COLLECTION), orderBy("timestamp", "desc"), limit(5));
-        const querySnapshot = await getDocs(q);
-        const fetchedNotifications: AppNotification[] = [];
-        querySnapshot.forEach((doc) => {
-          fetchedNotifications.push({ id: doc.id, ...doc.data() } as AppNotification);
-        });
-        setNotifications(fetchedNotifications);
-        // Basic unread check: if any notification is newer than last view time (not implemented yet)
-        // For now, just assume new ones are unread if list is not empty
-        if (fetchedNotifications.length > 0) {
-            // A more sophisticated check would involve localStorage for last viewed timestamp
-            setHasUnreadNotifications(true); 
+    const q = query(collection(db, NOTIFICATIONS_COLLECTION), orderBy("timestamp", "desc"), limit(10));
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const fetchedNotifications: AppNotification[] = [];
+      querySnapshot.forEach((doc) => {
+        fetchedNotifications.push({ id: doc.id, ...doc.data() } as AppNotification);
+      });
+      setNotifications(fetchedNotifications);
+      console.log("Header: Notifications fetched/updated:", fetchedNotifications.length, fetchedNotifications);
+
+      if (fetchedNotifications.length > 0) {
+        const lastViewTime = localStorage.getItem(LAST_NOTIFICATION_VIEW_KEY);
+        const latestNotificationTime = fetchedNotifications[0].timestamp.toMillis();
+        if (!lastViewTime || latestNotificationTime > parseInt(lastViewTime, 10)) {
+          setHasUnreadNotifications(true);
+          console.log("Header: Has unread notifications.");
+        } else {
+          setHasUnreadNotifications(false);
+          console.log("Header: No new unread notifications.");
         }
-
-      } catch (error) {
-        console.error("Error fetching notifications:", error);
+      } else {
+        setHasUnreadNotifications(false);
+         console.log("Header: No notifications found.");
       }
-    };
+    }, (error) => {
+      console.error("Header: Error fetching notifications from Firestore:", {message: error.message, code: error.code});
+    });
 
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000); // Refresh notifications every minute
-    return () => clearInterval(interval);
+    return () => {
+      console.log("Header: Unsubscribing from notifications listener.");
+      unsubscribe();
+    };
   }, [isClient]);
 
   const handleAdminLogout = () => {
@@ -120,13 +131,23 @@ export function Header() {
     router.push('/'); 
     router.refresh(); 
   };
+
+  const handleNotificationDropdownOpenChange = (open: boolean) => {
+    if (!open && hasUnreadNotifications) { // When dropdown is closed
+      if (notifications.length > 0) {
+        localStorage.setItem(LAST_NOTIFICATION_VIEW_KEY, notifications[0].timestamp.toMillis().toString());
+        setHasUnreadNotifications(false);
+        console.log("Header: Notifications marked as read. Last view time updated.");
+      }
+    }
+  };
   
   const allMobileNavLinks = [
     ...primaryNavLinks,
     ...secondaryNavLinks.filter(link => !primaryNavLinks.some(pLink => pLink.href === link.href && pLink.labelKey === link.labelKey)),
     ...(isClient && isAdminLoggedIn ? adminConsoleNavLinks : [])
   ]
-  .filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === link.labelKey));
+  .filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === l.labelKey));
 
 
   const uniqueSecondaryLinksForDesktop = secondaryNavLinks.filter(
@@ -137,16 +158,15 @@ export function Header() {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'new_live_class':
-      case 'liveClasses':
-        return <Tv2 className="h-4 w-4 text-blue-500" />;
-      case SCHEDULE_COLLECTION:
-      case HOMEWORK_COLLECTION:
-      case UPDATES_COLLECTION:
-        return <CalendarDays className="h-4 w-4 text-green-500" />;
+        return <Tv2 className="h-4 w-4 text-blue-500 flex-shrink-0" />;
+      case 'new_schedule_item':
+      case 'new_homework_item':
+      case 'new_update_item':
+        return <CalendarDays className="h-4 w-4 text-green-500 flex-shrink-0" />;
       case 'important':
-        return <Info className="h-4 w-4 text-yellow-500" />;
+        return <Info className="h-4 w-4 text-yellow-500 flex-shrink-0" />;
       default:
-        return <Bell className="h-4 w-4 text-gray-500" />;
+        return <Bell className="h-4 w-4 text-gray-500 flex-shrink-0" />;
     }
   };
 
@@ -238,7 +258,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-1 md:gap-2">
-          <DropdownMenu onOpenChange={() => setHasUnreadNotifications(false)}>
+          <DropdownMenu onOpenChange={handleNotificationDropdownOpenChange}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="text-foreground hover:bg-muted hover:text-primary relative" title={t('notifications')}>
                 <Bell className="h-5 w-5" />
@@ -251,10 +271,9 @@ export function Header() {
                 <span className="sr-only">{t('notifications')}</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 md:w-96 bg-popover border-border shadow-lg">
+            <DropdownMenuContent align="end" className="w-80 md:w-96 bg-popover border-border shadow-lg max-h-[400px] overflow-y-auto">
               <DropdownMenuLabel className="flex justify-between items-center">
                 {t('notifications')}
-                {/* Placeholder for "Mark all as read" if needed later */}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {notifications.length === 0 ? (
@@ -263,18 +282,17 @@ export function Header() {
                 </DropdownMenuItem>
               ) : (
                 notifications.map(notif => (
-                  <DropdownMenuItem key={notif.id} asChild className="cursor-pointer focus:bg-muted p-2">
-                    <Link href={notif.link || '#'} className="flex items-start gap-2 text-sm">
+                  <DropdownMenuItem key={notif.id} asChild className="cursor-pointer focus:bg-muted p-2 hover:bg-muted/80">
+                    <Link href={notif.link || '#'} className="flex items-start gap-3 text-sm w-full">
                       {getNotificationIcon(notif.type)}
-                      <div className="flex-1">
-                        <p className="font-medium text-popover-foreground leading-tight line-clamp-2">{notif.message}</p>
-                        <p className="text-xs text-muted-foreground">{notif.timestamp?.toDate().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})} - {notif.timestamp?.toDate().toLocaleDateString()}</p>
+                      <div className="flex-1 space-y-0.5">
+                        <p className="font-medium text-popover-foreground leading-tight line-clamp-3">{notif.message}</p>
+                        <p className="text-xs text-muted-foreground">{notif.timestamp?.toDate().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})} - {notif.timestamp?.toDate().toLocaleDateString([], {day: '2-digit', month: 'short'})}</p>
                       </div>
                     </Link>
                   </DropdownMenuItem>
                 ))
               )}
-              {/* Placeholder for "View all notifications" link if needed later */}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -308,5 +326,5 @@ export function Header() {
     </header>
   );
 }
-// Add to translations:
-// noNewNotifications: "No new notifications" (EN/HI)
+
+    
