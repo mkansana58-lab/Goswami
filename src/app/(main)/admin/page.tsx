@@ -38,13 +38,12 @@ export default function AdminPanelPage() {
       const isAdminLoggedIn = localStorage.getItem(ADMIN_LOGGED_IN_KEY) === 'true';
       if (!isAdminLoggedIn) {
         setIsAuthorized(false); 
-        // No automatic redirect here, let the UI show the login prompt.
       } else {
         setIsAuthorized(true);
       }
       setIsLoading(false);
     }
-  }, [router]);
+  }, []);
 
   if (isLoading) {
     return (
@@ -67,7 +66,7 @@ export default function AdminPanelPage() {
                 <CardContent className="space-y-4">
                     <p>{t('accessDeniedMessage')}</p>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {t('adminAccessNote') || "To access this panel, please login as an administrator."}
+                      {t('adminAccessNote') || "To access this panel, please login as an administrator via the admin login page."}
                     </p>
                     <Button asChild>
                       <Link href="/login">
@@ -116,6 +115,8 @@ export default function AdminPanelPage() {
 }
 
 // Add to translations:
-// adminAccessNote: "To access this panel, please login as an administrator." (EN)
-// adminAccessNote: "इस पैनल तक पहुंचने के लिए, कृपया एक व्यवस्थापक के रूप में लॉगिन करें।" (HI)
+// adminAccessNote: "To access this panel, please login as an administrator via the admin login page." (EN)
+// adminAccessNote: "इस पैनल तक पहुंचने के लिए, कृपया एडमिन लॉगिन पेज के माध्यम से एक व्यवस्थापक के रूप में लॉगिन करें।" (HI)
+    
+
     

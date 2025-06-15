@@ -29,7 +29,7 @@ type ScholarshipFormValues = z.infer<ReturnType<typeof formSchemaDefinition>>;
 export default function ScholarshipPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false); // Changed from isLoading to isSubmitting for clarity
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const currentFormSchema = formSchemaDefinition(t);
 
@@ -59,15 +59,15 @@ export default function ScholarshipPage() {
         description: t('registrationSuccessMessage'),
       });
       form.reset();
-    } catch (error: any) { // Catch specific error type
-      console.error("Error adding document to Firestore: ", error);
+    } catch (error: any) { 
+      console.error("Error adding document to Firestore: ", error.message, error.code, error.stack);
       toast({
         title: t('errorOccurred'),
-        description: `${t('saveErrorDetails') || "Could not save registration."} ${error.message || "Please try again."}`,
+        description: `${t('saveErrorDetails') || "Could not save registration."} ${error.message ? `(${error.message})` : "Please try again."}`,
         variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false); // Ensure this is always called
+      setIsSubmitting(false);
     }
   };
 
@@ -161,5 +161,6 @@ export default function ScholarshipPage() {
     </div>
   );
 }
+    
 
     

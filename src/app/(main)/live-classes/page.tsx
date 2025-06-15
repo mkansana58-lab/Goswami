@@ -79,7 +79,7 @@ export default function LiveClassesPage() {
   }, []);
 
   const fetchLiveClasses = async () => {
-    if (!isClient) return; // Ensure this runs only on client
+    if (!isClient) return;
     setIsLoadingClasses(true);
     try {
       const q = query(collection(db, LIVE_CLASSES_COLLECTION_NAME), orderBy("scheduledAt", "asc"));
@@ -91,10 +91,10 @@ export default function LiveClassesPage() {
           id: doc.id,
           title: data.title,
           subject: data.subject,
-          date: data.date, // Stored as YYYY-MM-DD
-          time: data.time, // Stored as HH:MM
+          date: data.date, 
+          time: data.time, 
           link: data.link,
-          scheduledAt: data.scheduledAt as Timestamp, // For sorting
+          scheduledAt: data.scheduledAt as Timestamp, 
         });
       });
       setLiveClasses(fetchedClasses);
@@ -102,7 +102,7 @@ export default function LiveClassesPage() {
       console.error("Error fetching live classes from Firestore:", error);
       toast({
         title: t('errorOccurred'),
-        description: `${t('fetchErrorDetails') || "Failed to load live classes."} ${error.message || ""}`,
+        description: `${t('fetchErrorDetails') || "Failed to load live classes."} ${error.message ? `(${error.message})` : ''}`,
         variant: "destructive",
       });
     } finally {
@@ -115,7 +115,7 @@ export default function LiveClassesPage() {
       fetchLiveClasses();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isClient]); // Removed language from dependencies to prevent re-fetching on lang change unless necessary for content
+  }, [isClient]);
 
 
   const onSubmit: SubmitHandler<LiveClassFormValues> = async (data) => {
@@ -129,10 +129,10 @@ export default function LiveClassesPage() {
       const newClass = {
         title: data.title,
         subject: data.subject,
-        date: data.date, // Save as YYYY-MM-DD string
-        time: data.time, // Save as HH:MM string
+        date: data.date, 
+        time: data.time, 
         link: data.link,
-        scheduledAt: Timestamp.fromDate(scheduledDate), // For sorting
+        scheduledAt: Timestamp.fromDate(scheduledDate), 
       };
       await addDoc(collection(db, LIVE_CLASSES_COLLECTION_NAME), newClass);
       toast({
@@ -141,10 +141,10 @@ export default function LiveClassesPage() {
       form.reset();
       fetchLiveClasses(); 
     } catch (error: any) {
-      console.error("Error adding live class to Firestore: ", error);
+      console.error("Error adding live class to Firestore: ", error.message, error.code, error.stack);
       toast({
         title: t('errorOccurred'),
-        description: `${t('saveErrorDetails') || "Could not save live class."} ${error.message || ""}`,
+        description: `${t('saveErrorDetails') || "Could not save live class."} ${error.message ? `(${error.message})` : ''}`,
         variant: "destructive",
       });
     } finally {
@@ -154,7 +154,6 @@ export default function LiveClassesPage() {
 
   const handleDeleteClass = async (classId: string) => {
     if (!showAdminFeatures) return;
-    // Add a temporary loading state if needed, or rely on toast
     try {
       await deleteDoc(doc(db, LIVE_CLASSES_COLLECTION_NAME, classId));
       toast({
@@ -162,16 +161,16 @@ export default function LiveClassesPage() {
       });
       fetchLiveClasses(); 
     } catch (error: any) {
-      console.error("Error deleting live class from Firestore: ", error);
+      console.error("Error deleting live class from Firestore: ", error.message, error.code, error.stack);
       toast({
         title: t('errorOccurred'),
-        description: `${t('deleteErrorDetails') || "Could not delete live class."} ${error.message || ""}`,
+        description: `${t('deleteErrorDetails') || "Could not delete live class."} ${error.message ? `(${error.message})` : ''}`,
         variant: "destructive",
       });
     }
   };
 
-  if (!isClient) { // Show basic loading for SSR/initial client mount
+  if (!isClient) { 
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -283,7 +282,7 @@ export default function LiveClassesPage() {
           )}
 
           <h2 className="text-2xl font-bold font-headline text-primary mb-4">{t('upcomingLiveClasses')}</h2>
-          {isLoadingClasses && liveClasses.length === 0 ? ( // Show loader only if loading and no classes yet
+          {isLoadingClasses && liveClasses.length === 0 ? ( 
              <div className="flex justify-center items-center py-6">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="ml-2">{t('loading')}</p>
@@ -335,7 +334,7 @@ export default function LiveClassesPage() {
                 </Card>
               ))}
             </div>
-          ) : ( // This will show if not loading and no classes
+          ) : ( 
             <p className="text-center text-muted-foreground py-6">{t('noLiveClassesScheduled')}</p>
           )}
         </CardContent>
@@ -346,13 +345,6 @@ export default function LiveClassesPage() {
     </div>
   );
 }
+    
 
-// Add to translations:
-// validationMin5Chars: "must be at least 5 characters." (EN / HI as needed)
-// validationDateYYYYMMDD: "Date must be in YYYY-MM-DD format." (EN / HI)
-// validationTimeHHMM: "Time must be in HH:MM format (24-hour)." (EN / HI)
-// validationUrl: "Please enter a valid URL." (EN / HI)
-// fetchErrorDetails: "Failed to load live classes." (EN / HI)
-// saveErrorDetails: "Could not save live class." (EN / HI)
-// deleteErrorDetails: "Could not delete live class." (EN / HI)
     
