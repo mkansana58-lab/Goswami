@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, CalendarDays, ClipboardCheck, PlaySquare, Tv2, LayoutDashboard, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Users, CalendarDays, ClipboardCheck, PlaySquare, Tv2, LayoutDashboard, AlertTriangle, ExternalLink, LogIn } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -38,6 +38,7 @@ export default function AdminPanelPage() {
       const isAdminLoggedIn = localStorage.getItem(ADMIN_LOGGED_IN_KEY) === 'true';
       if (!isAdminLoggedIn) {
         setIsAuthorized(false); 
+        // No automatic redirect here, let the UI show the login prompt.
       } else {
         setIsAuthorized(true);
       }
@@ -63,11 +64,16 @@ export default function AdminPanelPage() {
                         <AlertTriangle /> {t('accessDenied')}
                     </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                     <p>{t('accessDeniedMessage')}</p>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      To access this panel, ensure you are logged in as an administrator through the designated portal or by setting the appropriate local storage key.
+                      {t('adminAccessNote') || "To access this panel, please login as an administrator."}
                     </p>
+                    <Button asChild>
+                      <Link href="/login">
+                        <LogIn className="mr-2 h-4 w-4" /> {t('adminLoginNav')}
+                      </Link>
+                    </Button>
                 </CardContent>
             </Card>
         </div>
@@ -108,3 +114,8 @@ export default function AdminPanelPage() {
     </div>
   );
 }
+
+// Add to translations:
+// adminAccessNote: "To access this panel, please login as an administrator." (EN)
+// adminAccessNote: "इस पैनल तक पहुंचने के लिए, कृपया एक व्यवस्थापक के रूप में लॉगिन करें।" (HI)
+    

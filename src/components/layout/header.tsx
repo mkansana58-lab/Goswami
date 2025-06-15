@@ -5,16 +5,16 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import {
   BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, Tv2, LogOut, LayoutDashboard,
-  Home, DownloadCloud, MoreHorizontal, ScissorsLineDashed, HelpingHand, FileText, MessageSquare, Briefcase, BookOpen, FileQuestion, ListChecks, Bell
+  Home, DownloadCloud, MoreHorizontal, ScissorsLineDashed, HelpingHand, FileText, MessageSquare, Briefcase, BookOpen, FileQuestion, ListChecks, Bell, LogIn,
+  Gift, History, Newspaper, CalendarDays // Added Gift, History, Newspaper, CalendarDays
 } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle as RadixSheetTitle } from '@/components/ui/sheet'; // Added SheetTrigger here
+import { Sheet, SheetContent, SheetTrigger, SheetTitle as RadixSheetTitle } from '@/components/ui/sheet';
 import React, { useEffect, useState } from 'react';
-import Image from 'next/image'; // Keep for logo if needed
 
 const primaryNavLinks = [
   { href: '/', labelKey: 'navHome', icon: Home, adminOnly: false },
@@ -26,18 +26,18 @@ const primaryNavLinks = [
 const secondaryNavLinks = [
   { href: '/premium-courses', labelKey: 'paidCourses', icon: Star, adminOnly: false },
   { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck, adminOnly: false },
-  { href: '/free-courses', labelKey: 'freeCourses', icon: GraduationCap, adminOnly: false },
-  { href: '/tests', labelKey: 'previousPapersNav', icon: BookText, adminOnly: false },
-  { href: '/current-affairs', labelKey: 'currentAffairs', icon: BookText, adminOnly: false },
+  { href: '/free-courses', labelKey: 'freeCourses', icon: Gift, adminOnly: false },
+  { href: '/tests', labelKey: 'previousPapersNav', icon: History, adminOnly: false },
+  { href: '/current-affairs', labelKey: 'currentAffairs', icon: Newspaper, adminOnly: false },
   { href: '/quiz', labelKey: 'navQuiz', icon: FileQuestion, adminOnly: false },
   { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks, adminOnly: false },
   { href: '/study-books', labelKey: 'ourBooks', icon: BookOpen, adminOnly: false },
   { href: '/job-alerts', labelKey: 'navJobAlerts', icon: Briefcase, adminOnly: false },
-  { href: '/schedule', labelKey: 'navSchedule', icon: BookText, adminOnly: false },
+  { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays, adminOnly: false },
   { href: '/videos', labelKey: 'navVideos', icon: PlaySquare, adminOnly: false },
   { href: '/scholarship', labelKey: 'navScholarship', icon: Users, adminOnly: false },
   { href: '/sainik-school-course', labelKey: 'navSainikSchoolCourse', icon: GraduationCap, adminOnly: false },
-  { href: '/military-school-course', labelKey: 'navMilitarySchoolCourse', icon: GraduationCap, adminOnly: false },
+  { href: '/military-school-course', labelKey: 'navMilitarySchoolCourse', icon: ShieldCheck, adminOnly: false },
   { href: '/ai-tutor', labelKey: 'navAITutor', icon: Cpu, adminOnly: false },
   { href: '/cutoff-checker', labelKey: 'navCutOffChecker', icon: ScissorsLineDashed, adminOnly: false },
   { href: '/chance-checking', labelKey: 'navChanceChecking', icon: HelpingHand, adminOnly: false },
@@ -66,7 +66,7 @@ export function Header() {
       const adminStatus = localStorage.getItem(ADMIN_LOGGED_IN_KEY) === 'true';
       setIsAdminLoggedIn(adminStatus);
     }
-  }, [pathname]); 
+  }, [pathname]);
 
   const handleAdminLogout = () => {
     if (typeof window !== 'undefined') {
@@ -74,23 +74,22 @@ export function Header() {
     }
     setIsAdminLoggedIn(false);
     setIsMobileMenuOpen(false);
-    router.push('/'); 
-    router.refresh(); 
+    router.push('/');
+    router.refresh();
   };
   
   const allMobileNavLinks = [
     ...primaryNavLinks,
-    ...secondaryNavLinks.filter(link => !primaryNavLinks.some(pLink => pLink.href === link.href && pLink.labelKey === link.labelKey)), 
+    ...secondaryNavLinks.filter(link => !primaryNavLinks.some(pLink => pLink.href === link.href && pLink.labelKey === link.labelKey)),
     ...(isClient && isAdminLoggedIn ? adminConsoleNavLinks : [])
   ]
-  .filter(link => (!link.adminOnly || (link.adminOnly && isAdminLoggedIn)))
-  .filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === link.labelKey)); 
+  .filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === link.labelKey));
+
 
   const uniqueSecondaryLinksForDesktop = secondaryNavLinks.filter(
     link => !primaryNavLinks.some(pLink => pLink.href === link.href && pLink.labelKey === link.labelKey)
   )
-  .filter(link => (!link.adminOnly || (link.adminOnly && isAdminLoggedIn)))
-  .filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === link.labelKey)); 
+  .filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === link.labelKey));
 
 
   return (
@@ -138,6 +137,13 @@ export function Header() {
                       </Button>
                     )
                   }
+                  {isClient && !isAdminLoggedIn && (
+                     <Button variant="outline" className="w-full justify-start" asChild>
+                        <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                          <LogIn className="mr-2 h-5 w-5" /> {t('adminLoginNav')}
+                        </Link>
+                      </Button>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>
@@ -150,7 +156,6 @@ export function Header() {
 
         <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
           {primaryNavLinks
-            .filter(link => (!link.adminOnly || (link.adminOnly && isAdminLoggedIn)))
             .map((link) => (
             <Link
               key={`${link.href}-desktop-primary-${link.labelKey}`}
@@ -220,17 +225,21 @@ export function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
           
-          <div className="hidden md:flex">
-            {isClient && isAdminLoggedIn && (
-                <Button variant="outline" size="sm" onClick={handleAdminLogout} className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
-                  <LogOut className="mr-2 h-4 w-4" /> {t('adminLogout')}
-                </Button>
-              )
-            }
-          </div>
+          {isClient && (
+            isAdminLoggedIn ? (
+              <Button variant="outline" size="sm" onClick={handleAdminLogout} className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
+                <LogOut className="mr-2 h-4 w-4" /> {t('adminLogout')}
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/login">
+                  <LogIn className="mr-2 h-4 w-4" /> {t('adminLoginNav')}
+                </Link>
+              </Button>
+            )
+          )}
         </div>
       </div>
     </header>
   );
 }
-

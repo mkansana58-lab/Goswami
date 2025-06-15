@@ -29,7 +29,7 @@ type ScholarshipFormValues = z.infer<ReturnType<typeof formSchemaDefinition>>;
 export default function ScholarshipPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Changed from isLoading to isSubmitting for clarity
   
   const currentFormSchema = formSchemaDefinition(t);
 
@@ -45,7 +45,7 @@ export default function ScholarshipPage() {
   });
 
   const onSubmit: SubmitHandler<ScholarshipFormValues> = async (data) => {
-    setIsLoading(true);
+    setIsSubmitting(true);
     try {
       const newRegistration = {
         ...data,
@@ -59,15 +59,15 @@ export default function ScholarshipPage() {
         description: t('registrationSuccessMessage'),
       });
       form.reset();
-    } catch (error) {
+    } catch (error: any) { // Catch specific error type
       console.error("Error adding document to Firestore: ", error);
       toast({
         title: t('errorOccurred'),
-        description: "Could not save registration. Please try again. Check console for details.",
+        description: `${t('saveErrorDetails') || "Could not save registration."} ${error.message || "Please try again."}`,
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false); // Ensure this is always called
     }
   };
 
@@ -146,8 +146,8 @@ export default function ScholarshipPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg h-14" disabled={isLoading}>
-                {isLoading ? (
+              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg h-14" disabled={isSubmitting}>
+                {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     {t('loading')}
@@ -161,3 +161,5 @@ export default function ScholarshipPage() {
     </div>
   );
 }
+
+    
