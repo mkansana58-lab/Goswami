@@ -1,13 +1,4 @@
 
-"use client";
-import { useContext } from 'react';
-// Correct the import path if AuthContext is in src/contexts/auth-context.tsx
-import { AuthContext } from '@/contexts/auth-context'; 
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+// This file is intentionally left blank as it has been removed.
+// This hook was used for the student authentication context which is no longer needed.
+// Admin access is managed via a localStorage key 'ADMIN_LOGGED_IN_KEY'.

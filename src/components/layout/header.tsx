@@ -5,53 +5,49 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import {
-  BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, Tv2, LogIn, LogOut, LayoutDashboard,
-  Home, DownloadCloud, MoreHorizontal, ScissorsLineDashed, HelpingHand, FileText, MessageSquare, Briefcase, BookOpen, FileQuestion, ListChecks, Info, Bell,
-  ShoppingBag, Gift, Newspaper, History, UserCircle
+  BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, Tv2, LogOut, LayoutDashboard,
+  Home, DownloadCloud, MoreHorizontal, ScissorsLineDashed, HelpingHand, FileText, MessageSquare, Briefcase, BookOpen, FileQuestion, ListChecks, Bell
 } from 'lucide-react';
-import { Sheet, SheetContent, SheetTitle as RadixSheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle as RadixSheetTitle } from '@/components/ui/sheet'; // Added SheetTrigger here
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import Image from 'next/image';
+import Image from 'next/image'; // Keep for logo if needed
 
 const primaryNavLinks = [
-  { href: '/', labelKey: 'navHome', icon: Home, adminOnly: false, studentOnly: false },
-  { href: '/my-course', labelKey: 'navMyCourse', icon: GraduationCap, adminOnly: false, studentOnly: true },
-  { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2, adminOnly: false, studentOnly: false },
-  { href: '/downloads', labelKey: 'navDownloads', icon: DownloadCloud, adminOnly: false, studentOnly: false },
+  { href: '/', labelKey: 'navHome', icon: Home, adminOnly: false },
+  { href: '/my-course', labelKey: 'navMyCourse', icon: GraduationCap, adminOnly: false },
+  { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2, adminOnly: false },
+  { href: '/downloads', labelKey: 'navDownloads', icon: DownloadCloud, adminOnly: false },
 ];
 
 const secondaryNavLinks = [
-  { href: '/premium-courses', labelKey: 'paidCourses', icon: ShoppingBag, adminOnly: false, studentOnly: false },
-  { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck, adminOnly: false, studentOnly: false },
-  { href: '/free-courses', labelKey: 'freeCourses', icon: Gift, adminOnly: false, studentOnly: false },
-  { href: '/tests', labelKey: 'previousPapersNav', icon: History, adminOnly: false, studentOnly: false }, 
-  { href: '/current-affairs', labelKey: 'currentAffairs', icon: Newspaper, adminOnly: false, studentOnly: false },
-  { href: '/quiz', labelKey: 'navQuiz', icon: FileQuestion, adminOnly: false, studentOnly: false },
-  { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks, adminOnly: false, studentOnly: false },
-  { href: '/study-books', labelKey: 'ourBooks', icon: BookOpen, adminOnly: false, studentOnly: false },
-  { href: '/job-alerts', labelKey: 'navJobAlerts', icon: Briefcase, adminOnly: false, studentOnly: false },
-  { href: '/schedule', labelKey: 'navSchedule', icon: BookText, adminOnly: false, studentOnly: false },
-  { href: '/videos', labelKey: 'navVideos', icon: PlaySquare, adminOnly: false, studentOnly: false },
-  { href: '/scholarship', labelKey: 'navScholarship', icon: Users, adminOnly: false, studentOnly: false },
-  { href: '/sainik-school-course', labelKey: 'navSainikSchoolCourse', icon: GraduationCap, adminOnly: false, studentOnly: false },
-  { href: '/military-school-course', labelKey: 'navMilitarySchoolCourse', icon: GraduationCap, adminOnly: false, studentOnly: false },
-  { href: '/ai-tutor', labelKey: 'navAITutor', icon: Cpu, adminOnly: false, studentOnly: false },
-  { href: '/cutoff-checker', labelKey: 'navCutOffChecker', icon: ScissorsLineDashed, adminOnly: false, studentOnly: false },
-  { href: '/chance-checking', labelKey: 'navChanceChecking', icon: HelpingHand, adminOnly: false, studentOnly: false },
-  { href: '/study-material', labelKey: 'navStudyMaterial', icon: FileText, adminOnly: false, studentOnly: false },
-  { href: '/chat', labelKey: 'navChat', icon: MessageSquare, adminOnly: false, studentOnly: true },
+  { href: '/premium-courses', labelKey: 'paidCourses', icon: Star, adminOnly: false },
+  { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck, adminOnly: false },
+  { href: '/free-courses', labelKey: 'freeCourses', icon: GraduationCap, adminOnly: false },
+  { href: '/tests', labelKey: 'previousPapersNav', icon: BookText, adminOnly: false },
+  { href: '/current-affairs', labelKey: 'currentAffairs', icon: BookText, adminOnly: false },
+  { href: '/quiz', labelKey: 'navQuiz', icon: FileQuestion, adminOnly: false },
+  { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks, adminOnly: false },
+  { href: '/study-books', labelKey: 'ourBooks', icon: BookOpen, adminOnly: false },
+  { href: '/job-alerts', labelKey: 'navJobAlerts', icon: Briefcase, adminOnly: false },
+  { href: '/schedule', labelKey: 'navSchedule', icon: BookText, adminOnly: false },
+  { href: '/videos', labelKey: 'navVideos', icon: PlaySquare, adminOnly: false },
+  { href: '/scholarship', labelKey: 'navScholarship', icon: Users, adminOnly: false },
+  { href: '/sainik-school-course', labelKey: 'navSainikSchoolCourse', icon: GraduationCap, adminOnly: false },
+  { href: '/military-school-course', labelKey: 'navMilitarySchoolCourse', icon: GraduationCap, adminOnly: false },
+  { href: '/ai-tutor', labelKey: 'navAITutor', icon: Cpu, adminOnly: false },
+  { href: '/cutoff-checker', labelKey: 'navCutOffChecker', icon: ScissorsLineDashed, adminOnly: false },
+  { href: '/chance-checking', labelKey: 'navChanceChecking', icon: HelpingHand, adminOnly: false },
+  { href: '/study-material', labelKey: 'navStudyMaterial', icon: FileText, adminOnly: false },
+  { href: '/chat', labelKey: 'navChat', icon: MessageSquare, adminOnly: false },
 ];
 
 const adminConsoleNavLinks = [
-  { href: '/admin', labelKey: 'navAdminPanel', icon: LayoutDashboard, adminOnly: true, studentOnly: false },
-  { href: '/registrations', labelKey: 'navViewRegistrations', icon: ClipboardList, adminOnly: true, studentOnly: false },
+  { href: '/admin', labelKey: 'navAdminPanel', icon: LayoutDashboard, adminOnly: true },
+  { href: '/registrations', labelKey: 'navViewRegistrations', icon: ClipboardList, adminOnly: true },
 ];
 
 const ADMIN_LOGGED_IN_KEY = 'adminLoggedInGoSwami';
@@ -63,7 +59,6 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const { user: studentUser, studentData, setStudentData } = useAuth();
 
   useEffect(() => {
     setIsClient(true);
@@ -71,7 +66,7 @@ export function Header() {
       const adminStatus = localStorage.getItem(ADMIN_LOGGED_IN_KEY) === 'true';
       setIsAdminLoggedIn(adminStatus);
     }
-  }, [pathname, studentUser]); 
+  }, [pathname]); 
 
   const handleAdminLogout = () => {
     if (typeof window !== 'undefined') {
@@ -82,34 +77,19 @@ export function Header() {
     router.push('/'); 
     router.refresh(); 
   };
-
-  const handleStudentLogout = async () => {
-    await signOut(auth);
-    setStudentData(null);
-    setIsMobileMenuOpen(false);
-    router.push('/'); 
-    router.refresh();
-  };
-
-  const handleLoginNav = (path: string) => {
-    setIsMobileMenuOpen(false);
-    router.push(path);
-  }
-
+  
   const allMobileNavLinks = [
     ...primaryNavLinks,
     ...secondaryNavLinks.filter(link => !primaryNavLinks.some(pLink => pLink.href === link.href && pLink.labelKey === link.labelKey)), 
     ...(isClient && isAdminLoggedIn ? adminConsoleNavLinks : [])
   ]
   .filter(link => (!link.adminOnly || (link.adminOnly && isAdminLoggedIn)))
-  .filter(link => (!link.studentOnly || (link.studentOnly && studentUser)))
   .filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === link.labelKey)); 
 
   const uniqueSecondaryLinksForDesktop = secondaryNavLinks.filter(
     link => !primaryNavLinks.some(pLink => pLink.href === link.href && pLink.labelKey === link.labelKey)
   )
   .filter(link => (!link.adminOnly || (link.adminOnly && isAdminLoggedIn)))
-  .filter(link => (!link.studentOnly || (link.studentOnly && studentUser)))
   .filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === link.labelKey)); 
 
 
@@ -150,39 +130,14 @@ export function Header() {
                         {t(link.labelKey as any)}
                       </Link>
                   ))}
-                   {isClient && studentUser && (
-                    <Link
-                        key="mobile-profile"
-                        href="/profile"
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium transition-colors hover:bg-sidebar-accent/10",
-                          pathname === "/profile" ? "bg-sidebar-accent/20 text-sidebar-primary font-semibold" : "text-sidebar-foreground"
-                        )}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        <UserCircle className="h-5 w-5 text-sidebar-primary" />
-                        {t('profileNav')}
-                      </Link>
-                   )}
                 </div>
                 <div className="p-4 border-t border-sidebar-border space-y-2">
-                   {isClient && (
-                    studentUser ? (
-                      <Button variant="outline" className="w-full justify-start flex items-center gap-3 text-base font-medium border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground" onClick={handleStudentLogout}>
-                        <LogOut className="h-5 w-5" /> {t('logoutButton')}
-                      </Button>
-                    ) : isAdminLoggedIn ? (
+                   {isClient && isAdminLoggedIn && (
                       <Button variant="outline" className="w-full justify-start flex items-center gap-3 text-base font-medium border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground" onClick={handleAdminLogout}>
                         <LogOut className="h-5 w-5" /> {t('adminLogout')}
                       </Button>
-                    ) : (
-                      <>
-                        <Button variant="default" className="w-full justify-start flex items-center gap-3 text-base font-medium bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => handleLoginNav('/student-login')}>
-                          <LogIn className="h-5 w-5" /> {t('studentLoginNav')}
-                        </Button>
-                      </>
                     )
-                  )}
+                  }
                 </div>
               </SheetContent>
             </Sheet>
@@ -196,7 +151,6 @@ export function Header() {
         <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
           {primaryNavLinks
             .filter(link => (!link.adminOnly || (link.adminOnly && isAdminLoggedIn)))
-            .filter(link => (!link.studentOnly || (link.studentOnly && studentUser)))
             .map((link) => (
             <Link
               key={`${link.href}-desktop-primary-${link.labelKey}`}
@@ -267,44 +221,16 @@ export function Header() {
           </DropdownMenu>
           
           <div className="hidden md:flex">
-            {isClient && (
-              studentUser ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                       <Image 
-                        src={studentData?.photoURL || studentUser.photoURL || "https://placehold.co/32x32.png"}
-                        alt="User Profile"
-                        width={32}
-                        height={32}
-                        className="rounded-full object-cover border-2 border-primary/50"
-                        data-ai-hint="avatar person"
-                       />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile">{t('profileNav')}</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleStudentLogout} className="text-destructive focus:text-destructive-foreground focus:bg-destructive">
-                      {t('logoutButton')}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : isAdminLoggedIn ? (
+            {isClient && isAdminLoggedIn && (
                 <Button variant="outline" size="sm" onClick={handleAdminLogout} className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
                   <LogOut className="mr-2 h-4 w-4" /> {t('adminLogout')}
                 </Button>
-              ) : (
-                 <Button variant="outline" size="sm" onClick={() => handleLoginNav('/student-login')}>
-                    <LogIn className="mr-2 h-4 w-4" /> {t('studentLoginNav')}
-                 </Button>
               )
-            )}
+            }
           </div>
         </div>
       </div>
     </header>
   );
 }
+

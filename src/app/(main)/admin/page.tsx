@@ -37,8 +37,6 @@ export default function AdminPanelPage() {
     if (typeof window !== 'undefined') {
       const isAdminLoggedIn = localStorage.getItem(ADMIN_LOGGED_IN_KEY) === 'true';
       if (!isAdminLoggedIn) {
-        // If not authorized, don't redirect. Just show the access denied message.
-        // The mechanism to log in as admin is now external.
         setIsAuthorized(false); 
       } else {
         setIsAuthorized(true);
@@ -68,8 +66,7 @@ export default function AdminPanelPage() {
                 <CardContent>
                     <p>{t('accessDeniedMessage')}</p>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {/* Admin login mechanism is now external. Provide guidance if necessary. */}
-                      To access this panel, ensure you are logged in as an administrator through the designated portal.
+                      To access this panel, ensure you are logged in as an administrator through the designated portal or by setting the appropriate local storage key.
                     </p>
                 </CardContent>
             </Card>
