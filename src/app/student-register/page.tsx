@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, UserPlus, LogIn } from 'lucide-react';
+import { AlertTriangle, UserPlus, Loader2 } from 'lucide-react';
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, Timestamp, getDoc } from 'firebase/firestore';
@@ -61,7 +61,18 @@ export default function StudentRegisterPage() {
         displayName: user.displayName || additionalData?.displayName || "New User",
         photoURL: user.photoURL || null,
         createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       });
+    } else {
+      // If user doc exists, perhaps update displayName if it changed or wasn't set
+      const updateData: { displayName?: string; photoURL?: string | null; updatedAt: Timestamp } = { updatedAt: Timestamp.now() };
+      if (user.displayName && user.displayName !== userDocSnap.data()?.displayName) {
+        updateData.displayName = user.displayName;
+      }
+      if (user.photoURL && user.photoURL !== userDocSnap.data()?.photoURL) {
+        updateData.photoURL = user.photoURL;
+      }
+      await setDoc(userDocRef, updateData, { merge: true });
     }
     toast({ title: t('registrationSuccess') });
     router.push('/profile');
@@ -75,8 +86,10 @@ export default function StudentRegisterPage() {
       await updateProfile(userCredential.user, { displayName: data.displayName });
       await handleUserCreation(userCredential.user, { displayName: data.displayName });
     } catch (error: any) {
-      setAuthError(error.message);
-      toast({ title: t('errorOccurred'), description: error.message, variant: "destructive" });
+      console.error("Firebase Registration Error:", error);
+      const errorMessage = error.code ? `${error.message} (Code: ${error.code})` : error.message;
+      setAuthError(errorMessage);
+      toast({ title: t('errorOccurred'), description: errorMessage, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -90,8 +103,10 @@ export default function StudentRegisterPage() {
       const result = await signInWithPopup(auth, provider);
       await handleUserCreation(result.user);
     } catch (error: any) {
-      setAuthError(error.message);
-      toast({ title: t('errorOccurred'), description: error.message, variant: "destructive" });
+      console.error("Google Sign-In Error (Register):", error);
+      const errorMessage = error.code ? `${error.message} (Code: ${error.code})` : error.message;
+      setAuthError(errorMessage);
+      toast({ title: t('errorOccurred'), description: errorMessage, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -170,6 +185,7 @@ export default function StudentRegisterPage() {
                 )}
               />
               <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={isLoading}>
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" /> }
                 {isLoading ? t('loading') : t('registerButton')}
               </Button>
             </form>
@@ -185,14 +201,21 @@ export default function StudentRegisterPage() {
             </div>
           </div>
           <Button variant="outline" className="w-full mt-4" onClick={handleGoogleSignIn} disabled={isLoading}>
-             {/* Could add Google icon here */}
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
+              <svg role="img" viewBox="0 0 24 24" className="mr-2 h-4 w-4"><path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.02h-2.75v2.03h4.41c1.87-1.68 2.66-4.36 2.66-7.21 0-.6-.05-1.18-.15-1.73H12.48zM1.07 22.05A12 12 0 0012.02 24c3.23 0 5.97-1.08 7.95-2.92l-4.41-2.03v-.01c-1.17.82-2.63 1.3-4.24 1.3-3.35 0-6.19-2.26-7.21-5.31H1.07v2.03zM12.02 0A12 12 0 001.37 3.02l3.34 2.54A7.17 7.17 0 0112.02 3c1.91 0 3.58.66 4.92 1.92L20.5 1.4A11.97 11.97 0 0012.02 0z"></path></svg>
+            )}
             {isLoading ? t('loading') : t('continueWithGoogle')}
           </Button>
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            {t('alreadyHaveAccount')} <Link href="/student-login" className="font-semibold text-primary hover:underline">{t('loginButton')}</Link>
+            {t('alreadyHaveAccount')}{' '}
+            <Link href="/student-login" className="font-semibold text-primary hover:underline">
+              {t('loginButton')}
+            </Link>
           </p>
         </CardContent>
       </Card>
     </div>
   );
 }
+
+    

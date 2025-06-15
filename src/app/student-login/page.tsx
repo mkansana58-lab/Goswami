@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, LogIn } from 'lucide-react';
+import { AlertTriangle, LogIn, Loader2 } from 'lucide-react';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, Timestamp, getDoc } from 'firebase/firestore';
@@ -44,23 +44,23 @@ export default function StudentLoginPage() {
   });
 
   const handleUserLoginSuccess = async (user: import('firebase/auth').User) => {
-    // Ensure user profile exists in Firestore, especially for Google Sign-In
     const userDocRef = doc(db, "students", user.uid);
     const userDocSnap = await getDoc(userDocRef);
 
     if (!userDocSnap.exists()) {
-      // This case is more relevant for Google Sign-in where a user might log in
-      // without having gone through the app's specific registration flow that creates the doc.
       await setDoc(userDocRef, {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName || "New User",
         photoURL: user.photoURL || null,
         createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       });
+    } else {
+      await setDoc(userDocRef, { updatedAt: Timestamp.now() }, { merge: true });
     }
     toast({ title: t('loginSuccess') });
-    router.push('/profile'); // Or homepage
+    router.push('/profile'); 
   };
 
   const onSubmit: SubmitHandler<LoginFormValues> = async (data) => {
@@ -70,8 +70,10 @@ export default function StudentLoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       await handleUserLoginSuccess(userCredential.user);
     } catch (error: any) {
-      setAuthError(error.message);
-      toast({ title: t('errorOccurred'), description: error.message, variant: "destructive" });
+      console.error("Firebase Login Error:", error);
+      const errorMessage = error.code ? `${error.message} (Code: ${error.code})` : error.message;
+      setAuthError(errorMessage);
+      toast({ title: t('errorOccurred'), description: errorMessage, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -85,8 +87,10 @@ export default function StudentLoginPage() {
       const result = await signInWithPopup(auth, provider);
       await handleUserLoginSuccess(result.user);
     } catch (error: any) {
-      setAuthError(error.message);
-      toast({ title: t('errorOccurred'), description: error.message, variant: "destructive" });
+      console.error("Google Sign-In Error:", error);
+      const errorMessage = error.code ? `${error.message} (Code: ${error.code})` : error.message;
+      setAuthError(errorMessage);
+      toast({ title: t('errorOccurred'), description: errorMessage, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -139,6 +143,7 @@ export default function StudentLoginPage() {
                 )}
               />
               <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" /> }
                 {isLoading ? t('loading') : t('loginButton')}
               </Button>
             </form>
@@ -154,7 +159,9 @@ export default function StudentLoginPage() {
             </div>
           </div>
           <Button variant="outline" className="w-full mt-4" onClick={handleGoogleSignIn} disabled={isLoading}>
-            {/* Could add Google icon here */}
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
+              <svg role="img" viewBox="0 0 24 24" className="mr-2 h-4 w-4"><path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.02h-2.75v2.03h4.41c1.87-1.68 2.66-4.36 2.66-7.21 0-.6-.05-1.18-.15-1.73H12.48zM1.07 22.05A12 12 0 0012.02 24c3.23 0 5.97-1.08 7.95-2.92l-4.41-2.03v-.01c-1.17.82-2.63 1.3-4.24 1.3-3.35 0-6.19-2.26-7.21-5.31H1.07v2.03zM12.02 0A12 12 0 001.37 3.02l3.34 2.54A7.17 7.17 0 0112.02 3c1.91 0 3.58.66 4.92 1.92L20.5 1.4A11.97 11.97 0 0012.02 0z"></path></svg>
+            )}
             {isLoading ? t('loading') : t('continueWithGoogle')}
           </Button>
            <p className="mt-6 text-center text-sm text-muted-foreground">
@@ -168,3 +175,5 @@ export default function StudentLoginPage() {
     </div>
   );
 }
+
+    
