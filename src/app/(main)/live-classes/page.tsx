@@ -50,7 +50,7 @@ const formSchemaDefinition = (t: (key: string) => string) => z.object({
 type LiveClassFormValues = z.infer<ReturnType<typeof formSchemaDefinition>>;
 
 export default function LiveClassesPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { toast } = useToast();
   const [liveClasses, setLiveClasses] = useState<LiveClass[]>([]);
   const [showAdminFeatures, setShowAdminFeatures] = useState(false);
@@ -101,7 +101,7 @@ export default function LiveClassesPage() {
       console.error("Error fetching live classes from Firestore:", error);
       toast({
         title: t('errorOccurred'),
-        description: "Failed to load live classes.",
+        description: "Failed to load live classes. Check console for details. Ensure Firebase is configured correctly and security rules allow reads.",
         variant: "destructive",
       });
     } finally {
@@ -113,6 +113,7 @@ export default function LiveClassesPage() {
     if (isClient) {
       fetchLiveClasses();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isClient]);
 
 
@@ -122,7 +123,6 @@ export default function LiveClassesPage() {
     try {
       const [year, month, day] = data.date.split('-').map(Number);
       const [hours, minutes] = data.time.split(':').map(Number);
-      // Note: JavaScript months are 0-indexed (0 for January, 11 for December)
       const scheduledDate = new Date(year, month - 1, day, hours, minutes);
       
       const newClass = {
@@ -138,12 +138,12 @@ export default function LiveClassesPage() {
         title: t('liveClassAddedSuccess'),
       });
       form.reset();
-      fetchLiveClasses(); // Refresh the list
+      fetchLiveClasses(); 
     } catch (error) {
       console.error("Error adding live class to Firestore: ", error);
       toast({
         title: t('errorOccurred'),
-        description: "Could not save live class. Please try again.",
+        description: "Could not save live class. Check console for details. Ensure Firebase is configured and security rules allow writes.",
         variant: "destructive",
       });
     } finally {
@@ -158,18 +158,18 @@ export default function LiveClassesPage() {
       toast({
         title: t('itemDeletedSuccess'),
       });
-      fetchLiveClasses(); // Refresh the list
+      fetchLiveClasses(); 
     } catch (error) {
       console.error("Error deleting live class from Firestore: ", error);
       toast({
         title: t('errorOccurred'),
-        description: "Could not delete live class. Please try again.",
+        description: "Could not delete live class. Check console for details.",
         variant: "destructive",
       });
     }
   };
 
-  if (!isClient || isLoadingClasses) {
+  if (!isClient || (isLoadingClasses && liveClasses.length === 0)) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -281,7 +281,12 @@ export default function LiveClassesPage() {
           )}
 
           <h2 className="text-2xl font-bold font-headline text-primary mb-4">{t('upcomingLiveClasses')}</h2>
-          {liveClasses.length > 0 ? (
+          {isLoadingClasses && liveClasses.length === 0 ? (
+             <div className="flex justify-center items-center py-6">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="ml-2">{t('loading')}</p>
+            </div>
+          ) : liveClasses.length > 0 ? (
             <div className="space-y-4">
               {liveClasses.map((liveClass) => (
                 <Card key={liveClass.id} className="shadow-md hover:shadow-lg transition-shadow">
@@ -339,5 +344,3 @@ export default function LiveClassesPage() {
     </div>
   );
 }
-
-    
