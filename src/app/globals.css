@@ -7,54 +7,54 @@
     --background: 0 0% 100%; /* White #FFFFFF */
     --foreground: 0 0% 13%; /* Near Black #212121 */
 
-    /* A more vibrant and diverse palette */
-    --muted: 210 40% 96.1%; /* Lighter Cool Gray */
-    --muted-foreground: 215.4 16.3% 46.9%; /* Cool Gray */
+    --muted: 220 14% 96%; /* Light Gray */
+    --muted-foreground: 220 9% 45%; /* Gray */
 
     --popover: 0 0% 100%; 
     --popover-foreground: 0 0% 13%; 
 
-    --card: 0 0% 100%;
+    --card: 0 0% 100%; /* White cards */
     --card-foreground: 0 0% 13%; 
 
-    --border: 214.3 31.8% 91.4%; /* Light Gray */
-    --input: 214.3 31.8% 91.4%; 
+    --border: 220 13% 91%; /* Light Gray */
+    --input: 220 13% 91%; 
 
-    /* Primary: A vibrant blue */
-    --primary: 210 90% 50%; /* Bright Blue */
+    /* Primary: Red from user #E71D26 -> HSL 357, 80%, 51% */
+    --primary: 357 80% 51%;
     --primary-foreground: 0 0% 100%; /* White text on primary */
 
-    /* Secondary: A complementary teal or green */
-    --secondary: 170 70% 45%; /* Tealish Green */
+    /* Secondary: Dark Blue from user #003DA5 -> HSL 217, 100%, 32% */
+    --secondary: 217 100% 32%;
     --secondary-foreground: 0 0% 100%; /* White text on secondary */
 
-    /* Accent: A bright, attention-grabbing orange or yellow */
-    --accent: 35 100% 55%; /* Bright Orange/Yellow */
+    /* Accent: Yellow from user #FFD500 -> HSL 50, 100%, 50% */
+    --accent: 50 100% 50%;
     --accent-foreground: 0 0% 13%; /* Dark text on accent for contrast */
 
-    --destructive: 0 72.2% 50.6%; /* Red */
-    --destructive-foreground: 0 0% 100%; /* White text on destructive */
+    /* Destructive: Also Red, same as primary */
+    --destructive: 357 80% 51%; 
+    --destructive-foreground: 0 0% 100%;
 
-    --ring: 210 90% 50%; /* Bright Blue for focus rings */
+    --ring: 357 80% 65%; /* Lighter Red for focus rings */
 
     --radius: 0.75rem; /* Slightly more rounded corners */
 
-    /* Chart colors can be diversified too if charts are used */
-    --chart-1: 210 90% 50%; /* Bright Blue */
-    --chart-2: 35 100% 55%;  /* Bright Orange/Yellow */
-    --chart-3: 0 72.2% 50.6%; /* Red */
-    --chart-4: 170 70% 45%;  /* Tealish Green */
-    --chart-5: 260 80% 60%;    /* Purple - if needed */
+    /* Chart colors based on new theme */
+    --chart-1: 357 80% 51%; /* Red (Primary) */
+    --chart-2: 217 100% 32%; /* Dark Blue (Secondary) */
+    --chart-3: 50 100% 50%;  /* Yellow (Accent) */
+    --chart-4: 170 70% 45%;  /* A contrasting Tealish Green if needed */
+    --chart-5: 260 80% 60%;    /* A contrasting Purple if needed */
 
-    /* Sidebar theme can remain relatively neutral or adopt new primary/accent */
-    --sidebar-background: 220 25% 97%; 
-    --sidebar-foreground: 220 10% 25%;
-    --sidebar-primary: 210 90% 50%; /* Using new primary */
+    /* Sidebar theme using new colors */
+    --sidebar-background: 220 25% 97%; /* Light gray */
+    --sidebar-foreground: 0 0% 13%; /* Dark text */
+    --sidebar-primary: 357 80% 51%; /* Red */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 35 100% 55%; /* Using new accent */
+    --sidebar-accent: 50 100% 50%; /* Yellow */
     --sidebar-accent-foreground: 0 0% 13%;
     --sidebar-border: 220 20% 85%;
-    --sidebar-ring: 210 90% 50%;
+    --sidebar-ring: 357 80% 65%;
   }
 
   .dark {
@@ -74,34 +74,38 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
 
-    --primary: 210 80% 65%; /* Lighter Bright Blue for dark mode */
-    --primary-foreground: 222.2 47.4% 11.2%; /* Dark text on primary */
+    /* Primary: Red (needs to be lighter for dark mode) */
+    --primary: 357 90% 65%; 
+    --primary-foreground: 0 0% 100%; 
 
-    --secondary: 170 60% 55%; /* Lighter Tealish Green */
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary: Dark Blue (needs to be lighter for dark mode) */
+    --secondary: 217 80% 55%; 
+    --secondary-foreground: 0 0% 100%;
 
-    --accent: 35 90% 60%; /* Lighter Bright Orange/Yellow */
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent: Yellow (can be slightly toned down or kept vibrant) */
+    --accent: 50 90% 60%; 
+    --accent-foreground: 0 0% 13%;
 
-    --destructive: 0 62.8% 50.6%; /* Red */
-    --destructive-foreground: 210 40% 98%;
+    /* Destructive: Red (lighter for dark mode) */
+    --destructive: 357 90% 65%;
+    --destructive-foreground: 0 0% 100%;
     
-    --ring: 210 80% 65%;
+    --ring: 357 90% 70%; /* Lighter Red for focus rings */
 
-    --chart-1: 210 80% 65%;
-    --chart-2: 35 90% 60%;
-    --chart-3: 0 62.8% 50.6%;
+    --chart-1: 357 90% 65%;
+    --chart-2: 217 80% 55%;
+    --chart-3: 50 90% 60%;
     --chart-4: 170 60% 55%;
     --chart-5: 260 70% 65%;
 
-    --sidebar-background: 222.2 47.4% 10.2%; 
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 210 80% 65%;
-    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
-    --sidebar-accent: 35 90% 60%;
-    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 210 80% 65%;
+    --sidebar-background: 222.2 40% 15%; 
+    --sidebar-foreground: 210 30% 90%;
+    --sidebar-primary: 357 90% 65%;   
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 50 90% 60%;    
+    --sidebar-accent-foreground: 0 0% 13%;
+    --sidebar-border: 217.2 32.6% 25%;    
+    --sidebar-ring: 357 90% 70%;
   }
 }
 
