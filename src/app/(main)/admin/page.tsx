@@ -136,3 +136,5 @@ export default function AdminPanelPage() {
 // manageCourses: "Manage Courses"
 // adminMustLoginViaDedicatedPage: "Please log in as an administrator via the admin login page to access this panel."
 // (And ensure all the managementNoteKeys like adminManageSyllabusNote are in translations.ts)
+
+    
