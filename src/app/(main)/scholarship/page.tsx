@@ -12,7 +12,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from 'react';
+import { db } from '@/lib/firebase'; // Import Firestore instance
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
+
 
 const formSchemaDefinition = (t: (key: string) => string) => z.object({
   studentName: z.string().min(2, { message: t('studentNameValidation') || "Name must be at least 2 characters." }),
@@ -23,8 +26,6 @@ const formSchemaDefinition = (t: (key: string) => string) => z.object({
 });
 
 type ScholarshipFormValues = z.infer<ReturnType<typeof formSchemaDefinition>>;
-
-const LOCAL_STORAGE_KEY = 'scholarshipRegistrations';
 
 export default function ScholarshipPage() {
   const { t } = useLanguage();
@@ -43,19 +44,15 @@ export default function ScholarshipPage() {
     },
   });
 
-  const onSubmit: SubmitHandler<ScholarshipFormValues> = (data) => {
+  const onSubmit: SubmitHandler<ScholarshipFormValues> = async (data) => {
     try {
-      const existingRegistrationsString = localStorage.getItem(LOCAL_STORAGE_KEY);
-      const existingRegistrations: ScholarshipFormValues[] = existingRegistrationsString ? JSON.parse(existingRegistrationsString) : [];
-      
       const newRegistration = {
         ...data,
-        id: `reg${Date.now()}${Math.floor(Math.random() * 1000)}`, // Simple unique ID
-        registrationDate: new Date().toISOString().split('T')[0] // YYYY-MM-DD
+        registrationDate: Timestamp.fromDate(new Date()), // Use Firestore Timestamp
       };
 
-      existingRegistrations.push(newRegistration);
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(existingRegistrations));
+      // Add a new document with a generated ID to the "scholarshipRegistrations" collection.
+      await addDoc(collection(db, "scholarshipRegistrations"), newRegistration);
       
       toast({
         title: t('registrationSuccess'),
@@ -63,10 +60,10 @@ export default function ScholarshipPage() {
       });
       form.reset();
     } catch (error) {
-      console.error("Error saving to localStorage:", error);
+      console.error("Error adding document to Firestore: ", error);
       toast({
         title: t('errorOccurred'),
-        description: "Could not save registration.",
+        description: "Could not save registration. Please try again.",
         variant: "destructive",
       });
     }
@@ -148,7 +145,12 @@ export default function ScholarshipPage() {
                 )}
               />
               <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg h-14" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? t('loading') : t('submitRegistration')}
+                {form.formState.isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    {t('loading')}
+                  </>
+                ) : t('submitRegistration')}
               </Button>
             </form>
           </Form>

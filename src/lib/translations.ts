@@ -24,7 +24,7 @@ export const translations = {
     navChat: "Chat",
     navJobAlerts: "Job Alerts",
     navStudyBooks: "Study Books", 
-    ourBooks: "Our Books", // Added from image
+    ourBooks: "Our Books",
     navQuiz: "Quiz",
     navSyllabus: "Syllabus",
     language: "Language",
@@ -214,7 +214,7 @@ export const translations = {
     appName: "गो स्वामी डिफेंस अकादमी", 
     navHome: "होम",
     navSchedule: "कक्षा सारणी",
-    navTests: "टेस्ट सीरीज", // Changed from Test Access to match image
+    navTests: "टेस्ट सीरीज",
     navVideos: "वीडियो क्लास",
     navScholarship: "छात्रवृत्ति",
     navAITutor: "AI ट्यूटर",
@@ -232,7 +232,7 @@ export const translations = {
     navChat: "चैट",
     navJobAlerts: "जॉब अलर्ट्स", 
     navStudyBooks: "स्टडी बुक्स", 
-    ourBooks: "हमारी पुस्तकें", // Added from image
+    ourBooks: "हमारी पुस्तकें",
     navQuiz: "क्विज़", 
     navSyllabus: "सिलेबस", 
     language: "भाषा",
@@ -369,7 +369,7 @@ export const translations = {
     confirmDeleteMessage: "क्या आप वाकई इस आइटम को हटाना चाहते हैं? यह कार्रवाई पूर्ववत नहीं की जा सकती।",
     cancelButton: "रद्द करें",
     itemDeletedSuccess: "आइटम सफलतापूर्वक हटा दिया गया है।",
-    localStorageNote: "ध्यान दें: आपके द्वारा जोड़ा गया डेटा प्रदर्शन उद्देश्यों के लिए आपके ब्राउज़र के स्थानीय भंडारण में संग्रहीत है।",
+    localStorageNote: "ध्यान दें: आपके द्वारा जोड़ा गया डेटा प्रदर्शन उद्देश्यों के लिए आपके ब्राउज़र के Firebase Firestore में संग्रहीत है।",
     adminPanelTitle: "एडमिन पैनल",
     adminPanelDesc: "एप्लिकेशन के विभिन्न पहलुओं का प्रबंधन करें।",
     manageRegistrations: "छात्रवृत्ति पंजीकरण प्रबंधित करें",
@@ -393,12 +393,12 @@ export const translations = {
     studyBooksDesc: "अनुशंसित पुस्तकें और ई-पुस्तकें।",
     quizDesc: "विभिन्न क्विज़ के साथ अपने ज्ञान का परीक्षण करें।",
     syllabusDesc: "सभी कोर्स के लिए विस्तृत सिलेबस देखें।",
-    helloTeam: "नमस्ते, टीम विनर्स!", // From image
-    paidCourses: "पेड कोर्स", // From image
-    testSeries: "टेस्ट सीरीज", // From image
-    freeCourses: "फ्री कोर्सेस", // From image
-    previousPapersNav: "पिछले पेपर्स", // From image
-    currentAffairs: "करेंट अफेयर्स", // From image
+    helloTeam: "नमस्ते, टीम विनर्स!",
+    paidCourses: "पेड कोर्स",
+    testSeries: "टेस्ट सीरीज",
+    freeCourses: "फ्री कोर्सेस",
+    previousPapersNav: "पिछले पेपर्स", 
+    currentAffairs: "करेंट अफेयर्स",
     notifications: "सूचनाएं",
     navFreeCourses: "फ्री कोर्सेस", 
     navCurrentAffairs: "करेंट अफेयर्स", 
