@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { MessageSquare, Send, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label'; // Import Label component
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, Timestamp, serverTimestamp } from 'firebase/firestore';
@@ -18,11 +18,11 @@ const USER_ID_KEY = 'goSwamiChatUserId';
 const DISPLAY_NAME_KEY = 'goSwamiChatDisplayName';
 
 interface ChatMessage {
-  id: string; // Firestore document ID
+  id: string; 
   text: string;
   userId: string;
   displayName: string;
-  timestamp: Timestamp; // Firestore Timestamp
+  timestamp: Timestamp; 
 }
 
 export default function ChatPage() {
@@ -44,10 +44,14 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (isClient) {
+      console.log("ChatPage: Client detected. Initializing user ID and display name...");
       let userId = localStorage.getItem(USER_ID_KEY);
       if (!userId) {
         userId = Math.random().toString(36).substring(2, 15);
         localStorage.setItem(USER_ID_KEY, userId);
+        console.log("ChatPage: New user ID generated and stored:", userId);
+      } else {
+        console.log("ChatPage: Existing user ID found:", userId);
       }
       setCurrentUserId(userId);
 
@@ -56,24 +60,34 @@ export default function ChatPage() {
         setCurrentDisplayName(storedDisplayName);
         setTempDisplayName(storedDisplayName);
         setIsDisplayNameSet(true);
+        console.log("ChatPage: Stored display name found:", storedDisplayName);
       } else {
         setCurrentDisplayName(t('anonymousUser') || 'Anonymous');
+        console.log("ChatPage: No stored display name, using default.");
       }
     }
   }, [isClient, t]);
 
   useEffect(() => {
-    if (!isClient || !currentUserId) return;
+    if (!isClient || !currentUserId) {
+      console.log("ChatPage: Firestore listener not attached - isClient:", isClient, "currentUserId:", currentUserId);
+      return;
+    }
 
+    console.log("ChatPage: Setting up Firestore onSnapshot listener for collection:", CHAT_COLLECTION_NAME);
     const q = query(collection(db, CHAT_COLLECTION_NAME), orderBy("timestamp", "asc"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const fetchedMessages: ChatMessage[] = [];
+      console.log("ChatPage: onSnapshot triggered. Snapshot size:", querySnapshot.size, "Docs found:", querySnapshot.docs.length);
       querySnapshot.forEach((doc) => {
-        fetchedMessages.push({ id: doc.id, ...doc.data() } as ChatMessage);
+        const data = doc.data();
+        console.log("ChatPage: Fetched message doc ID:", doc.id, "Data:", data, "Timestamp type:", typeof data.timestamp, "Is Firestore Timestamp:", data.timestamp instanceof Timestamp);
+        fetchedMessages.push({ id: doc.id, ...data } as ChatMessage);
       });
       setMessages(fetchedMessages);
+      console.log("ChatPage: Messages state updated with", fetchedMessages.length, "messages.");
     }, (error) => {
-      console.error("Error fetching chat messages from Firestore:", error);
+      console.error("ChatPage: Error fetching chat messages from Firestore (onSnapshot):", { message: error.message, code: error.code, stack: error.stack });
       toast({
         title: t('errorOccurred'),
         description: t('fetchErrorDetails') + (error.message ? ` (${error.message})` : ''),
@@ -81,7 +95,10 @@ export default function ChatPage() {
       });
     });
 
-    return () => unsubscribe();
+    return () => {
+      console.log("ChatPage: Unsubscribing from Firestore onSnapshot listener.");
+      unsubscribe();
+    };
   }, [isClient, currentUserId, t, toast]);
 
   useEffect(() => {
@@ -101,6 +118,7 @@ export default function ChatPage() {
     setCurrentDisplayName(tempDisplayName.trim());
     localStorage.setItem(DISPLAY_NAME_KEY, tempDisplayName.trim());
     setIsDisplayNameSet(true);
+    console.log("ChatPage: Display name set to:", tempDisplayName.trim());
     toast({ title: t('displayNameSetSuccess') || "Display name updated!"});
   };
 
@@ -114,24 +132,28 @@ export default function ChatPage() {
         return;
     }
 
-    const newMessage = {
+    console.log("ChatPage: Attempting to send message...");
+    const newMessagePayload = {
       text: inputValue.trim(),
       userId: currentUserId,
       displayName: currentDisplayName || (t('anonymousUser') || 'Anonymous'),
       timestamp: serverTimestamp()
     };
+    console.log("ChatPage: New message payload:", newMessagePayload);
 
     try {
-      await addDoc(collection(db, CHAT_COLLECTION_NAME), newMessage);
+      const docRef = await addDoc(collection(db, CHAT_COLLECTION_NAME), newMessagePayload);
+      console.log("ChatPage: Message sent to Firestore successfully. Document ID:", docRef.id);
       setInputValue('');
     } catch (error: any) {
-      console.error("Error sending message to Firestore:", error);
+      console.error("ChatPage: Error sending message to Firestore (addDoc):", { message: error.message, code: error.code, details: error.details, stack: error.stack, fullError: error });
       toast({
         title: t('errorOccurred'),
-        description: t('saveErrorDetails') + (error.message ? ` (${error.message})` : ''),
+        description: `${t('saveErrorDetails') || "Could not send message."} ${error.message ? `(${error.message})` : 'Please check console and Firebase setup.'}`,
         variant: "destructive",
       });
     }
+    console.log("ChatPage: Finished send message attempt.");
   };
 
   const formatTimestamp = (timestamp: Date | null) => {
@@ -232,6 +254,5 @@ export default function ChatPage() {
       </Card>
     </div>
   );
-}
 
     
