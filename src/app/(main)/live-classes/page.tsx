@@ -81,6 +81,7 @@ export default function LiveClassesPage() {
   const fetchLiveClasses = async () => {
     if (!isClient) return;
     setIsLoadingClasses(true);
+    console.log("Fetching live classes...");
     try {
       const q = query(collection(db, LIVE_CLASSES_COLLECTION_NAME), orderBy("scheduledAt", "asc"));
       const querySnapshot = await getDocs(q);
@@ -98,8 +99,9 @@ export default function LiveClassesPage() {
         });
       });
       setLiveClasses(fetchedClasses);
+      console.log("Live classes fetched successfully:", fetchedClasses);
     } catch (error: any) {
-      console.error("Error fetching live classes from Firestore:", error);
+      console.error("Error fetching live classes from Firestore:", error.message, error.code, error.stack, error);
       toast({
         title: t('errorOccurred'),
         description: `${t('fetchErrorDetails') || "Failed to load live classes."} ${error.message ? `(${error.message})` : ''}`,
@@ -107,6 +109,7 @@ export default function LiveClassesPage() {
       });
     } finally {
       setIsLoadingClasses(false);
+      console.log("Finished fetching live classes.");
     }
   };
 
@@ -120,6 +123,7 @@ export default function LiveClassesPage() {
 
   const onSubmit: SubmitHandler<LiveClassFormValues> = async (data) => {
     if (!showAdminFeatures) return;
+    console.log("Attempting to submit new live class:", data);
     setIsSubmitting(true);
     try {
       const [year, month, day] = data.date.split('-').map(Number);
@@ -134,14 +138,16 @@ export default function LiveClassesPage() {
         link: data.link,
         scheduledAt: Timestamp.fromDate(scheduledDate), 
       };
+      console.log("New class payload for Firestore:", newClass);
       await addDoc(collection(db, LIVE_CLASSES_COLLECTION_NAME), newClass);
+      console.log("Live class added to Firestore successfully.");
       toast({
         title: t('liveClassAddedSuccess'),
       });
       form.reset();
       fetchLiveClasses(); 
     } catch (error: any) {
-      console.error("Error adding live class to Firestore: ", error.message, error.code, error.stack);
+      console.error("Error adding live class to Firestore: ", error.message, error.code, error.stack, error);
       toast({
         title: t('errorOccurred'),
         description: `${t('saveErrorDetails') || "Could not save live class."} ${error.message ? `(${error.message})` : ''}`,
@@ -149,24 +155,31 @@ export default function LiveClassesPage() {
       });
     } finally {
       setIsSubmitting(false);
+      console.log("Finished submit attempt for live class.");
     }
   };
 
   const handleDeleteClass = async (classId: string) => {
     if (!showAdminFeatures) return;
+    console.log("Attempting to delete live class with ID:", classId);
+    // Potentially add a loading state specific to deletion if needed
     try {
       await deleteDoc(doc(db, LIVE_CLASSES_COLLECTION_NAME, classId));
+      console.log("Live class deleted from Firestore successfully:", classId);
       toast({
         title: t('itemDeletedSuccess'),
       });
       fetchLiveClasses(); 
     } catch (error: any) {
-      console.error("Error deleting live class from Firestore: ", error.message, error.code, error.stack);
+      console.error("Error deleting live class from Firestore: ", error.message, error.code, error.stack, error);
       toast({
         title: t('errorOccurred'),
         description: `${t('deleteErrorDetails') || "Could not delete live class."} ${error.message ? `(${error.message})` : ''}`,
         variant: "destructive",
       });
+    } finally {
+        // Reset deletion-specific loading state if added
+        console.log("Finished delete attempt for live class:", classId);
     }
   };
 

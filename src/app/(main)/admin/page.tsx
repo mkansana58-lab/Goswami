@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, CalendarDays, ClipboardCheck, PlaySquare, Tv2, LayoutDashboard, AlertTriangle, ExternalLink, LogIn } from 'lucide-react';
+import { Users, CalendarDays, ClipboardCheck, PlaySquare, Tv2, LayoutDashboard, AlertTriangle, ExternalLink, LogIn, DownloadCloud } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -25,6 +25,7 @@ const adminSections: AdminSection[] = [
   { key: 'tests', titleKey: 'manageTests', descriptionKey: 'manageTestsDesc', href: '/tests', icon: ClipboardCheck },
   { key: 'videos', titleKey: 'manageVideos', descriptionKey: 'manageVideosDesc', href: '/videos', icon: PlaySquare },
   { key: 'liveClasses', titleKey: 'manageLiveClasses', descriptionKey: 'manageLiveClassesDesc', href: '/live-classes', icon: Tv2 },
+  { key: 'downloads', titleKey: 'navDownloads', descriptionKey: 'adminManageDownloadsDesc', href: '/downloads', icon: DownloadCloud },
 ];
 
 export default function AdminPanelPage() {
@@ -66,7 +67,7 @@ export default function AdminPanelPage() {
                 <CardContent className="space-y-4">
                     <p>{t('accessDeniedMessage')}</p>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {t('adminAccessNote') || "To access this panel, please login as an administrator via the admin login page."}
+                      {t('adminAccessNote')}
                     </p>
                     <Button asChild>
                       <Link href="/login">
@@ -102,7 +103,7 @@ export default function AdminPanelPage() {
               <CardContent>
                 <Button asChild className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
                   <Link href={section.href}>
-                    {t('goToSection')} <ExternalLink className="ml-2 h-4 w-4" />
+                    {section.key === 'downloads' ? t('viewSection') : t('goToSection')} <ExternalLink className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </CardContent>
@@ -113,10 +114,11 @@ export default function AdminPanelPage() {
     </div>
   );
 }
-
 // Add to translations:
-// adminAccessNote: "To access this panel, please login as an administrator via the admin login page." (EN)
-// adminAccessNote: "इस पैनल तक पहुंचने के लिए, कृपया एडमिन लॉगिन पेज के माध्यम से एक व्यवस्थापक के रूप में लॉगिन करें।" (HI)
+// adminManageDownloadsDesc: "View downloadable files. Manage files and metadata via Firebase Console (Storage & Firestore 'downloadableFiles' collection)." (EN)
+// adminManageDownloadsDesc: "डाउनलोड करने योग्य फ़ाइलें देखें। Firebase कंसोल (स्टोरेज और Firestore 'downloadableFiles' कलेक्शन) के माध्यम से फ़ाइलें और मेटाडेटा प्रबंधित करें।" (HI)
+// viewSection: "View Section" (EN)
+// viewSection: "सेक्शन देखें" (HI)
     
 
     

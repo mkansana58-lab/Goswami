@@ -45,14 +45,17 @@ export default function ScholarshipPage() {
   });
 
   const onSubmit: SubmitHandler<ScholarshipFormValues> = async (data) => {
+    console.log("Attempting to submit scholarship registration:", data);
     setIsSubmitting(true);
     try {
       const newRegistration = {
         ...data,
         registrationDate: Timestamp.fromDate(new Date()),
       };
+      console.log("New scholarship registration payload for Firestore:", newRegistration);
 
       await addDoc(collection(db, "scholarshipRegistrations"), newRegistration);
+      console.log("Scholarship registration added to Firestore successfully.");
       
       toast({
         title: t('registrationSuccess'),
@@ -60,7 +63,7 @@ export default function ScholarshipPage() {
       });
       form.reset();
     } catch (error: any) { 
-      console.error("Error adding document to Firestore: ", error.message, error.code, error.stack);
+      console.error("Error adding scholarship registration to Firestore: ", error.message, error.code, error.stack, error);
       toast({
         title: t('errorOccurred'),
         description: `${t('saveErrorDetails') || "Could not save registration."} ${error.message ? `(${error.message})` : "Please try again."}`,
@@ -68,6 +71,7 @@ export default function ScholarshipPage() {
       });
     } finally {
       setIsSubmitting(false);
+      console.log("Finished scholarship registration submit attempt.");
     }
   };
 
