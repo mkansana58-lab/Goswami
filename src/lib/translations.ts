@@ -106,7 +106,7 @@ export const translations = {
     liveClassDatePlaceholder: "E.g., 2024-08-15",
     liveClassTimePlaceholder: "E.g., 05:00 PM",
     liveClassLinkPlaceholder: "https://meet.example.com/liveclass",
-    loginTitle: "Admin Login", // This was the old key, reused for new admin login page
+    loginTitle: "Admin Login", 
     loginDesc: "Please login to access admin features.",
     usernameLabel: "Username",
     passwordLabel: "Password",
@@ -210,7 +210,8 @@ export const translations = {
     chatSimulationNote: "Note: This is a simulated chat. Messages are stored locally in your browser.",
     adminLogout: "Admin Logout",
     adminLoginNav: "Admin Login",
-    adminLoginSimplifiedNote: "For prototype purposes, clicking the 'Login' button will grant admin access.",
+    adminLoginSimplifiedNote: "For prototype purposes, clicking the 'Login' button will grant admin access.", // This will be overridden if adminLoginCredentialsNote is used
+    adminLoginCredentialsNote: "Enter admin credentials to login.",
     adminAccessNote: "To access this panel, please login as an administrator.",
     validationDateYYYYMMDD: "Date must be in YYYY-MM-DD format.",
     validationTimeHHMM: "Time must be in HH:MM format (24-hour).",
@@ -323,7 +324,7 @@ export const translations = {
     liveClassDatePlaceholder: "उदा., 2024-08-15",
     liveClassTimePlaceholder: "उदा., शाम 05:00 बजे",
     liveClassLinkPlaceholder: "https://meet.example.com/liveclass",
-    loginTitle: "एडमिन लॉगिन", // Reused
+    loginTitle: "एडमिन लॉगिन",
     loginDesc: "एडमिन सुविधाओं तक पहुंचने के लिए कृपया लॉगिन करें।",
     usernameLabel: "यूज़रनेम",
     passwordLabel: "पासवर्ड",
@@ -427,7 +428,8 @@ export const translations = {
     chatSimulationNote: "ध्यान दें: यह एक नकली चैट है। संदेश आपके ब्राउज़र में स्थानीय रूप से संग्रहीत होते हैं।",
     adminLogout: "एडमिन लॉगआउट",
     adminLoginNav: "एडमिन लॉगिन",
-    adminLoginSimplifiedNote: "प्रोटोटाइप उद्देश्यों के लिए, 'लॉगिन' बटन पर क्लिक करने से एडमिन एक्सेस मिल जाएगा।",
+    adminLoginSimplifiedNote: "प्रोटोटाइप उद्देश्यों के लिए, 'लॉगिन' बटन पर क्लिक करने से एडमिन एक्सेस मिल जाएगा।", // This will be overridden if adminLoginCredentialsNote is used
+    adminLoginCredentialsNote: "लॉगिन करने के लिए एडमिन क्रेडेंशियल दर्ज करें।",
     adminAccessNote: "इस पैनल तक पहुंचने के लिए, कृपया एक व्यवस्थापक के रूप में लॉगिन करें।",
     validationDateYYYYMMDD: "दिनांक YYYY-MM-DD प्रारूप में होना चाहिए।",
     validationTimeHHMM: "समय HH:MM प्रारूप (24-घंटे) में होना चाहिए।",

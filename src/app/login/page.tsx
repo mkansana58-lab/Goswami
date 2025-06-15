@@ -5,28 +5,30 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input'; // Kept for visual consistency if we add password later
-import { Label } from '@/components/ui/label';   // Kept for visual consistency
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/hooks/use-language';
 import { ShieldAlert } from 'lucide-react';
 
 const ADMIN_LOGGED_IN_KEY = 'adminLoggedInGoSwami';
-// For this prototype, we'll use a simple "magic word" or a button press.
-// A real admin login would require secure authentication.
-const ADMIN_USERNAME = 'admin'; // Example, not strictly checked for this version
+const ADMIN_USERNAME = 'admin';
+const ADMIN_PASSWORD = 'Mohit@123';
 
 export default function AdminLoginPage() {
   const { t } = useLanguage();
   const router = useRouter();
-  const [username, setUsername] = useState(''); // We can use this field if we expand later
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleAdminLogin = () => {
-    // In a real app, you'd verify credentials here.
-    // For this prototype, clicking the button logs in the admin.
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(ADMIN_LOGGED_IN_KEY, 'true');
-      router.push('/admin');
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(ADMIN_LOGGED_IN_KEY, 'true');
+        router.push('/admin');
+      }
+    } else {
+      setError(t('loginError') || 'Invalid username or password.');
     }
   };
 
@@ -41,18 +43,33 @@ export default function AdminLoginPage() {
           <CardDescription>{t('loginDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Username field for future expansion or basic check */}
           <div className="space-y-2">
             <Label htmlFor="username">{t('usernameLabel')}</Label>
             <Input
               id="username"
               placeholder={t('usernameLabel')}
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                setError(''); // Clear error on input change
+              }}
               className="h-12"
             />
           </div>
-           {/* We are not using a password field for this simplified admin login */}
+          <div className="space-y-2">
+            <Label htmlFor="password">{t('passwordLabel') || 'Password'}</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder={t('passwordLabel') || 'Password'}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError(''); // Clear error on input change
+              }}
+              className="h-12"
+            />
+          </div>
 
           {error && <p className="text-sm text-destructive text-center">{error}</p>}
           
@@ -60,7 +77,7 @@ export default function AdminLoginPage() {
             {t('loginButton')}
           </Button>
           <p className="text-xs text-center text-muted-foreground">
-            {t('adminLoginNav')}: {t('adminLoginSimplifiedNote') || 'For prototype, click to login.'}
+            {t('adminLoginNav')}: {t('adminLoginCredentialsNote') || 'Enter admin credentials to login.'}
           </p>
         </CardContent>
       </Card>
@@ -68,7 +85,10 @@ export default function AdminLoginPage() {
   );
 }
 
-// Add to translations:
-// adminLoginSimplifiedNote: "For prototype purposes, clicking the 'Login' button will grant admin access." (EN)
-// adminLoginSimplifiedNote: "प्रोटोटाइप उद्देश्यों के लिए, 'लॉगिन' बटन पर क्लिक करने से एडमिन एक्सेस मिल जाएगा।" (HI)
+// Add/Update to translations:
+// passwordLabel: "Password" (EN), "पासवर्ड" (HI)
+// adminLoginCredentialsNote: "Enter admin credentials to login." (EN)
+// adminLoginCredentialsNote: "लॉगिन करने के लिए एडमिन क्रेडेंशियल दर्ज करें।" (HI)
+// loginError: "Invalid username or password." (EN) (Already exists)
+// loginError: "अमान्य यूज़रनेम या पासवर्ड।" (HI) (Already exists)
     
