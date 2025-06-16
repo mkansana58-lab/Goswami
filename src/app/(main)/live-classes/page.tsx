@@ -87,33 +87,52 @@ export default function LiveClassesPage() {
       console.log("LiveClassesPage: onSnapshot triggered. Snapshot size:", querySnapshot.size, "Docs found:", querySnapshot.docs.length);
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        console.log(`LiveClassesPage: Processing doc ID: ${doc.id}, Raw Data:`, JSON.stringify(data));
+        console.log(`LiveClassesPage: Processing doc ID: ${doc.id}, Raw Data for onSnapshot:`, JSON.stringify(data));
         
-        if (!(data.scheduledAt instanceof Timestamp)) {
-            console.warn(`LiveClassesPage: doc ${doc.id} scheduledAt is NOT a Firestore Timestamp. Type: ${typeof data.scheduledAt}, Value:`, data.scheduledAt);
-        }
-        if (!(data.createdAt instanceof Timestamp)) {
-            console.warn(`LiveClassesPage: doc ${doc.id} createdAt is NOT a Firestore Timestamp. Type: ${typeof data.createdAt}, Value:`, data.createdAt);
+        let scheduledAtTS: Timestamp | null = null;
+        if (data.scheduledAt && typeof data.scheduledAt.toDate === 'function') { // Check if it's a Firestore Timestamp
+            scheduledAtTS = data.scheduledAt as Timestamp;
+        } else if (data.scheduledAt && typeof data.scheduledAt === 'object' && data.scheduledAt.seconds !== undefined && data.scheduledAt.nanoseconds !== undefined) {
+            // Handle cases where it might be a plain object (e.g. from cache or older data that wasn't a proper Timestamp)
+            scheduledAtTS = new Timestamp(data.scheduledAt.seconds, data.scheduledAt.nanoseconds);
+            console.warn(`LiveClassesPage: doc ${doc.id} scheduledAt was a plain object, converted to Timestamp. Value:`, data.scheduledAt);
+        } else {
+             console.error(`LiveClassesPage: doc ${doc.id} scheduledAt is invalid or missing. Type: ${typeof data.scheduledAt}, Value:`, data.scheduledAt);
         }
 
-        fetchedClasses.push({
-          id: doc.id,
-          title: data.title,
-          subject: data.subject,
-          date: data.date, 
-          time: data.time, 
-          link: data.link,
-          scheduledAt: data.scheduledAt as Timestamp,
-          createdAt: data.createdAt as Timestamp,
-        });
+        let createdAtTS: Timestamp | null = null;
+        if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+            createdAtTS = data.createdAt as Timestamp;
+        } else if (data.createdAt && typeof data.createdAt === 'object' && data.createdAt.seconds !== undefined && data.createdAt.nanoseconds !== undefined) {
+            createdAtTS = new Timestamp(data.createdAt.seconds, data.createdAt.nanoseconds);
+            console.warn(`LiveClassesPage: doc ${doc.id} createdAt was a plain object, converted to Timestamp. Value:`, data.createdAt);
+        } else {
+            console.error(`LiveClassesPage: doc ${doc.id} createdAt is invalid or missing. Type: ${typeof data.createdAt}, Value:`, data.createdAt);
+        }
+
+        // Only push if essential timestamps are valid
+        if (scheduledAtTS && createdAtTS) {
+            fetchedClasses.push({
+              id: doc.id,
+              title: data.title || "Untitled Class", // Provide default if missing
+              subject: data.subject || "No Subject", // Provide default
+              date: data.date || "N/A", 
+              time: data.time || "N/A", 
+              link: data.link || "#",
+              scheduledAt: scheduledAtTS,
+              createdAt: createdAtTS,
+            });
+        } else {
+            console.error(`LiveClassesPage: doc ${doc.id} (Title: ${data.title || 'N/A'}) skipped due to invalid/missing scheduledAt or createdAt timestamps.`);
+        }
       });
       setLiveClasses(fetchedClasses);
       setIsLoadingClasses(false);
-      console.log("LiveClassesPage: Live classes state updated. Total classes:", fetchedClasses.length);
+      console.log("LiveClassesPage: Live classes state updated by onSnapshot. Total classes in state:", fetchedClasses.length);
       if (fetchedClasses.length > 0) {
-        console.log("LiveClassesPage: First class in new state:", JSON.stringify(fetchedClasses[0]));
+        console.log("LiveClassesPage: First class in new state (onSnapshot):", JSON.stringify(fetchedClasses[0]));
       } else {
-        console.log("LiveClassesPage: No live classes in new state.");
+        console.log("LiveClassesPage: No live classes in new state (onSnapshot), or all processed docs had issues.");
       }
     }, (error) => {
       console.error("LiveClassesPage: Error fetching live classes from Firestore (onSnapshot):", { message: error.message, code: error.code, stack: error.stack });
@@ -129,7 +148,7 @@ export default function LiveClassesPage() {
       console.log("LiveClassesPage: Unsubscribing from Firestore onSnapshot listener.");
       unsubscribe();
     };
-  }, [isClient, t, toast]);
+  }, [isClient, t, toast, language]); // Added language as t depends on it
 
 
   const onSubmit: SubmitHandler<LiveClassFormValues> = async (data) => {
@@ -139,11 +158,12 @@ export default function LiveClassesPage() {
     try {
       const [year, month, day] = data.date.split('-').map(Number);
       const [hours, minutes] = data.time.split(':').map(Number);
-      const scheduledDate = new Date(year, month - 1, day, hours, minutes);
-      console.log("LiveClassesPage: Creating scheduledDate JS object:", scheduledDate.toString(), "from inputs:", data.date, data.time);
+      // Create date in UTC to avoid timezone issues when converting to Firestore Timestamp
+      const scheduledDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+      console.log("LiveClassesPage: Creating scheduledDate JS object (intended as UTC):", scheduledDate.toISOString(), "from inputs:", data.date, data.time);
       
       const scheduledAtTimestamp = Timestamp.fromDate(scheduledDate);
-      console.log("LiveClassesPage: Converted JS Date to Firestore Timestamp for scheduledAt:", scheduledAtTimestamp);
+      console.log("LiveClassesPage: Converted JS Date to Firestore Timestamp for scheduledAt:", scheduledAtTimestamp, "from date:", scheduledDate);
       
       const newClassPayload = {
         title: data.title,
@@ -171,7 +191,8 @@ export default function LiveClassesPage() {
         console.log("LiveClassesPage: Notification for new live class added successfully.");
       } catch (notifError: any) {
         console.error("LiveClassesPage: Error adding notification for live class:", { message: notifError.message, code: notifError.code, stack: notifError.stack });
-        toast({ title: t('errorOccurred'), description: `Failed to create notification: ${notifError.message}`, variant: "destructive" });
+        // Do not let notification failure block the main operation's success message
+        // toast({ title: t('errorOccurred'), description: `Failed to create notification: ${notifError.message}`, variant: "destructive" });
       }
 
       toast({ title: t('liveClassAddedSuccess') });
@@ -250,8 +271,17 @@ export default function LiveClassesPage() {
                     {showAdminFeatures && (<AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('confirmDeleteTitle')}</AlertDialogTitle><AlertDialogDescription>{t('confirmDeleteMessage')}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t('cancelButton')}</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteClass(liveClass.id)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">{t('deleteButton')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>)}
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <div className="flex items-center text-sm text-muted-foreground"><Calendar className="mr-2 h-4 w-4" /> {new Date(liveClass.date + 'T00:00:00Z').toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-CA', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}</div>
-                    <div className="flex items-center text-sm text-muted-foreground"><Clock className="mr-2 h-4 w-4" /> {liveClass.time}</div>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                        <Calendar className="mr-2 h-4 w-4" /> 
+                        {/* Display date portion of scheduledAt Timestamp, correctly handling timezone for display */}
+                        {liveClass.scheduledAt.toDate().toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-CA', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
+                    </div>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                        <Clock className="mr-2 h-4 w-4" /> 
+                        {/* Display time portion of scheduledAt Timestamp */}
+                        {liveClass.scheduledAt.toDate().toLocaleTimeString(language === 'hi' ? 'hi-IN' : 'en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' , hour12: true})}
+                         (UTC) {/* Explicitly state UTC or convert to local based on preference */}
+                    </div>
                     <Button variant="outline" asChild className="mt-2 w-full md:w-auto"><a href={liveClass.link} target="_blank" rel="noopener noreferrer"><LinkIcon className="mr-2 h-4 w-4" /> Join Class</a></Button>
                   </CardContent>
                 </Card>
@@ -264,3 +294,4 @@ export default function LiveClassesPage() {
   );
 }
     
+
