@@ -91,7 +91,6 @@ export default function LiveClassesPage() {
       const fetchedClasses: LiveClass[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        // Use JSON.parse(JSON.stringify(data)) for a deep copy to log the exact state at this point
         console.log(`LiveClassesPage: Processing doc ID: ${doc.id}, RAW DATA:`, JSON.parse(JSON.stringify(data)));
 
         let scheduledAtTS: Timestamp | null = null;
@@ -103,7 +102,7 @@ export default function LiveClassesPage() {
                 scheduledAtTS = new Timestamp(data.scheduledAt.seconds, data.scheduledAt.nanoseconds);
             } catch (e) {
                 console.error(`LiveClassesPage: Error converting plain object to Timestamp for scheduledAt on doc ${doc.id}. Error:`, e, "Data:", data.scheduledAt);
-                scheduledAtTS = null; // Ensure it's null if conversion fails
+                scheduledAtTS = null;
             }
         } else {
              console.warn(`LiveClassesPage: doc ${doc.id} scheduledAt is invalid or missing. Type: ${typeof data.scheduledAt}, Value:`, data.scheduledAt);
@@ -118,10 +117,11 @@ export default function LiveClassesPage() {
                 createdAtTS = new Timestamp(data.createdAt.seconds, data.createdAt.nanoseconds);
             } catch (e) {
                 console.error(`LiveClassesPage: Error converting plain object to Timestamp for createdAt on doc ${doc.id}. Error:`, e, "Data:", data.createdAt);
-                createdAtTS = null; // Ensure it's null if conversion fails
+                createdAtTS = null;
             }
         } else {
-            console.warn(`LiveClassesPage: doc ${doc.id} createdAt is invalid or missing. Type: ${typeof data.createdAt}, Value:`, data.createdAt);
+            // This case means createdAt is null or not a recognizable timestamp structure
+            console.warn(`LiveClassesPage: doc ${doc.id} createdAt is invalid, null, or missing. Type: ${typeof data.createdAt}, Value:`, data.createdAt);
         }
         
         if (data.title === undefined || data.title === null || data.title.trim() === "") {
@@ -131,10 +131,19 @@ export default function LiveClassesPage() {
           console.warn(`LiveClassesPage: Doc ID ${doc.id} has missing or empty subject. Using default. Raw subject:`, data.subject);
         }
 
+        if (scheduledAtTS) { // Primary check: scheduledAt MUST be valid
+            let finalCreatedAtTS: Timestamp;
+            if (createdAtTS) {
+                finalCreatedAtTS = createdAtTS;
+            } else {
+                // Log a warning that createdAt was null and we're using scheduledAt as a fallback
+                // This is to ensure the class is still displayed if `createdAt` is missing, but flags a data issue.
+                console.warn(`LiveClassesPage: Doc ID ${doc.id} 'createdAt' is null or invalid. Using 'scheduledAt' as a fallback for the 'createdAt' property to display the class.`);
+                finalCreatedAtTS = scheduledAtTS; // Use scheduledAt as a fallback
+            }
 
-        if (scheduledAtTS && createdAtTS) {
             try {
-                console.log(`LiveClassesPage: Doc ID ${doc.id} has VALID timestamps. scheduledAt: ${scheduledAtTS.toDate().toISOString()}, createdAt: ${createdAtTS.toDate().toISOString()}`);
+                console.log(`LiveClassesPage: Doc ID ${doc.id} will be ADDED to list. Valid scheduledAt: ${scheduledAtTS.toDate().toISOString()}, resolved createdAt: ${finalCreatedAtTS.toDate().toISOString()}`);
                 fetchedClasses.push({
                   id: doc.id,
                   title: data.title || "Untitled Class",
@@ -143,19 +152,20 @@ export default function LiveClassesPage() {
                   time: data.time || "N/A", 
                   link: data.link || "#",
                   scheduledAt: scheduledAtTS,
-                  createdAt: createdAtTS,
+                  createdAt: finalCreatedAtTS, // Use the resolved (possibly fallback) timestamp
                 });
-            } catch (e) {
-                 console.error(`LiveClassesPage: Error during toDate().toISOString() for doc ID ${doc.id}. This class will be SKIPPED. Error:`, e);
+            } catch (e: any) {
+                 console.error(`LiveClassesPage: Error during toDate().toISOString() for doc ID ${doc.id} when constructing LiveClass object. This class will be SKIPPED. Error: ${e.message}`);
             }
         } else {
-            console.error(`LiveClassesPage: Doc ID ${doc.id} SKIPPED. title: '${data.title || 'N/A'}'. Reason: Invalid/missing converted scheduledAtTS or createdAtTS. Converted scheduledAtTS: ${scheduledAtTS}, Converted createdAtTS: ${createdAtTS}. Raw scheduledAt: ${JSON.stringify(data.scheduledAt)}, Raw createdAt: ${JSON.stringify(data.createdAt)}`);
+            // This means scheduledAt was null or invalid, which is a more critical issue for display/sorting
+            console.error(`LiveClassesPage: Doc ID ${doc.id} SKIPPED. title: '${data.title || 'N/A'}'. Reason: Invalid/missing converted scheduledAtTS. Raw scheduledAt: ${JSON.stringify(data.scheduledAt)}`);
         }
       });
       
       console.log(`LiveClassesPage: Processed ${fetchedClasses.length} classes for UI from ${querySnapshot.docs.length} docs in snapshot.`);
       if (fetchedClasses.length > 0) {
-        console.log("LiveClassesPage: Final fetchedClasses to be set (first item):", JSON.parse(JSON.stringify({...fetchedClasses[0], scheduledAt: fetchedClasses[0].scheduledAt.toDate().toISOString(), createdAt: fetchedClasses[0].createdAt.toDate().toISOString() })));
+        // console.log("LiveClassesPage: Final fetchedClasses to be set (first item):", JSON.parse(JSON.stringify({...fetchedClasses[0], scheduledAt: fetchedClasses[0].scheduledAt.toDate().toISOString(), createdAt: fetchedClasses[0].createdAt.toDate().toISOString() })));
       } else {
         console.log("LiveClassesPage: Final fetchedClasses to be set is empty.");
       }
@@ -191,14 +201,19 @@ export default function LiveClassesPage() {
       
       let scheduledDate;
       try {
+        // Ensure date components are valid before creating Date object
+        if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hours) || isNaN(minutes)) {
+            throw new Error("Invalid date or time components provided in form.");
+        }
+        // Months are 0-indexed in JavaScript Date
         scheduledDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
         if (isNaN(scheduledDate.getTime())) {
             throw new Error("Invalid date/time components resulted in an invalid Date object.");
         }
         console.log("LiveClassesPage: Creating scheduledDate JS object (intended as UTC):", scheduledDate.toISOString(), "from inputs:", data.date, data.time);
-      } catch (e) {
+      } catch (e: any) {
         console.error("LiveClassesPage: Error creating Date object from form inputs.", e, "Inputs:", data.date, data.time);
-        toast({ title: t('errorOccurred'), description: `Invalid date or time format: ${e.message}`, variant: "destructive" });
+        toast({ title: t('errorOccurred'), description: `Invalid date or time format: ${e.message || 'Please check YYYY-MM-DD and HH:MM format.'}`, variant: "destructive" });
         setIsSubmitting(false);
         return;
       }
@@ -330,6 +345,4 @@ export default function LiveClassesPage() {
     </div>
   );
 }
-    
-
     
