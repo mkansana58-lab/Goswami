@@ -52,9 +52,9 @@ const formSchemaDefinition = (t: (key: string) => string) => z.object({
 type LiveClassFormValues = z.infer<ReturnType<typeof formSchemaDefinition>>;
 
 const getYouTubeEmbedUrl = (url: string | undefined | null): string => {
-  if (!url) {
-    console.warn("LiveClassesPage: getYouTubeEmbedUrl received an empty URL. Returning error placeholder.");
-    return `https://www.youtube.com/embed/error-empty-url`;
+  if (!url || typeof url !== 'string') {
+    console.warn("LiveClassesPage: getYouTubeEmbedUrl received an invalid or empty URL. URL:", url, "Returning error placeholder.");
+    return `https://www.youtube.com/embed/error-invalid-or-empty-url`;
   }
   let videoId = null;
   try {
@@ -66,7 +66,6 @@ const getYouTubeEmbedUrl = (url: string | undefined | null): string => {
         videoId = urlObj.searchParams.get('v');
          if (!videoId) { 
             const pathParts = urlObj.pathname.split('/');
-            // Check if the last part of path like /live/VIDEO_ID is the video ID
             if (pathParts.length > 1 && pathParts[pathParts.length - 2] === 'live') {
                  videoId = pathParts[pathParts.length -1].split('?')[0];
             }
@@ -84,7 +83,7 @@ const getYouTubeEmbedUrl = (url: string | undefined | null): string => {
   }
   
   if (videoId) {
-    const cleanVideoId = videoId.split('?')[0]; // Remove query params from videoId itself
+    const cleanVideoId = videoId.split('?')[0];
     console.log("LiveClassesPage: Extracted videoId:", cleanVideoId, "from URL:", url);
     return `https://www.youtube.com/embed/${cleanVideoId}`;
   }
@@ -126,7 +125,7 @@ export default function LiveClassesPage() {
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       console.log(`LiveClassesPage: -------- BEGIN ONSNAPSHOT (${new Date().toISOString()}) --------`);
-      console.log(`LiveClassesPage: Snapshot triggered. Size: ${querySnapshot.size}. isEmpty: ${querySnapshot.empty}`);
+      console.log(`LiveClassesPage: Firestore query returned ${querySnapshot.docs.length} documents. isEmpty: ${querySnapshot.empty}`); // ADDED LOG
       const currentDocIds = querySnapshot.docs.map(doc => doc.id);
       console.log(`LiveClassesPage: Document IDs in this snapshot: [${currentDocIds.join(', ')}]`);
 
@@ -175,7 +174,7 @@ export default function LiveClassesPage() {
             if (createdAtTS) {
                 finalCreatedAtTS = createdAtTS;
             } else {
-                console.warn(`LiveClassesPage: Doc ID ${doc.id} 'createdAt' is null or invalid. Using 'scheduledAt' as a fallback for the 'createdAt' property to display the class. scheduledAtTS: ${scheduledAtTS.toDate().toISOString()}`);
+                console.warn(`LiveClassesPage: Doc ID ${doc.id} 'createdAt' is null or invalid. Using 'scheduledAt' as a fallback for the 'createdAt' property to display the class. scheduledAtTS (used as fallback for createdAt): ${scheduledAtTS.toDate().toISOString()}`);
                 finalCreatedAtTS = scheduledAtTS; 
             }
 
@@ -186,11 +185,11 @@ export default function LiveClassesPage() {
                   subject: data.subject || "No Subject",
                   date: data.date || "N/A", 
                   time: data.time || "N/A", 
-                  link: getYouTubeEmbedUrl(data.link), // Ensure data.link is passed
+                  link: getYouTubeEmbedUrl(data.link), 
                   scheduledAt: scheduledAtTS,
                   createdAt: finalCreatedAtTS, 
                 };
-                console.log(`LiveClassesPage: Doc ID ${doc.id} successfully PROCESSED and will be ADDED to list. Processed object:`, JSON.parse(JSON.stringify({...processedClass, scheduledAt: processedClass.scheduledAt.toDate().toISOString(), createdAt: processedClass.createdAt.toDate().toISOString() })));
+                console.log(`LiveClassesPage: Doc ID ${doc.id} successfully PROCESSED and will be ADDED to list. Processed object (timestamps converted for logging):`, JSON.parse(JSON.stringify({...processedClass, scheduledAt: processedClass.scheduledAt.toDate().toISOString(), createdAt: processedClass.createdAt.toDate().toISOString() })));
                 fetchedClasses.push(processedClass);
             } catch (e: any) {
                  console.error(`LiveClassesPage: Error during toDate().toISOString() for doc ID ${doc.id} when constructing LiveClass object for logging. This class might still be ADDED but logging failed. Error: ${e.message}`);
@@ -201,7 +200,7 @@ export default function LiveClassesPage() {
                       subject: data.subject || "No Subject",
                       date: data.date || "N/A", 
                       time: data.time || "N/A", 
-                      link: getYouTubeEmbedUrl(data.link), // Ensure data.link is passed
+                      link: getYouTubeEmbedUrl(data.link), 
                       scheduledAt: scheduledAtTS,
                       createdAt: finalCreatedAtTS, 
                     });
@@ -210,7 +209,7 @@ export default function LiveClassesPage() {
                  }
             }
         } else {
-            console.error(`LiveClassesPage: Doc ID ${doc.id} SKIPPED. title: '${data.title || 'N/A'}'. Reason: Invalid/missing converted scheduledAtTS. Raw scheduledAt: ${JSON.stringify(data.scheduledAt)}, Raw createdAt: ${JSON.stringify(data.createdAt)}`);
+            console.error(`LiveClassesPage: Doc ID ${doc.id} SKIPPED. title: '${data.title || 'N/A'}'. Reason: Invalid/missing converted scheduledAtTS. Raw scheduledAt: ${JSON.stringify(data.scheduledAt)}.`);
         }
       });
       
@@ -276,17 +275,17 @@ export default function LiveClassesPage() {
     }
     
     console.log("LiveClassesPage: Checking created timestamps before Firestore call.");
-    console.log("LiveClassesPage: scheduledAtTimestamp for Firestore:", scheduledAtTimestamp);
+    console.log("LiveClassesPage: scheduledAtTimestamp for Firestore:", scheduledAtTimestamp, "Is Firestore Timestamp:", scheduledAtTimestamp instanceof Timestamp);
     console.log("LiveClassesPage: serverNowTimestamp (for createdAt) for Firestore:", serverNowTimestamp);
 
 
     if (!(scheduledAtTimestamp instanceof Timestamp)) {
-        console.error("LiveClassesPage: scheduledAtTimestamp is not a valid Firestore Timestamp object before sending to Firestore.");
-        toast({ title: t('errorOccurred'), description: "Internal error: Scheduled time could not be processed correctly.", variant: "destructive" });
+        console.error("LiveClassesPage: CRITICAL - scheduledAtTimestamp is not a valid Firestore Timestamp object before sending to Firestore.");
+        toast({ title: t('errorOccurred'), description: "Internal error: Scheduled time could not be processed correctly. scheduledAtTimestamp is not instance of Timestamp.", variant: "destructive" });
         setIsSubmitting(false);
         return;
     }
-      
+          
     const newClassPayload = {
       title: data.title,
       subject: data.subject,
@@ -353,7 +352,7 @@ export default function LiveClassesPage() {
   
   const formatDisplayDate = (lc: LiveClass) => {
     if (!lc.scheduledAt || typeof lc.scheduledAt.toDate !== 'function') {
-      console.warn("formatDisplayDate: Invalid scheduledAt for LiveClass:", lc.id, lc.title);
+      console.warn("formatDisplayDate: Invalid scheduledAt for LiveClass:", lc.id, lc.title, "Using lc.date:", lc.date);
       return lc.date || "Invalid Date"; 
     }
     const date = lc.scheduledAt.toDate();
@@ -362,7 +361,7 @@ export default function LiveClassesPage() {
 
   const formatDisplayTime = (lc: LiveClass) => {
      if (!lc.scheduledAt || typeof lc.scheduledAt.toDate !== 'function') {
-      console.warn("formatDisplayTime: Invalid scheduledAt for LiveClass:", lc.id, lc.title);
+      console.warn("formatDisplayTime: Invalid scheduledAt for LiveClass:", lc.id, lc.title, "Using lc.time:", lc.time);
       return lc.time || "Invalid Time"; 
     }
     const date = lc.scheduledAt.toDate();
@@ -421,7 +420,10 @@ export default function LiveClassesPage() {
                         {formatDisplayTime(liveClass)}
                          {language === 'hi' ? ' बजे' : ''}
                     </div>
-                    <Button variant="outline" asChild className="mt-2 w-full md:w-auto"><a href={liveClass.link} target="_blank" rel="noopener noreferrer"><LinkIcon className="mr-2 h-4 w-4" /> {t('joinClassButton') || 'Join Class'}</a></Button>
+                    {liveClass.link && liveClass.link.includes('error') ? 
+                      (<p className="text-destructive text-xs mt-1">{t('errorOccurred')}: Invalid video link.</p>) :
+                      (<Button variant="outline" asChild className="mt-2 w-full md:w-auto"><a href={liveClass.link} target="_blank" rel="noopener noreferrer"><LinkIcon className="mr-2 h-4 w-4" /> {t('joinClassButton') || 'Join Class'}</a></Button>)
+                    }
                   </CardContent>
                 </Card>
               ))}</div>
@@ -432,4 +434,6 @@ export default function LiveClassesPage() {
     </div>
   );
 }
+    
+
     
