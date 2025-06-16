@@ -2,7 +2,7 @@
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getAuth, type Auth } from 'firebase/auth';
-import { getAnalytics, type Analytics } from 'firebase/analytics';
+import { getAnalytics, type Analytics, isSupported } from 'firebase/analytics';
 
 // Configuration object using environment variables
 const firebaseConfig = {
@@ -23,7 +23,7 @@ let analytics: Analytics | undefined;
 // Check for essential Firebase configuration
 if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
   console.error(
-    'Essential Firebase configuration (apiKey, authDomain, projectId) is missing. Firebase will not be initialized properly and app features may fail.'
+    'Firebase Error: Essential Firebase configuration (NEXT_PUBLIC_FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN, NEXT_PUBLIC_FIREBASE_PROJECT_ID) is missing or undefined in your environment variables. Please check your .env file and ensure these variables are correctly set. Firebase will not be initialized properly, and app features may fail.'
   );
   // app, db, auth, analytics will remain uninitialized here.
   // Code that relies on them being initialized will likely throw errors,
@@ -34,7 +34,7 @@ if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.proj
     try {
       app = initializeApp(firebaseConfig);
     } catch (error) {
-      console.error("Error initializing Firebase app:", error);
+      console.error("Firebase Error: Error initializing Firebase app:", error);
       // If app initialization fails, subsequent services will also fail to initialize.
     }
   } else {
@@ -42,17 +42,31 @@ if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.proj
   }
 
   // Initialize Firestore and Auth only if app was successfully initialized
-  if (app!) {
+  // @ts-ignore (app might be uninitialized if config is missing, but the outer check handles this)
+  if (app) {
+    // @ts-ignore
     db = getFirestore(app);
+    // @ts-ignore
     auth = getAuth(app);
 
-    // Initialize Analytics only on the client side and if measurementId is available
+    // Initialize Analytics only on the client side and if measurementId is available and Analytics is supported
     if (typeof window !== 'undefined' && firebaseConfig.measurementId) {
-      try {
-        analytics = getAnalytics(app);
-      } catch (e) {
-        console.warn("Firebase Analytics could not be initialized. Ensure measurementId is correct.", e);
-      }
+      isSupported().then((supported) => {
+        if (supported) {
+          try {
+            // @ts-ignore
+            analytics = getAnalytics(app);
+          } catch (e) {
+            console.warn("Firebase Warning: Firebase Analytics could not be initialized. Ensure measurementId is correct and Analytics is enabled for your project.", e);
+          }
+        } else {
+          console.warn("Firebase Warning: Firebase Analytics is not supported in this environment.");
+        }
+      }).catch(e => {
+        console.warn("Firebase Warning: Error checking Analytics support.", e);
+      });
+    } else if (typeof window !== 'undefined' && !firebaseConfig.measurementId) {
+        console.warn("Firebase Warning: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID is not set. Firebase Analytics will not be initialized.");
     }
   }
 }
@@ -60,3 +74,4 @@ if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.proj
 // Export the Firebase services.
 // Note: They might be uninitialized if essential config was missing or app initialization failed.
 export { app, db, auth, analytics };
+
