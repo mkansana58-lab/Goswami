@@ -63,16 +63,24 @@ export default function RegistrationsPage() {
             const fetchedRegistrations: RegistrationDataDisplay[] = [];
             querySnapshot.forEach((doc) => {
               const data = doc.data() as Omit<RegistrationDataFirestore, 'id'>;
-              console.log("RegistrationsPage: Processing doc ID:", doc.id, "Data:", JSON.parse(JSON.stringify(data)));
+              console.log("RegistrationsPage: Processing doc ID:", doc.id, "Raw Data:", JSON.parse(JSON.stringify(data)));
               let formattedDate = "Invalid Date";
               if (data.registrationDate && typeof data.registrationDate.toDate === 'function') {
                 try {
-                    formattedDate = data.registrationDate.toDate().toLocaleDateString();
+                    formattedDate = data.registrationDate.toDate().toLocaleDateString('en-CA'); // Use a consistent locale like en-CA for YYYY-MM-DD
                 } catch (e) {
-                    console.error("RegistrationsPage: Error formatting date for doc ID:", doc.id, e);
+                    console.error("RegistrationsPage: Error formatting date for doc ID:", doc.id, e, "Raw date:", data.registrationDate);
+                    // Keep "Invalid Date" or try a simpler format if toLocaleDateString fails
+                     try {
+                        const d = data.registrationDate.toDate();
+                        formattedDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    } catch (finalError) {
+                         console.error("RegistrationsPage: Final attempt to format date failed for doc ID:", doc.id, finalError);
+                    }
                 }
               } else {
                 console.warn("RegistrationsPage: registrationDate is missing or not a Timestamp for doc ID:", doc.id, "Raw value:", data.registrationDate);
+                formattedDate = data.registrationDate ? String(data.registrationDate) : "Missing Date";
               }
               fetchedRegistrations.push({
                 id: doc.id,
@@ -101,7 +109,7 @@ export default function RegistrationsPage() {
         fetchRegistrations();
       }
     }
-  }, [router]); // Added router to dependency array as it's used inside useEffect
+  }, [router, t]); // Added router and t to dependency array
 
   if (isLoading) {
     console.log("RegistrationsPage: isLoading is true, rendering loading state.");
@@ -186,4 +194,5 @@ export default function RegistrationsPage() {
     </div>
   );
 }
+
 

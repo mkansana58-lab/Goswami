@@ -124,9 +124,15 @@ export default function SchedulePage() {
         console.log(`SchedulePage: ${collectionName} snapshot triggered. Size: ${querySnapshot.size}`);
         let fetchedItems: T[] = [];
         querySnapshot.forEach((doc) => {
-          fetchedItems.push({ id: doc.id, ...doc.data() } as T);
+          const data = doc.data();
+           // Basic check for createdAt, can be made more robust
+          if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+            fetchedItems.push({ id: doc.id, ...data } as T);
+          } else {
+            console.warn(`SchedulePage: Document ${doc.id} in ${collectionName} is missing a valid createdAt timestamp. Skipping.`);
+          }
         });
-        setData(fetchedItems); // Firestore data is already sorted by query
+        setData(fetchedItems); 
         setIsLoading(false);
         console.log(`SchedulePage: ${collectionName} state updated. Total items: ${fetchedItems.length}`);
       }, (error) => {
@@ -168,11 +174,11 @@ export default function SchedulePage() {
     if (!showAdminFeatures) return;
     
     setIsSubmittingState(true);
-    console.log(`SchedulePage: Attempting to add item to ${collectionName}`, data);
+    console.log(`SchedulePage: Attempting to add item to ${collectionName}. Form data:`, JSON.parse(JSON.stringify(data)));
 
     try {
       const payload = { ...data, createdAt: serverTimestamp() };
-      console.log(`SchedulePage: Payload for ${collectionName}:`, payload);
+      console.log(`SchedulePage: PAYLOAD for ${collectionName}:`, JSON.parse(JSON.stringify(payload)));
       const docRef = await addDoc(collection(db, collectionName), payload);
       console.log(`SchedulePage: Item added to ${collectionName} successfully with ID: `, docRef.id);
       
@@ -196,7 +202,7 @@ export default function SchedulePage() {
       toast({ title: t(successMessageKey) });
       formReset();
     } catch (error: any) {
-      console.error(`SchedulePage: Error adding item to ${collectionName}: `, error);
+      console.error(`SchedulePage: ERROR adding item to ${collectionName}: `, error);
       toast({
         title: t('errorOccurred'),
         description: `${t('saveErrorDetails')} ${error.message ? `(${error.message})` : ''}`,
