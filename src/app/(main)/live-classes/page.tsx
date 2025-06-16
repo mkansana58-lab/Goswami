@@ -36,7 +36,7 @@ interface LiveClass {
   subject: string;
   date: string; 
   time: string; 
-  link: string;
+  link: string; // This should be the embeddable URL for iframes
   scheduledAt: Timestamp; 
   createdAt: Timestamp;
 }
@@ -46,10 +46,40 @@ const formSchemaDefinition = (t: (key: string) => string) => z.object({
   subject: z.string().min(3, { message: t('liveClassSubjectLabel') + " " + (t('validationMin3Chars') || "must be at least 3 characters.") }),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: t('validationDateYYYYMMDD') || "Date must be in YYYY-MM-DD format."}),
   time: z.string().regex(/^\d{2}:\d{2}$/, { message: t('validationTimeHHMM') || "Time must be in HH:MM format (24-hour)."}),
-  link: z.string().url({ message: t('validationUrl') || "Please enter a valid URL for the meeting link." }),
+  link: z.string().url({ message: t('validationUrl') || "Please enter a valid URL for the meeting link." }), // This will be the direct YouTube link from admin
 });
 
 type LiveClassFormValues = z.infer<ReturnType<typeof formSchemaDefinition>>;
+
+// Helper to convert YouTube watch/live links to embed links
+const getYouTubeEmbedUrl = (url: string): string => {
+  let videoId = null;
+  try {
+    const urlObj = new URL(url);
+    if (urlObj.hostname === 'youtu.be') {
+      videoId = urlObj.pathname.slice(1);
+    } else if (urlObj.hostname.includes('youtube.com')) {
+      if (urlObj.pathname === '/live') {
+        videoId = urlObj.searchParams.get('v');
+         if (!videoId) { // For links like /live/VIDEO_ID
+            const pathParts = urlObj.pathname.split('/');
+            if (pathParts.length > 1 && pathParts[0] === 'live') videoId = pathParts[1];
+         }
+      } else if (urlObj.pathname === '/watch') {
+        videoId = urlObj.searchParams.get('v');
+      }
+    }
+  } catch (e) {
+    console.error("Error parsing YouTube URL:", e);
+    return url; // Return original if parsing fails
+  }
+  
+  if (videoId) {
+    return `https://www.youtube.com/embed/${videoId.split('?')[0]}`;
+  }
+  return url; // Return original if no videoId found
+};
+
 
 export default function LiveClassesPage() {
   const { t, language } = useLanguage();
@@ -88,7 +118,7 @@ export default function LiveClassesPage() {
       const currentDocIds = querySnapshot.docs.map(doc => doc.id);
       console.log(`LiveClassesPage: Document IDs in this snapshot: [${currentDocIds.join(', ')}]`);
 
-      const fetchedClasses: LiveClass[] = [];
+      let fetchedClasses: LiveClass[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         console.log(`LiveClassesPage: Processing doc ID: ${doc.id}, RAW DATA:`, JSON.parse(JSON.stringify(data)));
@@ -120,7 +150,6 @@ export default function LiveClassesPage() {
                 createdAtTS = null;
             }
         } else {
-            // This case means createdAt is null or not a recognizable timestamp structure
             console.warn(`LiveClassesPage: doc ${doc.id} createdAt is invalid, null, or missing. Type: ${typeof data.createdAt}, Value:`, data.createdAt);
         }
         
@@ -131,15 +160,13 @@ export default function LiveClassesPage() {
           console.warn(`LiveClassesPage: Doc ID ${doc.id} has missing or empty subject. Using default. Raw subject:`, data.subject);
         }
 
-        if (scheduledAtTS) { // Primary check: scheduledAt MUST be valid
+        if (scheduledAtTS) { 
             let finalCreatedAtTS: Timestamp;
             if (createdAtTS) {
                 finalCreatedAtTS = createdAtTS;
             } else {
-                // Log a warning that createdAt was null and we're using scheduledAt as a fallback
-                // This is to ensure the class is still displayed if `createdAt` is missing, but flags a data issue.
                 console.warn(`LiveClassesPage: Doc ID ${doc.id} 'createdAt' is null or invalid. Using 'scheduledAt' as a fallback for the 'createdAt' property to display the class.`);
-                finalCreatedAtTS = scheduledAtTS; // Use scheduledAt as a fallback
+                finalCreatedAtTS = scheduledAtTS; 
             }
 
             try {
@@ -150,20 +177,71 @@ export default function LiveClassesPage() {
                   subject: data.subject || "No Subject",
                   date: data.date || "N/A", 
                   time: data.time || "N/A", 
-                  link: data.link || "#",
+                  link: getYouTubeEmbedUrl(data.link || "#"), // Convert to embed URL
                   scheduledAt: scheduledAtTS,
-                  createdAt: finalCreatedAtTS, // Use the resolved (possibly fallback) timestamp
+                  createdAt: finalCreatedAtTS, 
                 });
             } catch (e: any) {
                  console.error(`LiveClassesPage: Error during toDate().toISOString() for doc ID ${doc.id} when constructing LiveClass object. This class will be SKIPPED. Error: ${e.message}`);
             }
         } else {
-            // This means scheduledAt was null or invalid, which is a more critical issue for display/sorting
-            console.error(`LiveClassesPage: Doc ID ${doc.id} SKIPPED. title: '${data.title || 'N/A'}'. Reason: Invalid/missing converted scheduledAtTS. Raw scheduledAt: ${JSON.stringify(data.scheduledAt)}`);
+            console.error(`LiveClassesPage: Doc ID ${doc.id} SKIPPED. title: '${data.title || 'N/A'}'. Reason: Invalid/missing converted scheduledAtTS. Raw scheduledAt: ${JSON.stringify(data.scheduledAt)}, Raw createdAt: ${JSON.stringify(data.createdAt)}`);
         }
       });
       
-      console.log(`LiveClassesPage: Processed ${fetchedClasses.length} classes for UI from ${querySnapshot.docs.length} docs in snapshot.`);
+      // --- BEGIN PROTOTYPE DATA INJECTION ---
+      const today = new Date();
+      
+      // Maths Live Class (Today 8 PM)
+      const mathsScheduledDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 20, 0, 0);
+      const mathsScheduledAtTimestamp = Timestamp.fromDate(mathsScheduledDate);
+      const mathsDateString = mathsScheduledDate.toLocaleDateString('hi-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+      const mathsTimeString = mathsScheduledDate.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit', hour12: false }); // 24-hr for consistency
+      
+      const mathsLiveClass: LiveClass = {
+        id: "manual-maths-class-today",
+        title: "गणित लाइव क्लास - सैनिक स्कूल",
+        subject: "गणित",
+        date: mathsDateString,
+        time: mathsTimeString,
+        link: getYouTubeEmbedUrl("https://www.youtube.com/live/PwnSyUrRLS0?si=Ww8B77_2Xw__OUj4"),
+        scheduledAt: mathsScheduledAtTimestamp,
+        createdAt: Timestamp.now(),
+      };
+
+      // English Live Class (Tomorrow 8 PM)
+      const tomorrow = new Date();
+      tomorrow.setDate(today.getDate() + 1);
+      const englishScheduledDate = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 20, 0, 0);
+      const englishScheduledAtTimestamp = Timestamp.fromDate(englishScheduledDate);
+      const englishDateString = englishScheduledDate.toLocaleDateString('hi-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+      const englishTimeString = englishScheduledDate.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit', hour12: false }); // 24-hr
+
+      const englishLiveClass: LiveClass = {
+        id: "manual-english-class-tomorrow",
+        title: "अंग्रेजी लाइव क्लास",
+        subject: "अंग्रेजी",
+        date: englishDateString,
+        time: englishTimeString,
+        link: getYouTubeEmbedUrl("https://www.youtube.com/live/ZYwA6tMlr8w?si=SAVdKwAsS3ph4BDn"),
+        scheduledAt: englishScheduledAtTimestamp,
+        createdAt: Timestamp.now(),
+      };
+      
+      // Add manual classes if they don't already exist (by ID check, simple way for prototype)
+      if (!fetchedClasses.find(c => c.id === mathsLiveClass.id)) {
+        fetchedClasses.push(mathsLiveClass);
+      }
+      if (!fetchedClasses.find(c => c.id === englishLiveClass.id)) {
+        fetchedClasses.push(englishLiveClass);
+      }
+
+      // Re-sort after adding manual items to ensure correct order by scheduledAt
+      fetchedClasses.sort((a, b) => a.scheduledAt.toMillis() - b.scheduledAt.toMillis());
+      // --- END PROTOTYPE DATA INJECTION ---
+
+
+      console.log(`LiveClassesPage: Processed ${fetchedClasses.length} classes for UI from ${querySnapshot.docs.length} docs in snapshot (including manual prototype data).`);
       if (fetchedClasses.length > 0) {
         // console.log("LiveClassesPage: Final fetchedClasses to be set (first item):", JSON.parse(JSON.stringify({...fetchedClasses[0], scheduledAt: fetchedClasses[0].scheduledAt.toDate().toISOString(), createdAt: fetchedClasses[0].createdAt.toDate().toISOString() })));
       } else {
@@ -201,11 +279,9 @@ export default function LiveClassesPage() {
       
       let scheduledDate;
       try {
-        // Ensure date components are valid before creating Date object
         if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hours) || isNaN(minutes)) {
             throw new Error("Invalid date or time components provided in form.");
         }
-        // Months are 0-indexed in JavaScript Date
         scheduledDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
         if (isNaN(scheduledDate.getTime())) {
             throw new Error("Invalid date/time components resulted in an invalid Date object.");
@@ -226,7 +302,7 @@ export default function LiveClassesPage() {
         subject: data.subject,
         date: data.date, 
         time: data.time, 
-        link: data.link,
+        link: data.link, // Store original link from admin
         scheduledAt: scheduledAtTimestamp, 
         createdAt: serverTimestamp() 
       };
@@ -266,6 +342,13 @@ export default function LiveClassesPage() {
 
   const handleDeleteClass = async (classId: string) => {
     if (!showAdminFeatures) return;
+    // For manually added prototype data, just filter out from state
+    if (classId.startsWith("manual-")) {
+        setLiveClasses(prev => prev.filter(c => c.id !== classId));
+        toast({ title: t('itemDeletedSuccess')});
+        return;
+    }
+
     console.log("LiveClassesPage: Attempting to delete live class with ID:", classId);
     try {
       await deleteDoc(doc(db, LIVE_CLASSES_COLLECTION_NAME, classId));
@@ -327,12 +410,13 @@ export default function LiveClassesPage() {
                   <CardContent className="space-y-2">
                     <div className="flex items-center text-sm text-muted-foreground">
                         <Calendar className="mr-2 h-4 w-4" /> 
-                        {liveClass.scheduledAt.toDate().toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-CA', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
+                        {/* Display the string date and time directly if available from manual data, otherwise format from Timestamp */}
+                        {liveClass.id.startsWith("manual-") ? `${liveClass.date}` : liveClass.scheduledAt.toDate().toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-CA', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
                     </div>
                     <div className="flex items-center text-sm text-muted-foreground">
                         <Clock className="mr-2 h-4 w-4" /> 
-                        {liveClass.scheduledAt.toDate().toLocaleTimeString(language === 'hi' ? 'hi-IN' : 'en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' , hour12: true})}
-                         (UTC)
+                        {liveClass.id.startsWith("manual-") ? `${liveClass.time}` : liveClass.scheduledAt.toDate().toLocaleTimeString(language === 'hi' ? 'hi-IN' : 'en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' , hour12: true})}
+                         {liveClass.id.startsWith("manual-") ? (language === 'hi' ? 'बजे' : '') : ' (UTC)'}
                     </div>
                     <Button variant="outline" asChild className="mt-2 w-full md:w-auto"><a href={liveClass.link} target="_blank" rel="noopener noreferrer"><LinkIcon className="mr-2 h-4 w-4" /> Join Class</a></Button>
                   </CardContent>

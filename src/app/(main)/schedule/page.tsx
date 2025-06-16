@@ -114,7 +114,8 @@ export default function SchedulePage() {
     const setupListener = <T extends { id: string; createdAt: Timestamp }>(
       collectionName: string,
       setData: React.Dispatch<React.SetStateAction<T[]>>,
-      setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
+      setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
+      manualItemToAdd?: T | null // Optional manual item
     ): Unsubscribe => {
       setIsLoading(true);
       console.log(`SchedulePage: Setting up Firestore onSnapshot listener for ${collectionName}`);
@@ -122,10 +123,21 @@ export default function SchedulePage() {
       
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         console.log(`SchedulePage: ${collectionName} snapshot triggered. Size: ${querySnapshot.size}`);
-        const fetchedItems: T[] = [];
+        let fetchedItems: T[] = [];
         querySnapshot.forEach((doc) => {
           fetchedItems.push({ id: doc.id, ...doc.data() } as T);
         });
+
+        // --- BEGIN PROTOTYPE DATA INJECTION for specific collections ---
+        if (manualItemToAdd) {
+          if (!fetchedItems.find(item => item.id === manualItemToAdd.id)) {
+            fetchedItems.unshift(manualItemToAdd); // Add to the beginning
+          }
+        }
+         // Re-sort after adding manual items to ensure correct order by createdAt (desc)
+        fetchedItems.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+        // --- END PROTOTYPE DATA INJECTION ---
+
         setData(fetchedItems);
         setIsLoading(false);
         console.log(`SchedulePage: ${collectionName} state updated. Total items: ${fetchedItems.length}`);
@@ -141,8 +153,33 @@ export default function SchedulePage() {
       return unsubscribe;
     };
 
-    const unsubSchedule = setupListener<ScheduleItem>(SCHEDULE_COLLECTION, setScheduleItems, setIsLoadingSchedule);
-    const unsubHomework = setupListener<HomeworkItem>(HOMEWORK_COLLECTION, setHomeworkItems, setIsLoadingHomework);
+    // --- PREPARE PROTOTYPE DATA ---
+    const today = new Date();
+    const tomorrow = new Date();
+    tomorrow.setDate(today.getDate() + 1);
+    const englishScheduledDate = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 20, 0, 0); // Tomorrow 8 PM
+
+    const manualScheduleItem: ScheduleItem = {
+      id: "manual-english-schedule",
+      title: "अंग्रेजी लाइव क्लास",
+      time: englishScheduledDate.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
+      subject: "अंग्रेजी",
+      teacher: "ऑनलाइन",
+      createdAt: Timestamp.fromDate(englishScheduledDate), // Use scheduled time for sorting consistency here
+    };
+    
+    const manualHomeworkItem: HomeworkItem = {
+      id: "manual-hindi-homework",
+      subject: "हिन्दी",
+      task: "आज 10 पाठ पूरा करना",
+      dueDate: today.toLocaleDateString('hi-IN', { weekday: 'long' }), // "आज"
+      createdAt: Timestamp.now(),
+    };
+    // --- END PREPARE PROTOTYPE DATA ---
+
+
+    const unsubSchedule = setupListener<ScheduleItem>(SCHEDULE_COLLECTION, setScheduleItems, setIsLoadingSchedule, manualScheduleItem);
+    const unsubHomework = setupListener<HomeworkItem>(HOMEWORK_COLLECTION, setHomeworkItems, setIsLoadingHomework, manualHomeworkItem);
     const unsubUpdates = setupListener<UpdateItem>(UPDATES_COLLECTION, setUpdateItems, setIsLoadingUpdates);
 
     return () => {
@@ -195,7 +232,6 @@ export default function SchedulePage() {
 
       toast({ title: t(successMessageKey) });
       formReset();
-      // No need to call fetchData() anymore, onSnapshot will handle updates
     } catch (error: any) {
       console.error(`SchedulePage: Error adding item to ${collectionName}: `, error);
       toast({
@@ -211,12 +247,24 @@ export default function SchedulePage() {
   
   const handleDeleteItem = async (itemId: string, collectionName: string) => {
     if (!showAdminFeatures) return;
+
+    // For manually added prototype data, just filter out from state
+    if (itemId.startsWith("manual-")) {
+        if (collectionName === SCHEDULE_COLLECTION) {
+            setScheduleItems(prev => prev.filter(c => c.id !== itemId));
+        } else if (collectionName === HOMEWORK_COLLECTION) {
+            setHomeworkItems(prev => prev.filter(c => c.id !== itemId));
+        }
+        // No need to handle updates for this prototype scenario
+        toast({ title: t('itemDeletedSuccess')});
+        return;
+    }
+
     console.log(`SchedulePage: Attempting to delete item ${itemId} from ${collectionName}`);
     try {
       await deleteDoc(doc(db, collectionName, itemId));
       console.log(`SchedulePage: Item ${itemId} deleted from ${collectionName} successfully.`);
       toast({ title: t('itemDeletedSuccess') });
-      // No need to call fetchData() anymore, onSnapshot will handle updates
     } catch (error: any) {
       console.error(`SchedulePage: Error deleting item ${itemId} from ${collectionName}: `, error);
       toast({
@@ -339,3 +387,4 @@ export default function SchedulePage() {
     </div>
   );
 }
+
