@@ -34,9 +34,9 @@ interface LiveClass {
   id: string; 
   title: string;
   subject: string;
-  date: string; 
-  time: string; 
-  link: string; 
+  date: string; // Original date string from input, for display if needed
+  time: string; // Original time string from input, for display if needed
+  link: string; // Processed embed link
   scheduledAt: Timestamp; 
   createdAt: Timestamp;
 }
@@ -62,24 +62,29 @@ const getYouTubeEmbedUrl = (url: string): string => {
         videoId = urlObj.searchParams.get('v');
          if (!videoId) { 
             const pathParts = urlObj.pathname.split('/');
-            if (pathParts.length > 1 && pathParts[0] === 'live') videoId = pathParts[pathParts.length -1];
+            if (pathParts.length > 1 && (pathParts[0] === 'live' || pathParts[1] === 'live')) {
+                 videoId = pathParts[pathParts.length -1].split('?')[0];
+            }
          }
       } else if (urlObj.pathname === '/watch') {
         videoId = urlObj.searchParams.get('v');
       } else if (urlObj.pathname.startsWith('/embed/')) {
+        console.log("LiveClassesPage: URL is already an embed URL:", url);
         return url;
       }
     }
   } catch (e) {
     console.error("LiveClassesPage: Error parsing YouTube URL:", e, "URL:", url);
-    return `https://www.youtube.com/embed/error-parsing-url`; 
+    return `https://www.youtube.com/embed/error-parsing-url?original=${encodeURIComponent(url)}`; 
   }
   
   if (videoId) {
-    return `https://www.youtube.com/embed/${videoId.split('?')[0]}`;
+    const cleanVideoId = videoId.split('?')[0];
+    console.log("LiveClassesPage: Extracted videoId:", cleanVideoId, "from URL:", url);
+    return `https://www.youtube.com/embed/${cleanVideoId}`;
   }
   console.warn("LiveClassesPage: Could not extract videoId from URL:", url, "Returning generic placeholder.");
-  return `https://www.youtube.com/embed/invalid-video-id`; 
+  return `https://www.youtube.com/embed/invalid-video-id?original=${encodeURIComponent(url)}`; 
 };
 
 
@@ -110,7 +115,7 @@ export default function LiveClassesPage() {
     if (!isClient) return;
 
     setIsLoadingClasses(true);
-    console.log("LiveClassesPage: Setting up Firestore onSnapshot listener for collection:", LIVE_CLASSES_COLLECTION_NAME);
+    console.log("LiveClassesPage: Setting up Firestore onSnapshot listener for collection:", LIVE_CLASSES_COLLECTION_NAME, "Ordering by scheduledAt ASC.");
     
     const q = query(collection(db, LIVE_CLASSES_COLLECTION_NAME), orderBy("scheduledAt", "asc"));
     
@@ -153,10 +158,10 @@ export default function LiveClassesPage() {
             console.warn(`LiveClassesPage: doc ${doc.id} createdAt is invalid, null, or missing. Type: ${typeof data.createdAt}, Value:`, data.createdAt);
         }
         
-        if (data.title === undefined || data.title === null || data.title.trim() === "") {
+        if (data.title === undefined || data.title === null || String(data.title).trim() === "") {
           console.warn(`LiveClassesPage: Doc ID ${doc.id} has missing or empty title. Using default. Raw title:`, data.title);
         }
-        if (data.subject === undefined || data.subject === null || data.subject.trim() === "") {
+        if (data.subject === undefined || data.subject === null || String(data.subject).trim() === "") {
           console.warn(`LiveClassesPage: Doc ID ${doc.id} has missing or empty subject. Using default. Raw subject:`, data.subject);
         }
 
@@ -165,13 +170,12 @@ export default function LiveClassesPage() {
             if (createdAtTS) {
                 finalCreatedAtTS = createdAtTS;
             } else {
-                console.warn(`LiveClassesPage: Doc ID ${doc.id} 'createdAt' is null or invalid. Using 'scheduledAt' as a fallback for the 'createdAt' property to display the class.`);
+                console.warn(`LiveClassesPage: Doc ID ${doc.id} 'createdAt' is null or invalid. Using 'scheduledAt' as a fallback for the 'createdAt' property to display the class. scheduledAtTS: ${scheduledAtTS.toDate().toISOString()}`);
                 finalCreatedAtTS = scheduledAtTS; 
             }
 
             try {
-                console.log(`LiveClassesPage: Doc ID ${doc.id} will be ADDED to list. Valid scheduledAt: ${scheduledAtTS.toDate().toISOString()}, resolved createdAt: ${finalCreatedAtTS.toDate().toISOString()}`);
-                fetchedClasses.push({
+                const processedClass = {
                   id: doc.id,
                   title: data.title || "Untitled Class",
                   subject: data.subject || "No Subject",
@@ -180,19 +184,35 @@ export default function LiveClassesPage() {
                   link: getYouTubeEmbedUrl(data.link || "#"),
                   scheduledAt: scheduledAtTS,
                   createdAt: finalCreatedAtTS, 
-                });
+                };
+                console.log(`LiveClassesPage: Doc ID ${doc.id} successfully PROCESSED and will be ADDED to list. Processed object:`, JSON.parse(JSON.stringify({...processedClass, scheduledAt: processedClass.scheduledAt.toDate().toISOString(), createdAt: processedClass.createdAt.toDate().toISOString() })));
+                fetchedClasses.push(processedClass);
             } catch (e: any) {
-                 console.error(`LiveClassesPage: Error during toDate().toISOString() for doc ID ${doc.id} when constructing LiveClass object. This class will be SKIPPED. Error: ${e.message}`);
+                 console.error(`LiveClassesPage: Error during toDate().toISOString() for doc ID ${doc.id} when constructing LiveClass object for logging. This class might still be ADDED but logging failed. Error: ${e.message}`);
+                 // Attempt to add anyway if the error was just in logging
+                 try {
+                    fetchedClasses.push({
+                      id: doc.id,
+                      title: data.title || "Untitled Class",
+                      subject: data.subject || "No Subject",
+                      date: data.date || "N/A", 
+                      time: data.time || "N/A", 
+                      link: getYouTubeEmbedUrl(data.link || "#"),
+                      scheduledAt: scheduledAtTS,
+                      createdAt: finalCreatedAtTS, 
+                    });
+                 } catch (innerError: any) {
+                    console.error(`LiveClassesPage: CRITICAL - Error adding class ${doc.id} to list even after logging failed. SKIPPING. Inner error: ${innerError.message}`);
+                 }
             }
         } else {
             console.error(`LiveClassesPage: Doc ID ${doc.id} SKIPPED. title: '${data.title || 'N/A'}'. Reason: Invalid/missing converted scheduledAtTS. Converted scheduledAtTS: ${scheduledAtTS}, Converted createdAtTS: ${createdAtTS}. Raw scheduledAt: ${JSON.stringify(data.scheduledAt)}, Raw createdAt: ${JSON.stringify(data.createdAt)}`);
         }
       });
       
-      // Data from Firestore is already sorted by scheduledAt by the query
       console.log(`LiveClassesPage: Processed ${fetchedClasses.length} classes for UI from ${querySnapshot.docs.length} docs in snapshot.`);
       if (fetchedClasses.length > 0) {
-        // console.log("LiveClassesPage: Final fetchedClasses to be set (first item):", JSON.parse(JSON.stringify({...fetchedClasses[0], scheduledAt: fetchedClasses[0].scheduledAt.toDate().toISOString(), createdAt: fetchedClasses[0].createdAt.toDate().toISOString() })));
+         console.log("LiveClassesPage: Final fetchedClasses to be set (first item, if any, with converted timestamps):", JSON.parse(JSON.stringify({...fetchedClasses[0], scheduledAt: fetchedClasses[0].scheduledAt.toDate().toISOString(), createdAt: fetchedClasses[0].createdAt.toDate().toISOString() })));
       } else {
         console.log("LiveClassesPage: Final fetchedClasses to be set is empty.");
       }
@@ -220,51 +240,57 @@ export default function LiveClassesPage() {
 
   const onSubmit: SubmitHandler<LiveClassFormValues> = async (data) => {
     if (!showAdminFeatures) return;
-    console.log("LiveClassesPage: Attempting to submit new live class with form data:", data);
+    console.log("LiveClassesPage: Admin Form SUBMITTING. Form data:", JSON.parse(JSON.stringify(data)));
     setIsSubmitting(true);
+    
+    let scheduledAtTimestamp: Timestamp;
+    const serverNowTimestamp = serverTimestamp(); // For createdAt
+
     try {
       const [year, month, day] = data.date.split('-').map(Number);
       const [hours, minutes] = data.time.split(':').map(Number);
       
-      let scheduledDate;
-      try {
-        if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hours) || isNaN(minutes)) {
-            throw new Error("Invalid date or time components provided in form.");
-        }
-        scheduledDate = new Date(year, month - 1, day, hours, minutes);
-        if (isNaN(scheduledDate.getTime())) {
-            throw new Error("Invalid date/time components resulted in an invalid Date object.");
-        }
-        console.log("LiveClassesPage: Creating scheduledDate JS object (from local form input):", scheduledDate.toString(), "from inputs:", data.date, data.time);
-      } catch (e: any) {
-        console.error("LiveClassesPage: Error creating Date object from form inputs.", e, "Inputs:", data.date, data.time);
-        toast({ title: t('errorOccurred'), description: `Invalid date or time format: ${e.message || 'Please check YYYY-MM-DD and HH:MM format.'}`, variant: "destructive" });
-        setIsSubmitting(false);
-        return;
+      if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hours) || isNaN(minutes)) {
+          throw new Error("Invalid date or time components provided in form. Could not parse numbers.");
       }
+      // Construct JS Date object carefully using UTC to avoid timezone issues, then convert to Firestore Timestamp
+      // Note: JS Date months are 0-indexed (0 for Jan, 1 for Feb, etc.)
+      const localDate = new Date(year, month - 1, day, hours, minutes, 0, 0);
+      if (isNaN(localDate.getTime())) {
+          throw new Error(`Constructed JS Date is invalid. Year: ${year}, Month: ${month-1}, Day: ${day}, Hours: ${hours}, Minutes: ${minutes}`);
+      }
+      scheduledAtTimestamp = Timestamp.fromDate(localDate);
+      console.log("LiveClassesPage: Successfully created JS Date for scheduledAt (local time based on input):", localDate.toString());
+      console.log("LiveClassesPage: Converted to Firestore Timestamp for scheduledAt:", JSON.parse(JSON.stringify(scheduledAtTimestamp)));
+
+    } catch (e: any) {
+      console.error("LiveClassesPage: ERROR during scheduledAt Timestamp creation from form inputs.", { error: e.message, formData: data });
+      toast({ title: t('errorOccurred'), description: `Invalid date or time format: ${e.message || 'Please check YYYY-MM-DD and HH:MM format.'}`, variant: "destructive" });
+      setIsSubmitting(false);
+      return;
+    }
       
-      const scheduledAtTimestamp = Timestamp.fromDate(scheduledDate);
-      console.log("LiveClassesPage: Converted JS Date to Firestore Timestamp for scheduledAt:", scheduledAtTimestamp, "from date:", scheduledDate);
-      
-      const newClassPayload = {
-        title: data.title,
-        subject: data.subject,
-        date: data.date, 
-        time: data.time, 
-        link: data.link, 
-        scheduledAt: scheduledAtTimestamp, 
-        createdAt: serverTimestamp() 
-      };
-      console.log("LiveClassesPage: New class payload for Firestore:", newClassPayload);
+    const newClassPayload = {
+      title: data.title,
+      subject: data.subject,
+      date: data.date, // Store original string date for potential display or easier admin view
+      time: data.time, // Store original string time
+      link: data.link, // Store original link, will be processed for embed on display
+      scheduledAt: scheduledAtTimestamp, 
+      createdAt: serverNowTimestamp 
+    };
+    console.log("LiveClassesPage: PAYLOAD to be sent to Firestore:", JSON.parse(JSON.stringify(newClassPayload)));
+    
+    try {
       const docRef = await addDoc(collection(db, LIVE_CLASSES_COLLECTION_NAME), newClassPayload);
-      console.log("LiveClassesPage: Live class added to Firestore successfully with ID:", docRef.id);
+      console.log("LiveClassesPage: Live class added to Firestore successfully. Document ID:", docRef.id);
       
       try {
         const notificationPayload = {
           message: `${t('newLiveClassNotification') || 'New Live Class Scheduled'}: ${data.title} - ${data.subject}`,
           type: 'new_live_class',
           link: '/live-classes',
-          timestamp: serverTimestamp(),
+          timestamp: serverTimestamp(), // Use server timestamp for notification as well
           autoGenerated: true
         };
         console.log("LiveClassesPage: Attempting to add notification to Firestore:", notificationPayload);
@@ -277,7 +303,7 @@ export default function LiveClassesPage() {
       toast({ title: t('liveClassAddedSuccess') });
       form.reset();
     } catch (error: any) {
-      console.error("LiveClassesPage: Error adding live class to Firestore:", { message: error.message, code: error.code, stack: error.stack, fullError: error });
+      console.error("LiveClassesPage: ERROR adding live class to Firestore:", { message: error.message, code: error.code, stack: error.stack, fullError: error });
       toast({
         title: t('errorOccurred'),
         description: `${t('saveErrorDetails') || "Could not save live class."} ${error.message ? `(${error.message})` : 'Please check console for details.'}`,
@@ -309,11 +335,19 @@ export default function LiveClassesPage() {
   };
   
   const formatDisplayDate = (lc: LiveClass) => {
+    if (!lc.scheduledAt || typeof lc.scheduledAt.toDate !== 'function') {
+      console.warn("formatDisplayDate: Invalid scheduledAt for LiveClass:", lc.id, lc.title);
+      return lc.date || "Invalid Date"; // Fallback to original string date if timestamp is problematic
+    }
     const date = lc.scheduledAt.toDate();
     return date.toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-CA', { year: 'numeric', month: 'long', day: 'numeric'});
   };
 
   const formatDisplayTime = (lc: LiveClass) => {
+     if (!lc.scheduledAt || typeof lc.scheduledAt.toDate !== 'function') {
+      console.warn("formatDisplayTime: Invalid scheduledAt for LiveClass:", lc.id, lc.title);
+      return lc.time || "Invalid Time"; // Fallback to original string time
+    }
     const date = lc.scheduledAt.toDate();
     return date.toLocaleTimeString(language === 'hi' ? 'hi-IN' : 'en-US', { hour: '2-digit', minute: '2-digit', hour12: true});
   };
@@ -370,7 +404,7 @@ export default function LiveClassesPage() {
                         {formatDisplayTime(liveClass)}
                          {language === 'hi' ? ' बजे' : ''}
                     </div>
-                    <Button variant="outline" asChild className="mt-2 w-full md:w-auto"><a href={liveClass.link} target="_blank" rel="noopener noreferrer"><LinkIcon className="mr-2 h-4 w-4" /> Join Class</a></Button>
+                    <Button variant="outline" asChild className="mt-2 w-full md:w-auto"><a href={liveClass.link} target="_blank" rel="noopener noreferrer"><LinkIcon className="mr-2 h-4 w-4" /> {t('joinClassButton') || 'Join Class'}</a></Button>
                   </CardContent>
                 </Card>
               ))}</div>
@@ -381,6 +415,4 @@ export default function LiveClassesPage() {
     </div>
   );
 }
-    
-
     

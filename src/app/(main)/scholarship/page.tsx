@@ -16,6 +16,8 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
+const SCHOLARSHIP_COLLECTION_NAME = "scholarshipRegistrations";
+
 const formSchemaDefinition = (t: (key: string) => string) => z.object({
   studentName: z.string().min(2, { message: t('studentNameValidation') || "Name must be at least 2 characters." }),
   emailAddress: z.string().email({ message: t('emailValidation') || "Invalid email address." }),
@@ -39,19 +41,25 @@ export default function ScholarshipPage() {
   });
 
   const onSubmit: SubmitHandler<ScholarshipFormValues> = async (data) => {
-    console.log("Attempting to submit scholarship registration:", data);
+    console.log("ScholarshipPage: Attempting to submit scholarship registration. Form data:", JSON.parse(JSON.stringify(data)));
     setIsSubmitting(true);
     try {
       const newRegistration = { ...data, registrationDate: serverTimestamp() };
-      console.log("New scholarship registration payload for Firestore:", newRegistration);
+      console.log("ScholarshipPage: New scholarship registration PAYLOAD for Firestore:", JSON.parse(JSON.stringify(newRegistration)));
 
-      const docRef = await addDoc(collection(db, "scholarshipRegistrations"), newRegistration);
-      console.log("Scholarship registration added to Firestore successfully with ID:", docRef.id);
+      const docRef = await addDoc(collection(db, SCHOLARSHIP_COLLECTION_NAME), newRegistration);
+      console.log("ScholarshipPage: Scholarship registration added to Firestore successfully. Collection:", SCHOLARSHIP_COLLECTION_NAME, "Document ID:", docRef.id);
       
       toast({ title: t('registrationSuccess'), description: t('registrationSuccessMessage') });
       form.reset();
     } catch (error: any) { 
-      console.error("Error adding scholarship registration to Firestore. Config issue? Rules? Network?", { message: error.message, code: error.code, stack: error.stack, fullError: error });
+      console.error("ScholarshipPage: ERROR adding scholarship registration to Firestore.", {
+        collection: SCHOLARSHIP_COLLECTION_NAME,
+        message: error.message,
+        code: error.code,
+        stack: error.stack,
+        fullError: error
+      });
       toast({
         title: t('errorOccurred'),
         description: `${t('saveErrorDetails') || "Could not save registration."} ${error.message ? `(${error.message})` : "Please check console and Firebase setup."}`,
@@ -59,7 +67,7 @@ export default function ScholarshipPage() {
       });
     } finally {
       setIsSubmitting(false);
-      console.log("Finished scholarship registration submit attempt.");
+      console.log("ScholarshipPage: Finished scholarship registration submit attempt.");
     }
   };
 
@@ -88,3 +96,4 @@ export default function ScholarshipPage() {
     </div>
   );
 }
+
