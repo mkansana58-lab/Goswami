@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { CalendarDays, ListChecks, Megaphone, PlusCircle, Trash2, Loader2 } from 'lucide-react';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, Timestamp, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, query, orderBy, Timestamp, serverTimestamp, onSnapshot, Unsubscribe } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,7 +55,7 @@ interface UpdateItem {
   id: string;
   title: string;
   message: string;
-  date: string; // Event/effective date for the update
+  date: string; 
   createdAt: Timestamp;
 }
 
@@ -87,11 +87,19 @@ export default function SchedulePage() {
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
   const [showAdminFeatures, setShowAdminFeatures] = useState(false);
-  const [isLoadingData, setIsLoadingData] = useState(true);
+  
+  const [isLoadingSchedule, setIsLoadingSchedule] = useState(true);
+  const [isLoadingHomework, setIsLoadingHomework] = useState(true);
+  const [isLoadingUpdates, setIsLoadingUpdates] = useState(true);
 
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
   const [homeworkItems, setHomeworkItems] = useState<HomeworkItem[]>([]);
   const [updateItems, setUpdateItems] = useState<UpdateItem[]>([]);
+  
+  const [isSubmittingSchedule, setIsSubmittingSchedule] = useState(false);
+  const [isSubmittingHomework, setIsSubmittingHomework] = useState(false);
+  const [isSubmittingUpdate, setIsSubmittingUpdate] = useState(false);
+
 
   useEffect(() => {
     setIsClient(true);
@@ -100,60 +108,66 @@ export default function SchedulePage() {
     }
   }, []);
 
-  const fetchData = async () => {
-    if(!isClient) return;
-    setIsLoadingData(true);
-    console.log("SchedulePage: Attempting to fetch all schedule data...");
-    try {
-      const scheduleQuery = query(collection(db, SCHEDULE_COLLECTION), orderBy("createdAt", "desc"));
-      const scheduleSnapshot = await getDocs(scheduleQuery);
-      setScheduleItems(scheduleSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScheduleItem)));
-      console.log("SchedulePage: Fetched schedule items", scheduleSnapshot.docs.length);
-
-      const homeworkQuery = query(collection(db, HOMEWORK_COLLECTION), orderBy("createdAt", "desc"));
-      const homeworkSnapshot = await getDocs(homeworkQuery);
-      setHomeworkItems(homeworkSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as HomeworkItem)));
-      console.log("SchedulePage: Fetched homework items", homeworkSnapshot.docs.length);
-
-      const updatesQuery = query(collection(db, UPDATES_COLLECTION), orderBy("createdAt", "desc"));
-      const updatesSnapshot = await getDocs(updatesQuery);
-      setUpdateItems(updatesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UpdateItem)));
-      console.log("SchedulePage: Fetched update items", updatesSnapshot.docs.length);
-
-    } catch (error: any) {
-      console.error("SchedulePage: Error fetching schedule data from Firestore:", { message: error.message, code: error.code, stack: error.stack });
-      toast({
-        title: t('errorOccurred'),
-        description: `${t('fetchErrorDetails')} ${error.message ? `(${error.message})` : ''}`,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingData(false);
-      console.log("SchedulePage: Finished fetching all schedule data attempt.");
-    }
-  };
-
   useEffect(() => {
-    fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isClient]);
+    if (!isClient) return;
+
+    const setupListener = <T extends { id: string; createdAt: Timestamp }>(
+      collectionName: string,
+      setData: React.Dispatch<React.SetStateAction<T[]>>,
+      setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
+    ): Unsubscribe => {
+      setIsLoading(true);
+      console.log(`SchedulePage: Setting up Firestore onSnapshot listener for ${collectionName}`);
+      const q = query(collection(db, collectionName), orderBy("createdAt", "desc"));
+      
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        console.log(`SchedulePage: ${collectionName} snapshot triggered. Size: ${querySnapshot.size}`);
+        const fetchedItems: T[] = [];
+        querySnapshot.forEach((doc) => {
+          fetchedItems.push({ id: doc.id, ...doc.data() } as T);
+        });
+        setData(fetchedItems);
+        setIsLoading(false);
+        console.log(`SchedulePage: ${collectionName} state updated. Total items: ${fetchedItems.length}`);
+      }, (error) => {
+        console.error(`SchedulePage: Error in onSnapshot listener for ${collectionName}:`, error);
+        toast({
+          title: t('errorOccurred'),
+          description: `${t('fetchErrorDetails')} for ${collectionName}. ${error.message ? `(${error.message})` : ''}`,
+          variant: "destructive",
+        });
+        setIsLoading(false);
+      });
+      return unsubscribe;
+    };
+
+    const unsubSchedule = setupListener<ScheduleItem>(SCHEDULE_COLLECTION, setScheduleItems, setIsLoadingSchedule);
+    const unsubHomework = setupListener<HomeworkItem>(HOMEWORK_COLLECTION, setHomeworkItems, setIsLoadingHomework);
+    const unsubUpdates = setupListener<UpdateItem>(UPDATES_COLLECTION, setUpdateItems, setIsLoadingUpdates);
+
+    return () => {
+      console.log("SchedulePage: Unsubscribing from Firestore listeners.");
+      unsubSchedule();
+      unsubHomework();
+      unsubUpdates();
+    };
+  }, [isClient, t, toast]);
 
   const scheduleForm = useForm<ScheduleFormValues>({ resolver: zodResolver(scheduleFormSchemaDefinition(t)), defaultValues: { title: "", time: "", subject: "", teacher: "" }});
   const homeworkForm = useForm<HomeworkFormValues>({ resolver: zodResolver(homeworkFormSchemaDefinition(t)), defaultValues: { subject: "", task: "", dueDate: "" }});
   const updateForm = useForm<UpdateFormValues>({ resolver: zodResolver(updateFormSchemaDefinition(t)), defaultValues: { title: "", message: "", date: "" }});
 
-  const handleAddItem = async <FormValues extends { title?: string; subject?: string; task?: string } >(
+  const handleAddItem = async <FormValues extends { title?: string; subject?: string; task?: string; message?: string } >(
     data: FormValues,
     collectionName: string,
-    notificationType: string, // e.g., 'new_schedule_item', 'new_homework'
+    notificationType: string,
     successMessageKey: string,
     formReset: () => void,
-    formInstance: any 
+    setIsSubmittingState: React.Dispatch<React.SetStateAction<boolean>>
   ) => {
     if (!showAdminFeatures) return;
     
-    const submittingStateSetter = formInstance.formState.setIsSubmitting || ((val: boolean) => formInstance.control.isSubmitting = val);
-    submittingStateSetter(true);
+    setIsSubmittingState(true);
     console.log(`SchedulePage: Attempting to add item to ${collectionName}`, data);
 
     try {
@@ -162,9 +176,8 @@ export default function SchedulePage() {
       const docRef = await addDoc(collection(db, collectionName), payload);
       console.log(`SchedulePage: Item added to ${collectionName} successfully with ID: `, docRef.id);
       
-      // Add notification
       try {
-        const notificationMessage = `${t(successMessageKey)}: ${data.title || data.subject || data.task || 'New Item'}`;
+        const notificationMessage = `${t(successMessageKey)}: ${data.title || data.subject || data.task || data.message || 'New Item'}`;
         const notificationPayload = {
           message: notificationMessage,
           type: notificationType,
@@ -176,22 +189,22 @@ export default function SchedulePage() {
         await addDoc(collection(db, NOTIFICATIONS_COLLECTION), notificationPayload);
         console.log("SchedulePage: Notification added successfully for", notificationType);
       } catch (notifError: any) {
-        console.error(`SchedulePage: Error adding notification for ${notificationType}:`, { message: notifError.message, code: notifError.code, stack: notifError.stack });
+        console.error(`SchedulePage: Error adding notification for ${notificationType}:`, notifError);
         toast({ title: t('errorOccurred'), description: `Failed to create notification: ${notifError.message}`, variant: "destructive" });
       }
 
       toast({ title: t(successMessageKey) });
       formReset();
-      fetchData(); 
+      // No need to call fetchData() anymore, onSnapshot will handle updates
     } catch (error: any) {
-      console.error(`SchedulePage: Error adding item to ${collectionName}: `, { message: error.message, code: error.code, stack: error.stack });
+      console.error(`SchedulePage: Error adding item to ${collectionName}: `, error);
       toast({
         title: t('errorOccurred'),
         description: `${t('saveErrorDetails')} ${error.message ? `(${error.message})` : ''}`,
         variant: "destructive",
       });
     } finally {
-       submittingStateSetter(false);
+       setIsSubmittingState(false);
        console.log(`SchedulePage: Finished add item attempt for ${collectionName}.`);
     }
   };
@@ -203,9 +216,9 @@ export default function SchedulePage() {
       await deleteDoc(doc(db, collectionName, itemId));
       console.log(`SchedulePage: Item ${itemId} deleted from ${collectionName} successfully.`);
       toast({ title: t('itemDeletedSuccess') });
-      fetchData(); 
+      // No need to call fetchData() anymore, onSnapshot will handle updates
     } catch (error: any) {
-      console.error(`SchedulePage: Error deleting item ${itemId} from ${collectionName}: `, { message: error.message, code: error.code, stack: error.stack });
+      console.error(`SchedulePage: Error deleting item ${itemId} from ${collectionName}: `, error);
       toast({
         title: t('errorOccurred'),
         description: `${t('deleteErrorDetails')} ${error.message ? `(${error.message})` : ''}`,
@@ -216,11 +229,11 @@ export default function SchedulePage() {
     }
   };
 
-  const onScheduleSubmit: SubmitHandler<ScheduleFormValues> = (data) => handleAddItem(data, SCHEDULE_COLLECTION, 'new_schedule_item', 'scheduleAddedSuccess', scheduleForm.reset, scheduleForm);
-  const onHomeworkSubmit: SubmitHandler<HomeworkFormValues> = (data) => handleAddItem(data, HOMEWORK_COLLECTION, 'new_homework_item', 'homeworkAddedSuccess', homeworkForm.reset, homeworkForm);
-  const onUpdateSubmit: SubmitHandler<UpdateFormValues> = (data) => handleAddItem(data, UPDATES_COLLECTION, 'new_update_item', 'updateAddedSuccess', updateForm.reset, updateForm);
+  const onScheduleSubmit: SubmitHandler<ScheduleFormValues> = (data) => handleAddItem(data, SCHEDULE_COLLECTION, 'new_schedule_item', 'scheduleAddedSuccess', scheduleForm.reset, setIsSubmittingSchedule);
+  const onHomeworkSubmit: SubmitHandler<HomeworkFormValues> = (data) => handleAddItem(data, HOMEWORK_COLLECTION, 'new_homework_item', 'homeworkAddedSuccess', homeworkForm.reset, setIsSubmittingHomework);
+  const onUpdateSubmit: SubmitHandler<UpdateFormValues> = (data) => handleAddItem(data, UPDATES_COLLECTION, 'new_update_item', 'updateAddedSuccess', updateForm.reset, setIsSubmittingUpdate);
   
-  if (!isClient || (isLoadingData && !scheduleItems.length && !homeworkItems.length && !updateItems.length)) {
+  if (!isClient || (isLoadingSchedule && isLoadingHomework && isLoadingUpdates && !scheduleItems.length && !homeworkItems.length && !updateItems.length)) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">{t('loading')}</p></div>;
   }
 
@@ -244,9 +257,9 @@ export default function SchedulePage() {
                     <FormField control={scheduleForm.control} name="subject" render={({ field }) => (<FormItem><FormLabel>{t('scheduleSubjectLabel')}</FormLabel><FormControl><Input placeholder={t('scheduleSubjectPlaceholder')} {...field} /></FormControl><FormMessage /></FormItem> )}/>
                     <FormField control={scheduleForm.control} name="teacher" render={({ field }) => (<FormItem><FormLabel>{t('scheduleTeacherLabel')}</FormLabel><FormControl><Input placeholder={t('scheduleTeacherPlaceholder')} {...field} /></FormControl><FormMessage /></FormItem> )}/>
                   </div>
-                  <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90" disabled={scheduleForm.formState.isSubmitting}>
-                    {scheduleForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    {scheduleForm.formState.isSubmitting ? t('loading') : t('addScheduleButton')}
+                  <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90" disabled={isSubmittingSchedule}>
+                    {isSubmittingSchedule ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {isSubmittingSchedule ? t('loading') : t('addScheduleButton')}
                   </Button>
                 </form>
               </Form>
@@ -264,9 +277,9 @@ export default function SchedulePage() {
                     <FormField control={homeworkForm.control} name="dueDate" render={({ field }) => ( <FormItem><FormLabel>{t('homeworkDueDateLabel')}</FormLabel><FormControl><Input placeholder={t('homeworkDueDatePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem> )}/>
                   </div>
                   <FormField control={homeworkForm.control} name="task" render={({ field }) => ( <FormItem><FormLabel>{t('homeworkTaskLabel')}</FormLabel><FormControl><Textarea placeholder={t('homeworkTaskPlaceholder')} {...field} rows={3} /></FormControl><FormMessage /></FormItem> )}/>
-                  <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90" disabled={homeworkForm.formState.isSubmitting}>
-                     {homeworkForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    {homeworkForm.formState.isSubmitting ? t('loading') : t('addHomeworkButton')}
+                  <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90" disabled={isSubmittingHomework}>
+                     {isSubmittingHomework ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {isSubmittingHomework ? t('loading') : t('addHomeworkButton')}
                   </Button>
                 </form>
               </Form>
@@ -284,9 +297,9 @@ export default function SchedulePage() {
                      <FormField control={updateForm.control} name="date" render={({ field }) => ( <FormItem><FormLabel>{t('updateDateLabel')}</FormLabel><FormControl><Input placeholder={t('updateDatePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem> )}/>
                   </div>
                   <FormField control={updateForm.control} name="message" render={({ field }) => ( <FormItem><FormLabel>{t('updateMessageLabel')}</FormLabel><FormControl><Textarea placeholder={t('updateMessagePlaceholder')} {...field} rows={3}/></FormControl><FormMessage /></FormItem> )}/>
-                  <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90" disabled={updateForm.formState.isSubmitting}>
-                    {updateForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    {updateForm.formState.isSubmitting ? t('loading') : t('addUpdateButton')}
+                  <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90" disabled={isSubmittingUpdate}>
+                    {isSubmittingUpdate ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {isSubmittingUpdate ? t('loading') : t('addUpdateButton')}
                   </Button>
                 </form>
               </Form>
@@ -298,7 +311,7 @@ export default function SchedulePage() {
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center space-x-3"><CalendarDays className="h-8 w-8 text-accent" /><div><CardTitle className="text-2xl font-headline text-primary">{t('classScheduleTitle')}</CardTitle><CardDescription>{t('dynamicScheduleDesc')}</CardDescription></div></CardHeader>
         <CardContent>
-          {isLoadingData && scheduleItems.length === 0 ? <div className="flex justify-center items-center py-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /><p className="ml-2 text-sm">{t('loading')}</p></div>
+          {isLoadingSchedule && scheduleItems.length === 0 ? <div className="flex justify-center items-center py-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /><p className="ml-2 text-sm">{t('loading')}</p></div>
            : scheduleItems.length > 0 ? (<ul className="space-y-3">{scheduleItems.map((item) => (<li key={item.id} className="p-3 bg-muted/50 rounded-md flex justify-between items-start"><div><p className="font-semibold text-secondary-foreground">{item.title} ({item.time})</p><p className="text-sm text-muted-foreground">{t('subject')}: {item.subject}</p><p className="text-sm text-muted-foreground">{t('scheduleTeacherLabel')}: {item.teacher}</p></div>{showAdminFeatures && (<AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('confirmDeleteTitle')}</AlertDialogTitle><AlertDialogDescription>{t('confirmDeleteMessage')}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t('cancelButton')}</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteItem(item.id, SCHEDULE_COLLECTION)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">{t('deleteButton')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>)}</li>))}</ul>) : <p className="text-center text-muted-foreground py-4">{t('noScheduleItems')}</p>}
         </CardContent>
       </Card>
@@ -307,7 +320,7 @@ export default function SchedulePage() {
         <Card className="shadow-lg">
           <CardHeader className="flex flex-row items-center space-x-3"><ListChecks className="h-8 w-8 text-accent" /><div><CardTitle className="text-2xl font-headline text-primary">{t('homeworkAssignments')}</CardTitle><CardDescription>{t('dynamicHomeworkDesc')}</CardDescription></div></CardHeader>
           <CardContent>
-             {isLoadingData && homeworkItems.length === 0 ? <div className="flex justify-center items-center py-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /><p className="ml-2 text-sm">{t('loading')}</p></div>
+             {isLoadingHomework && homeworkItems.length === 0 ? <div className="flex justify-center items-center py-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /><p className="ml-2 text-sm">{t('loading')}</p></div>
             : homeworkItems.length > 0 ? (<ul className="space-y-3">{homeworkItems.map((item) => (<li key={item.id} className="p-3 bg-muted/50 rounded-md flex justify-between items-start"><div><p className="font-semibold text-secondary-foreground">{item.subject}: {item.task}</p><p className="text-sm text-muted-foreground">{t('homeworkDueDateLabel')}: {item.dueDate}</p></div>{showAdminFeatures && (<AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('confirmDeleteTitle')}</AlertDialogTitle><AlertDialogDescription>{t('confirmDeleteMessage')}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t('cancelButton')}</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteItem(item.id, HOMEWORK_COLLECTION)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">{t('deleteButton')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>)}</li>))}</ul>) : <p className="text-center text-muted-foreground py-4">{t('noHomeworkItems')}</p>}
           </CardContent>
         </Card>
@@ -315,7 +328,7 @@ export default function SchedulePage() {
         <Card className="shadow-lg">
           <CardHeader className="flex flex-row items-center space-x-3"><Megaphone className="h-8 w-8 text-accent" /><div><CardTitle className="text-2xl font-headline text-primary">{t('importantUpdates')}</CardTitle><CardDescription>{t('dynamicUpdatesDesc')}</CardDescription></div></CardHeader>
           <CardContent>
-            {isLoadingData && updateItems.length === 0 ? <div className="flex justify-center items-center py-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /><p className="ml-2 text-sm">{t('loading')}</p></div>
+            {isLoadingUpdates && updateItems.length === 0 ? <div className="flex justify-center items-center py-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /><p className="ml-2 text-sm">{t('loading')}</p></div>
             : updateItems.length > 0 ? (<ul className="space-y-3">{updateItems.map((item) => (<li key={item.id} className="p-3 bg-muted/50 rounded-md flex justify-between items-start"><div><p className="font-semibold text-secondary-foreground">{item.title} ({item.date})</p><p className="text-sm text-muted-foreground whitespace-pre-wrap">{item.message}</p></div>{showAdminFeatures && (<AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('confirmDeleteTitle')}</AlertDialogTitle><AlertDialogDescription>{t('confirmDeleteMessage')}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t('cancelButton')}</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteItem(item.id, UPDATES_COLLECTION)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">{t('deleteButton')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>)}</li>))}</ul>) : <p className="text-center text-muted-foreground py-4">{t('noUpdateItems')}</p>}
           </CardContent>
         </Card>
@@ -326,5 +339,3 @@ export default function SchedulePage() {
     </div>
   );
 }
-
-    
