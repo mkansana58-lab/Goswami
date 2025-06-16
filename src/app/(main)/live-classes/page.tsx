@@ -434,6 +434,7 @@ export default function LiveClassesPage() {
     </div>
   );
 }
+import { app } from './firebase';
     
 
     
