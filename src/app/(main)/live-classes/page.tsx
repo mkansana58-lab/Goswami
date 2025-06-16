@@ -83,59 +83,89 @@ export default function LiveClassesPage() {
     const q = query(collection(db, LIVE_CLASSES_COLLECTION_NAME), orderBy("scheduledAt", "asc"));
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      console.log(`LiveClassesPage: -------- BEGIN ONSNAPSHOT (${new Date().toISOString()}) --------`);
+      console.log(`LiveClassesPage: Snapshot triggered. Size: ${querySnapshot.size}. isEmpty: ${querySnapshot.empty}`);
+      const currentDocIds = querySnapshot.docs.map(doc => doc.id);
+      console.log(`LiveClassesPage: Document IDs in this snapshot: [${currentDocIds.join(', ')}]`);
+
       const fetchedClasses: LiveClass[] = [];
-      console.log("LiveClassesPage: onSnapshot triggered. Snapshot size:", querySnapshot.size, "Docs found:", querySnapshot.docs.length);
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        console.log(`LiveClassesPage: Processing doc ID: ${doc.id}, Raw Data for onSnapshot:`, JSON.stringify(data));
-        
+        // Use JSON.parse(JSON.stringify(data)) for a deep copy to log the exact state at this point
+        console.log(`LiveClassesPage: Processing doc ID: ${doc.id}, RAW DATA:`, JSON.parse(JSON.stringify(data)));
+
         let scheduledAtTS: Timestamp | null = null;
-        if (data.scheduledAt && typeof data.scheduledAt.toDate === 'function') { // Check if it's a Firestore Timestamp
+        if (data.scheduledAt && typeof data.scheduledAt.toDate === 'function') {
             scheduledAtTS = data.scheduledAt as Timestamp;
         } else if (data.scheduledAt && typeof data.scheduledAt === 'object' && data.scheduledAt.seconds !== undefined && data.scheduledAt.nanoseconds !== undefined) {
-            // Handle cases where it might be a plain object (e.g. from cache or older data that wasn't a proper Timestamp)
-            scheduledAtTS = new Timestamp(data.scheduledAt.seconds, data.scheduledAt.nanoseconds);
-            console.warn(`LiveClassesPage: doc ${doc.id} scheduledAt was a plain object, converted to Timestamp. Value:`, data.scheduledAt);
+            console.warn(`LiveClassesPage: doc ${doc.id} scheduledAt was a plain object, attempting to convert. Value:`, data.scheduledAt);
+            try {
+                scheduledAtTS = new Timestamp(data.scheduledAt.seconds, data.scheduledAt.nanoseconds);
+            } catch (e) {
+                console.error(`LiveClassesPage: Error converting plain object to Timestamp for scheduledAt on doc ${doc.id}. Error:`, e, "Data:", data.scheduledAt);
+                scheduledAtTS = null; // Ensure it's null if conversion fails
+            }
         } else {
-             console.error(`LiveClassesPage: doc ${doc.id} scheduledAt is invalid or missing. Type: ${typeof data.scheduledAt}, Value:`, data.scheduledAt);
+             console.warn(`LiveClassesPage: doc ${doc.id} scheduledAt is invalid or missing. Type: ${typeof data.scheduledAt}, Value:`, data.scheduledAt);
         }
 
         let createdAtTS: Timestamp | null = null;
         if (data.createdAt && typeof data.createdAt.toDate === 'function') {
             createdAtTS = data.createdAt as Timestamp;
         } else if (data.createdAt && typeof data.createdAt === 'object' && data.createdAt.seconds !== undefined && data.createdAt.nanoseconds !== undefined) {
-            createdAtTS = new Timestamp(data.createdAt.seconds, data.createdAt.nanoseconds);
-            console.warn(`LiveClassesPage: doc ${doc.id} createdAt was a plain object, converted to Timestamp. Value:`, data.createdAt);
+            console.warn(`LiveClassesPage: doc ${doc.id} createdAt was a plain object, attempting to convert. Value:`, data.createdAt);
+            try {
+                createdAtTS = new Timestamp(data.createdAt.seconds, data.createdAt.nanoseconds);
+            } catch (e) {
+                console.error(`LiveClassesPage: Error converting plain object to Timestamp for createdAt on doc ${doc.id}. Error:`, e, "Data:", data.createdAt);
+                createdAtTS = null; // Ensure it's null if conversion fails
+            }
         } else {
-            console.error(`LiveClassesPage: doc ${doc.id} createdAt is invalid or missing. Type: ${typeof data.createdAt}, Value:`, data.createdAt);
+            console.warn(`LiveClassesPage: doc ${doc.id} createdAt is invalid or missing. Type: ${typeof data.createdAt}, Value:`, data.createdAt);
+        }
+        
+        if (data.title === undefined || data.title === null || data.title.trim() === "") {
+          console.warn(`LiveClassesPage: Doc ID ${doc.id} has missing or empty title. Using default. Raw title:`, data.title);
+        }
+        if (data.subject === undefined || data.subject === null || data.subject.trim() === "") {
+          console.warn(`LiveClassesPage: Doc ID ${doc.id} has missing or empty subject. Using default. Raw subject:`, data.subject);
         }
 
-        // Only push if essential timestamps are valid
+
         if (scheduledAtTS && createdAtTS) {
-            fetchedClasses.push({
-              id: doc.id,
-              title: data.title || "Untitled Class", // Provide default if missing
-              subject: data.subject || "No Subject", // Provide default
-              date: data.date || "N/A", 
-              time: data.time || "N/A", 
-              link: data.link || "#",
-              scheduledAt: scheduledAtTS,
-              createdAt: createdAtTS,
-            });
+            try {
+                console.log(`LiveClassesPage: Doc ID ${doc.id} has VALID timestamps. scheduledAt: ${scheduledAtTS.toDate().toISOString()}, createdAt: ${createdAtTS.toDate().toISOString()}`);
+                fetchedClasses.push({
+                  id: doc.id,
+                  title: data.title || "Untitled Class",
+                  subject: data.subject || "No Subject",
+                  date: data.date || "N/A", 
+                  time: data.time || "N/A", 
+                  link: data.link || "#",
+                  scheduledAt: scheduledAtTS,
+                  createdAt: createdAtTS,
+                });
+            } catch (e) {
+                 console.error(`LiveClassesPage: Error during toDate().toISOString() for doc ID ${doc.id}. This class will be SKIPPED. Error:`, e);
+            }
         } else {
-            console.error(`LiveClassesPage: doc ${doc.id} (Title: ${data.title || 'N/A'}) skipped due to invalid/missing scheduledAt or createdAt timestamps.`);
+            console.error(`LiveClassesPage: Doc ID ${doc.id} SKIPPED. title: '${data.title || 'N/A'}'. Reason: Invalid/missing converted scheduledAtTS or createdAtTS. Converted scheduledAtTS: ${scheduledAtTS}, Converted createdAtTS: ${createdAtTS}. Raw scheduledAt: ${JSON.stringify(data.scheduledAt)}, Raw createdAt: ${JSON.stringify(data.createdAt)}`);
         }
       });
+      
+      console.log(`LiveClassesPage: Processed ${fetchedClasses.length} classes for UI from ${querySnapshot.docs.length} docs in snapshot.`);
+      if (fetchedClasses.length > 0) {
+        console.log("LiveClassesPage: Final fetchedClasses to be set (first item):", JSON.parse(JSON.stringify({...fetchedClasses[0], scheduledAt: fetchedClasses[0].scheduledAt.toDate().toISOString(), createdAt: fetchedClasses[0].createdAt.toDate().toISOString() })));
+      } else {
+        console.log("LiveClassesPage: Final fetchedClasses to be set is empty.");
+      }
+
       setLiveClasses(fetchedClasses);
       setIsLoadingClasses(false);
-      console.log("LiveClassesPage: Live classes state updated by onSnapshot. Total classes in state:", fetchedClasses.length);
-      if (fetchedClasses.length > 0) {
-        console.log("LiveClassesPage: First class in new state (onSnapshot):", JSON.stringify(fetchedClasses[0]));
-      } else {
-        console.log("LiveClassesPage: No live classes in new state (onSnapshot), or all processed docs had issues.");
-      }
+      console.log(`LiveClassesPage: Live classes state updated by onSnapshot. Total classes in state: ${fetchedClasses.length}`);
+      console.log(`LiveClassesPage: -------- END ONSNAPSHOT (${new Date().toISOString()}) --------`);
     }, (error) => {
-      console.error("LiveClassesPage: Error fetching live classes from Firestore (onSnapshot):", { message: error.message, code: error.code, stack: error.stack });
+      console.error("LiveClassesPage: Error in onSnapshot listener:", { message: error.message, code: error.code, stack: error.stack });
       toast({
         title: t('errorOccurred'),
         description: `${t('fetchErrorDetails') || "Failed to load live classes."} ${error.message ? `(${error.message})` : ''}`,
@@ -148,7 +178,7 @@ export default function LiveClassesPage() {
       console.log("LiveClassesPage: Unsubscribing from Firestore onSnapshot listener.");
       unsubscribe();
     };
-  }, [isClient, t, toast, language]); // Added language as t depends on it
+  }, [isClient, t, toast, language]);
 
 
   const onSubmit: SubmitHandler<LiveClassFormValues> = async (data) => {
@@ -158,9 +188,20 @@ export default function LiveClassesPage() {
     try {
       const [year, month, day] = data.date.split('-').map(Number);
       const [hours, minutes] = data.time.split(':').map(Number);
-      // Create date in UTC to avoid timezone issues when converting to Firestore Timestamp
-      const scheduledDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
-      console.log("LiveClassesPage: Creating scheduledDate JS object (intended as UTC):", scheduledDate.toISOString(), "from inputs:", data.date, data.time);
+      
+      let scheduledDate;
+      try {
+        scheduledDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+        if (isNaN(scheduledDate.getTime())) {
+            throw new Error("Invalid date/time components resulted in an invalid Date object.");
+        }
+        console.log("LiveClassesPage: Creating scheduledDate JS object (intended as UTC):", scheduledDate.toISOString(), "from inputs:", data.date, data.time);
+      } catch (e) {
+        console.error("LiveClassesPage: Error creating Date object from form inputs.", e, "Inputs:", data.date, data.time);
+        toast({ title: t('errorOccurred'), description: `Invalid date or time format: ${e.message}`, variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+      }
       
       const scheduledAtTimestamp = Timestamp.fromDate(scheduledDate);
       console.log("LiveClassesPage: Converted JS Date to Firestore Timestamp for scheduledAt:", scheduledAtTimestamp, "from date:", scheduledDate);
@@ -191,8 +232,6 @@ export default function LiveClassesPage() {
         console.log("LiveClassesPage: Notification for new live class added successfully.");
       } catch (notifError: any) {
         console.error("LiveClassesPage: Error adding notification for live class:", { message: notifError.message, code: notifError.code, stack: notifError.stack });
-        // Do not let notification failure block the main operation's success message
-        // toast({ title: t('errorOccurred'), description: `Failed to create notification: ${notifError.message}`, variant: "destructive" });
       }
 
       toast({ title: t('liveClassAddedSuccess') });
@@ -273,14 +312,12 @@ export default function LiveClassesPage() {
                   <CardContent className="space-y-2">
                     <div className="flex items-center text-sm text-muted-foreground">
                         <Calendar className="mr-2 h-4 w-4" /> 
-                        {/* Display date portion of scheduledAt Timestamp, correctly handling timezone for display */}
                         {liveClass.scheduledAt.toDate().toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-CA', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
                     </div>
                     <div className="flex items-center text-sm text-muted-foreground">
                         <Clock className="mr-2 h-4 w-4" /> 
-                        {/* Display time portion of scheduledAt Timestamp */}
                         {liveClass.scheduledAt.toDate().toLocaleTimeString(language === 'hi' ? 'hi-IN' : 'en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' , hour12: true})}
-                         (UTC) {/* Explicitly state UTC or convert to local based on preference */}
+                         (UTC)
                     </div>
                     <Button variant="outline" asChild className="mt-2 w-full md:w-auto"><a href={liveClass.link} target="_blank" rel="noopener noreferrer"><LinkIcon className="mr-2 h-4 w-4" /> Join Class</a></Button>
                   </CardContent>
@@ -295,3 +332,4 @@ export default function LiveClassesPage() {
 }
     
 
+    
