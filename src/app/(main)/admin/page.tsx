@@ -5,9 +5,10 @@ import { useEffect, useState } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, CalendarDays, ClipboardCheck, PlaySquare, Tv2, LayoutDashboard, AlertTriangle, ExternalLink, LogIn, DownloadCloud, ListChecks, FileQuestion, NewspaperIcon, BookOpenIcon, Briefcase, ShieldCheck, Star } from 'lucide-react';
+import { Users, CalendarDays, ClipboardCheck, PlaySquare, Tv2, LayoutDashboard, AlertTriangle, ExternalLink, LogIn, DownloadCloud, ListChecks, FileQuestion, NewspaperIcon, BookOpenIcon, Briefcase, ShieldCheck, Star, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const ADMIN_LOGGED_IN_KEY = 'adminLoggedInGoSwami';
 
@@ -20,9 +21,6 @@ interface AdminSection {
   managementNoteKey?: keyof ReturnType<typeof useLanguage>['t'];
 }
 
-// Note: For many of these, actual admin UIs for content management are not built in this step.
-// The href will point to the user-facing page. Admin would manage content via Firebase Console.
-// Descriptions are updated to reflect this for some items.
 const adminSections: AdminSection[] = [
   { key: 'registrations', titleKey: 'manageRegistrations', descriptionKey: 'manageRegistrationsDesc', href: '/registrations', icon: Users },
   { key: 'schedule', titleKey: 'manageSchedule', descriptionKey: 'manageScheduleDesc', href: '/schedule', icon: CalendarDays },
@@ -35,7 +33,7 @@ const adminSections: AdminSection[] = [
   { key: 'currentAffairs', titleKey: 'navCurrentAffairs', descriptionKey: 'adminCurrentAffairsDesc', href: '/current-affairs', icon: NewspaperIcon, managementNoteKey: 'adminManageCurrentAffairsNote'},
   { key: 'studyBooks', titleKey: 'navStudyBooks', descriptionKey: 'adminStudyBooksDesc', href: '/study-books', icon: BookOpenIcon, managementNoteKey: 'adminManageBooksNote'},
   { key: 'jobAlerts', titleKey: 'navJobAlerts', descriptionKey: 'adminJobAlertsDesc', href: '/job-alerts', icon: Briefcase, managementNoteKey: 'adminManageJobAlertsNote'},
-  { key: 'courses', titleKey: 'manageCourses', descriptionKey: 'adminCoursesDesc', href: '/premium-courses', icon: Star, managementNoteKey: 'adminManageCoursesNote'}, // Points to premium, covers free too
+  { key: 'courses', titleKey: 'manageCourses', descriptionKey: 'adminCoursesDesc', href: '/premium-courses', icon: Star, managementNoteKey: 'adminManageCoursesNote'},
 ];
 
 
@@ -49,7 +47,6 @@ export default function AdminPanelPage() {
     if (typeof window !== 'undefined') {
       const isAdminLoggedIn = localStorage.getItem(ADMIN_LOGGED_IN_KEY) === 'true';
       if (!isAdminLoggedIn) {
-        // router.replace('/login'); // User will be prompted to login via message
         setIsAuthorized(false); 
       } else {
         setIsAuthorized(true);
@@ -100,41 +97,38 @@ export default function AdminPanelPage() {
           <CardTitle className="text-3xl font-bold font-headline text-primary">{t('adminPanelTitle')}</CardTitle>
           <CardDescription className="text-lg">{t('adminPanelDesc')}</CardDescription>
         </CardHeader>
-        <CardContent className="grid md:grid-cols-2 gap-6">
-          {adminSections.map((section) => (
-            <Card key={section.key} className="shadow-md hover:shadow-lg transition-shadow duration-300">
-              <CardHeader className="flex flex-row items-start space-x-4 pb-3">
-                <section.icon className="h-10 w-10 text-accent mt-1" />
-                <div>
-                  <CardTitle className="text-xl font-headline text-primary">{t(section.titleKey)}</CardTitle>
-                  <CardDescription className="text-sm text-muted-foreground pt-1">{t(section.descriptionKey)}</CardDescription>
-                  {section.managementNoteKey && <CardDescription className="text-xs text-primary/70 pt-1 italic">{t(section.managementNoteKey)}</CardDescription>}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Button asChild className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                  <Link href={section.href}>
-                    {t('viewSection') || "View/Manage Section"} <ExternalLink className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+        <CardContent>
+          <Alert className="mb-6 border-primary/30 bg-primary/5">
+            <Info className="h-5 w-5 text-primary" />
+            <AlertTitle className="font-semibold text-primary">{t('adminPanelInfoTitle') || "Admin Panel Information"}</AlertTitle>
+            <AlertDescription className="text-foreground/80">
+              {t('adminPanelInfoDesc') || "This panel provides quick links to various sections. Most content (like courses, books, syllabus, etc.) is managed directly in the Firebase Firestore database. Some sections like Live Classes or Schedule have on-page forms for adding content when you are logged in as an admin."}
+            </AlertDescription>
+          </Alert>
+          <div className="grid md:grid-cols-2 gap-6">
+            {adminSections.map((section) => (
+              <Card key={section.key} className="shadow-md hover:shadow-lg transition-shadow duration-300">
+                <CardHeader className="flex flex-row items-start space-x-4 pb-3">
+                  <section.icon className="h-10 w-10 text-accent mt-1" />
+                  <div>
+                    <CardTitle className="text-xl font-headline text-primary">{t(section.titleKey)}</CardTitle>
+                    <CardDescription className="text-sm text-muted-foreground pt-1">{t(section.descriptionKey)}</CardDescription>
+                    {section.managementNoteKey && <CardDescription className="text-xs text-primary/70 pt-1 italic">{t(section.managementNoteKey)}</CardDescription>}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Button asChild className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                    <Link href={section.href}>
+                      {t('viewSection') || "View/Manage Section"} <ExternalLink className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>
   );
 }
-// Add to translations:
-// adminManageDownloadsDesc, viewSection (already present)
-// adminSyllabusDesc: "View and manage course syllabus. (Manage via Firestore 'syllabusItems')"
-// adminQuizDesc: "View and manage quizzes. (Manage via Firestore 'quizzes')"
-// adminCurrentAffairsDesc: "View and manage current affairs. (Manage via Firestore 'currentAffairsArticles')"
-// adminStudyBooksDesc: "View and manage study books. (Manage via Firestore 'studyBooks')"
-// adminJobAlertsDesc: "View and manage job alerts. (Manage via Firestore 'jobAlerts')"
-// adminCoursesDesc: "View and manage paid and free courses. (Manage via Firestore 'courses')"
-// manageCourses: "Manage Courses"
-// adminMustLoginViaDedicatedPage: "Please log in as an administrator via the admin login page to access this panel."
-// (And ensure all the managementNoteKeys like adminManageSyllabusNote are in translations.ts)
-
     

@@ -286,7 +286,9 @@ export const translations = {
     chattingAs: "Chatting as:",
     changeNameButton: "(Change)",
     sending: "Sending...",
-    setDisplayNameFirst: "Set your name to chat"
+    setDisplayNameFirst: "Set your name to chat",
+    adminPanelInfoTitle: "Admin Panel Information",
+    adminPanelInfoDesc: "This panel provides quick links to various sections. Most content (like courses, books, syllabus, etc.) is managed directly in the Firebase Firestore database. Some sections like Live Classes or Schedule have on-page forms for adding content when you are logged in as an admin."
   },
   hi: {
     appName: "गो स्वामी डिफेंस अकादमी", 
@@ -572,7 +574,9 @@ export const translations = {
     chattingAs: "इस रूप में चैट कर रहे हैं:",
     changeNameButton: "(बदलें)",
     sending: "भेज रहा है...",
-    setDisplayNameFirst: "चैट करने के लिए अपना नाम सेट करें"
+    setDisplayNameFirst: "चैट करने के लिए अपना नाम सेट करें",
+    adminPanelInfoTitle: "एडमिन पैनल जानकारी",
+    adminPanelInfoDesc: "यह पैनल विभिन्न अनुभागों के लिए त्वरित लिंक प्रदान करता है। अधिकांश सामग्री (जैसे पाठ्यक्रम, किताबें, पाठ्यक्रम, आदि) सीधे Firebase Firestore डेटाबेस में प्रबंधित की जाती है। कुछ अनुभाग जैसे लाइव क्लास या शेड्यूल में व्यवस्थापक के रूप में लॉग इन होने पर सामग्री जोड़ने के लिए ऑन-पेज फॉर्म होते हैं।"
   }
 }
 
