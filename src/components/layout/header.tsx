@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { cn } from '@/lib/utils';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import {
-  BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, Tv2, LogOut, LayoutDashboard,
+  BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, LogOut, LayoutDashboard,
   Home, DownloadCloud, MoreHorizontal, ScissorsLineDashed, HelpingHand, FileText, MessageSquare, Briefcase, BookOpen, FileQuestion, ListChecks, Bell, LogIn,
   Gift, History, Newspaper, CalendarDays, CheckCircle, XCircle, Info
 } from 'lucide-react';
@@ -21,8 +21,9 @@ import { collection, query, orderBy, limit, getDocs, Timestamp, serverTimestamp,
 const primaryNavLinks = [
   { href: '/', labelKey: 'navHome', icon: Home },
   { href: '/my-course', labelKey: 'navMyCourse', icon: GraduationCap }, 
-  { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2 },
+  // { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2 }, // Removed
   { href: '/downloads', labelKey: 'navDownloads', icon: DownloadCloud },
+  { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays }, // Added Schedule to primary
 ];
 
 const secondaryNavLinks = [
@@ -35,7 +36,7 @@ const secondaryNavLinks = [
   { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks },
   { href: '/study-books', labelKey: 'ourBooks', icon: BookOpen },
   { href: '/job-alerts', labelKey: 'navJobAlerts', icon: Briefcase },
-  { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays },
+  // { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays }, // Moved to primary
   { href: '/videos', labelKey: 'navVideos', icon: PlaySquare },
   { href: '/scholarship', labelKey: 'navScholarship', icon: Users },
   { href: '/sainik-school-course', labelKey: 'navSainikSchoolCourse', icon: GraduationCap },
@@ -157,8 +158,8 @@ export function Header() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'new_live_class':
-        return <Tv2 className="h-4 w-4 text-blue-500 flex-shrink-0" />;
+      // case 'new_live_class': // Removed
+      //   return <Tv2 className="h-4 w-4 text-blue-500 flex-shrink-0" />;
       case 'new_schedule_item':
       case 'new_homework_item':
       case 'new_update_item':
@@ -326,5 +327,6 @@ export function Header() {
     </header>
   );
 }
+    
 
     

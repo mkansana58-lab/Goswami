@@ -3,7 +3,7 @@
 
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Gift, Loader2, PlayCircle } from 'lucide-react';
+import { Gift, Loader2, PlayCircle, RadioTower } from 'lucide-react';
 import Image from 'next/image';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
@@ -20,8 +20,9 @@ interface Course {
   category: 'free' | 'paid';
   imageUrl?: string;
   dataAiHint?: string;
-  contentUrl?: string; // Link to course content/details page or external resource
+  contentUrl?: string; 
   subject?: string;
+  liveSessionDetails?: string; // New field for live session info
 }
 
 export default function FreeCoursesPage() {
@@ -95,6 +96,15 @@ export default function FreeCoursesPage() {
                   </CardHeader>
                   <CardContent className="flex-grow">
                     <p className="text-sm text-muted-foreground mb-4">{course.description}</p>
+                    {course.liveSessionDetails && (
+                      <div className="mt-2 p-3 bg-primary/10 rounded-md">
+                        <div className="flex items-center text-primary mb-1">
+                          <RadioTower className="h-5 w-5 mr-2" />
+                          <h4 className="font-semibold text-sm">Live Session Details:</h4>
+                        </div>
+                        <p className="text-xs text-primary/80 whitespace-pre-wrap">{course.liveSessionDetails}</p>
+                      </div>
+                    )}
                   </CardContent>
                   <CardContent>
                     {course.contentUrl ? (
@@ -114,7 +124,7 @@ export default function FreeCoursesPage() {
             <p className="text-center text-muted-foreground py-6">{t('noFreeCoursesAvailable') || "No free courses available at the moment."}</p>
           )}
            <p className="text-center text-sm text-muted-foreground pt-6">
-             {t('adminManageCoursesNote') || "Admin: Please add/manage courses (free/paid) in the 'courses' collection in Firestore."}
+             {t('adminManageCoursesNote') || "Admin: Please add/manage courses (free/paid) in the 'courses' collection in Firestore. Include 'liveSessionDetails' for courses with live components."}
            </p>
         </CardContent>
       </Card>
@@ -126,3 +136,5 @@ export default function FreeCoursesPage() {
 // comingSoon: "Coming Soon" (EN/HI)
 // noFreeCoursesAvailable: "No free courses available at the moment." (EN/HI)
 // adminManageCoursesNote: "Admin: Please add/manage courses (free/paid) in the 'courses' collection in Firestore." (EN/HI)
+
+    

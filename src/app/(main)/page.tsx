@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLanguage } from '@/hooks/use-language';
 import { 
-  ShoppingBag, ClipboardCheck, Gift, History, Newspaper, FileQuestion, ListChecks, BookOpen, Briefcase, Tv2, DownloadCloud, GraduationCap, Home as HomeIcon, Bell
+  ShoppingBag, ClipboardCheck, Gift, History, Newspaper, FileQuestion, ListChecks, BookOpen, Briefcase, DownloadCloud, GraduationCap, Home as HomeIcon, Bell, CalendarDays
 } from 'lucide-react';
 import Image from 'next/image';
 import { InspirationalMessages } from '@/components/home/inspirational-messages';
@@ -20,14 +20,15 @@ const featureGridLinks = [
   { href: '/current-affairs', labelKey: 'currentAffairs', icon: Newspaper, descriptionKey: 'navCurrentAffairs' },
   { href: '/quiz', labelKey: 'navQuiz', icon: FileQuestion, descriptionKey: 'quizDesc' },
   { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks, descriptionKey: 'syllabusDesc' },
-  { href: '/study-books', labelKey: 'ourBooks', icon: BookOpen, descriptionKey: 'studyBooksDesc' }, // Updated labelKey
+  { href: '/study-books', labelKey: 'ourBooks', icon: BookOpen, descriptionKey: 'studyBooksDesc' }, 
   { href: '/job-alerts', labelKey: 'navJobAlerts', icon: Briefcase, descriptionKey: 'jobAlertsDesc' },
 ];
 
 const bottomNavSimulatedLinks = [
     { href: '/', labelKey: 'navHome', icon: HomeIcon, descriptionKey: 'navHome' },
     { href: '/my-course', labelKey: 'navMyCourse', icon: GraduationCap, descriptionKey: 'myCourseDesc' },
-    { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2, descriptionKey: 'liveClassesDesc' },
+    // { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2, descriptionKey: 'liveClassesDesc' }, // Removed
+    { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays, descriptionKey: 'navSchedule' }, // Added Schedule
     { href: '/downloads', labelKey: 'navDownloads', icon: DownloadCloud, descriptionKey: 'downloadsDesc' },
 ];
 
@@ -104,3 +105,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    

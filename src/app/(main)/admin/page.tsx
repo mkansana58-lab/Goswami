@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, CalendarDays, ClipboardCheck, PlaySquare, Tv2, LayoutDashboard, AlertTriangle, ExternalLink, LogIn, DownloadCloud, ListChecks, FileQuestion, NewspaperIcon, BookOpenIcon, Briefcase, ShieldCheck, Star, Info } from 'lucide-react';
+import { Users, CalendarDays, ClipboardCheck, PlaySquare, LayoutDashboard, AlertTriangle, ExternalLink, LogIn, DownloadCloud, ListChecks, FileQuestion, NewspaperIcon, BookOpenIcon, Briefcase, ShieldCheck, Star, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -26,7 +26,7 @@ const adminSections: AdminSection[] = [
   { key: 'schedule', titleKey: 'manageSchedule', descriptionKey: 'manageScheduleDesc', href: '/schedule', icon: CalendarDays },
   { key: 'tests', titleKey: 'manageTests', descriptionKey: 'manageTestsDesc', href: '/tests', icon: ClipboardCheck },
   { key: 'videos', titleKey: 'manageVideos', descriptionKey: 'manageVideosDesc', href: '/videos', icon: PlaySquare },
-  { key: 'liveClasses', titleKey: 'manageLiveClasses', descriptionKey: 'manageLiveClassesDesc', href: '/live-classes', icon: Tv2 },
+  // { key: 'liveClasses', titleKey: 'manageLiveClasses', descriptionKey: 'manageLiveClassesDesc', href: '/live-classes', icon: Tv2 }, // Removed
   { key: 'downloads', titleKey: 'navDownloads', descriptionKey: 'adminManageDownloadsDesc', href: '/downloads', icon: DownloadCloud },
   { key: 'syllabus', titleKey: 'navSyllabus', descriptionKey: 'adminSyllabusDesc', href: '/syllabus', icon: ListChecks, managementNoteKey: 'adminManageSyllabusNote'},
   { key: 'quizzes', titleKey: 'navQuiz', descriptionKey: 'adminQuizDesc', href: '/quiz', icon: FileQuestion, managementNoteKey: 'adminManageQuizzesNote'},
@@ -131,4 +131,6 @@ export default function AdminPanelPage() {
     </div>
   );
 }
+    
+
     

@@ -3,7 +3,7 @@
 
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Star, Gem, BadgeCheck, Loader2, PlayCircle } from 'lucide-react';
+import { Star, Gem, BadgeCheck, Loader2, PlayCircle, RadioTower } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -18,12 +18,13 @@ interface Course {
   title: string;
   description: string;
   category: 'free' | 'paid';
-  price?: string; // e.g., "₹5000" or "Contact for price"
+  price?: string; 
   imageUrl?: string;
   dataAiHint?: string;
-  contentUrl?: string; // Link to course content/details page or external resource
+  contentUrl?: string; 
   subject?: string;
-  features?: string[]; // Array of strings for bullet points
+  features?: string[]; 
+  liveSessionDetails?: string; // New field for live session info
 }
 
 export default function PremiumCoursesPage() {
@@ -105,10 +106,18 @@ export default function PremiumCoursesPage() {
                         {course.features.map((feature, index) => <li key={index}>{feature}</li>)}
                       </ul>
                     )}
+                    {course.liveSessionDetails && (
+                      <div className="mt-2 p-3 bg-accent/10 rounded-md">
+                        <div className="flex items-center text-accent mb-1">
+                          <RadioTower className="h-5 w-5 mr-2" />
+                          <h4 className="font-semibold text-sm">Live Session Details:</h4>
+                        </div>
+                        <p className="text-xs text-accent-foreground/80 whitespace-pre-wrap">{course.liveSessionDetails}</p>
+                      </div>
+                    )}
                   </CardContent>
                   <CardContent>
                     <Button asChild className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                      {/* Since student login is removed, enrollment is placeholder */}
                       <Link href="/contact">{t('enrollNowButton') || 'Enroll Now / Contact Us'}</Link>
                     </Button>
                   </CardContent>
@@ -128,7 +137,7 @@ export default function PremiumCoursesPage() {
                 {t('whyGoPremiumDesc') || "Our premium courses are designed for aspirants who seek an extra edge in their preparation. With limited seats, we ensure quality and individual attention for every premium student."}
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
-                {t('adminManageCoursesNote') || "Admin: Please add/manage courses (free/paid) in the 'courses' collection in Firestore."}
+                {t('adminManageCoursesNote') || "Admin: Please add/manage courses (free/paid) in the 'courses' collection in Firestore. Include 'liveSessionDetails' for courses with live components."}
               </p>
             </CardContent>
           </Card>
@@ -143,3 +152,5 @@ export default function PremiumCoursesPage() {
 // whyGoPremium: "Why Go Premium?" (EN/HI)
 // whyGoPremiumDesc: "Our premium courses are designed for aspirants who seek an extra edge in their preparation..." (EN/HI)
 // adminManageCoursesNote (already added for free courses, can be reused)
+
+    
