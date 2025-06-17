@@ -14,7 +14,7 @@ export const translations = {
     navMilitarySchoolCourse: "Military School Course",
     navPremiumCourses: "Premium Courses",
     navViewRegistrations: "View Registrations",
-    navLiveClasses: "Live Classes", // Re-added
+    navLiveClasses: "Live Classes",
     navAdminPanel: "Admin Panel",
     navMyCourse: "My Course",
     navDownloads: "Downloads",
@@ -89,24 +89,24 @@ export const translations = {
     problemTextValidation: "Problem text must be at least 10 characters.",
     problemText: "Practice Problem",
     aiAssessment: "AI Assessment",
-    liveClassesTitle: "Live Classes Schedule", // Re-added
-    liveClassesDesc: "Join our live interactive classes. Schedule and links below. Past classes are automatically removed.", // Re-added
-    addLiveClassTitle: "Add New Live Class (Admin)", // Re-added
-    liveClassTitleLabel: "Class Title", // Re-added
-    liveClassSubjectLabel: "Subject", // Re-added
-    liveClassDateLabel: "Date (YYYY-MM-DD)", // Re-added
-    liveClassTimeLabel: "Time (HH:MM - 24hr format)", // Re-added
-    liveClassLinkLabel: "Meeting Link (e.g., YouTube Live, Google Meet, Zoom)", // Re-added
-    addLiveClassButton: "Add Live Class", // Re-added
-    upcomingLiveClasses: "Upcoming Live Classes", // Re-added
-    noLiveClassesScheduled: "No live classes scheduled at the moment.", // Re-added
-    liveClassAddedSuccess: "Live class added successfully!", // Re-added
-    liveClassTitlePlaceholder: "E.g., Maths Doubt Clearing Session", // Re-added
-    liveClassSubjectPlaceholder: "E.g., Mathematics", // Re-added
-    liveClassDatePlaceholder: "E.g., 2024-08-15", // Re-added
-    liveClassTimePlaceholder: "E.g., 17:00 for 5 PM", // Re-added
-    liveClassLinkPlaceholder: "https://youtube.com/live/your_video_id or https://meet.example.com/liveclass", // Re-added
-    joinClassButton: "Join Class", // Re-added
+    liveClassesTitle: "Live Classes Schedule",
+    liveClassesDesc: "Join our live interactive classes. Schedule and links below. Future classes are shown; past classes are automatically hidden.",
+    addLiveClassTitle: "Add New Live Class (Admin)",
+    liveClassTitleLabel: "Class Title",
+    liveClassSubjectLabel: "Subject",
+    liveClassDateLabel: "Date (YYYY-MM-DD)",
+    liveClassTimeLabel: "Time (HH:MM - 24hr format)",
+    liveClassLinkLabel: "Meeting Link (e.g., YouTube Live, Google Meet, Zoom)",
+    addLiveClassButton: "Add Live Class",
+    upcomingLiveClasses: "Upcoming Live Classes",
+    noLiveClassesScheduled: "No live classes scheduled at the moment.",
+    liveClassAddedSuccess: "Live class added successfully!",
+    liveClassTitlePlaceholder: "E.g., Maths Doubt Clearing Session",
+    liveClassSubjectPlaceholder: "E.g., Mathematics",
+    liveClassDatePlaceholder: "E.g., 2024-08-15",
+    liveClassTimePlaceholder: "E.g., 17:00 for 5 PM",
+    liveClassLinkPlaceholder: "https://youtube.com/live/your_video_id or https://meet.example.com/liveclass",
+    joinClassButton: "Join Class",
     loginTitle: "Admin Login", 
     loginDesc: "Please login to access admin features.",
     usernameLabel: "Username",
@@ -175,8 +175,8 @@ export const translations = {
     manageTestsDesc: "View and manage mock tests and previous year papers. (Manage via Firestore 'mockTestsFS' & 'previousPapersFS')",
     manageVideos: "Manage Video Lectures",
     manageVideosDesc: "View and manage video lectures for students. (Manage via Firestore 'videosFS')",
-    manageLiveClasses: "Manage Live Classes", // Re-added
-    manageLiveClassesDesc: "Schedule and manage live interactive classes. (Data stored in 'liveClasses' Firestore collection)", // Re-added
+    manageLiveClasses: "Manage Live Classes",
+    manageLiveClassesDesc: "Schedule and manage live interactive classes. (Data stored in 'liveClasses' Firestore collection)",
     goToSection: "Go to Section",
     myCourseDesc: "Access your enrolled courses and materials here.",
     downloadsDesc: "Find all your downloadable content here.",
@@ -288,7 +288,11 @@ export const translations = {
     sending: "Sending...",
     setDisplayNameFirst: "Set your name to chat",
     adminPanelInfoTitle: "Admin Panel Information",
-    adminPanelInfoDesc: "This panel provides quick links to various sections. Most content (like courses, books, syllabus, etc.) is managed directly in the Firebase Firestore database. Some sections like Live Classes or Schedule have on-page forms for adding content when you are logged in as an admin."
+    adminPanelInfoDesc: "This panel provides quick links to various sections. Most content (like courses, books, syllabus, etc.) is managed directly in the Firebase Firestore database. Some sections like Live Classes or Schedule have on-page forms for adding content when you are logged in as an admin.",
+    liveClassValidationAllFields: "Please fill all fields for the live class.",
+    liveClassValidationInvalidDateTime: "Invalid date or time format. Please use YYYY-MM-DD for date and HH:MM for time.",
+    invalidDateLabel: "Invalid Date",
+    noPreviewAvailable: "Video preview not available for this link type. Click 'Join Class' to open."
   },
   hi: {
     appName: "गो स्वामी डिफेंस अकादमी", 
@@ -302,7 +306,7 @@ export const translations = {
     navMilitarySchoolCourse: "मिलिट्री स्कूल कोर्स",
     navPremiumCourses: "प्रीमियम कोर्स", 
     navViewRegistrations: "पंजीकरण देखें",
-    navLiveClasses: "लाइव क्लास", // Re-added
+    navLiveClasses: "लाइव क्लास",
     navAdminPanel: "एडमिन पैनल",
     navMyCourse: "मेरा कोर्स", 
     navDownloads: "डाउनलोड", 
@@ -377,24 +381,24 @@ export const translations = {
     problemTextValidation: "समस्या पाठ कम से कम 10 वर्णों का होना चाहिए।",
     problemText: "अभ्यास समस्या",
     aiAssessment: "AI मूल्यांकन",
-    liveClassesTitle: "लाइव क्लास की समय-सारणी", // Re-added
-    liveClassesDesc: "हमारी लाइव इंटरैक्टिव कक्षाओं में शामिल हों। समय-सारणी और लिंक नीचे दिए गए हैं। पिछली कक्षाएं अपने आप हटा दी जाती हैं।", // Re-added
-    addLiveClassTitle: "नई लाइव क्लास जोड़ें (एडमिन)", // Re-added
-    liveClassTitleLabel: "क्लास का शीर्षक", // Re-added
-    liveClassSubjectLabel: "विषय", // Re-added
-    liveClassDateLabel: "दिनांक (YYYY-MM-DD)", // Re-added
-    liveClassTimeLabel: "समय (HH:MM - 24 घंटे प्रारूप)", // Re-added
-    liveClassLinkLabel: "मीटिंग लिंक (जैसे यूट्यूब लाइव, गूगल मीट, ज़ूम)", // Re-added
-    addLiveClassButton: "लाइव क्लास जोड़ें", // Re-added
-    upcomingLiveClasses: "आगामी लाइव क्लासें", // Re-added
-    noLiveClassesScheduled: "फिलहाल कोई लाइव क्लास निर्धारित नहीं है।", // Re-added
-    liveClassAddedSuccess: "लाइव क्लास सफलतापूर्वक जोड़ी गई!", // Re-added
-    liveClassTitlePlaceholder: "उदा., गणित संदेह निवारण सत्र", // Re-added
-    liveClassSubjectPlaceholder: "उदा., गणित", // Re-added
-    liveClassDatePlaceholder: "उदा., 2024-08-15", // Re-added
-    liveClassTimePlaceholder: "उदा., शाम 5 बजे के लिए 17:00", // Re-added
-    liveClassLinkPlaceholder: "https://youtube.com/live/your_video_id या https://meet.example.com/liveclass", // Re-added
-    joinClassButton: "क्लास में शामिल हों", // Re-added
+    liveClassesTitle: "लाइव क्लास की समय-सारणी",
+    liveClassesDesc: "हमारी लाइव इंटरैक्टिव कक्षाओं में शामिल हों। समय-सारणी और लिंक नीचे दिए गए हैं। भविष्य की कक्षाएं दिखाई जाती हैं; पिछली कक्षाएं अपने आप छिप जाती हैं।",
+    addLiveClassTitle: "नई लाइव क्लास जोड़ें (एडमिन)",
+    liveClassTitleLabel: "क्लास का शीर्षक",
+    liveClassSubjectLabel: "विषय",
+    liveClassDateLabel: "दिनांक (YYYY-MM-DD)",
+    liveClassTimeLabel: "समय (HH:MM - 24 घंटे प्रारूप)",
+    liveClassLinkLabel: "मीटिंग लिंक (जैसे यूट्यूब लाइव, गूगल मीट, ज़ूम)",
+    addLiveClassButton: "लाइव क्लास जोड़ें",
+    upcomingLiveClasses: "आगामी लाइव क्लासें",
+    noLiveClassesScheduled: "फिलहाल कोई लाइव क्लास निर्धारित नहीं है।",
+    liveClassAddedSuccess: "लाइव क्लास सफलतापूर्वक जोड़ी गई!",
+    liveClassTitlePlaceholder: "उदा., गणित संदेह निवारण सत्र",
+    liveClassSubjectPlaceholder: "उदा., गणित",
+    liveClassDatePlaceholder: "उदा., 2024-08-15",
+    liveClassTimePlaceholder: "उदा., शाम 5 बजे के लिए 17:00",
+    liveClassLinkPlaceholder: "https://youtube.com/live/your_video_id या https://meet.example.com/liveclass",
+    joinClassButton: "क्लास में शामिल हों",
     loginTitle: "एडमिन लॉगिन",
     loginDesc: "एडमिन सुविधाओं तक पहुंचने के लिए कृपया लॉगिन करें।",
     usernameLabel: "यूज़रनेम",
@@ -463,8 +467,8 @@ export const translations = {
     manageTestsDesc: "मॉक टेस्ट और पिछले वर्ष के प्रश्नपत्र देखें और प्रबंधित करें। (Firestore 'mockTestsFS' और 'previousPapersFS' के माध्यम से प्रबंधित करें)",
     manageVideos: "वीडियो व्याख्यान प्रबंधित करें",
     manageVideosDesc: "छात्रों के लिए वीडियो व्याख्यान देखें और प्रबंधित करें। (Firestore 'videosFS' के माध्यम से प्रबंधित करें)",
-    manageLiveClasses: "लाइव क्लास प्रबंधित करें", // Re-added
-    manageLiveClassesDesc: "लाइव इंटरैक्टिव कक्षाएं शेड्यूल और प्रबंधित करें। (डेटा 'liveClasses' Firestore कलेक्शन में सहेजा जाता है)", // Re-added
+    manageLiveClasses: "लाइव क्लास प्रबंधित करें",
+    manageLiveClassesDesc: "लाइव इंटरैक्टिव कक्षाएं शेड्यूल और प्रबंधित करें। (डेटा 'liveClasses' Firestore कलेक्शन में सहेजा जाता है)",
     goToSection: "सेक्शन पर जाएं",
     myCourseDesc: "अपने नामांकित कोर्स और सामग्री यहाँ देखें।",
     downloadsDesc: "अपनी सभी डाउनलोड करने योग्य सामग्री यहाँ खोजें।",
@@ -576,7 +580,13 @@ export const translations = {
     sending: "भेज रहा है...",
     setDisplayNameFirst: "चैट करने के लिए अपना नाम सेट करें",
     adminPanelInfoTitle: "एडमिन पैनल जानकारी",
-    adminPanelInfoDesc: "यह पैनल विभिन्न अनुभागों के लिए त्वरित लिंक प्रदान करता है। अधिकांश सामग्री (जैसे पाठ्यक्रम, किताबें, पाठ्यक्रम, आदि) सीधे Firebase Firestore डेटाबेस में प्रबंधित की जाती है। कुछ अनुभाग जैसे लाइव क्लास या शेड्यूल में व्यवस्थापक के रूप में लॉग इन होने पर सामग्री जोड़ने के लिए ऑन-पेज फॉर्म होते हैं।"
+    adminPanelInfoDesc: "यह पैनल विभिन्न अनुभागों के लिए त्वरित लिंक प्रदान करता है। अधिकांश सामग्री (जैसे पाठ्यक्रम, किताबें, पाठ्यक्रम, आदि) सीधे Firebase Firestore डेटाबेस में प्रबंधित की जाती है। कुछ अनुभाग जैसे लाइव क्लास या शेड्यूल में व्यवस्थापक के रूप में लॉग इन होने पर सामग्री जोड़ने के लिए ऑन-पेज फॉर्म होते हैं।",
+    liveClassValidationAllFields: "कृपया लाइव क्लास के लिए सभी फ़ील्ड भरें।",
+    liveClassValidationInvalidDateTime: "अमान्य दिनांक या समय प्रारूप। कृपया दिनांक के लिए YYYY-MM-DD और समय के लिए HH:MM का उपयोग करें।",
+    invalidDateLabel: "अमान्य दिनांक",
+    noPreviewAvailable: "इस लिंक प्रकार के लिए वीडियो पूर्वावलोकन उपलब्ध नहीं है। खोलने के लिए 'क्लास में शामिल हों' पर क्लिक करें।"
   }
 }
+    
+
     

@@ -1,7 +1,7 @@
 
 // firebase.ts
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getFirestore, collection, getDocs, type Firestore, query, orderBy } from "firebase/firestore";
+import { getFirestore, collection, getDocs, type Firestore, query, orderBy, Timestamp } from "firebase/firestore"; // Added Timestamp
 import { getAuth, type Auth } from "firebase/auth";
 import { getAnalytics, type Analytics, isSupported } from "firebase/analytics";
 
@@ -31,24 +31,25 @@ function logMissingConfig(key: string, value: string | undefined) {
 }
 
 // Log the config values being used (for debugging)
-console.log("Firebase Config Initializing with:");
-console.log("API Key:", firebaseConfig.apiKey ? firebaseConfig.apiKey.substring(0, 5) + "..." : "MISSING");
-console.log("Auth Domain:", firebaseConfig.authDomain || "MISSING");
-console.log("Project ID:", firebaseConfig.projectId || "MISSING");
+if (typeof window !== 'undefined') { // Only log on client-side
+    console.log("Firebase Config Initializing with (client-side):");
+    console.log("API Key:", firebaseConfig.apiKey ? firebaseConfig.apiKey.substring(0, 5) + "..." : "MISSING_IN_ENV");
+    console.log("Auth Domain:", firebaseConfig.authDomain || "MISSING_IN_ENV");
+    console.log("Project ID:", firebaseConfig.projectId || "MISSING_IN_ENV");
+}
 
 
 if (!getApps().length) {
-  let missingConfig = false;
-  missingConfig = logMissingConfig("NEXT_PUBLIC_FIREBASE_API_KEY", firebaseConfig.apiKey) || missingConfig;
-  missingConfig = logMissingConfig("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN", firebaseConfig.authDomain) || missingConfig;
-  missingConfig = logMissingConfig("NEXT_PUBLIC_FIREBASE_PROJECT_ID", firebaseConfig.projectId) || missingConfig;
-  // Add checks for other essential keys if needed
+  let missingConfigOnClient = false;
+  if (typeof window !== 'undefined') { // Check only on client for NEXT_PUBLIC_
+    missingConfigOnClient = logMissingConfig("NEXT_PUBLIC_FIREBASE_API_KEY", firebaseConfig.apiKey) || missingConfigOnClient;
+    missingConfigOnClient = logMissingConfig("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN", firebaseConfig.authDomain) || missingConfigOnClient;
+    missingConfigOnClient = logMissingConfig("NEXT_PUBLIC_FIREBASE_PROJECT_ID", firebaseConfig.projectId) || missingConfigOnClient;
+  }
 
-  if (missingConfig) {
-    console.error("CRITICAL: Firebase configuration is missing essential values. Firebase will not initialize correctly. Please check your .env file and restart the server.");
-    // You might want to throw an error here or handle it in a way that stops app execution
-    // if Firebase is absolutely critical for the app to start.
-    // For now, it will attempt to initialize, likely failing if core values are missing.
+
+  if (missingConfigOnClient) {
+    console.error("CRITICAL: Firebase client-side configuration is missing essential NEXT_PUBLIC_ prefixed values. Firebase will not initialize correctly on the client. Please check your .env file and restart the server.");
   }
   
   try {
@@ -72,11 +73,11 @@ if (!getApps().length) {
   }
 } else {
   app = getApps()[0];
-  db = getFirestore(app); // Ensure db is assigned here too
-  auth = getAuth(app);    // Ensure auth is assigned here too
+  db = getFirestore(app); 
+  auth = getAuth(app);    
   if (typeof window !== "undefined") {
       isSupported().then(supported => {
-        if (supported && !analytics) { // Initialize only if not already initialized
+        if (supported && !analytics) { 
           analytics = getAnalytics(app);
           console.log("Firebase Analytics re-initialized (existing app instance).");
         }
@@ -85,25 +86,36 @@ if (!getApps().length) {
   console.log("Firebase using existing app instance.");
 }
 
+interface LiveClassForFirebaseTs {
+  id: string;
+  title?: string;
+  scheduledAt?: Timestamp;
+  link?: string;
+  [key: string]: any;
+}
+
 // Firestore से Live Classes लाने वाला function
-export async function getLiveClasses() {
+export async function getLiveClasses(): Promise<LiveClassForFirebaseTs[]> {
   if (!db) {
     console.error("Firebase DB not initialized in getLiveClasses. Check Firebase configuration and server restart.");
     return [];
   }
   try {
-    // 'liveClasses' कलेक्शन से डेटा लाएं और 'scheduledAt' के अनुसार घटते क्रम में (नई क्लास पहले)
     const liveClassesCollection = collection(db, "liveClasses");
     const q = query(liveClassesCollection, orderBy("scheduledAt", "desc"));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map((doc) => ({
+    const classes = querySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-    }));
+    })) as LiveClassForFirebaseTs[];
+    console.log("getLiveClasses in firebase.ts fetched:", classes.length, "items.");
+    return classes;
   } catch (error) {
-    console.error("Error fetching live classes from Firebase:", error);
+    console.error("Error fetching live classes from Firebase in getLiveClasses:", error);
     return [];
   }
 }
 
 export { app, db, auth, analytics };
+
+    
