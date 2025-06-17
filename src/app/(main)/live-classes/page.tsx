@@ -92,9 +92,9 @@ export default function LiveClassesPage() {
       }
     } catch (e) {
       console.warn("LiveClassesPage: Could not parse URL for YouTube ID:", url, e);
-      return url; 
+      return url; // Return original URL if parsing fails or it's not a typical YouTube link
     }
-    return videoId ? `https://www.youtube.com/embed/${videoId}` : url; 
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url; // Return embed URL or original if no ID found
   };
 
   useEffect(() => {
@@ -116,6 +116,7 @@ export default function LiveClassesPage() {
         if (scheduledAtTimestamp && typeof scheduledAtTimestamp.toDate === 'function') {
           const scheduledDateTime = scheduledAtTimestamp.toDate();
           
+          // Only include classes that are scheduled for the future
           if (scheduledDateTime.getTime() > now.getTime()) {
             fetchedUpcomingClasses.push({
               id: doc.id,
@@ -125,7 +126,7 @@ export default function LiveClassesPage() {
               displayDate: scheduledDateTime.toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-CA', { year: 'numeric', month: 'long', day: 'numeric' }),
               displayTime: scheduledDateTime.toLocaleTimeString(language === 'hi' ? 'hi-IN' : 'en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
               link: data.link,
-              embedUrl: getYouTubeEmbedUrl(data.link || '') || data.link,
+              embedUrl: getYouTubeEmbedUrl(data.link || '') || data.link, // Ensure data.link is a string
               createdAt: data.createdAt as Timestamp,
             });
           } else {
@@ -172,18 +173,26 @@ export default function LiveClassesPage() {
 
     let scheduledAtJSDate: Date;
     try {
-      if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hours) || isNaN(minutes)) {
-        throw new Error("Invalid number conversion for date/time components.");
+      if (isNaN(year) || year < 1000 || year > 3000 || // Basic year check
+          isNaN(month) || month < 1 || month > 12 ||
+          isNaN(day) || day < 1 || day > 31 ||
+          isNaN(hours) || hours < 0 || hours > 23 ||
+          isNaN(minutes) || minutes < 0 || minutes > 59) {
+        throw new Error("Invalid number conversion or out-of-range value for date/time components.");
       }
       // Month is 0-indexed in JavaScript Date constructor
       scheduledAtJSDate = new Date(year, month - 1, day, hours, minutes);
-      if (isNaN(scheduledAtJSDate.getTime())) {
-        throw new Error("Invalid date/time components resulted in NaN date.");
+      if (isNaN(scheduledAtJSDate.getTime()) || 
+          scheduledAtJSDate.getFullYear() !== year ||
+          scheduledAtJSDate.getMonth() !== month - 1 ||
+          scheduledAtJSDate.getDate() !== day) {
+         console.error("LiveClassesPage: ERROR - Constructed JS Date is invalid or does not match input parts.", { year, month, day, hours, minutes, constructed: scheduledAtJSDate.toISOString() });
+        throw new Error("Invalid date or time components resulted in inconsistent Date object.");
       }
       console.log("LiveClassesPage: Successfully created JS Date for scheduledAt:", scheduledAtJSDate.toISOString());
     } catch (e: any) {
       console.error("LiveClassesPage: ERROR - Could not construct valid JS Date from form input.", { date: data.date, time: data.time, error: e.message });
-      toast({ title: t('errorOccurred'), description: "Invalid date or time format. Please use YYYY-MM-DD and HH:MM.", variant: "destructive" });
+      toast({ title: t('errorOccurred'), description: `${t('validationDateYYYYMMDD')} / ${t('validationTimeHHMM')}. ${e.message}`, variant: "destructive" });
       setIsSubmitting(false);
       return;
     }
@@ -229,7 +238,8 @@ export default function LiveClassesPage() {
         console.log("LiveClassesPage: Notification for new live class added successfully.");
       } catch (notifError: any) {
          console.error("LiveClassesPage: Error adding notification for new live class:", notifError);
-         toast({ title: t('errorOccurred'), description: `Failed to create notification: ${notifError.message}`, variant: "destructive" });
+         // Non-critical, so don't block main success toast, but log and maybe show a minor warning
+         toast({ title: t('errorOccurred'), description: `Failed to create notification: ${notifError.message}`, variant: "destructive" }); // Changed to destructive as it's an error
       }
 
       toast({ title: t('liveClassAddedSuccess') });
@@ -254,6 +264,7 @@ export default function LiveClassesPage() {
       await deleteDoc(doc(db, LIVE_CLASSES_COLLECTION, classId));
       console.log(`LiveClassesPage: Live class ${classId} deleted successfully.`);
       toast({ title: t('itemDeletedSuccess') });
+      // No need to manually filter state, onSnapshot will update it.
     } catch (error: any) {
       console.error(`LiveClassesPage: Error deleting live class ${classId}:`, error);
       toast({
@@ -265,6 +276,7 @@ export default function LiveClassesPage() {
   };
 
   if (!isClient) {
+    // Basic loading state for SSR or initial client load
     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">{t('loading')}</p></div>;
   }
   
@@ -296,7 +308,11 @@ export default function LiveClassesPage() {
                 )} />
                 <div className="grid md:grid-cols-2 gap-4">
                   <FormField control={liveClassForm.control} name="date" render={({ field }) => (
-                    <FormItem><FormLabel>{t('liveClassDateLabel')}</FormLabel><FormControl><Input type="date" placeholder={t('liveClassDatePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem>
+                      <FormLabel>{t('liveClassDateLabel')}</FormLabel>
+                      <FormControl><Input type="text" placeholder={t('liveClassDatePlaceholder')} {...field} /></FormControl> {/* Changed type to "text" */}
+                      <FormMessage />
+                    </FormItem>
                   )} />
                   <FormField control={liveClassForm.control} name="time" render={({ field }) => (
                     <FormItem><FormLabel>{t('liveClassTimeLabel')}</FormLabel><FormControl><Input type="time" placeholder={t('liveClassTimePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
@@ -315,6 +331,7 @@ export default function LiveClassesPage() {
         )}
       </Card>
 
+      {/* Video Player Section */}
       {selectedVideoUrl && currentClassForPlayer && (
         <Card className="shadow-lg mt-6">
           <CardHeader>
@@ -336,6 +353,7 @@ export default function LiveClassesPage() {
                 ></iframe>
               </div>
             ) : (
+              // Fallback for non-embeddable or non-YouTube links
               <div className="aspect-video bg-muted flex items-center justify-center rounded-md">
                 <p className="text-muted-foreground p-4 text-center">
                   {t('videoLectures')} ({currentClassForPlayer.title}) - {t('liveClassLinkPlaceholder')}
@@ -352,6 +370,7 @@ export default function LiveClassesPage() {
       )}
 
 
+      {/* Upcoming Live Classes List */}
       <Card className="shadow-lg">
         <CardHeader>
             <CardTitle className="text-2xl font-headline text-primary">{t('upcomingLiveClasses')}</CardTitle>
@@ -381,7 +400,7 @@ export default function LiveClassesPage() {
                           setSelectedVideoUrl(liveClass.embedUrl || liveClass.link);
                           setSelectedVideoTitle(liveClass.title);
                         }}
-                        className="bg-primary hover:bg-primary/90"
+                        className="bg-primary hover:bg-primary/90" // Use primary color for join button
                       >
                         <PlaySquare className="mr-2 h-4 w-4"/> {t('joinClassButton')}
                       </Button>
@@ -424,3 +443,5 @@ export default function LiveClassesPage() {
     </div>
   );
 }
+
+    
