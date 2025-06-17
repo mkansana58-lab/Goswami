@@ -34,8 +34,8 @@ interface LiveClass {
   id: string; 
   title: string;
   subject: string;
-  date: string; 
-  time: string; 
+  date: string; // Form input date string
+  time: string; // Form input time string
   link: string; 
   scheduledAt: Timestamp; 
   createdAt: Timestamp;
@@ -44,31 +44,30 @@ interface LiveClass {
 const formSchemaDefinition = (t: (key: string) => string) => z.object({
   title: z.string().min(5, { message: t('liveClassTitleLabel') + " " + (t('validationMin5Chars') || "must be at least 5 characters.") }),
   subject: z.string().min(3, { message: t('liveClassSubjectLabel') + " " + (t('validationMin3Chars') || "must be at least 3 characters.") }),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: t('validationDateYYYYMMDD') || "Date must be in YYYY-MM-DD format."}),
-  time: z.string().regex(/^\d{2}:\d{2}$/, { message: t('validationTimeHHMM') || "Time must be in HH:MM format (24-hour)."}),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: t('validationDateYYYYMMDD') || "Date must be in YYYY-MM-DD format."}), // YYYY-MM-DD
+  time: z.string().regex(/^\d{2}:\d{2}$/, { message: t('validationTimeHHMM') || "Time must be in HH:MM format (24-hour)."}), // HH:MM (24-hour)
   link: z.string().url({ message: t('validationUrl') || "Please enter a valid URL for the meeting link." }),
 });
 
 type LiveClassFormValues = z.infer<ReturnType<typeof formSchemaDefinition>>;
 
 const getYouTubeEmbedUrl = (url: string | undefined | null): string => {
-  if (!url || typeof url !== 'string') {
-    console.warn("LiveClassesPage: getYouTubeEmbedUrl received an invalid or empty URL. URL:", url, "Returning error placeholder.");
-    return `https://www.youtube.com/embed/error-invalid-or-empty-url`;
+  if (!url || typeof url !== 'string' || url.trim() === "") {
+    console.warn("LiveClassesPage: getYouTubeEmbedUrl received an invalid or empty URL. URL:", url, "Returning error placeholder for empty/invalid URL.");
+    return `https://www.youtube.com/embed/error-empty-or-invalid-url`;
   }
   let videoId = null;
   try {
     const urlObj = new URL(url);
     if (urlObj.hostname === 'youtu.be') {
-      videoId = urlObj.pathname.slice(1);
+      videoId = urlObj.pathname.slice(1).split('?')[0];
     } else if (urlObj.hostname.includes('youtube.com')) {
       if (urlObj.pathname === '/live' || urlObj.pathname.startsWith('/live/')) {
-        videoId = urlObj.searchParams.get('v');
-         if (!videoId) { 
-            const pathParts = urlObj.pathname.split('/');
-            if (pathParts.length > 1 && pathParts[pathParts.length - 2] === 'live') {
-                 videoId = pathParts[pathParts.length -1].split('?')[0];
-            }
+         const pathParts = urlObj.pathname.split('/');
+         if (pathParts.length > 1 && pathParts[1] === 'live' && pathParts[2]) {
+            videoId = pathParts[2].split('?')[0];
+         } else {
+            videoId = urlObj.searchParams.get('v'); // Fallback for /live?v=ID
          }
       } else if (urlObj.pathname === '/watch') {
         videoId = urlObj.searchParams.get('v');
@@ -78,17 +77,17 @@ const getYouTubeEmbedUrl = (url: string | undefined | null): string => {
       }
     }
   } catch (e) {
-    console.error("LiveClassesPage: Error parsing YouTube URL:", e, "URL:", url);
+    console.error("LiveClassesPage: Error parsing YouTube URL:", e, "URL:", url, "Returning error placeholder for unparseable URL.");
     return `https://www.youtube.com/embed/error-parsing-url?original=${encodeURIComponent(url)}`; 
   }
   
   if (videoId) {
-    const cleanVideoId = videoId.split('?')[0];
+    const cleanVideoId = videoId.split('?')[0]; // Ensure no query params on video ID
     console.log("LiveClassesPage: Extracted videoId:", cleanVideoId, "from URL:", url);
     return `https://www.youtube.com/embed/${cleanVideoId}`;
   }
-  console.warn("LiveClassesPage: Could not extract videoId from URL:", url, "Returning generic placeholder.");
-  return `https://www.youtube.com/embed/invalid-video-id?original=${encodeURIComponent(url)}`; 
+  console.warn("LiveClassesPage: Could not extract videoId from URL:", url, "Returning generic placeholder for no ID found.");
+  return `https://www.youtube.com/embed/error-no-video-id-found?original=${encodeURIComponent(url)}`; 
 };
 
 
@@ -185,7 +184,7 @@ export default function LiveClassesPage() {
                   subject: data.subject || "No Subject",
                   date: data.date || "N/A", 
                   time: data.time || "N/A", 
-                  link: getYouTubeEmbedUrl(data.link || ''), 
+                  link: getYouTubeEmbedUrl(data.link || null), // Pass null if data.link is falsy
                   scheduledAt: scheduledAtTS,
                   createdAt: finalCreatedAtTS, 
                 };
@@ -200,7 +199,7 @@ export default function LiveClassesPage() {
                       subject: data.subject || "No Subject",
                       date: data.date || "N/A", 
                       time: data.time || "N/A", 
-                      link: getYouTubeEmbedUrl(data.link || ''), 
+                      link: getYouTubeEmbedUrl(data.link || null), // Pass null if data.link is falsy
                       scheduledAt: scheduledAtTS,
                       createdAt: finalCreatedAtTS, 
                     });
@@ -253,35 +252,47 @@ export default function LiveClassesPage() {
     const serverNowTimestamp = serverTimestamp(); 
 
     try {
-      const [year, month, day] = data.date.split('-').map(Number);
-      const [hours, minutes] = data.time.split(':').map(Number);
+      const [yearStr, monthStr, dayStr] = data.date.split('-');
+      const [hoursStr, minutesStr] = data.time.split(':');
+
+      const year = parseInt(yearStr, 10);
+      const month = parseInt(monthStr, 10); // Month is 1-indexed from form
+      const day = parseInt(dayStr, 10);
+      const hours = parseInt(hoursStr, 10);
+      const minutes = parseInt(minutesStr, 10);
       
       if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hours) || isNaN(minutes)) {
-          throw new Error("Invalid date or time components provided in form. Could not parse numbers.");
+          console.error("LiveClassesPage: ERROR - Invalid date or time components from form. Could not parse numbers from date/time strings.", {year, month, day, hours, minutes});
+          throw new Error("Invalid date or time components provided in form. Date/time strings could not be parsed to numbers.");
       }
+
+      // JavaScript Date constructor month is 0-indexed (0-11)
       const localDate = new Date(year, month - 1, day, hours, minutes, 0, 0);
+      
       if (isNaN(localDate.getTime())) {
-          throw new Error(`Constructed JS Date is invalid. Year: ${year}, Month: ${month-1}, Day: ${day}, Hours: ${hours}, Minutes: ${minutes}`);
+          console.error("LiveClassesPage: ERROR - Constructed JS Date is invalid from form inputs.", {year, month: month-1, day, hours, minutes, originalDateString: data.date, originalTimeString: data.time});
+          throw new Error(`Constructed JS Date is invalid. Please check date/time format. Parsed: Y=${year}, M=${month-1}, D=${day}, H=${hours}, Min=${minutes}`);
       }
+      
       scheduledAtTimestamp = Timestamp.fromDate(localDate);
-      console.log("LiveClassesPage: Successfully created JS Date for scheduledAt (local time based on input):", localDate.toString());
+      console.log("LiveClassesPage: Successfully created JS Date for scheduledAt (local time based on input):", localDate.toString(), "UTC:", localDate.toISOString());
       console.log("LiveClassesPage: Converted to Firestore Timestamp for scheduledAt:", JSON.parse(JSON.stringify(scheduledAtTimestamp)));
 
     } catch (e: any) {
-      console.error("LiveClassesPage: ERROR during scheduledAt Timestamp creation from form inputs.", { error: e.message, formData: data });
-      toast({ title: t('errorOccurred'), description: `Invalid date or time format: ${e.message || 'Please check YYYY-MM-DD and HH:MM format.'}`, variant: "destructive" });
+      console.error("LiveClassesPage: ERROR during scheduledAt Timestamp creation from form inputs.", { error: e.message, stack: e.stack, formData: data });
+      toast({ title: t('errorOccurred'), description: `Invalid date or time format: ${e.message || 'Please ensure date is YYYY-MM-DD and time is HH:MM (24-hour).'}`, variant: "destructive" });
       setIsSubmitting(false);
       return;
     }
     
     console.log("LiveClassesPage: Checking created timestamps before Firestore call.");
-    console.log("LiveClassesPage: scheduledAtTimestamp for Firestore:", scheduledAtTimestamp, "Is Firestore Timestamp:", scheduledAtTimestamp instanceof Timestamp);
-    console.log("LiveClassesPage: serverNowTimestamp (for createdAt) for Firestore:", serverNowTimestamp, "Is serverTimestamp a function call result:", typeof serverNowTimestamp === 'function'); // This log might be misleading for serverTimestamp object
+    console.log("LiveClassesPage: scheduledAtTimestamp to be sent to Firestore:", scheduledAtTimestamp, "Is Firestore Timestamp:", scheduledAtTimestamp instanceof Timestamp, "Value (toDate):", scheduledAtTimestamp.toDate());
+    console.log("LiveClassesPage: serverNowTimestamp (for createdAt) for Firestore:", serverNowTimestamp); // This is a sentinel, won't show a date locally
 
 
     if (!(scheduledAtTimestamp instanceof Timestamp)) {
-        console.error("LiveClassesPage: CRITICAL - scheduledAtTimestamp is not a valid Firestore Timestamp object before sending to Firestore.");
-        toast({ title: t('errorOccurred'), description: "Internal error: Scheduled time could not be processed correctly. scheduledAtTimestamp is not instance of Timestamp.", variant: "destructive" });
+        console.error("LiveClassesPage: CRITICAL - scheduledAtTimestamp is not a valid Firestore Timestamp object before sending to Firestore. Type:", typeof scheduledAtTimestamp);
+        toast({ title: t('errorOccurred'), description: "Internal error: Scheduled time could not be processed correctly. scheduledAtTimestamp is not instance of Firestore Timestamp.", variant: "destructive" });
         setIsSubmitting(false);
         return;
     }
@@ -295,7 +306,7 @@ export default function LiveClassesPage() {
       scheduledAt: scheduledAtTimestamp, 
       createdAt: serverNowTimestamp 
     };
-    console.log("LiveClassesPage: PAYLOAD to be sent to Firestore:", JSON.parse(JSON.stringify(newClassPayload)));
+    console.log("LiveClassesPage: PAYLOAD to be sent to Firestore:", JSON.parse(JSON.stringify({...newClassPayload, scheduledAt: newClassPayload.scheduledAt.toDate() /* For logging only */ })));
     
     try {
       const docRef = await addDoc(collection(db, LIVE_CLASSES_COLLECTION_NAME), newClassPayload);
@@ -352,7 +363,7 @@ export default function LiveClassesPage() {
   
   const formatDisplayDate = (lc: LiveClass) => {
     if (!lc.scheduledAt || typeof lc.scheduledAt.toDate !== 'function') {
-      console.warn("formatDisplayDate: Invalid scheduledAt for LiveClass:", lc.id, lc.title, "Using lc.date:", lc.date);
+      console.warn("formatDisplayDate: Invalid scheduledAt for LiveClass:", lc.id, lc.title, "Using lc.date (form input):", lc.date);
       return lc.date || "Invalid Date"; 
     }
     const date = lc.scheduledAt.toDate();
@@ -361,7 +372,7 @@ export default function LiveClassesPage() {
 
   const formatDisplayTime = (lc: LiveClass) => {
      if (!lc.scheduledAt || typeof lc.scheduledAt.toDate !== 'function') {
-      console.warn("formatDisplayTime: Invalid scheduledAt for LiveClass:", lc.id, lc.title, "Using lc.time:", lc.time);
+      console.warn("formatDisplayTime: Invalid scheduledAt for LiveClass:", lc.id, lc.title, "Using lc.time (form input):", lc.time);
       return lc.time || "Invalid Time"; 
     }
     const date = lc.scheduledAt.toDate();
@@ -420,8 +431,8 @@ export default function LiveClassesPage() {
                         {formatDisplayTime(liveClass)}
                          {language === 'hi' ? ' बजे' : ''}
                     </div>
-                    {liveClass.link && liveClass.link.includes('error') ? 
-                      (<p className="text-destructive text-xs mt-1">{t('errorOccurred')}: Invalid video link.</p>) :
+                    {liveClass.link && liveClass.link.includes('error-') ? 
+                      (<p className="text-destructive text-xs mt-1">{t('errorOccurred')}: Invalid video link. ({liveClass.link.substring(liveClass.link.lastIndexOf('/') + 1)})</p>) :
                       (<Button variant="outline" asChild className="mt-2 w-full md:w-auto"><a href={liveClass.link} target="_blank" rel="noopener noreferrer"><LinkIcon className="mr-2 h-4 w-4" /> {t('joinClassButton') || 'Join Class'}</a></Button>)
                     }
                   </CardContent>
@@ -434,3 +445,5 @@ export default function LiveClassesPage() {
     </div>
   );
 }
+
+    
