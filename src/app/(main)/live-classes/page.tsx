@@ -125,7 +125,7 @@ export default function LiveClassesPage() {
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       console.log(`LiveClassesPage: -------- BEGIN ONSNAPSHOT (${new Date().toISOString()}) --------`);
-      console.log(`LiveClassesPage: Firestore query returned ${querySnapshot.docs.length} documents. isEmpty: ${querySnapshot.empty}`); // ADDED LOG
+      console.log(`LiveClassesPage: Firestore query returned ${querySnapshot.docs.length} documents. isEmpty: ${querySnapshot.empty}`);
       const currentDocIds = querySnapshot.docs.map(doc => doc.id);
       console.log(`LiveClassesPage: Document IDs in this snapshot: [${currentDocIds.join(', ')}]`);
 
@@ -185,7 +185,7 @@ export default function LiveClassesPage() {
                   subject: data.subject || "No Subject",
                   date: data.date || "N/A", 
                   time: data.time || "N/A", 
-                  link: getYouTubeEmbedUrl(data.link), 
+                  link: getYouTubeEmbedUrl(data.link || ''), 
                   scheduledAt: scheduledAtTS,
                   createdAt: finalCreatedAtTS, 
                 };
@@ -200,7 +200,7 @@ export default function LiveClassesPage() {
                       subject: data.subject || "No Subject",
                       date: data.date || "N/A", 
                       time: data.time || "N/A", 
-                      link: getYouTubeEmbedUrl(data.link), 
+                      link: getYouTubeEmbedUrl(data.link || ''), 
                       scheduledAt: scheduledAtTS,
                       createdAt: finalCreatedAtTS, 
                     });
@@ -276,7 +276,7 @@ export default function LiveClassesPage() {
     
     console.log("LiveClassesPage: Checking created timestamps before Firestore call.");
     console.log("LiveClassesPage: scheduledAtTimestamp for Firestore:", scheduledAtTimestamp, "Is Firestore Timestamp:", scheduledAtTimestamp instanceof Timestamp);
-    console.log("LiveClassesPage: serverNowTimestamp (for createdAt) for Firestore:", serverNowTimestamp);
+    console.log("LiveClassesPage: serverNowTimestamp (for createdAt) for Firestore:", serverNowTimestamp, "Is serverTimestamp a function call result:", typeof serverNowTimestamp === 'function'); // This log might be misleading for serverTimestamp object
 
 
     if (!(scheduledAtTimestamp instanceof Timestamp)) {
@@ -434,7 +434,3 @@ export default function LiveClassesPage() {
     </div>
   );
 }
-import { app } from './firebase';
-    
-
-    
