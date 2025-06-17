@@ -11,7 +11,7 @@ import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import {
   BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, LogOut, LayoutDashboard,
   Home, DownloadCloud, MoreHorizontal, ScissorsLineDashed, HelpingHand, FileText, MessageSquare, Briefcase, BookOpen, FileQuestion, ListChecks, Bell, LogIn,
-  Gift, History, Newspaper, CalendarDays, CheckCircle, XCircle, Info, Tv2, School // Added School for E-Counselling
+  Gift, History, Newspaper, CalendarDays, CheckCircle, XCircle, Info, Tv2, School, Library // Added Library for Study Material
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle as RadixSheetTitle } from '@/components/ui/sheet';
 import React, { useEffect, useState } from 'react';
@@ -22,14 +22,15 @@ const primaryNavLinks = [
   { href: '/', labelKey: 'navHome', icon: Home },
   { href: '/my-course', labelKey: 'navMyCourse', icon: GraduationCap },
   { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2 },
+  { href: '/study-material', labelKey: 'navStudyMaterial', icon: Library }, // CHANGED
   { href: '/downloads', labelKey: 'navDownloads', icon: DownloadCloud },
   { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays },
 ];
 
 const secondaryNavLinks = [
-  { href: '/premium-courses', labelKey: 'paidCourses', icon: Star },
+  // { href: '/premium-courses', labelKey: 'paidCourses', icon: Star }, // REMOVED
   { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck },
-  { href: '/free-courses', labelKey: 'freeCourses', icon: Gift },
+  // { href: '/free-courses', labelKey: 'freeCourses', icon: Gift }, // REMOVED
   { href: '/tests', labelKey: 'previousPapersNav', icon: History },
   { href: '/current-affairs', labelKey: 'currentAffairs', icon: Newspaper },
   { href: '/quiz', labelKey: 'navQuiz', icon: FileQuestion },
@@ -38,12 +39,12 @@ const secondaryNavLinks = [
   { href: '/job-alerts', labelKey: 'navJobAlerts', icon: Briefcase },
   { href: '/videos', labelKey: 'navVideos', icon: PlaySquare },
   { href: '/scholarship', labelKey: 'navScholarship', icon: Users },
-  { href: '/sainik-school-course', labelKey: 'navSainikSchoolCourse', icon: GraduationCap },
-  { href: '/military-school-course', labelKey: 'navMilitarySchoolCourse', icon: ShieldCheck },
+  // { href: '/sainik-school-course', labelKey: 'navSainikSchoolCourse', icon: GraduationCap }, // REMOVED
+  // { href: '/military-school-course', labelKey: 'navMilitarySchoolCourse', icon: ShieldCheck }, // REMOVED
   { href: '/ai-tutor', labelKey: 'navAITutor', icon: Cpu },
   { href: '/cutoff-checker', labelKey: 'navCutOffChecker', icon: ScissorsLineDashed },
   { href: '/chance-checking', labelKey: 'navChanceChecking', icon: HelpingHand },
-  { href: '/study-material', labelKey: 'navStudyMaterial', icon: FileText },
+  // { href: '/study-material', labelKey: 'navStudyMaterial', icon: FileText }, // Already in primary
   { href: '/chat', labelKey: 'navChat', icon: MessageSquare },
   { href: '/sainik-e-counselling', labelKey: 'navSainikECounselling', icon: School },
 ];

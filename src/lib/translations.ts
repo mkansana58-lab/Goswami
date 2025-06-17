@@ -10,9 +10,9 @@ export const translations = {
     navVideos: "Video Classes",
     navScholarship: "Scholarship",
     navAITutor: "AI Tutor",
-    navSainikSchoolCourse: "Sainik School Course",
-    navMilitarySchoolCourse: "Military School Course",
-    navPremiumCourses: "Premium Courses",
+    // REMOVED: navSainikSchoolCourse: "Sainik School Course",
+    // REMOVED: navMilitarySchoolCourse: "Military School Course",
+    // REMOVED: navPremiumCourses: "Premium Courses",
     navViewRegistrations: "View Registrations",
     navLiveClasses: "Live Classes",
     navAdminPanel: "Admin Panel",
@@ -64,11 +64,11 @@ export const translations = {
     registrationSuccessMessage: "Your scholarship registration has been submitted.",
     errorOccurred: "An error occurred",
     sainikSchoolCourseTitle: "Sainik School Entrance Course",
-    sainikSchoolCourseDesc: "Comprehensive preparation for Sainik School entrance exams.",
+    // UPDATED: sainikSchoolCourseDesc: "Comprehensive preparation for Sainik School entrance exams.",
     militarySchoolCourseTitle: "Military School Entrance Course",
-    militarySchoolCourseDesc: "Dedicated coaching for Rashtriya Military Schools (RMS) entrance.",
-    premiumCoursesTitle: "Premium Courses",
-    premiumCoursesDesc: "Unlock exclusive content and personalized mentorship. Some courses may include live sessions.",
+    // UPDATED: militarySchoolCourseDesc: "Dedicated coaching for Rashtriya Military Schools (RMS) entrance.",
+    premiumCoursesTitle: "Premium Courses", // Still used for section title
+    premiumCoursesDesc: "Unlock exclusive content and personalized mentorship. Some courses may include live sessions.", // Kept for admin panel
     premiumSainikPrice: "Sainik School Premium Module: ₹20",
     premiumMilitaryPrice: "Military School Premium Module: ₹20",
     viewRegistrationsTitle: "Scholarship Registrations",
@@ -183,7 +183,7 @@ export const translations = {
     downloadsDesc: "Find all your downloadable content here.",
     cutOffCheckerDesc: "Check previous year cut-off marks & predict selection chance.",
     chanceCheckingDesc: "Analyze your chances for selection using our AI tool.",
-    studyMaterialDesc: "Access curated study materials and notes.",
+    studyMaterialDesc: "Access all courses, notes, and specialized coaching material here.", // UPDATED
     chatDesc: "Connect with teachers and fellow students.",
     jobAlertsDesc: "Get alerts for defence job openings.",
     studyBooksDesc: "Recommended books and e-books.",
@@ -192,13 +192,13 @@ export const translations = {
     helloTeam: "Hello, Team winners!",
     paidCourses: "Paid Course",
     testSeries: "Test Series",
-    freeCourses: "Free Courses",
+    freeCourses: "Free Courses", // Used for section title & home grid
     previousPapersNav: "Previous Papers",
     currentAffairs: "Current Affairs",
     notifications: "Notifications",
-    navFreeCourses: "Free Courses",
+    // REMOVED: navFreeCourses: "Free Courses",
     navCurrentAffairs: "Current Affairs",
-    freeCoursesDesc: "Explore our free courses and learning materials. Some may include live sessions.",
+    freeCoursesDesc: "Explore our free courses and learning materials. Some may include live sessions.", // Kept for admin panel
     currentAffairsDesc: "Stay updated with the latest current affairs.",
     placeholderBanner: "Promotional Banner",
     typeYourMessage: "Type your message...",
@@ -271,7 +271,7 @@ export const translations = {
     adminCurrentAffairsDesc: "View and manage current affairs. (Manage via Firestore 'currentAffairsArticles')",
     adminStudyBooksDesc: "View and manage study books. (Manage via Firestore 'studyBooks')",
     adminJobAlertsDesc: "View and manage job alerts. (Manage via Firestore 'jobAlerts')",
-    adminCoursesDesc: "View and manage paid and free courses. (Manage via Firestore 'courses')",
+    adminCoursesDesc: "View and manage paid and free courses. (Manage via Firestore 'courses', now part of Study Material section)", // UPDATED
     manageCourses: "Manage Courses",
     adminMustLoginViaDedicatedPage: "Please log in as an administrator via the admin login page to access this panel.",
     chatStartConversation: "Type a message to start the conversation.",
@@ -314,7 +314,13 @@ export const translations = {
     distanceDisclaimer: "Note: Distance shown is a simulation for prototype purposes and may not be accurate.",
     examValidation: "Please select an exam type.",
     stateValidation: "Please enter your state.",
-    districtValidation: "Please enter your district."
+    districtValidation: "Please enter your district.",
+    studyMaterialCategoryFreeCourses: "Free Courses",
+    studyMaterialCategoryPremiumCourses: "Premium Courses (Paid)",
+    studyMaterialCategorySainik: "Sainik School Course Material",
+    studyMaterialCategoryMilitary: "Military School Course Material",
+    studyMaterialCategoryGeneralNotes: "General Study Notes",
+    studyMaterialHubDesc: "Explore all our learning resources including courses, specialized coaching material, and notes."
   },
   hi: {
     appName: "गो स्वामी डिफेंस अकादमी",
@@ -324,9 +330,9 @@ export const translations = {
     navVideos: "वीडियो क्लास",
     navScholarship: "छात्रवृत्ति",
     navAITutor: "AI ट्यूटर",
-    navSainikSchoolCourse: "सैनिक स्कूल कोर्स",
-    navMilitarySchoolCourse: "मिलिट्री स्कूल कोर्स",
-    navPremiumCourses: "प्रीमियम कोर्स",
+    // REMOVED: navSainikSchoolCourse: "सैनिक स्कूल कोर्स",
+    // REMOVED: navMilitarySchoolCourse: "मिलिट्री स्कूल कोर्स",
+    // REMOVED: navPremiumCourses: "प्रीमियम कोर्स",
     navViewRegistrations: "पंजीकरण देखें",
     navLiveClasses: "लाइव क्लास",
     navAdminPanel: "एडमिन पैनल",
@@ -378,11 +384,11 @@ export const translations = {
     registrationSuccessMessage: "आपका छात्रवृत्ति पंजीकरण जमा कर दिया गया है।",
     errorOccurred: "एक त्रुटि हुई",
     sainikSchoolCourseTitle: "सैनिक स्कूल प्रवेश कोर्स",
-    sainikSchoolCourseDesc: "सैनिक स्कूल प्रवेश परीक्षाओं के लिए व्यापक तैयारी।",
+    // UPDATED: sainikSchoolCourseDesc: "सैनिक स्कूल प्रवेश परीक्षाओं के लिए व्यापक तैयारी।",
     militarySchoolCourseTitle: "मिलिट्री स्कूल प्रवेश कोर्स",
-    militarySchoolCourseDesc: "राष्ट्रीय मिलिट्री स्कूल (RMS) प्रवेश के लिए समर्पित कोचिंग।",
-    premiumCoursesTitle: "प्रीमियम कोर्स",
-    premiumCoursesDesc: "हमारे प्रीमियम पाठ्यक्रमों के साथ विशेष सामग्री और व्यक्तिगत मार्गदर्शन प्राप्त करें। कुछ पाठ्यक्रमों में लाइव सेशन शामिल हो सकते हैं।",
+    // UPDATED: militarySchoolCourseDesc: "राष्ट्रीय मिलिट्री स्कूल (RMS) प्रवेश के लिए समर्पित कोचिंग।",
+    premiumCoursesTitle: "प्रीमियम कोर्स", // Still used for section title
+    premiumCoursesDesc: "हमारे प्रीमियम पाठ्यक्रमों के साथ विशेष सामग्री और व्यक्तिगत मार्गदर्शन प्राप्त करें। कुछ पाठ्यक्रमों में लाइव सेशन शामिल हो सकते हैं।", // Kept for admin panel
     premiumSainikPrice: "सैनिक स्कूल प्रीमियम मॉड्यूल: ₹20",
     premiumMilitaryPrice: "मिलिट्री स्कूल प्रीमियम मॉड्यूल: ₹20",
     viewRegistrationsTitle: "छात्रवृत्ति पंजीकरण",
@@ -497,22 +503,22 @@ export const translations = {
     downloadsDesc: "अपनी सभी डाउनलोड करने योग्य सामग्री यहाँ खोजें।",
     cutOffCheckerDesc: "पिछले वर्षों के कट-ऑफ अंक देखें और चयन की संभावना का अनुमान लगाएं।",
     chanceCheckingDesc: "हमारे AI टूल का उपयोग करके चयन के लिए अपने अवसरों का विश्लेषण करें।",
-    studyMaterialDesc: "क्यूरेटेड अध्ययन सामग्री और नोट्स प्राप्त करें।",
+    studyMaterialDesc: "सभी कोर्स, नोट्स और विशेष कोचिंग सामग्री यहाँ एक्सेस करें।", // UPDATED
     chatDesc: "शिक्षकों और साथी छात्रों से जुड़ें।",
     jobAlertsDesc: "रक्षा क्षेत्र की नौकरियों के लिए अलर्ट प्राप्त करें।",
     studyBooksDesc: "अनुशंसित पुस्तकें और ई-पुस्तकें।",
     quizDesc: "विभिन्न क्विज़ के साथ अपने ज्ञान का परीक्षण करें।",
     syllabusDesc: "सभी कोर्स के लिए विस्तृत सिलेबस देखें।",
     helloTeam: "नमस्ते, टीम विनर्स!",
-    paidCourses: "पेड कोर्स",
+    paidCourses: "पेड कोर्स", // Used for section title & home grid
     testSeries: "टेस्ट सीरीज",
-    freeCourses: "फ्री कोर्सेस",
+    freeCourses: "फ्री कोर्सेस", // Used for section title & home grid
     previousPapersNav: "पिछले पेपर्स",
     currentAffairs: "करेंट अफेयर्स",
     notifications: "सूचनाएं",
-    navFreeCourses: "फ्री कोर्सेस",
+    // REMOVED: navFreeCourses: "फ्री कोर्सेस",
     navCurrentAffairs: "करेंट अफेयर्स",
-    freeCoursesDesc: "हमारे फ्री कोर्स और अध्ययन सामग्री का अन्वेषण करें। कुछ में लाइव सेशन शामिल हो सकते हैं।",
+    freeCoursesDesc: "हमारे फ्री कोर्स और अध्ययन सामग्री का अन्वेषण करें। कुछ में लाइव सेशन शामिल हो सकते हैं।", // Kept for admin panel
     currentAffairsDesc: "नवीनतम करेंट अफेयर्स से अपडेट रहें।",
     placeholderBanner: "प्रचार बैनर",
     typeYourMessage: "अपना संदेश लिखें...",
@@ -585,7 +591,7 @@ export const translations = {
     adminCurrentAffairsDesc: "करेंट अफेयर्स देखें और प्रबंधित करें। (Firestore 'currentAffairsArticles' के माध्यम से प्रबंधित करें)",
     adminStudyBooksDesc: "स्टडी बुक्स देखें और प्रबंधित करें। (Firestore 'studyBooks' के माध्यम से प्रबंधित करें)",
     adminJobAlertsDesc: "जॉब अलर्ट्स देखें और प्रबंधित करें। (Firestore 'jobAlerts' के माध्यम से प्रबंधित करें)",
-    adminCoursesDesc: "सशुल्क और मुफ्त कोर्स देखें और प्रबंधित करें। (Firestore 'courses' के माध्यम से प्रबंधित करें)",
+    adminCoursesDesc: "सशुल्क और मुफ्त कोर्स देखें और प्रबंधित करें। (Firestore 'courses' के माध्यम से प्रबंधित करें, अब स्टडी मटेरियल सेक्शन का हिस्सा)", // UPDATED
     manageCourses: "कोर्स प्रबंधित करें",
     adminMustLoginViaDedicatedPage: "इस पैनल तक पहुंचने के लिए कृपया व्यवस्थापक लॉगिन पेज के माध्यम से एक व्यवस्थापक के रूप में लॉगिन करें।",
     chatStartConversation: "बातचीत शुरू करने के लिए एक संदेश लिखें।",
@@ -628,7 +634,13 @@ export const translations = {
     distanceDisclaimer: "ध्यान दें: दिखाई गई दूरी प्रोटोटाइप उद्देश्यों के लिए एक सिमुलेशन है और सटीक नहीं हो सकती है।",
     examValidation: "कृपया एक परीक्षा प्रकार चुनें।",
     stateValidation: "कृपया अपना राज्य दर्ज करें।",
-    districtValidation: "कृपया अपना जिला दर्ज करें।"
+    districtValidation: "कृपया अपना जिला दर्ज करें।",
+    studyMaterialCategoryFreeCourses: "फ्री कोर्सेस",
+    studyMaterialCategoryPremiumCourses: "प्रीमियम कोर्सेस (सशुल्क)",
+    studyMaterialCategorySainik: "सैनिक स्कूल कोर्स सामग्री",
+    studyMaterialCategoryMilitary: "मिलिट्री स्कूल कोर्स सामग्री",
+    studyMaterialCategoryGeneralNotes: "सामान्य अध्ययन नोट्स",
+    studyMaterialHubDesc: "हमारे सभी शिक्षण संसाधनों का अन्वेषण करें, जिसमें पाठ्यक्रम, विशेष कोचिंग सामग्री और नोट्स शामिल हैं।"
   }
 }
     

@@ -6,29 +6,31 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLanguage } from '@/hooks/use-language';
 import { 
-  ShoppingBag, ClipboardCheck, Gift, History, Newspaper, FileQuestion, ListChecks, BookOpen, Briefcase, DownloadCloud, GraduationCap, Home as HomeIcon, Bell, CalendarDays
+  ShoppingBag, ClipboardCheck, Gift, History, Newspaper, FileQuestion, ListChecks, BookOpen, Briefcase, DownloadCloud, GraduationCap, Home as HomeIcon, Bell, CalendarDays, Library // Added Library
 } from 'lucide-react';
 import Image from 'next/image';
 import { InspirationalMessages } from '@/components/home/inspirational-messages';
 
 
 const featureGridLinks = [
-  { href: '/premium-courses', labelKey: 'paidCourses', icon: ShoppingBag, descriptionKey: 'premiumCoursesDesc' },
+  // { href: '/premium-courses', labelKey: 'paidCourses', icon: ShoppingBag, descriptionKey: 'premiumCoursesDesc' }, // REMOVED
+  { href: '/study-material', labelKey: 'paidCourses', icon: ShoppingBag, descriptionKey: 'premiumCoursesDesc' }, // POINTS TO STUDY MATERIAL
   { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck, descriptionKey: 'navTests' },
-  { href: '/free-courses', labelKey: 'freeCourses', icon: Gift, descriptionKey: 'navFreeCourses' },
+  // { href: '/free-courses', labelKey: 'freeCourses', icon: Gift, descriptionKey: 'navFreeCourses' }, // REMOVED
+  { href: '/study-material', labelKey: 'freeCourses', icon: Gift, descriptionKey: 'freeCoursesDesc' }, // POINTS TO STUDY MATERIAL
   { href: '/tests', labelKey: 'previousPapersNav', icon: History, descriptionKey: 'previousYearPapers' }, // Points to /tests
   { href: '/current-affairs', labelKey: 'currentAffairs', icon: Newspaper, descriptionKey: 'navCurrentAffairs' },
   { href: '/quiz', labelKey: 'navQuiz', icon: FileQuestion, descriptionKey: 'quizDesc' },
   { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks, descriptionKey: 'syllabusDesc' },
   { href: '/study-books', labelKey: 'ourBooks', icon: BookOpen, descriptionKey: 'studyBooksDesc' }, 
   { href: '/job-alerts', labelKey: 'navJobAlerts', icon: Briefcase, descriptionKey: 'jobAlertsDesc' },
+  { href: '/study-material', labelKey: 'navStudyMaterial', icon: Library, descriptionKey: 'studyMaterialHubDesc' }, // ADDED direct link
 ];
 
 const bottomNavSimulatedLinks = [
     { href: '/', labelKey: 'navHome', icon: HomeIcon, descriptionKey: 'navHome' },
     { href: '/my-course', labelKey: 'navMyCourse', icon: GraduationCap, descriptionKey: 'myCourseDesc' },
-    // { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2, descriptionKey: 'liveClassesDesc' }, // Removed
-    { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays, descriptionKey: 'navSchedule' }, // Added Schedule
+    { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays, descriptionKey: 'navSchedule' },
     { href: '/downloads', labelKey: 'navDownloads', icon: DownloadCloud, descriptionKey: 'downloadsDesc' },
 ];
 
