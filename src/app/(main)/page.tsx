@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLanguage } from '@/hooks/use-language';
 import { 
-  ShoppingBag, ClipboardCheck, Gift, History, Newspaper, FileQuestion, ListChecks, BookOpen, Briefcase, DownloadCloud, GraduationCap, Home as HomeIcon, Bell, CalendarDays, Library, UserCircle
-} from 'lucide-react';
+  ShoppingBag, ClipboardCheck, Gift, History, Newspaper, FileQuestion, ListChecks, BookOpen, Briefcase, GraduationCap, Home as HomeIcon, Bell, CalendarDays, Library, UserCircle, PackageSearch
+} from 'lucide-react'; // Added PackageSearch
 import Image from 'next/image';
 import { InspirationalMessages } from '@/components/home/inspirational-messages';
 import { useEffect, useState } from 'react';
@@ -30,10 +30,9 @@ const featureGridLinks = [
 
 const bottomNavSimulatedLinks = [
     { href: '/', labelKey: 'navHome', icon: HomeIcon, descriptionKey: 'navHome' },
-    { href: '/student-profile', labelKey: 'studentProfileTitle', icon: UserCircle, descriptionKey: 'studentProfileTitle', studentOnly: true }, // Student specific
-    { href: '/my-course', labelKey: 'navMyCourse', icon: GraduationCap, descriptionKey: 'myCourseDesc', studentOnly: true }, // Student specific
+    { href: '/student-profile', labelKey: 'studentProfileTitle', icon: UserCircle, descriptionKey: 'studentProfileTitle', studentOnly: true },
+    { href: '/learning-hub', labelKey: 'navLearningHub', icon: PackageSearch, descriptionKey: 'learningHubDesc' }, // Updated
     { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays, descriptionKey: 'navSchedule' },
-    { href: '/downloads', labelKey: 'navDownloads', icon: DownloadCloud, descriptionKey: 'downloadsDesc' },
 ];
 
 
@@ -57,7 +56,6 @@ export default function HomePage() {
           } catch (e) { console.error(e); }
         }
       }
-       // Listen for profile updates
       const handleProfileUpdate = () => {
         const profileRawUpdated = localStorage.getItem(STUDENT_PROFILE_LOCALSTORAGE_KEY);
         if (profileRawUpdated) {
@@ -71,10 +69,8 @@ export default function HomePage() {
         setIsStudentLoggedIn(false);
         setStudentName(null);
       };
-
       window.addEventListener('studentProfileUpdated', handleProfileUpdate);
       window.addEventListener('studentLoggedOut', handleLogout);
-
       return () => {
         window.removeEventListener('studentProfileUpdated', handleProfileUpdate);
         window.removeEventListener('studentLoggedOut', handleLogout);
@@ -88,7 +84,6 @@ export default function HomePage() {
 
   return (
     <div className="space-y-6 md:space-y-8 pb-16 md:pb-8 bg-background">
-      
       <section className="text-left py-4">
         <h2 className="text-xl font-semibold text-foreground mb-4">
           {isClient && isStudentLoggedIn && studentName ? `${t('greetingDynamic')} ${studentName}!` : t('helloTeam')}
@@ -122,7 +117,6 @@ export default function HomePage() {
 
       <InspirationalMessages />
 
-      {/* Simulated Bottom Navigation for Desktop - this section remains visually similar to your image's bottom nav */}
       <div className="fixed bottom-0 left-0 right-0 md:hidden bg-background border-t border-border shadow-top p-2 z-40">
         <div className="container mx-auto flex justify-around items-center h-14">
           {visibleBottomNavLinks.map((link) => (
@@ -136,7 +130,6 @@ export default function HomePage() {
         </div>
       </div>
       
-      {/* This section appears on desktop below the grid, simulating the bottom nav area from the image */}
       <section className="hidden md:block pt-8">
         <h3 className="text-lg font-semibold text-center text-primary mb-4">{t('exploreSections')}</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -151,7 +144,6 @@ export default function HomePage() {
             ))}
         </div>
       </section>
-
     </div>
   );
 }

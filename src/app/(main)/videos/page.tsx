@@ -1,10 +1,11 @@
 
 "use client";
+// This page's public content is now part of the Learning Hub.
+// This page can be kept for admin-specific functionalities.
 
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { PlayCircle, UploadCloud, Loader2, AlertTriangle } from 'lucide-react';
-import Image from 'next/image';
+import { PlaySquare, UploadCloud, Loader2, AlertTriangle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import React, { useState, useEffect, type ChangeEvent } from 'react';
@@ -12,28 +13,32 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, Timestamp, query, orderBy } from 'firebase/firestore';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import Link from 'next/link';
 
 interface VideoItemFirestore {
-  id: string; // Firestore document ID
+  id: string;
   title: string;
   subject: string;
-  type: "youtube" | "local"; // "local" means placeholder for future direct upload
-  url: string; // YouTube embed URL or placeholder path
-  thumbnailUrl: string; // URL for the thumbnail image
-  dataAiHint: string; // Hint for AI image generation if thumbnail is placeholder
+  type: "youtube" | "local";
+  url: string;
+  thumbnailUrl: string;
+  dataAiHint: string;
   addedAt: Timestamp;
-  fileName?: string; // For user uploaded "local" type videos (metadata only)
+  fileName?: string;
 }
 
 const VIDEOS_COLLECTION = 'videosFS';
 const ADMIN_LOGGED_IN_KEY = 'adminLoggedInGoSwami';
 
-export default function VideosPage() {
+export default function AdminVideosPage() {
   const { t, language } = useLanguage();
   const { toast } = useToast();
-  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [inputKey, setInputKey] = useState(Date.now()); // To reset file input
+  const [videoTitle, setVideoTitle] = useState(''); // New state for title
+  const [videoSubject, setVideoSubject] = useState(''); // New state for subject
+  const [videoUrl, setVideoUrl] = useState(''); // New state for URL (for YouTube)
+  const [videoType, setVideoType] = useState<'youtube' | 'local'>('youtube'); // New state for type
+  const [inputKey, setInputKey] = useState(Date.now());
 
   const [videosToDisplay, setVideosToDisplay] = useState<VideoItemFirestore[]>([]);
   const [showAdminFeatures, setShowAdminFeatures] = useState(false);
@@ -41,7 +46,6 @@ export default function VideosPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
-
 
   useEffect(() => {
     setIsClient(true);
@@ -62,190 +66,145 @@ export default function VideosPage() {
       });
       setVideosToDisplay(fetchedVideos);
     } catch (error) {
-      console.error("Error fetching videos from Firestore:", error);
-      setFetchError(t('errorOccurred') + " " + "Could not load video data from Firestore. Please check console and Firebase setup.");
-      toast({
-        title: t('errorOccurred'),
-        description: "Failed to load videos.",
-        variant: "destructive",
-      });
+      setFetchError(t('errorOccurred') + " " + t('fetchErrorDetails'));
     } finally {
       setIsLoading(false);
     }
   };
   
-  useEffect(() => {
-    if (isClient) {
-      fetchVideos();
-    }
-  }, [isClient, language]);
-
+  useEffect(() => { if (isClient) fetchVideos(); }, [isClient, language, t]);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setUploadFile(event.target.files[0]);
+      if (!videoTitle) setVideoTitle(event.target.files[0].name.replace(/\.[^/.]+$/, "")); // Autofill title
     } else {
       setUploadFile(null);
     }
   };
 
-  const handleUploadVideo = async () => {
-    if (uploadFile && showAdminFeatures) {
-      setIsSubmitting(true);
-      try {
-        const newVideoPayload: Omit<VideoItemFirestore, 'id'> = {
-          title: uploadFile.name.replace(/\.[^/.]+$/, ""), // Use file name as title (without extension)
-          subject: t('subject') || "Uploaded Video",
-          type: "local", // Mark as local, actual file not uploaded to storage in prototype
-          url: `/uploads/prototype_${uploadFile.name}`, // Placeholder URL
-          thumbnailUrl: "https://placehold.co/600x400.png", // Default placeholder
-          dataAiHint: "uploaded video",
-          addedAt: Timestamp.now(),
-          fileName: uploadFile.name,
-        };
+  const handleAddVideo = async () => {
+    if (!showAdminFeatures || !videoTitle || !videoSubject) {
+        toast({ title: t('errorOccurred'), description: t('videoAdminValidation'), variant: 'destructive'});
+        return;
+    }
+    if (videoType === 'youtube' && !videoUrl) {
+        toast({ title: t('errorOccurred'), description: t('youtubeUrlRequired'), variant: 'destructive'});
+        return;
+    }
+    if (videoType === 'local' && !uploadFile) {
+        toast({ title: t('errorOccurred'), description: t('fileRequiredForLocal'), variant: 'destructive'});
+        return;
+    }
 
-        await addDoc(collection(db, VIDEOS_COLLECTION), newVideoPayload);
-        
-        toast({
-          title: t('uploadVideo') + " " + (t('registrationSuccess') || "Successful!"),
-          description: `${uploadFile.name} ${t('liveClassAddedSuccess') || 'metadata added successfully.'}`,
-        });
-        setUploadFile(null);
-        setInputKey(Date.now()); // Reset file input
-        fetchVideos(); // Refresh list
-      } catch (error) {
-         console.error("Error adding video to Firestore:", error);
-        toast({
-          title: t('errorOccurred'),
-          description: "Could not save video metadata. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsSubmitting(false);
+    setIsSubmitting(true);
+    try {
+      let newVideoPayload: Omit<VideoItemFirestore, 'id' | 'addedAt'> & { addedAt: any } = { // Use any for serverTimestamp flexibility
+        title: videoTitle,
+        subject: videoSubject,
+        type: videoType,
+        url: videoType === 'youtube' ? videoUrl : `/uploads/prototype_${uploadFile?.name || 'local_video'}`,
+        thumbnailUrl: videoType === 'youtube' ? getYouTubeThumbnail(videoUrl) : "https://placehold.co/600x400.png",
+        dataAiHint: videoType === 'youtube' ? "youtube video" : "uploaded video",
+        addedAt: Timestamp.now(), // Temporarily, will be replaced by serverTimestamp
+      };
+      
+      if (videoType === 'local' && uploadFile) {
+        newVideoPayload.fileName = uploadFile.name;
       }
+      // Ensure addedAt is serverTimestamp for actual Firestore write
+      const finalPayload = {...newVideoPayload, addedAt: serverTimestamp()};
+
+      await addDoc(collection(db, VIDEOS_COLLECTION), finalPayload);
+      
+      toast({ title: t('videoAddedSuccess'), description: `${videoTitle} ${t('liveClassAddedSuccess')}`});
+      setUploadFile(null);
+      setVideoTitle('');
+      setVideoSubject('');
+      setVideoUrl('');
+      setVideoType('youtube');
+      setInputKey(Date.now());
+      fetchVideos();
+    } catch (error) {
+       console.error("Error adding video to Firestore:", error);
+      toast({ title: t('errorOccurred'), description: t('saveErrorDetails'), variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
     }
   };
+  
+  const getYouTubeThumbnail = (youtubeUrl: string): string => {
+    try {
+      const urlObj = new URL(youtubeUrl);
+      let videoId = null;
+      if (urlObj.hostname === "youtu.be") {
+        videoId = urlObj.pathname.slice(1);
+      } else if (urlObj.hostname.includes("youtube.com") && urlObj.searchParams.has("v")) {
+        videoId = urlObj.searchParams.get("v");
+      } else if (urlObj.hostname.includes("youtube.com") && urlObj.pathname.startsWith("/live/")) {
+        videoId = urlObj.pathname.split('/live/')[1]?.split('?')[0];
+      }
+      if (videoId) {
+        return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`; // Or mqdefault.jpg, sddefault.jpg
+      }
+    } catch (e) { /* ignore error, return placeholder */ }
+    return "https://placehold.co/600x400.png";
+  };
 
-  const currentVideoForPlayer = videosToDisplay.find(v => v.url === selectedVideoUrl);
 
-  if (!isClient || isLoading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="ml-2">{t('loading')}</p>
-      </div>
-    );
+  if (!isClient || (isLoading && videosToDisplay.length === 0)) {
+    return <div className="flex justify-center items-center h-screen"><Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="ml-2">{t('loading')}</p></div>;
   }
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-3xl font-bold font-headline text-primary mb-6">{t('navVideos')}</h1>
+    <div className="space-y-8 max-w-4xl mx-auto">
+      <Card className="shadow-xl">
+        <CardHeader className="text-center pb-4">
+          <PlaySquare className="h-16 w-16 text-primary mx-auto mb-4" />
+          <CardTitle className="text-3xl font-bold font-headline text-primary">{t('manageVideos')}</CardTitle>
+          <CardDescription className="text-lg">{t('manageVideosDesc')}</CardDescription>
+          <Button variant="outline" asChild className="mt-2">
+            <Link href="/learning-hub?tab=videos">
+              {t('viewPublicPage') || "View Public Videos Page"} <ExternalLink className="ml-2 h-4 w-4"/>
+            </Link>
+          </Button>
+        </CardHeader>
 
-      {showAdminFeatures && (
-        <Card className="shadow-lg bg-muted/30">
-          <CardHeader>
-            <CardTitle className="text-2xl font-headline text-primary">{t('uploadVideo') || 'Upload New Video'}</CardTitle>
-            <CardDescription>{t('uploadVideoDesc') || 'Upload new video lectures for students. (Admin only)'} (This will add video metadata to Firestore. Actual file upload is not implemented.)</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Input
-                key={inputKey} // Used to reset input
-                id="video-file-upload"
-                type="file" 
-                accept="video/*" 
-                onChange={handleFileChange} 
-                className="max-w-sm border-input focus:ring-primary"
-                aria-label={t('selectFile')}
-              />
-              <Button onClick={handleUploadVideo} disabled={!uploadFile || isSubmitting} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-                {isSubmitting ? t('loading') : (t('uploadVideo') || 'Upload Video')}
-              </Button>
+        {showAdminFeatures && (
+          <CardContent className="border-t pt-6">
+            <h3 className="text-xl font-semibold text-secondary-foreground mb-4">{t('uploadVideo') || 'Add New Video'}</h3>
+            <div className="space-y-4">
+              <div><label htmlFor="videoType" className="block text-sm font-medium text-foreground mb-1">{t('videoTypeLabel') || "Video Type"}</label>
+                <select id="videoType" value={videoType} onChange={(e) => setVideoType(e.target.value as 'youtube' | 'local')} className="w-full p-2 border rounded-md">
+                  <option value="youtube">{t('youtubeLink') || "YouTube Link"}</option>
+                  <option value="local">{t('localFilePlaceholder') || "Local File (Metadata Only)"}</option>
+                </select>
+              </div>
+              <div><label htmlFor="videoTitle" className="block text-sm font-medium text-foreground mb-1">{t('videoTitleLabel') || "Video Title"}</label><Input id="videoTitle" value={videoTitle} onChange={(e) => setVideoTitle(e.target.value)} placeholder={t('videoTitlePlaceholder') || "Enter video title"} /></div>
+              <div><label htmlFor="videoSubject" className="block text-sm font-medium text-foreground mb-1">{t('videoSubjectLabel') || "Subject"}</label><Input id="videoSubject" value={videoSubject} onChange={(e) => setVideoSubject(e.target.value)} placeholder={t('videoSubjectPlaceholder') || "Enter subject"} /></div>
+              {videoType === 'youtube' && (<div><label htmlFor="videoUrl" className="block text-sm font-medium text-foreground mb-1">{t('videoUrlLabel') || "YouTube Video URL"}</label><Input id="videoUrl" type="url" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." /></div>)}
+              {videoType === 'local' && (<div className="flex items-center space-x-2"><Input key={inputKey} id="video-file-upload" type="file" accept="video/*" onChange={handleFileChange} className="max-w-sm"/><label htmlFor="video-file-upload" className="text-sm text-muted-foreground">{uploadFile ? uploadFile.name : t('noFileChosen')}</label></div>)}
+              <Button onClick={handleAddVideo} disabled={isSubmitting} className="bg-accent text-accent-foreground hover:bg-accent/90">{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}{isSubmitting ? t('loading') : (t('addVideoButton') || 'Add Video')}</Button>
             </div>
-            {uploadFile && <p className="text-sm text-muted-foreground">{t('selectFile')}: {uploadFile.name}</p>}
           </CardContent>
-        </Card>
-      )}
+        )}
 
-      {fetchError && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>{t('errorOccurred')}</AlertTitle>
-          <AlertDescription>{fetchError}</AlertDescription>
-        </Alert>
-      )}
-      
-      {selectedVideoUrl && currentVideoForPlayer && (
-        <Card className="shadow-lg mt-8">
-          <CardHeader>
-            <CardTitle className="text-xl font-headline text-primary">
-              {currentVideoForPlayer.title}
-            </CardTitle>
-             <CardDescription>{t('subject')}: {currentVideoForPlayer.subject}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {currentVideoForPlayer.type === 'youtube' ? (
-              <div className="aspect-video">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src={currentVideoForPlayer.url} // Assumes valid YouTube embed URL
-                  title="YouTube video player"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="rounded-md"
-                ></iframe>
-              </div>
-            ) : ( // For 'local' type or any other
-               <div className="aspect-video bg-muted flex items-center justify-center rounded-md">
-                <p className="text-muted-foreground p-4 text-center">
-                  {t('videoLectures')} ({currentVideoForPlayer.title}) - Playback for locally added videos is not implemented in this prototype.
-                  {currentVideoForPlayer.fileName && <span className="block text-sm">File: {currentVideoForPlayer.fileName}</span>}
-                </p>
-              </div>
-            )}
-             <Button onClick={() => setSelectedVideoUrl(null)} className="mt-4" variant="outline">Close Player</Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {videosToDisplay.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {videosToDisplay.map((video) => (
-            <Card key={video.id} className="shadow-lg hover:shadow-2xl transition-shadow duration-300 overflow-hidden">
-              <div className="relative aspect-video cursor-pointer group" onClick={() => setSelectedVideoUrl(video.url)}>
-                <Image 
-                  src={video.thumbnailUrl} 
-                  alt={video.title} 
-                  width={600}
-                  height={400}
-                  className="w-full h-full object-cover"
-                  data-ai-hint={video.dataAiHint}
-                  onError={(e) => e.currentTarget.src = 'https://placehold.co/600x400.png'} // Fallback
-                />
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <PlayCircle className="h-16 w-16 text-white" />
-                </div>
-              </div>
-              <CardHeader>
-                <CardTitle className="text-lg font-headline text-primary truncate" title={video.title}>{video.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>{t('subject') || 'Subject'}: {video.subject}</CardDescription>
-                {video.fileName && video.type === 'local' && <p className="text-xs text-muted-foreground truncate">File: {video.fileName}</p>}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-         !fetchError && <p className="text-center text-muted-foreground py-8">{t('noRegistrations').replace('registrations', 'videos')}</p> 
-      )}
-       <p className="text-center text-sm text-muted-foreground">
-        {t('localStorageNote').replace('local storage', 'Firebase Firestore')}. Videos are not actually uploaded or fully playable if added locally in this prototype.
-      </p>
+        <CardContent className={(showAdminFeatures) ? "border-t pt-6" : "pt-6"}>
+           <h3 className="text-2xl font-semibold text-secondary-foreground mb-6 text-center">{t('videoGalleryAdmin') || "Video Gallery (Admin View)"}</h3>
+          {fetchError && (<Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>{t('errorOccurred')}</AlertTitle><AlertDescription>{fetchError}</AlertDescription></Alert>)}
+          {videosToDisplay.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {videosToDisplay.map((video) => (
+                <Card key={video.id} className="shadow-sm hover:shadow-md transition-shadow">
+                  <CardHeader><CardTitle className="text-md text-primary truncate" title={video.title}>{video.title}</CardTitle><CardDescription className="text-xs">{t('subject')}: {video.subject} | Type: {video.type}</CardDescription></CardHeader>
+                  <CardContent><p className="text-xs text-muted-foreground truncate" title={video.url}>URL: {video.url}</p>{video.fileName && <p className="text-xs text-muted-foreground">File: {video.fileName}</p>}</CardContent>
+                  {/* Admin might want delete/edit options here in future */}
+                </Card>
+              ))}
+            </div>
+          ) : (!fetchError && <p className="text-center text-muted-foreground py-4">{t('noVideosAvailable') || "No videos uploaded yet."}</p>)}
+        </CardContent>
+      </Card>
     </div>
   );
 }
-

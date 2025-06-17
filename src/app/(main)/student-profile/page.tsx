@@ -15,7 +15,7 @@ import { useLanguage } from '@/hooks/use-language';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { doc, setDoc, getDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { User, Camera, Home, Phone, Mail, Loader2, ShieldAlert, LogOut } from 'lucide-react';
+import { User, Camera, Home, Phone, Mail, Loader2, ShieldAlert, LogOut, GraduationCap } from 'lucide-react';
 import Image from 'next/image';
 import { STUDENT_LOGGED_IN_KEY, STUDENT_USERNAME_KEY } from '../student-login/page';
 
@@ -180,6 +180,33 @@ export default function StudentProfilePage() {
               <LogOut className="mr-2 h-4 w-4" /> {t('studentLogoutButton')}
             </Button>
           </CardContent>
+      </Card>
+
+      {/* My Course Section - Merged Content */}
+      <Card className="shadow-xl">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold font-headline text-primary flex items-center">
+            <GraduationCap className="mr-3 h-8 w-8 text-accent" />
+            {t('myCourseSectionTitle')}
+          </CardTitle>
+          <CardDescription>{t('myCourseSectionDesc')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+           <div className="overflow-hidden rounded-lg shadow-md mb-4">
+            <Image
+              src="https://placehold.co/800x300.png"
+              alt={t('myCourseSectionTitle')}
+              width={800}
+              height={300}
+              className="w-full h-auto object-cover"
+              data-ai-hint="student dashboard course"
+            />
+          </div>
+          <p className="text-center text-muted-foreground">
+            {t('myCourseContentPlaceholder')}
+          </p>
+          {/* Future: List enrolled courses, progress, links to course material etc. */}
+        </CardContent>
       </Card>
     </div>
   );

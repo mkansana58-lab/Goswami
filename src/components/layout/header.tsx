@@ -11,7 +11,7 @@ import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import {
   BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, LogOut, LayoutDashboard,
   Home, DownloadCloud, MoreHorizontal, ScissorsLineDashed, HelpingHand, FileText, MessageSquare, Briefcase, BookOpen, FileQuestion, ListChecks, Bell, LogIn,
-  Gift, History, Newspaper, CalendarDays, CheckCircle, XCircle, Info, Tv2, School, Library, UserCircle, Settings, Mail
+  Gift, History, Newspaper, CalendarDays, CheckCircle, XCircle, Info, Tv2, School, Library, UserCircle, Settings, Mail, PackageSearch
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle as RadixSheetTitle } from '@/components/ui/sheet';
 import React, { useEffect, useState } from 'react';
@@ -25,23 +25,21 @@ import { STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/app/(main)/student-profile/p
 const primaryNavLinks = [
   { href: '/', labelKey: 'navHome', icon: Home },
   { href: '/study-material', labelKey: 'navStudyMaterial', icon: Library }, 
+  { href: '/learning-hub', labelKey: 'navLearningHub', icon: PackageSearch }, // New Learning Hub
   { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays },
   { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck },
-  { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2 },
 ];
 
 const secondaryNavLinks = [
-  { href: '/downloads', labelKey: 'navDownloads', icon: DownloadCloud },
+  // Downloads, Live Classes, Videos are now in Learning Hub
   { href: '/current-affairs', labelKey: 'currentAffairs', icon: Newspaper },
   { href: '/quiz', labelKey: 'navQuiz', icon: FileQuestion },
   { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks },
   { href: '/study-books', labelKey: 'ourBooks', icon: BookOpen },
   { href: '/job-alerts', labelKey: 'navJobAlerts', icon: Briefcase },
-  { href: '/videos', labelKey: 'navVideos', icon: PlaySquare },
   { href: '/scholarship', labelKey: 'navScholarship', icon: Users },
   { href: '/ai-tutor', labelKey: 'navAITutor', icon: Cpu },
   { href: '/cutoff-checker', labelKey: 'navCutOffChecker', icon: ScissorsLineDashed },
-  // { href: '/chance-checking', labelKey: 'navChanceChecking', icon: HelpingHand }, // Cutoff checker covers this
   { href: '/chat', labelKey: 'navChat', icon: MessageSquare },
   { href: '/sainik-e-counselling', labelKey: 'navSainikECounselling', icon: School },
   { href: '/contact', labelKey: 'navContact', icon: Mail },
@@ -54,7 +52,7 @@ const adminConsoleNavLinks = [
 
 const studentNavLinks = [
     { href: '/student-profile', labelKey: 'studentProfileTitle', icon: UserCircle },
-    { href: '/my-course', labelKey: 'navMyCourse', icon: GraduationCap }, // My Course is now more relevant for logged-in students
+    // My Course is now part of Student Profile
 ];
 
 
@@ -103,10 +101,10 @@ export function Header() {
             setStudentProfile(JSON.parse(profileRaw));
           } catch (e) {
             console.error("Error parsing student profile from localStorage", e);
-            setStudentProfile(null); // Or fetch from DB if needed
+            setStudentProfile(null);
           }
         } else {
-           setStudentProfile(null); // No cached profile
+           setStudentProfile(null); 
         }
       } else {
         setStudentProfile(null);
@@ -117,56 +115,38 @@ export function Header() {
   useEffect(() => {
     setIsClient(true);
     checkLoginStatus();
-
-    // Listen for custom events to update status without page reload
     window.addEventListener('studentProfileUpdated', checkLoginStatus);
     window.addEventListener('studentLoggedOut', checkLoginStatus);
-    
     return () => {
       window.removeEventListener('studentProfileUpdated', checkLoginStatus);
       window.removeEventListener('studentLoggedOut', checkLoginStatus);
     };
-  }, [pathname]); // Re-check on path change too
+  }, [pathname]); 
 
   useEffect(() => {
     if (!isClient) return;
-    console.log("Header: Setting up notifications listener...");
-
     const q = query(collection(db, NOTIFICATIONS_COLLECTION), orderBy("timestamp", "desc"), limit(10));
-
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const fetchedNotifications: AppNotification[] = [];
       querySnapshot.forEach((doc) => {
         fetchedNotifications.push({ id: doc.id, ...doc.data() } as AppNotification);
       });
       setNotifications(fetchedNotifications);
-      console.log("Header: Notifications fetched/updated:", fetchedNotifications.length);
-
       if (fetchedNotifications.length > 0) {
         const lastViewTime = localStorage.getItem(LAST_NOTIFICATION_VIEW_KEY);
         const latestNotificationTime = fetchedNotifications[0].timestamp.toMillis();
-        if (!lastViewTime || latestNotificationTime > parseInt(lastViewTime, 10)) {
-          setHasUnreadNotifications(true);
-        } else {
-          setHasUnreadNotifications(false);
-        }
+        setHasUnreadNotifications(!lastViewTime || latestNotificationTime > parseInt(lastViewTime, 10));
       } else {
         setHasUnreadNotifications(false);
       }
     }, (error) => {
-      console.error("Header: Error fetching notifications from Firestore:", {message: error.message, code: error.code});
+      console.error("Header: Error fetching notifications:", error);
     });
-
-    return () => {
-      console.log("Header: Unsubscribing from notifications listener.");
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, [isClient]);
 
   const handleAdminLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(ADMIN_LOGGED_IN_KEY);
-    }
+    if (typeof window !== 'undefined') localStorage.removeItem(ADMIN_LOGGED_IN_KEY);
     setIsAdminLoggedIn(false);
     setIsMobileMenuOpen(false);
     router.push('/');
@@ -178,22 +158,18 @@ export function Header() {
       localStorage.removeItem(STUDENT_LOGGED_IN_KEY);
       localStorage.removeItem(STUDENT_USERNAME_KEY);
       localStorage.removeItem(STUDENT_PROFILE_LOCALSTORAGE_KEY);
-      window.dispatchEvent(new Event('studentLoggedOut')); // Notify immediately
+      window.dispatchEvent(new Event('studentLoggedOut')); 
     }
     setIsStudentLoggedIn(false);
     setStudentProfile(null);
     setIsMobileMenuOpen(false);
     router.push('/student-login');
-    // No need for router.refresh() here if state updates correctly
   };
 
-
   const handleNotificationDropdownOpenChange = (open: boolean) => {
-    if (!open && hasUnreadNotifications) { 
-      if (notifications.length > 0) {
-        localStorage.setItem(LAST_NOTIFICATION_VIEW_KEY, notifications[0].timestamp.toMillis().toString());
-        setHasUnreadNotifications(false);
-      }
+    if (!open && hasUnreadNotifications && notifications.length > 0) { 
+      localStorage.setItem(LAST_NOTIFICATION_VIEW_KEY, notifications[0].timestamp.toMillis().toString());
+      setHasUnreadNotifications(false);
     }
   };
 
@@ -202,14 +178,11 @@ export function Header() {
     ...secondaryNavLinks,
     ...(isClient && isAdminLoggedIn ? adminConsoleNavLinks : []),
     ...(isClient && isStudentLoggedIn ? studentNavLinks : [])
-  ]
-  .filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === l.labelKey));
+  ].filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === l.labelKey));
 
-
-  const uniqueSecondaryLinksForDesktop = secondaryNavLinks.filter(
-    link => !primaryNavLinks.some(pLink => pLink.href === link.href && pLink.labelKey === link.labelKey)
-  )
-  .filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === l.labelKey));
+  const uniqueSecondaryLinksForDesktop = secondaryNavLinks
+    .filter(link => !primaryNavLinks.some(pLink => pLink.href === link.href && pLink.labelKey === link.labelKey))
+    .filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === l.labelKey));
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -220,7 +193,6 @@ export function Header() {
     }
   };
 
-
   return (
     <header className="bg-background text-foreground sticky top-0 z-50 shadow-md border-b">
       <div className="container mx-auto flex items-center justify-between p-3 h-16">
@@ -228,117 +200,55 @@ export function Header() {
           <div className="md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-foreground">
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
+                <Button variant="ghost" size="icon" className="text-foreground"><Menu className="h-6 w-6" /><span className="sr-only">Open menu</span></Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[280px] bg-sidebar p-0 flex flex-col border-r">
                 <VisuallyHidden.Root><RadixSheetTitle>{t('mobileMenuTitle')}</RadixSheetTitle></VisuallyHidden.Root>
                 <div className="p-4 border-b border-sidebar-border">
                   <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-                    {isClient && isStudentLoggedIn && studentProfile?.photoDataUrl ? (
-                       <Image src={studentProfile.photoDataUrl} alt={studentProfile.name || t('studentProfilePhotoAlt')} width={32} height={32} className="rounded-full h-8 w-8 object-cover" />
-                    ) : isClient && isStudentLoggedIn ? (
-                       <UserCircle className="h-8 w-8 text-sidebar-primary" />
-                    ) : (
-                       <ShieldCheck className="h-8 w-8 text-sidebar-primary" />
-                    )}
-                    <h2 className="text-lg font-headline font-bold text-sidebar-primary">
-                       {isClient && isStudentLoggedIn && studentProfile?.name ? studentProfile.name : t('appName')}
-                    </h2>
+                    {isClient && isStudentLoggedIn && studentProfile?.photoDataUrl ? (<Image src={studentProfile.photoDataUrl} alt={studentProfile.name || t('studentProfilePhotoAlt')} width={32} height={32} className="rounded-full h-8 w-8 object-cover" />)
+                     : isClient && isStudentLoggedIn ? (<UserCircle className="h-8 w-8 text-sidebar-primary" />)
+                     : (<ShieldCheck className="h-8 w-8 text-sidebar-primary" />)}
+                    <h2 className="text-lg font-headline font-bold text-sidebar-primary">{isClient && isStudentLoggedIn && studentProfile?.name ? studentProfile.name : t('appName')}</h2>
                   </Link>
                 </div>
                 <div className="flex-grow overflow-y-auto p-4 space-y-1">
                   {allMobileNavLinks.map((link) => (
                      <Link key={`mobile-${link.href}-${link.labelKey}`} href={link.href}
-                        className={cn("flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium transition-colors hover:bg-sidebar-accent/10",
-                          pathname === link.href ? "bg-sidebar-accent/20 text-sidebar-primary font-semibold" : "text-sidebar-foreground"
-                        )} onClick={() => setIsMobileMenuOpen(false)}>
+                        className={cn("flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium transition-colors hover:bg-sidebar-accent/10", pathname === link.href ? "bg-sidebar-accent/20 text-sidebar-primary font-semibold" : "text-sidebar-foreground")}
+                        onClick={() => setIsMobileMenuOpen(false)}>
                         <link.icon className="h-5 w-5 text-sidebar-primary" />{t(link.labelKey as any)}
                       </Link>
                   ))}
                 </div>
                 <div className="p-4 border-t border-sidebar-border space-y-2">
-                   {isClient && isStudentLoggedIn && (
-                      <Button variant="outline" className="w-full justify-start flex items-center gap-3 text-base font-medium border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground" onClick={handleStudentLogout}>
-                        <LogOut className="h-5 w-5" /> {t('studentLogoutButton')}
-                      </Button>
-                   )}
-                   {isClient && isAdminLoggedIn && (
-                      <Button variant="outline" className="w-full justify-start flex items-center gap-3 text-base font-medium border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground" onClick={handleAdminLogout}>
-                        <LogOut className="h-5 w-5" /> {t('adminLogout')}
-                      </Button>
-                    )
-                  }
-                   {isClient && !isAdminLoggedIn && !isStudentLoggedIn && (
-                     <>
-                      <Button variant="outline" className="w-full justify-start" asChild>
-                        <Link href="/student-login" onClick={() => setIsMobileMenuOpen(false)}>
-                          <UserCircle className="mr-2 h-5 w-5" /> {t('studentLoginTitle')}
-                        </Link>
-                      </Button>
-                      <Button variant="outline" className="w-full justify-start" asChild>
-                        <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                          <ShieldCheck className="mr-2 h-5 w-5" /> {t('adminLoginNav')}
-                        </Link>
-                      </Button>
-                     </>
-                  )}
+                   {isClient && isStudentLoggedIn && (<Button variant="outline" className="w-full justify-start flex items-center gap-3 text-base font-medium border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground" onClick={handleStudentLogout}><LogOut className="h-5 w-5" /> {t('studentLogoutButton')}</Button>)}
+                   {isClient && isAdminLoggedIn && (<Button variant="outline" className="w-full justify-start flex items-center gap-3 text-base font-medium border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground" onClick={handleAdminLogout}><LogOut className="h-5 w-5" /> {t('adminLogout')}</Button>)}
+                   {isClient && !isAdminLoggedIn && !isStudentLoggedIn && (<>
+                      <Button variant="outline" className="w-full justify-start" asChild><Link href="/student-login" onClick={() => setIsMobileMenuOpen(false)}><UserCircle className="mr-2 h-5 w-5" /> {t('studentLoginTitle')}</Link></Button>
+                      <Button variant="outline" className="w-full justify-start" asChild><Link href="/login" onClick={() => setIsMobileMenuOpen(false)}><ShieldCheck className="mr-2 h-5 w-5" /> {t('adminLoginNav')}</Link></Button>
+                   </>)}
                 </div>
               </SheetContent>
             </Sheet>
           </div>
           <Link href="/" className="flex items-center gap-2">
-            {isClient && isStudentLoggedIn && studentProfile?.photoDataUrl ? (
-              <Image src={studentProfile.photoDataUrl} alt={studentProfile.name || t('studentProfilePhotoAlt')} width={32} height={32} className="rounded-full h-8 w-8 object-cover" />
-            ) : isClient && isStudentLoggedIn ? (
-              <UserCircle className="h-8 w-8 text-primary" />
-            ) : (
-              <ShieldCheck className="h-8 w-8 text-primary" />
-            )}
-            <h1 className="text-lg md:text-xl font-headline font-bold text-primary hidden sm:block">
-               {isClient && isStudentLoggedIn && studentProfile?.name ? studentProfile.name : t('appName')}
-            </h1>
+            {isClient && isStudentLoggedIn && studentProfile?.photoDataUrl ? (<Image src={studentProfile.photoDataUrl} alt={studentProfile.name || t('studentProfilePhotoAlt')} width={32} height={32} className="rounded-full h-8 w-8 object-cover" />)
+             : isClient && isStudentLoggedIn ? (<UserCircle className="h-8 w-8 text-primary" />)
+             : (<ShieldCheck className="h-8 w-8 text-primary" />)}
+            <h1 className="text-lg md:text-xl font-headline font-bold text-primary hidden sm:block">{isClient && isStudentLoggedIn && studentProfile?.name ? studentProfile.name : t('appName')}</h1>
           </Link>
         </div>
 
         <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
-          {primaryNavLinks.map((link) => (
-            <Link key={`${link.href}-desktop-primary-${link.labelKey}`} href={link.href}
-              className={cn("px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary",
-                pathname === link.href ? "bg-muted text-primary font-semibold" : "text-foreground"
-              )}>{t(link.labelKey as any)}</Link>
-          ))}
-          {isClient && isAdminLoggedIn && adminConsoleNavLinks.map((link) => (
-             <Link key={`${link.href}-desktop-admin`} href={link.href}
-              className={cn("px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary flex items-center gap-1",
-                pathname === link.href ? "bg-muted text-primary font-semibold" : "text-foreground"
-              )}><link.icon className="h-4 w-4" /> {t(link.labelKey as any)}</Link>
-          ))}
-           {isClient && isStudentLoggedIn && studentNavLinks.map((link) => (
-             <Link key={`${link.href}-desktop-student`} href={link.href}
-              className={cn("px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary flex items-center gap-1",
-                pathname === link.href ? "bg-muted text-primary font-semibold" : "text-foreground"
-              )}><link.icon className="h-4 w-4" /> {t(link.labelKey as any)}</Link>
-          ))}
-
-
+          {primaryNavLinks.map((link) => (<Link key={`${link.href}-desktop-primary-${link.labelKey}`} href={link.href} className={cn("px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary", pathname === link.href ? "bg-muted text-primary font-semibold" : "text-foreground")}>{t(link.labelKey as any)}</Link>))}
+          {isClient && isAdminLoggedIn && adminConsoleNavLinks.map((link) => (<Link key={`${link.href}-desktop-admin`} href={link.href} className={cn("px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary flex items-center gap-1", pathname === link.href ? "bg-muted text-primary font-semibold" : "text-foreground")}><link.icon className="h-4 w-4" /> {t(link.labelKey as any)}</Link>))}
+          {isClient && isStudentLoggedIn && studentNavLinks.map((link) => (<Link key={`${link.href}-desktop-student`} href={link.href} className={cn("px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary flex items-center gap-1", pathname === link.href ? "bg-muted text-primary font-semibold" : "text-foreground")}><link.icon className="h-4 w-4" /> {t(link.labelKey as any)}</Link>))}
           {uniqueSecondaryLinksForDesktop.length > 0 && (
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium hover:bg-muted hover:text-primary">
-                  <MoreHorizontal className="h-5 w-5" /><span className="sr-only">More</span>
-                </Button>
-              </DropdownMenuTrigger>
+              <DropdownMenuTrigger asChild><Button variant="ghost" className="px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium hover:bg-muted hover:text-primary"><MoreHorizontal className="h-5 w-5" /><span className="sr-only">More</span></Button></DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="max-h-96 overflow-y-auto bg-popover border-border shadow-lg">
-                {uniqueSecondaryLinksForDesktop.map((link) => (
-                  <DropdownMenuItem key={`desktop-more-${link.href}-${link.labelKey}`} asChild className="focus:bg-muted focus:text-primary cursor-pointer">
-                    <Link href={link.href} className={cn(pathname === link.href ? "bg-muted text-primary" : "text-popover-foreground", "w-full justify-start flex items-center")}>
-                      <link.icon className="mr-2 h-4 w-4 text-primary/80" />{t(link.labelKey as any)}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
+                {uniqueSecondaryLinksForDesktop.map((link) => (<DropdownMenuItem key={`desktop-more-${link.href}-${link.labelKey}`} asChild className="focus:bg-muted focus:text-primary cursor-pointer"><Link href={link.href} className={cn(pathname === link.href ? "bg-muted text-primary" : "text-popover-foreground", "w-full justify-start flex items-center")}><link.icon className="mr-2 h-4 w-4 text-primary/80" />{t(link.labelKey as any)}</Link></DropdownMenuItem>))}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -346,80 +256,26 @@ export function Header() {
 
         <div className="flex items-center gap-1 md:gap-2">
           <DropdownMenu onOpenChange={handleNotificationDropdownOpenChange}>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-foreground hover:bg-muted hover:text-primary relative" title={t('notifications')}>
-                <Bell className="h-5 w-5" />
-                {isClient && hasUnreadNotifications && notifications.length > 0 && (
-                  <span className="absolute top-1 right-1.5 flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
-                  </span>
-                )}
-                <span className="sr-only">{t('notifications')}</span>
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="text-foreground hover:bg-muted hover:text-primary relative" title={t('notifications')}><Bell className="h-5 w-5" />{isClient && hasUnreadNotifications && notifications.length > 0 && (<span className="absolute top-1 right-1.5 flex h-2.5 w-2.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span></span>)}<span className="sr-only">{t('notifications')}</span></Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 md:w-96 bg-popover border-border shadow-lg max-h-[400px] overflow-y-auto">
-              <DropdownMenuLabel className="flex justify-between items-center">
-                {t('notifications')}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {notifications.length === 0 ? (
-                <DropdownMenuItem disabled className="text-muted-foreground text-center py-4">
-                  {t('noNewNotifications') || "No new notifications"}
-                </DropdownMenuItem>
-              ) : (
-                notifications.map(notif => (
-                  <DropdownMenuItem key={notif.id} asChild className="cursor-pointer focus:bg-muted p-2 hover:bg-muted/80">
-                    <Link href={notif.link || '#'} className="flex items-start gap-3 text-sm w-full">
-                      {getNotificationIcon(notif.type)}
-                      <div className="flex-1 space-y-0.5">
-                        <p className="font-medium text-popover-foreground leading-tight line-clamp-3">{notif.message}</p>
-                        <p className="text-xs text-muted-foreground">{notif.timestamp?.toDate().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})} - {notif.timestamp?.toDate().toLocaleDateString([], {day: '2-digit', month: 'short'})}</p>
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                ))
-              )}
+              <DropdownMenuLabel className="flex justify-between items-center">{t('notifications')}</DropdownMenuLabel><DropdownMenuSeparator />
+              {notifications.length === 0 ? (<DropdownMenuItem disabled className="text-muted-foreground text-center py-4">{t('noNewNotifications')}</DropdownMenuItem>)
+               : (notifications.map(notif => (<DropdownMenuItem key={notif.id} asChild className="cursor-pointer focus:bg-muted p-2 hover:bg-muted/80"><Link href={notif.link || '#'} className="flex items-start gap-3 text-sm w-full">{getNotificationIcon(notif.type)}<div className="flex-1 space-y-0.5"><p className="font-medium text-popover-foreground leading-tight line-clamp-3">{notif.message}</p><p className="text-xs text-muted-foreground">{notif.timestamp?.toDate().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})} - {notif.timestamp?.toDate().toLocaleDateString([], {day: '2-digit', month: 'short'})}</p></div></Link></DropdownMenuItem>)))}
             </DropdownMenuContent>
           </DropdownMenu>
-
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-foreground hover:bg-muted hover:text-primary">
-                <Languages className="h-5 w-5" /><span className="sr-only">{t('language')}</span>
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="text-foreground hover:bg-muted hover:text-primary"><Languages className="h-5 w-5" /><span className="sr-only">{t('language')}</span></Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-popover border-border shadow-lg">
               <DropdownMenuItem onClick={() => setLanguage('en')} disabled={language === 'en'} className="focus:bg-muted focus:text-primary cursor-pointer">{t('english')}</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setLanguage('hi')} disabled={language === 'hi'} className="focus:bg-muted focus:text-primary cursor-pointer">{t('hindi')}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-
-          {isClient && isStudentLoggedIn && (
-              <Button variant="outline" size="sm" onClick={handleStudentLogout} className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground hidden md:flex">
-                <LogOut className="mr-2 h-4 w-4" /> {t('studentLogoutButton')}
-              </Button>
-          )}
-          {isClient && isAdminLoggedIn && !isStudentLoggedIn && ( // Show admin logout only if admin is logged in and student is not
-              <Button variant="outline" size="sm" onClick={handleAdminLogout} className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground hidden md:flex">
-                <LogOut className="mr-2 h-4 w-4" /> {t('adminLogout')}
-              </Button>
-          )}
-           {isClient && !isAdminLoggedIn && !isStudentLoggedIn && ( // Show login buttons if no one is logged in
-             <>
-              <Button variant="outline" size="sm" asChild className="hidden md:flex">
-                <Link href="/student-login">
-                  <UserCircle className="mr-2 h-4 w-4" /> {t('studentLoginTitle')}
-                </Link>
-              </Button>
-              <Button variant="outline" size="sm" asChild className="hidden md:flex">
-                <Link href="/login">
-                  <ShieldCheck className="mr-2 h-4 w-4" /> {t('adminLoginNav')}
-                </Link>
-              </Button>
-            </>
-            )
-          }
+          {isClient && isStudentLoggedIn && (<Button variant="outline" size="sm" onClick={handleStudentLogout} className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground hidden md:flex"><LogOut className="mr-2 h-4 w-4" /> {t('studentLogoutButton')}</Button>)}
+          {isClient && isAdminLoggedIn && !isStudentLoggedIn && (<Button variant="outline" size="sm" onClick={handleAdminLogout} className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground hidden md:flex"><LogOut className="mr-2 h-4 w-4" /> {t('adminLogout')}</Button>)}
+          {isClient && !isAdminLoggedIn && !isStudentLoggedIn && (<>
+            <Button variant="outline" size="sm" asChild className="hidden md:flex"><Link href="/student-login"><UserCircle className="mr-2 h-4 w-4" /> {t('studentLoginTitle')}</Link></Button>
+            <Button variant="outline" size="sm" asChild className="hidden md:flex"><Link href="/login"><ShieldCheck className="mr-2 h-4 w-4" /> {t('adminLoginNav')}</Link></Button>
+          </>)}
         </div>
       </div>
     </header>
