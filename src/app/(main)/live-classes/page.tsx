@@ -28,15 +28,15 @@ import {
 
 const ADMIN_LOGGED_IN_KEY = 'adminLoggedInGoSwami';
 const LIVE_CLASSES_COLLECTION = 'liveClasses';
-const NOTIFICATIONS_COLLECTION = 'notifications'; 
+const NOTIFICATIONS_COLLECTION = 'notifications';
 
 interface LiveClass {
   id: string;
   title: string;
   subject: string;
-  scheduledAt: Timestamp; 
-  displayDate?: string; 
-  displayTime?: string; 
+  scheduledAt: Timestamp;
+  displayDate?: string;
+  displayTime?: string;
   link: string;
   embedUrl?: string;
   createdAt: Timestamp;
@@ -74,7 +74,7 @@ export default function LiveClassesPage() {
     }
   }, []);
 
-  const getYouTubeEmbedUrl = (url: string): string | null => {
+  const getYouTubeEmbedUrl = useCallback((url: string | undefined | null): string | null => {
     if (!url) return null;
     let videoId = null;
     try {
@@ -87,15 +87,15 @@ export default function LiveClassesPage() {
         } else if (urlObj.pathname.startsWith('/live/')) {
           videoId = urlObj.pathname.split('/live/')[1]?.split('?')[0];
         } else if (urlObj.pathname.startsWith('/embed/')) {
-          return url; 
+          return url;
         }
       }
     } catch (e) {
       console.warn("LiveClassesPage: Could not parse URL for YouTube ID:", url, e);
-      return url; 
+      return url;
     }
-    return videoId ? `https://www.youtube.com/embed/${videoId}` : url; 
-  };
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  }, []);
 
   useEffect(() => {
     if (!isClient) return;
@@ -113,21 +113,18 @@ export default function LiveClassesPage() {
         const data = doc.data();
         const scheduledAtTimestamp = data.scheduledAt as Timestamp;
 
-        // Log raw data for each document to help debug
         try {
             console.log(`LiveClassesPage: Processing doc ID: ${doc.id}, RAW DATA:`, JSON.parse(JSON.stringify(data)));
         } catch (e) {
             console.error(`LiveClassesPage: Could not stringify raw data for doc ID: ${doc.id}`, data, e);
         }
 
-
         if (scheduledAtTimestamp && typeof scheduledAtTimestamp.toDate === 'function') {
           const scheduledDateTime = scheduledAtTimestamp.toDate();
           
-          // Log the times being compared
           console.log(`LiveClassesPage: Doc ID: ${doc.id}, Scheduled Time: ${scheduledDateTime.toISOString()}, Current Time: ${now.toISOString()}, Title: ${data.title}`);
 
-          if (scheduledDateTime.getTime() > now.getTime()) { // Only include classes that are scheduled for the future
+          if (scheduledDateTime.getTime() > now.getTime()) {
             fetchedUpcomingClasses.push({
               id: doc.id,
               title: data.title,
@@ -164,7 +161,7 @@ export default function LiveClassesPage() {
       console.log("LiveClassesPage: Unsubscribing from Firestore listener.");
       unsubscribe();
     };
-  }, [isClient, t, toast, language]);
+  }, [isClient, t, toast, language, getYouTubeEmbedUrl]);
 
 
   const onAdminSubmit: SubmitHandler<LiveClassFormValues> = async (data) => {
@@ -176,32 +173,35 @@ export default function LiveClassesPage() {
     const [hoursStr, minutesStr] = data.time.split(':');
 
     const year = parseInt(yearStr, 10);
-    const month = parseInt(monthStr, 10); 
+    const month = parseInt(monthStr, 10);
     const day = parseInt(dayStr, 10);
     const hours = parseInt(hoursStr, 10);
     const minutes = parseInt(minutesStr, 10);
 
     let scheduledAtJSDate: Date;
     try {
-      if (isNaN(year) || year < 1000 || year > 3000 || 
+      if (isNaN(year) || year < 1000 || year > 3000 ||
           isNaN(month) || month < 1 || month > 12 ||
           isNaN(day) || day < 1 || day > 31 ||
           isNaN(hours) || hours < 0 || hours > 23 ||
           isNaN(minutes) || minutes < 0 || minutes > 59) {
-        console.error("LiveClassesPage: ERROR - Invalid number conversion or out-of-range value for date/time components from form.", { dataDate: data.date, dataTime: data.time, parsed: {year, month, day, hours, minutes} });
-        throw new Error("Invalid number conversion or out-of-range value for date/time components.");
+        const errorDetail = `Invalid number conversion or out-of-range value. Y:${year}, M:${month}, D:${day}, H:${hours}, Min:${minutes}`;
+        console.error("LiveClassesPage: ERROR - " + errorDetail, { dataDate: data.date, dataTime: data.time });
+        throw new Error(errorDetail);
       }
-      
-      scheduledAtJSDate = new Date(year, month - 1, day, hours, minutes); // Month is 0-indexed for JS Date
-      
-      if (isNaN(scheduledAtJSDate.getTime()) || 
+
+      scheduledAtJSDate = new Date(year, month - 1, day, hours, minutes); // Month is 0-indexed
+
+      if (isNaN(scheduledAtJSDate.getTime()) ||
           scheduledAtJSDate.getFullYear() !== year ||
-          scheduledAtJSDate.getMonth() !== month - 1 || // check 0-indexed month
+          scheduledAtJSDate.getMonth() !== month - 1 ||
           scheduledAtJSDate.getDate() !== day ||
           scheduledAtJSDate.getHours() !== hours ||
           scheduledAtJSDate.getMinutes() !== minutes
           ) {
-         console.error("LiveClassesPage: ERROR - Constructed JS Date is invalid or does not match input parts.", { year, month, day, hours, minutes, constructedDate: scheduledAtJSDate.toISOString(), constructedParts: {gy: scheduledAtJSDate.getFullYear(), gm: scheduledAtJSDate.getMonth(), gd: scheduledAtJSDate.getDate(), gh: scheduledAtJSDate.getHours(), gmin: scheduledAtJSDate.getMinutes() } });
+        const constructedParts = {gy: scheduledAtJSDate.getFullYear(), gm: scheduledAtJSDate.getMonth(), gd: scheduledAtJSDate.getDate(), gh: scheduledAtJSDate.getHours(), gmin: scheduledAtJSDate.getMinutes() };
+        const errorDetail = `Constructed JS Date is invalid or does not match input parts. Input: Y${year}M${month-1}D${day}H${hours}Min${minutes}. Constructed: ${JSON.stringify(constructedParts)}. Date obj: ${scheduledAtJSDate.toISOString()}`;
+        console.error("LiveClassesPage: ERROR - " + errorDetail);
         throw new Error("Invalid date or time components resulted in inconsistent Date object. Please check YYYY-MM-DD and HH:MM format.");
       }
       console.log("LiveClassesPage: Successfully created JS Date for scheduledAt:", scheduledAtJSDate.toISOString());
@@ -211,11 +211,11 @@ export default function LiveClassesPage() {
       setIsSubmitting(false);
       return;
     }
-    
+
     let scheduledAtTimestamp: Timestamp;
     try {
         scheduledAtTimestamp = Timestamp.fromDate(scheduledAtJSDate);
-        console.log("LiveClassesPage: Converted to Firestore Timestamp for scheduledAt:", scheduledAtTimestamp);
+        console.log("LiveClassesPage: Converted to Firestore Timestamp for scheduledAt:", JSON.parse(JSON.stringify(scheduledAtTimestamp)));
     } catch (e:any) {
         console.error("LiveClassesPage: ERROR - Could not convert JS Date to Firestore Timestamp.", { jsDate: scheduledAtJSDate, errorMsg: e.message, stack: e.stack });
         toast({ title: t('errorOccurred'), description: "Failed to create Firestore timestamp from date/time.", variant: "destructive" });
@@ -224,23 +224,21 @@ export default function LiveClassesPage() {
     }
 
     const serverNowTimestamp = serverTimestamp();
-    console.log("LiveClassesPage: Valid scheduledAtTimestamp:", JSON.parse(JSON.stringify(scheduledAtTimestamp)), "Valid serverNowTimestamp for createdAt (pending server evaluation):", JSON.parse(JSON.stringify(serverNowTimestamp)));
-
+    console.log("LiveClassesPage: Valid serverNowTimestamp for createdAt (pending server evaluation):", JSON.parse(JSON.stringify(serverNowTimestamp)));
 
     const newClassPayload = {
       title: data.title,
       subject: data.subject,
       link: data.link,
       scheduledAt: scheduledAtTimestamp,
-      createdAt: serverNowTimestamp, 
+      createdAt: serverNowTimestamp,
     };
     console.log("LiveClassesPage: PAYLOAD to be sent to Firestore:", JSON.parse(JSON.stringify(newClassPayload)));
-
 
     try {
       const docRef = await addDoc(collection(db, LIVE_CLASSES_COLLECTION), newClassPayload);
       console.log("LiveClassesPage: Live class added to Firestore successfully. Document ID:", docRef.id);
-      
+
       try {
         const notificationMessage = `${t('liveClassAddedSuccess')}: ${data.title}`;
         await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
@@ -289,9 +287,14 @@ export default function LiveClassesPage() {
   };
 
   if (!isClient) {
-    return <div className="flex justify-center items-center h-screen"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">{t('loading')}</p></div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2">{t('loading')}</p>
+      </div>
+    );
   }
-  
+
   const currentClassForPlayer = liveClasses.find(cls => cls.embedUrl === selectedVideoUrl && cls.title === selectedVideoTitle);
 
   return (
@@ -304,7 +307,7 @@ export default function LiveClassesPage() {
           <CardTitle className="text-3xl font-bold font-headline text-primary">{t('liveClassesTitle')}</CardTitle>
           <CardDescription className="text-lg">{t('liveClassesDesc')}</CardDescription>
         </CardHeader>
-        
+
         {showAdminFeatures && (
           <CardContent className="border-t pt-6">
             <h2 className="text-xl font-semibold text-secondary-foreground mb-4 flex items-center">
@@ -327,7 +330,7 @@ export default function LiveClassesPage() {
                     </FormItem>
                   )} />
                   <FormField control={liveClassForm.control} name="time" render={({ field }) => (
-                    <FormItem><FormLabel>{t('liveClassTimeLabel')}</FormLabel><FormControl><Input type="time" placeholder={t('liveClassTimePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('liveClassTimeLabel')}</FormLabel><FormControl><Input type="text" placeholder={t('liveClassTimePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
                 <FormField control={liveClassForm.control} name="link" render={({ field }) => (
@@ -356,66 +359,87 @@ export default function LiveClassesPage() {
                   width="100%"
                   height="100%"
                   src={currentClassForPlayer.embedUrl}
-                  title={currentClassForPlayer.title}
+                  title="YouTube video player"
                   frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                   className="rounded-md"
                 ></iframe>
               </div>
             ) : (
               <div className="aspect-video bg-muted flex items-center justify-center rounded-md">
-                <p className="text-muted-foreground p-4 text-center">
-                  {t('videoLectures')} ({currentClassForPlayer.title}) - {t('liveClassLinkPlaceholder')}
-                  <br />
-                  <a href={currentClassForPlayer.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center justify-center mt-2">
-                    {t('joinClassButton')} <ExternalLink className="ml-2 h-4 w-4"/>
-                  </a>
+                <p className="text-muted-foreground text-center p-4">
+                  {t('liveClassVideoPlaybackNotAvailable') || "Video playback for this type of link is not directly available here. Please use the join link."}
                 </p>
               </div>
             )}
-             <Button onClick={() => {setSelectedVideoUrl(null); setSelectedVideoTitle(null);}} className="mt-4" variant="outline">Close Player</Button>
+            <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90 flex-1">
+                    <a href={currentClassForPlayer.link} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="mr-2 h-4 w-4" /> {t('joinClassButton')}
+                    </a>
+                </Button>
+                <Button onClick={() => {setSelectedVideoUrl(null); setSelectedVideoTitle(null);}} variant="outline" className="flex-1">
+                    {t('closePlayerButton') || "Close Player"}
+                </Button>
+            </div>
           </CardContent>
         </Card>
       )}
 
       <Card className="shadow-lg">
         <CardHeader>
-            <CardTitle className="text-2xl font-headline text-primary">{t('upcomingLiveClasses')}</CardTitle>
+          <CardTitle className="text-2xl font-headline text-primary">{t('upcomingLiveClasses')}</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading && liveClasses.length === 0 ? ( 
+          {isLoading && liveClasses.length === 0 ? (
             <div className="flex justify-center items-center py-10">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">{t('loading')}</p>
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="ml-2">{t('loading')}</p>
             </div>
           ) : liveClasses.length > 0 ? (
-            <div className="space-y-4">
+            <ul className="space-y-4">
               {liveClasses.map((liveClass) => (
-                <Card key={liveClass.id} className="p-4 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                    <div className="mb-2 sm:mb-0">
+                <li key={liveClass.id} className="p-4 bg-muted/50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                    <div className="flex-grow">
                       <h3 className="text-lg font-semibold text-secondary-foreground">{liveClass.title}</h3>
-                      <p className="text-sm text-muted-foreground">{t('subject')}: {liveClass.subject}</p>
                       <p className="text-sm text-muted-foreground">
-                        {t('date')}: {liveClass.displayDate} | {t('scheduleTimeLabel')}: {liveClass.displayTime}
+                        {t('subject')}: {liveClass.subject}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {liveClass.displayDate} - {liveClass.displayTime}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                       <Button 
-                        variant="default" 
-                        size="sm" 
-                        onClick={() => {
-                          setSelectedVideoUrl(liveClass.embedUrl || liveClass.link);
-                          setSelectedVideoTitle(liveClass.title);
-                        }}
-                        className="bg-primary hover:bg-primary/90"
-                      >
-                        <PlaySquare className="mr-2 h-4 w-4"/> {t('joinClassButton')}
-                      </Button>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-shrink-0">
+                        {liveClass.embedUrl && liveClass.embedUrl.includes("youtube.com/embed/") ? (
+                            <Button
+                                onClick={() => {setSelectedVideoUrl(liveClass.embedUrl!); setSelectedVideoTitle(liveClass.title);}}
+                                variant="outline"
+                                size="sm"
+                                className="w-full sm:w-auto"
+                            >
+                                <PlaySquare className="mr-2 h-4 w-4" /> {t('watchHere') || "Watch Here"}
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={() => {setSelectedVideoUrl(liveClass.link); setSelectedVideoTitle(liveClass.title);}}
+                                variant="outline"
+                                size="sm"
+                                className="w-full sm:w-auto"
+                            >
+                                <PlaySquare className="mr-2 h-4 w-4" /> {t('viewDetails') || "View Details"}
+                            </Button>
+                        )}
+                        <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 w-full sm:w-auto">
+                            <a href={liveClass.link} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="mr-2 h-4 w-4" /> {t('joinClassButton')}
+                            </a>
+                        </Button>
                       {showAdminFeatures && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
+                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 w-full sm:w-auto mt-2 sm:mt-0 sm:ml-2">
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </AlertDialogTrigger>
@@ -435,20 +459,21 @@ export default function LiveClassesPage() {
                       )}
                     </div>
                   </div>
-                </Card>
+                </li>
               ))}
-            </div>
+            </ul>
           ) : (
-            !isLoading && <p className="text-center text-muted-foreground py-6">{t('noLiveClassesScheduled')}</p> 
+            <p className="text-center text-muted-foreground py-10">{t('noLiveClassesScheduled')}</p>
           )}
         </CardContent>
-         <CardFooter>
-            <p className="text-xs text-muted-foreground mx-auto text-center">
-              {t('localStorageNote').replace('local storage', 'Firebase Firestore')}
+        <CardFooter className="text-center">
+            <p className="text-xs text-muted-foreground mx-auto">
+                {t('liveClassDataNote') || "Live class data is fetched from Firestore. Past classes are automatically hidden. Admin can add new classes using the form above if logged in."}
             </p>
-         </CardFooter>
+        </CardFooter>
       </Card>
     </div>
   );
 }
+
     
