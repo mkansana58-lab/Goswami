@@ -11,7 +11,7 @@ import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import {
   BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, LogOut, LayoutDashboard,
   Home, DownloadCloud, MoreHorizontal, ScissorsLineDashed, HelpingHand, FileText, MessageSquare, Briefcase, BookOpen, FileQuestion, ListChecks, Bell, LogIn,
-  Gift, History, Newspaper, CalendarDays, CheckCircle, XCircle, Info
+  Gift, History, Newspaper, CalendarDays, CheckCircle, XCircle, Info, Tv2 // Added Tv2 for Live Classes
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle as RadixSheetTitle } from '@/components/ui/sheet';
 import React, { useEffect, useState } from 'react';
@@ -21,9 +21,9 @@ import { collection, query, orderBy, limit, getDocs, Timestamp, serverTimestamp,
 const primaryNavLinks = [
   { href: '/', labelKey: 'navHome', icon: Home },
   { href: '/my-course', labelKey: 'navMyCourse', icon: GraduationCap }, 
-  // { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2 }, // Removed
+  { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2 }, // Re-added Live Classes
   { href: '/downloads', labelKey: 'navDownloads', icon: DownloadCloud },
-  { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays }, // Added Schedule to primary
+  { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays }, 
 ];
 
 const secondaryNavLinks = [
@@ -36,7 +36,6 @@ const secondaryNavLinks = [
   { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks },
   { href: '/study-books', labelKey: 'ourBooks', icon: BookOpen },
   { href: '/job-alerts', labelKey: 'navJobAlerts', icon: Briefcase },
-  // { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays }, // Moved to primary
   { href: '/videos', labelKey: 'navVideos', icon: PlaySquare },
   { href: '/scholarship', labelKey: 'navScholarship', icon: Users },
   { href: '/sainik-school-course', labelKey: 'navSainikSchoolCourse', icon: GraduationCap },
@@ -154,12 +153,12 @@ export function Header() {
   const uniqueSecondaryLinksForDesktop = secondaryNavLinks.filter(
     link => !primaryNavLinks.some(pLink => pLink.href === link.href && pLink.labelKey === link.labelKey)
   )
-  .filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === link.labelKey));
+  .filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === l.labelKey));
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      // case 'new_live_class': // Removed
-      //   return <Tv2 className="h-4 w-4 text-blue-500 flex-shrink-0" />;
+      case 'new_live_class': // Re-added
+        return <Tv2 className="h-4 w-4 text-blue-500 flex-shrink-0" />;
       case 'new_schedule_item':
       case 'new_homework_item':
       case 'new_update_item':

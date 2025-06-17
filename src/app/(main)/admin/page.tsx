@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, CalendarDays, ClipboardCheck, PlaySquare, LayoutDashboard, AlertTriangle, ExternalLink, LogIn, DownloadCloud, ListChecks, FileQuestion, NewspaperIcon, BookOpenIcon, Briefcase, ShieldCheck, Star, Info } from 'lucide-react';
+import { Users, CalendarDays, ClipboardCheck, PlaySquare, LayoutDashboard, AlertTriangle, ExternalLink, LogIn, DownloadCloud, ListChecks, FileQuestion, NewspaperIcon, BookOpenIcon, Briefcase, ShieldCheck, Star, Info, Tv2 } from 'lucide-react'; // Added Tv2
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -24,9 +24,9 @@ interface AdminSection {
 const adminSections: AdminSection[] = [
   { key: 'registrations', titleKey: 'manageRegistrations', descriptionKey: 'manageRegistrationsDesc', href: '/registrations', icon: Users },
   { key: 'schedule', titleKey: 'manageSchedule', descriptionKey: 'manageScheduleDesc', href: '/schedule', icon: CalendarDays },
+  { key: 'liveClasses', titleKey: 'manageLiveClasses', descriptionKey: 'manageLiveClassesDesc', href: '/live-classes', icon: Tv2 }, // Re-added
   { key: 'tests', titleKey: 'manageTests', descriptionKey: 'manageTestsDesc', href: '/tests', icon: ClipboardCheck },
   { key: 'videos', titleKey: 'manageVideos', descriptionKey: 'manageVideosDesc', href: '/videos', icon: PlaySquare },
-  // { key: 'liveClasses', titleKey: 'manageLiveClasses', descriptionKey: 'manageLiveClassesDesc', href: '/live-classes', icon: Tv2 }, // Removed
   { key: 'downloads', titleKey: 'navDownloads', descriptionKey: 'adminManageDownloadsDesc', href: '/downloads', icon: DownloadCloud },
   { key: 'syllabus', titleKey: 'navSyllabus', descriptionKey: 'adminSyllabusDesc', href: '/syllabus', icon: ListChecks, managementNoteKey: 'adminManageSyllabusNote'},
   { key: 'quizzes', titleKey: 'navQuiz', descriptionKey: 'adminQuizDesc', href: '/quiz', icon: FileQuestion, managementNoteKey: 'adminManageQuizzesNote'},

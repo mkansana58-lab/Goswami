@@ -14,7 +14,7 @@ export const translations = {
     navMilitarySchoolCourse: "Military School Course",
     navPremiumCourses: "Premium Courses",
     navViewRegistrations: "View Registrations",
-    // navLiveClasses: "Live Classes", // Commented out
+    navLiveClasses: "Live Classes", // Re-added
     navAdminPanel: "Admin Panel",
     navMyCourse: "My Course",
     navDownloads: "Downloads",
@@ -89,24 +89,24 @@ export const translations = {
     problemTextValidation: "Problem text must be at least 10 characters.",
     problemText: "Practice Problem",
     aiAssessment: "AI Assessment",
-    // liveClassesTitle: "Live Classes Schedule", // Commented out
-    // liveClassesDesc: "Join our live interactive classes. Schedule and links below.", // Commented out
-    // addLiveClassTitle: "Add New Live Class (Admin)", // Commented out
-    // liveClassTitleLabel: "Class Title", // Commented out
-    // liveClassSubjectLabel: "Subject", // Commented out
-    // liveClassDateLabel: "Date", // Commented out
-    // liveClassTimeLabel: "Time", // Commented out
-    // liveClassLinkLabel: "Meeting Link (e.g., Google Meet, Zoom)", // Commented out
-    // addLiveClassButton: "Add Live Class", // Commented out
-    // upcomingLiveClasses: "Upcoming Live Classes", // Commented out
-    // noLiveClassesScheduled: "No live classes scheduled at the moment.", // Commented out
-    // liveClassAddedSuccess: "Live class added successfully!", // Commented out
-    // liveClassTitlePlaceholder: "E.g., Maths Doubt Clearing Session", // Commented out
-    // liveClassSubjectPlaceholder: "E.g., Mathematics", // Commented out
-    // liveClassDatePlaceholder: "E.g., 2024-08-15", // Commented out
-    // liveClassTimePlaceholder: "E.g., 05:00 PM", // Commented out
-    // liveClassLinkPlaceholder: "https://meet.example.com/liveclass", // Commented out
-    // joinClassButton: "Join Class", // Commented out
+    liveClassesTitle: "Live Classes Schedule", // Re-added
+    liveClassesDesc: "Join our live interactive classes. Schedule and links below. Past classes are automatically removed.", // Re-added
+    addLiveClassTitle: "Add New Live Class (Admin)", // Re-added
+    liveClassTitleLabel: "Class Title", // Re-added
+    liveClassSubjectLabel: "Subject", // Re-added
+    liveClassDateLabel: "Date (YYYY-MM-DD)", // Re-added
+    liveClassTimeLabel: "Time (HH:MM - 24hr format)", // Re-added
+    liveClassLinkLabel: "Meeting Link (e.g., YouTube Live, Google Meet, Zoom)", // Re-added
+    addLiveClassButton: "Add Live Class", // Re-added
+    upcomingLiveClasses: "Upcoming Live Classes", // Re-added
+    noLiveClassesScheduled: "No live classes scheduled at the moment.", // Re-added
+    liveClassAddedSuccess: "Live class added successfully!", // Re-added
+    liveClassTitlePlaceholder: "E.g., Maths Doubt Clearing Session", // Re-added
+    liveClassSubjectPlaceholder: "E.g., Mathematics", // Re-added
+    liveClassDatePlaceholder: "E.g., 2024-08-15", // Re-added
+    liveClassTimePlaceholder: "E.g., 17:00 for 5 PM", // Re-added
+    liveClassLinkPlaceholder: "https://youtube.com/live/your_video_id or https://meet.example.com/liveclass", // Re-added
+    joinClassButton: "Join Class", // Re-added
     loginTitle: "Admin Login", 
     loginDesc: "Please login to access admin features.",
     usernameLabel: "Username",
@@ -175,8 +175,8 @@ export const translations = {
     manageTestsDesc: "View and manage mock tests and previous year papers. (Manage via Firestore 'mockTestsFS' & 'previousPapersFS')",
     manageVideos: "Manage Video Lectures",
     manageVideosDesc: "View and manage video lectures for students. (Manage via Firestore 'videosFS')",
-    // manageLiveClasses: "Manage Live Classes", // Commented out
-    // manageLiveClassesDesc: "Schedule and manage live interactive classes. (Manage via Firestore 'liveClasses')", // Commented out
+    manageLiveClasses: "Manage Live Classes", // Re-added
+    manageLiveClassesDesc: "Schedule and manage live interactive classes. (Data stored in 'liveClasses' Firestore collection)", // Re-added
     goToSection: "Go to Section",
     myCourseDesc: "Access your enrolled courses and materials here.",
     downloadsDesc: "Find all your downloadable content here.",
@@ -226,7 +226,6 @@ export const translations = {
     MockTests: "Mock Tests",
     Notes: "Notes",
     PreviousYearPapers: "Previous Year Papers",
-    // newLiveClassNotification: "New Live Class Scheduled", // Commented out
     noNewNotifications: "No new notifications",
     examNameLabel: "Exam Name",
     examNamePlaceholder: "e.g., NDA Entrance",
@@ -303,7 +302,7 @@ export const translations = {
     navMilitarySchoolCourse: "मिलिट्री स्कूल कोर्स",
     navPremiumCourses: "प्रीमियम कोर्स", 
     navViewRegistrations: "पंजीकरण देखें",
-    // navLiveClasses: "लाइव क्लास", // Commented out
+    navLiveClasses: "लाइव क्लास", // Re-added
     navAdminPanel: "एडमिन पैनल",
     navMyCourse: "मेरा कोर्स", 
     navDownloads: "डाउनलोड", 
@@ -378,24 +377,24 @@ export const translations = {
     problemTextValidation: "समस्या पाठ कम से कम 10 वर्णों का होना चाहिए।",
     problemText: "अभ्यास समस्या",
     aiAssessment: "AI मूल्यांकन",
-    // liveClassesTitle: "लाइव क्लास की समय-सारणी", // Commented out
-    // liveClassesDesc: "हमारी लाइव इंटरैक्टिव कक्षाओं में शामिल हों। समय-सारणी और लिंक नीचे दिए गए हैं।", // Commented out
-    // addLiveClassTitle: "नई लाइव क्लास जोड़ें (एडमिन)", // Commented out
-    // liveClassTitleLabel: "क्लास का शीर्षक", // Commented out
-    // liveClassSubjectLabel: "विषय", // Commented out
-    // liveClassDateLabel: "दिनांक", // Commented out
-    // liveClassTimeLabel: "समय", // Commented out
-    // liveClassLinkLabel: "मीटिंग लिंक (जैसे गूगल मीट, ज़ूम)", // Commented out
-    // addLiveClassButton: "लाइव क्लास जोड़ें", // Commented out
-    // upcomingLiveClasses: "आगामी लाइव क्लासें", // Commented out
-    // noLiveClassesScheduled: "फिलहाल कोई लाइव क्लास निर्धारित नहीं है।", // Commented out
-    // liveClassAddedSuccess: "लाइव क्लास सफलतापूर्वक जोड़ी गई!", // Commented out
-    // liveClassTitlePlaceholder: "उदा., गणित संदेह निवारण सत्र", // Commented out
-    // liveClassSubjectPlaceholder: "उदा., गणित", // Commented out
-    // liveClassDatePlaceholder: "उदा., 2024-08-15", // Commented out
-    // liveClassTimePlaceholder: "उदा., शाम 05:00 बजे", // Commented out
-    // liveClassLinkPlaceholder: "https://meet.example.com/liveclass", // Commented out
-    // joinClassButton: "क्लास में शामिल हों", // Commented out
+    liveClassesTitle: "लाइव क्लास की समय-सारणी", // Re-added
+    liveClassesDesc: "हमारी लाइव इंटरैक्टिव कक्षाओं में शामिल हों। समय-सारणी और लिंक नीचे दिए गए हैं। पिछली कक्षाएं अपने आप हटा दी जाती हैं।", // Re-added
+    addLiveClassTitle: "नई लाइव क्लास जोड़ें (एडमिन)", // Re-added
+    liveClassTitleLabel: "क्लास का शीर्षक", // Re-added
+    liveClassSubjectLabel: "विषय", // Re-added
+    liveClassDateLabel: "दिनांक (YYYY-MM-DD)", // Re-added
+    liveClassTimeLabel: "समय (HH:MM - 24 घंटे प्रारूप)", // Re-added
+    liveClassLinkLabel: "मीटिंग लिंक (जैसे यूट्यूब लाइव, गूगल मीट, ज़ूम)", // Re-added
+    addLiveClassButton: "लाइव क्लास जोड़ें", // Re-added
+    upcomingLiveClasses: "आगामी लाइव क्लासें", // Re-added
+    noLiveClassesScheduled: "फिलहाल कोई लाइव क्लास निर्धारित नहीं है।", // Re-added
+    liveClassAddedSuccess: "लाइव क्लास सफलतापूर्वक जोड़ी गई!", // Re-added
+    liveClassTitlePlaceholder: "उदा., गणित संदेह निवारण सत्र", // Re-added
+    liveClassSubjectPlaceholder: "उदा., गणित", // Re-added
+    liveClassDatePlaceholder: "उदा., 2024-08-15", // Re-added
+    liveClassTimePlaceholder: "उदा., शाम 5 बजे के लिए 17:00", // Re-added
+    liveClassLinkPlaceholder: "https://youtube.com/live/your_video_id या https://meet.example.com/liveclass", // Re-added
+    joinClassButton: "क्लास में शामिल हों", // Re-added
     loginTitle: "एडमिन लॉगिन",
     loginDesc: "एडमिन सुविधाओं तक पहुंचने के लिए कृपया लॉगिन करें।",
     usernameLabel: "यूज़रनेम",
@@ -464,8 +463,8 @@ export const translations = {
     manageTestsDesc: "मॉक टेस्ट और पिछले वर्ष के प्रश्नपत्र देखें और प्रबंधित करें। (Firestore 'mockTestsFS' और 'previousPapersFS' के माध्यम से प्रबंधित करें)",
     manageVideos: "वीडियो व्याख्यान प्रबंधित करें",
     manageVideosDesc: "छात्रों के लिए वीडियो व्याख्यान देखें और प्रबंधित करें। (Firestore 'videosFS' के माध्यम से प्रबंधित करें)",
-    // manageLiveClasses: "लाइव क्लास प्रबंधित करें", // Commented out
-    // manageLiveClassesDesc: "लाइव इंटरैक्टिव कक्षाएं शेड्यूल और प्रबंधित करें। (Firestore 'liveClasses' के माध्यम से प्रबंधित करें)", // Commented out
+    manageLiveClasses: "लाइव क्लास प्रबंधित करें", // Re-added
+    manageLiveClassesDesc: "लाइव इंटरैक्टिव कक्षाएं शेड्यूल और प्रबंधित करें। (डेटा 'liveClasses' Firestore कलेक्शन में सहेजा जाता है)", // Re-added
     goToSection: "सेक्शन पर जाएं",
     myCourseDesc: "अपने नामांकित कोर्स और सामग्री यहाँ देखें।",
     downloadsDesc: "अपनी सभी डाउनलोड करने योग्य सामग्री यहाँ खोजें।",
@@ -515,7 +514,6 @@ export const translations = {
     MockTests: "मॉक टेस्ट",
     Notes: "नोट्स",
     PreviousYearPapers: "पिछले वर्ष के प्रश्नपत्र",
-    // newLiveClassNotification: "नई लाइव क्लास निर्धारित की गई", // Commented out
     noNewNotifications: "कोई नई सूचना नहीं है",
     examNameLabel: "परीक्षा का नाम",
     examNamePlaceholder: "उदा., एनडीए प्रवेश परीक्षा",
@@ -581,6 +579,4 @@ export const translations = {
     adminPanelInfoDesc: "यह पैनल विभिन्न अनुभागों के लिए त्वरित लिंक प्रदान करता है। अधिकांश सामग्री (जैसे पाठ्यक्रम, किताबें, पाठ्यक्रम, आदि) सीधे Firebase Firestore डेटाबेस में प्रबंधित की जाती है। कुछ अनुभाग जैसे लाइव क्लास या शेड्यूल में व्यवस्थापक के रूप में लॉग इन होने पर सामग्री जोड़ने के लिए ऑन-पेज फॉर्म होते हैं।"
   }
 }
-    
-
     
