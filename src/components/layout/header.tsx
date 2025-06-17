@@ -11,7 +11,7 @@ import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import {
   BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, LogOut, LayoutDashboard,
   Home, DownloadCloud, MoreHorizontal, ScissorsLineDashed, HelpingHand, FileText, MessageSquare, Briefcase, BookOpen, FileQuestion, ListChecks, Bell, LogIn,
-  Gift, History, Newspaper, CalendarDays, CheckCircle, XCircle, Info, Tv2 // Added Tv2 for Live Classes
+  Gift, History, Newspaper, CalendarDays, CheckCircle, XCircle, Info, Tv2, School // Added School for E-Counselling
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle as RadixSheetTitle } from '@/components/ui/sheet';
 import React, { useEffect, useState } from 'react';
@@ -20,17 +20,17 @@ import { collection, query, orderBy, limit, getDocs, Timestamp, serverTimestamp,
 
 const primaryNavLinks = [
   { href: '/', labelKey: 'navHome', icon: Home },
-  { href: '/my-course', labelKey: 'navMyCourse', icon: GraduationCap }, 
-  { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2 }, // Re-added Live Classes
+  { href: '/my-course', labelKey: 'navMyCourse', icon: GraduationCap },
+  { href: '/live-classes', labelKey: 'navLiveClasses', icon: Tv2 },
   { href: '/downloads', labelKey: 'navDownloads', icon: DownloadCloud },
-  { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays }, 
+  { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays },
 ];
 
 const secondaryNavLinks = [
   { href: '/premium-courses', labelKey: 'paidCourses', icon: Star },
   { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck },
   { href: '/free-courses', labelKey: 'freeCourses', icon: Gift },
-  { href: '/tests', labelKey: 'previousPapersNav', icon: History }, 
+  { href: '/tests', labelKey: 'previousPapersNav', icon: History },
   { href: '/current-affairs', labelKey: 'currentAffairs', icon: Newspaper },
   { href: '/quiz', labelKey: 'navQuiz', icon: FileQuestion },
   { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks },
@@ -44,7 +44,8 @@ const secondaryNavLinks = [
   { href: '/cutoff-checker', labelKey: 'navCutOffChecker', icon: ScissorsLineDashed },
   { href: '/chance-checking', labelKey: 'navChanceChecking', icon: HelpingHand },
   { href: '/study-material', labelKey: 'navStudyMaterial', icon: FileText },
-  { href: '/chat', labelKey: 'navChat', icon: MessageSquare }, 
+  { href: '/chat', labelKey: 'navChat', icon: MessageSquare },
+  { href: '/sainik-e-counselling', labelKey: 'navSainikECounselling', icon: School },
 ];
 
 const adminConsoleNavLinks = [
@@ -89,7 +90,7 @@ export function Header() {
     console.log("Header: Setting up notifications listener...");
 
     const q = query(collection(db, NOTIFICATIONS_COLLECTION), orderBy("timestamp", "desc"), limit(10));
-    
+
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const fetchedNotifications: AppNotification[] = [];
       querySnapshot.forEach((doc) => {
@@ -128,8 +129,8 @@ export function Header() {
     }
     setIsAdminLoggedIn(false);
     setIsMobileMenuOpen(false);
-    router.push('/'); 
-    router.refresh(); 
+    router.push('/');
+    router.refresh();
   };
 
   const handleNotificationDropdownOpenChange = (open: boolean) => {
@@ -141,7 +142,7 @@ export function Header() {
       }
     }
   };
-  
+
   const allMobileNavLinks = [
     ...primaryNavLinks,
     ...secondaryNavLinks.filter(link => !primaryNavLinks.some(pLink => pLink.href === link.href && pLink.labelKey === link.labelKey)),
@@ -157,7 +158,7 @@ export function Header() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'new_live_class': // Re-added
+      case 'new_live_class':
         return <Tv2 className="h-4 w-4 text-blue-500 flex-shrink-0" />;
       case 'new_schedule_item':
       case 'new_homework_item':
@@ -307,7 +308,7 @@ export function Header() {
               <DropdownMenuItem onClick={() => setLanguage('hi')} disabled={language === 'hi'} className="focus:bg-muted focus:text-primary cursor-pointer">{t('hindi')}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          
+
           {isClient && isAdminLoggedIn && (
               <Button variant="outline" size="sm" onClick={handleAdminLogout} className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground hidden md:flex">
                 <LogOut className="mr-2 h-4 w-4" /> {t('adminLogout')}
@@ -326,6 +327,4 @@ export function Header() {
     </header>
   );
 }
-    
-
     
