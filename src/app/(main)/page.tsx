@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLanguage } from '@/hooks/use-language';
 import { 
   ShoppingBag, ClipboardCheck, Gift, History, Newspaper, FileQuestion, ListChecks, BookOpen, Briefcase, GraduationCap, Home as HomeIcon, Bell, CalendarDays, Library, UserCircle, PackageSearch
-} from 'lucide-react'; // Added PackageSearch
+} from 'lucide-react';
 import Image from 'next/image';
 import { InspirationalMessages } from '@/components/home/inspirational-messages';
 import { useEffect, useState } from 'react';
@@ -27,10 +27,10 @@ const featureGridLinks = [
   { href: '/study-material', labelKey: 'navStudyMaterial', icon: Library, descriptionKey: 'studyMaterialHubDesc' }, 
 ];
 
-const bottomNavSimulatedLinks = [
+const getBottomNavSimulatedLinks = (isStudentLoggedIn: boolean) => [
     { href: '/', labelKey: 'navHome', icon: HomeIcon, descriptionKey: 'navHome' },
-    { href: '/student-profile', labelKey: 'studentProfileTitle', icon: UserCircle, descriptionKey: 'studentProfileTitle', studentOnly: true },
-    { href: '/learning-hub', labelKey: 'navLearningHub', icon: PackageSearch, descriptionKey: 'learningHubDesc' }, // Updated
+    ...(isStudentLoggedIn ? [{ href: '/student-profile', labelKey: 'studentProfileTitle', icon: UserCircle, descriptionKey: 'studentProfileTitle' }] : []),
+    { href: '/learning-hub', labelKey: 'navLearningHub', icon: PackageSearch, descriptionKey: 'learningHubDesc' },
     { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays, descriptionKey: 'navSchedule' },
 ];
 
@@ -41,8 +41,7 @@ export default function HomePage() {
   const [isStudentLoggedIn, setIsStudentLoggedIn] = useState(false);
   const [studentName, setStudentName] = useState<string | null>(null);
 
-  useEffect(() => {
-    setIsClient(true);
+  const updateLoginState = () => {
     if (typeof window !== 'undefined') {
       const loggedIn = localStorage.getItem(STUDENT_LOGGED_IN_KEY) === 'true';
       setIsStudentLoggedIn(loggedIn);
@@ -52,34 +51,30 @@ export default function HomePage() {
           try {
             const profile = JSON.parse(profileRaw);
             setStudentName(profile.name || null);
-          } catch (e) { console.error(e); }
+          } catch (e) { console.error("Error parsing student profile on homepage:", e); setStudentName(null); }
+        } else {
+          setStudentName(null);
         }
-      }
-      const handleProfileUpdate = () => {
-        const profileRawUpdated = localStorage.getItem(STUDENT_PROFILE_LOCALSTORAGE_KEY);
-        if (profileRawUpdated) {
-          try {
-            const profile = JSON.parse(profileRawUpdated);
-            setStudentName(profile.name || null);
-          } catch (e) { console.error(e); }
-        }
-      };
-      const handleLogout = () => {
-        setIsStudentLoggedIn(false);
+      } else {
         setStudentName(null);
-      };
-      window.addEventListener('studentProfileUpdated', handleProfileUpdate);
-      window.addEventListener('studentLoggedOut', handleLogout);
-      return () => {
-        window.removeEventListener('studentProfileUpdated', handleProfileUpdate);
-        window.removeEventListener('studentLoggedOut', handleLogout);
-      };
+      }
     }
+  };
+
+  useEffect(() => {
+    setIsClient(true);
+    updateLoginState(); // Initial check
+
+    window.addEventListener('studentProfileUpdated', updateLoginState);
+    window.addEventListener('studentLoggedOut', updateLoginState);
+
+    return () => {
+      window.removeEventListener('studentProfileUpdated', updateLoginState);
+      window.removeEventListener('studentLoggedOut', updateLoginState);
+    };
   }, []);
 
-  const visibleBottomNavLinks = bottomNavSimulatedLinks.filter(link => 
-    !link.studentOnly || (link.studentOnly && isClient && isStudentLoggedIn)
-  );
+  const bottomNavSimulatedLinks = getBottomNavSimulatedLinks(isStudentLoggedIn);
 
   return (
     <div className="space-y-6 md:space-y-8 pb-16 md:pb-8 bg-background">
@@ -118,7 +113,7 @@ export default function HomePage() {
 
       <div className="fixed bottom-0 left-0 right-0 md:hidden bg-background border-t border-border shadow-top p-2 z-40">
         <div className="container mx-auto flex justify-around items-center h-14">
-          {visibleBottomNavLinks.map((link) => (
+          {bottomNavSimulatedLinks.map((link) => (
             <Link href={link.href} key={`${link.href}-mobile-bottom`} passHref>
               <div className="flex flex-col items-center justify-center text-center cursor-pointer group">
                 <link.icon className="h-6 w-6 mb-0.5 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -132,7 +127,7 @@ export default function HomePage() {
       <section className="hidden md:block pt-8">
         <h3 className="text-lg font-semibold text-center text-primary mb-4">{t('exploreSections')}</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {visibleBottomNavLinks.map((link) => (
+            {bottomNavSimulatedLinks.map((link) => (
                  <Link href={link.href} key={`${link.href}-desktop-bottom`} passHref>
                     <Card className="bg-card hover:shadow-lg hover:border-accent transition-all duration-300 cursor-pointer h-full flex flex-col items-center text-center p-4 rounded-lg border border-muted">
                         <link.icon className="h-10 w-10 text-primary mb-2" />

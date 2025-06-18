@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/hooks/use-language';
 import { useToast } from "@/hooks/use-toast";
-import { ShieldAlert, UserCircle, Loader2 } from 'lucide-react';
+import { UserCircle, Loader2 } from 'lucide-react';
 import { STUDENT_LOGGED_IN_KEY, STUDENT_USERNAME_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants';
 import type { StudentProfileData } from '../student-profile/page'; // Assuming type is exported here
 
@@ -83,14 +83,14 @@ export default function StudentLoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
-      <Card className="w-full max-w-md shadow-xl">
+    <div className="flex items-center justify-center min-h-[calc(100vh-8rem)] bg-muted/20 py-8 px-4">
+      <Card className="w-full max-w-md shadow-xl border-primary/20">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-3">
-            <UserCircle className="h-12 w-12 text-primary" />
+            <UserCircle className="h-16 w-16 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold font-headline text-primary">{t('studentLoginTitle')}</CardTitle>
-          <CardDescription>{t('studentLoginDesc')}</CardDescription>
+          <CardTitle className="text-3xl font-bold font-headline text-primary">{t('studentLoginTitle')}</CardTitle>
+          <CardDescription className="text-lg">{t('studentLoginDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
@@ -124,8 +124,8 @@ export default function StudentLoginPage() {
           <Card className="mt-4 bg-primary/5 border-primary/30 p-3">
             <CardDescription className="text-xs text-center text-primary/80">
               {t('dummyCredentialsInfo')}<br />
-              <strong>{t('usernameLabel')}:</strong> {DUMMY_USERNAME}<br />
-              <strong>{t('passwordLabel')}:</strong> {DUMMY_PASSWORD}
+              <strong className="font-medium">{t('usernameLabel')}:</strong> {DUMMY_USERNAME}<br />
+              <strong className="font-medium">{t('passwordLabel')}:</strong> {DUMMY_PASSWORD}
             </CardDescription>
           </Card>
         </CardContent>

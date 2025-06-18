@@ -13,8 +13,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useLanguage } from '@/hooks/use-language';
 import { Mail, Phone, MessageSquare, User, Send, Info } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import Link from 'next/link';
-import { STUDENT_USERNAME_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants'; // For prefilling
+import { STUDENT_USERNAME_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants'; 
+import type { StudentProfileData } from '../student-profile/page';
+
 
 const USER_EMAIL = "mohitkansana82@gmail.com";
 const USER_PHONE = "9694251069";
@@ -28,7 +29,7 @@ type EmailFormValues = z.infer<ReturnType<typeof emailFormSchemaDefinition>>;
 
 const smsFormSchemaDefinition = (t: (key: string) => string) => z.object({
   senderName: z.string().min(2, { message: t('studentNameValidation') }),
-  senderMobile: z.string().min(10, { message: t('phoneValidation') }),
+  senderMobile: z.string().min(10, { message: t('phoneValidation') }), // Validate as string, actual number format handled by SMS app
   smsMessage: z.string().min(5, { message: t('messageValidationShort') }),
 });
 type SmsFormValues = z.infer<ReturnType<typeof smsFormSchemaDefinition>>;
@@ -52,18 +53,18 @@ export default function ContactPage() {
     defaultValues: { senderName: "", senderMobile: "", smsMessage: "" },
   });
 
-  // Prefill email if student is logged in
   useEffect(() => {
     if (typeof window !== 'undefined' && isClient) {
       const studentProfileRaw = localStorage.getItem(STUDENT_PROFILE_LOCALSTORAGE_KEY);
-      const studentUsername = localStorage.getItem(STUDENT_USERNAME_KEY);
+      const studentUsername = localStorage.getItem(STUDENT_USERNAME_KEY); // Fallback if profile doesn't have specific fields
+      
       if (studentProfileRaw) {
         try {
-          const studentProfile = JSON.parse(studentProfileRaw);
+          const studentProfile: StudentProfileData = JSON.parse(studentProfileRaw);
           if (studentProfile.email) {
             emailForm.setValue('senderEmail', studentProfile.email);
           } else if (studentUsername) {
-             emailForm.setValue('senderEmail', `${studentUsername}@example.com`); // Fallback
+             emailForm.setValue('senderEmail', `${studentUsername}@example.com`); 
           }
           if (studentProfile.name) {
             smsForm.setValue('senderName', studentProfile.name);
@@ -73,11 +74,11 @@ export default function ContactPage() {
           }
         } catch (e) {
           console.error("Error parsing student profile for contact form:", e);
-           if (studentUsername) {
+           if (studentUsername) { // Still try to prefill email if username exists
              emailForm.setValue('senderEmail', `${studentUsername}@example.com`);
           }
         }
-      } else if (studentUsername) {
+      } else if (studentUsername) { // If no profile but username exists
         emailForm.setValue('senderEmail', `${studentUsername}@example.com`);
       }
     }
@@ -90,8 +91,6 @@ export default function ContactPage() {
   };
   
   const onSmsSubmit: SubmitHandler<SmsFormValues> = (data) => {
-    // The sms: URI scheme is not universally supported and might not work on all devices/browsers, especially desktops.
-    // It usually just opens the default SMS app with prefilled number and message.
     const smsLink = `sms:${USER_PHONE}?body=${encodeURIComponent(`From ${data.senderName} (${data.senderMobile}):\n${data.smsMessage}`)}`;
      if (isClient) window.location.href = smsLink;
   };
@@ -99,10 +98,10 @@ export default function ContactPage() {
 
   return (
     <div className="max-w-3xl mx-auto py-8 space-y-8">
-      <Card className="shadow-xl">
+      <Card className="shadow-xl border-primary/20">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold font-headline text-primary">{t('contactUsTitle')}</CardTitle>
-          <CardDescription>{t('contactUsDesc')}</CardDescription>
+          <CardDescription className="text-lg">{t('contactUsDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-around items-center gap-4 p-4 bg-muted/50 rounded-lg">
@@ -127,8 +126,7 @@ export default function ContactPage() {
         </CardContent>
       </Card>
 
-      {/* Email Form */}
-      <Card className="shadow-lg">
+      <Card className="shadow-lg border-primary/10">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl text-secondary-foreground">
             <Mail className="h-6 w-6 text-accent" /> {t('sendUsEmailTitle')}
@@ -138,10 +136,10 @@ export default function ContactPage() {
         <CardContent>
           <Form {...emailForm}>
             <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4">
-              <FormField control={emailForm.control} name="senderEmail" render={({ field }) => (<FormItem><FormLabel>{t('yourEmailLabel')}</FormLabel><FormControl><Input type="email" placeholder={t('yourEmailPlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={emailForm.control} name="subject" render={({ field }) => (<FormItem><FormLabel>{t('subjectLabel')}</FormLabel><FormControl><Input placeholder={t('subjectPlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={emailForm.control} name="message" render={({ field }) => (<FormItem><FormLabel>{t('messageLabel')}</FormLabel><FormControl><Textarea rows={5} placeholder={t('messagePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>)} />
-              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+              <FormField control={emailForm.control} name="senderEmail" render={({ field }) => (<FormItem><FormLabel>{t('yourEmailLabel')}</FormLabel><FormControl><Input type="email" placeholder={t('yourEmailPlaceholder')} {...field} className="text-base md:text-sm h-11" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={emailForm.control} name="subject" render={({ field }) => (<FormItem><FormLabel>{t('subjectLabel')}</FormLabel><FormControl><Input placeholder={t('subjectPlaceholder')} {...field} className="text-base md:text-sm h-11" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={emailForm.control} name="message" render={({ field }) => (<FormItem><FormLabel>{t('messageLabel')}</FormLabel><FormControl><Textarea rows={5} placeholder={t('messagePlaceholder')} {...field} className="text-base md:text-sm min-h-[100px]" /></FormControl><FormMessage /></FormItem>)} />
+              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12">
                 <Send className="mr-2 h-4 w-4" /> {t('sendEmailButton')}
               </Button>
             </form>
@@ -149,8 +147,7 @@ export default function ContactPage() {
         </CardContent>
       </Card>
 
-      {/* SMS "Form" */}
-      <Card className="shadow-lg">
+      <Card className="shadow-lg border-primary/10">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl text-secondary-foreground">
             <MessageSquare className="h-6 w-6 text-accent" /> {t('sendUsSmsTitle')}
@@ -160,10 +157,10 @@ export default function ContactPage() {
         <CardContent>
            <Form {...smsForm}>
             <form onSubmit={smsForm.handleSubmit(onSmsSubmit)} className="space-y-4">
-              <FormField control={smsForm.control} name="senderName" render={({ field }) => (<FormItem><FormLabel>{t('yourNameLabel')}</FormLabel><FormControl><Input placeholder={t('yourNamePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={smsForm.control} name="senderMobile" render={({ field }) => (<FormItem><FormLabel>{t('yourMobileLabel')}</FormLabel><FormControl><Input type="tel" placeholder={t('yourMobilePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={smsForm.control} name="smsMessage" render={({ field }) => (<FormItem><FormLabel>{t('messageLabelShort')}</FormLabel><FormControl><Textarea rows={3} placeholder={t('messagePlaceholderShort')} {...field} /></FormControl><FormMessage /></FormItem>)} />
-              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+              <FormField control={smsForm.control} name="senderName" render={({ field }) => (<FormItem><FormLabel>{t('yourNameLabel')}</FormLabel><FormControl><Input placeholder={t('yourNamePlaceholder')} {...field} className="text-base md:text-sm h-11" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={smsForm.control} name="senderMobile" render={({ field }) => (<FormItem><FormLabel>{t('yourMobileLabel')}</FormLabel><FormControl><Input type="tel" placeholder={t('yourMobilePlaceholder')} {...field} className="text-base md:text-sm h-11" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={smsForm.control} name="smsMessage" render={({ field }) => (<FormItem><FormLabel>{t('messageLabelShort')}</FormLabel><FormControl><Textarea rows={3} placeholder={t('messagePlaceholderShort')} {...field} className="text-base md:text-sm min-h-[80px]" /></FormControl><FormMessage /></FormItem>)} />
+              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12">
                 <Send className="mr-2 h-4 w-4" /> {t('sendSmsButton')}
               </Button>
             </form>

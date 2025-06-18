@@ -7,14 +7,14 @@ export const translations = {
     navHome: "Home",
     navSchedule: "Class Schedule",
     navTests: "Test Access",
-    navVideos: "Video Classes", // Will be under Learning Hub
+    navVideos: "Video Classes", 
     navScholarship: "Scholarship",
     navAITutor: "AI Tutor",
     navViewRegistrations: "View Registrations",
-    navLiveClasses: "Live Classes", // Will be under Learning Hub
+    navLiveClasses: "Live Classes", 
     navAdminPanel: "Admin Panel",
-    navMyCourse: "My Course", // Merged into Student Profile
-    navDownloads: "Downloads", // Will be under Learning Hub
+    navMyCourse: "My Course", 
+    navDownloads: "Downloads", 
     navCutOffChecker: "Cut Off Checker",
     navChanceChecking: "Chance Checking",
     navStudyMaterial: "Study Material",
@@ -26,7 +26,7 @@ export const translations = {
     navSyllabus: "Syllabus",
     navSainikECounselling: "Sainik E-Counselling",
     navContact: "Contact Us",
-    navLearningHub: "Learning Hub", // New
+    navLearningHub: "Learning Hub",
     language: "Language",
     english: "English",
     hindi: "Hindi",
@@ -176,8 +176,8 @@ export const translations = {
     manageLiveClasses: "Manage Live Classes",
     manageLiveClassesDesc: "Schedule and manage live interactive classes. (Data stored in 'liveClasses' Firestore collection)",
     goToSection: "Go to Section",
-    myCourseDesc: "Access your enrolled courses and materials here.", // Still used if referenced by admin panel
-    downloadsDesc: "Find all your downloadable content here.", // Now part of Learning Hub description
+    myCourseDesc: "Access your enrolled courses and materials here.",
+    downloadsDesc: "Find all your downloadable content here.",
     cutOffCheckerDesc: "Check previous year cut-off marks & predict selection chance.",
     chanceCheckingDesc: "Analyze your chances for selection using our AI tool.",
     studyMaterialDesc: "Access all courses, notes, and specialized coaching material here.",
@@ -359,46 +359,48 @@ export const translations = {
     messageValidationShort: "Message must be at least 5 characters.",
     sendSmsButton: "Compose SMS",
     smsDisclaimer: "This will attempt to open your phone's SMS application. Standard messaging rates may apply.",
-    myCourseSectionTitle: "My Enrolled Courses", // New
-    myCourseSectionDesc: "Access your learning materials and track your progress.", // New
-    myCourseContentPlaceholder: "Your enrolled courses and learning activities will appear here once you enroll. Explore our 'Study Material' section to find courses!", // New
-    learningHubDesc: "Access live classes, video lectures, and downloadable study materials all in one place.", // New
-    closePlayer: "Close Player", // New
-    noVideosAvailable: "No videos available.", // New
-    allLiveClassesAdmin: "All Scheduled Classes (Admin View)", // New
-    pastEventAdmin: "Past Event", // New
-    viewLinkAdmin: "View Link", // New
-    viewPublicPage: "View Public Page", // New
-    adminManageDownloads: "Manage Downloads (Admin)", // New
-    videoTypeLabel: "Video Type", // New
-    youtubeLink: "YouTube Link", // New
-    localFilePlaceholder: "Local File (Metadata Only)", // New
-    videoTitleLabel: "Video Title", // New
-    videoTitlePlaceholder: "Enter video title", // New
-    videoSubjectLabel: "Video Subject", // New
-    videoSubjectPlaceholder: "Enter video subject", // New
-    videoUrlLabel: "YouTube Video URL", // New
-    noFileChosen: "No file chosen", // New
-    addVideoButton: "Add Video", // New
-    videoAddedSuccess: "Video metadata added successfully!", // New
-    videoGalleryAdmin: "Video Gallery (Admin View)", // New
-    videoAdminValidation: "Title and Subject are required for the video.", // New
-    youtubeUrlRequired: "YouTube URL is required for YouTube video type.", // New
-    fileRequiredForLocal: "A file must be selected for Local File type (metadata only).", // New
+    myCourseSectionTitle: "My Enrolled Courses",
+    myCourseSectionDesc: "Access your learning materials and track your progress.",
+    myCourseContentPlaceholder: "Your enrolled courses and learning activities will appear here once you enroll. Explore our 'Study Material' section to find courses!",
+    complete: "Complete",
+    viewCourseContent: "View Content",
+    learningHubDesc: "Access live classes, video lectures, and downloadable study materials all in one place.",
+    closePlayer: "Close Player",
+    noVideosAvailable: "No videos available.",
+    allLiveClassesAdmin: "All Scheduled Classes (Admin View)",
+    pastEventAdmin: "Past Event",
+    viewLinkAdmin: "View Link",
+    viewPublicPage: "View Public Page",
+    adminManageDownloads: "Manage Downloads (Admin)",
+    videoTypeLabel: "Video Type",
+    youtubeLink: "YouTube Link",
+    localFilePlaceholder: "Local File (Metadata Only)",
+    videoTitleLabel: "Video Title",
+    videoTitlePlaceholder: "Enter video title",
+    videoSubjectLabel: "Video Subject",
+    videoSubjectPlaceholder: "Enter video subject",
+    videoUrlLabel: "YouTube Video URL",
+    noFileChosen: "No file chosen",
+    addVideoButton: "Add Video",
+    videoAddedSuccess: "Video metadata added successfully!",
+    videoGalleryAdmin: "Video Gallery (Admin View)",
+    videoAdminValidation: "Title and Subject are required for the video.",
+    youtubeUrlRequired: "YouTube URL is required for YouTube video type.",
+    fileRequiredForLocal: "A file must be selected for Local File type (metadata only).",
   },
   hi: {
     appName: "गो स्वामी डिफेंस अकादमी",
     navHome: "होम",
     navSchedule: "कक्षा सारणी",
     navTests: "टेस्ट सीरीज",
-    navVideos: "वीडियो क्लास", // अब लर्निंग हब के अंतर्गत
+    navVideos: "वीडियो क्लास",
     navScholarship: "छात्रवृत्ति",
     navAITutor: "AI ट्यूटर",
     navViewRegistrations: "पंजीकरण देखें",
-    navLiveClasses: "लाइव क्लास", // अब लर्निंग हब के अंतर्गत
+    navLiveClasses: "लाइव क्लास",
     navAdminPanel: "एडमिन पैनल",
-    navMyCourse: "मेरा कोर्स", // छात्र प्रोफ़ाइल में मर्ज किया गया
-    navDownloads: "डाउनलोड", // अब लर्निंग हब के अंतर्गत
+    navMyCourse: "मेरा कोर्स",
+    navDownloads: "डाउनलोड",
     navCutOffChecker: "कट ऑफ चेकर",
     navChanceChecking: "चांस चेकिंग",
     navStudyMaterial: "स्टडी मटेरियल",
@@ -410,7 +412,7 @@ export const translations = {
     navSyllabus: "सिलेबस",
     navSainikECounselling: "सैनिक स्कूल ई-काउंसलिंग",
     navContact: "हमसे संपर्क करें",
-    navLearningHub: "लर्निंग हब", // नया
+    navLearningHub: "लर्निंग हब",
     language: "भाषा",
     english: "English",
     hindi: "हिंदी",
@@ -743,31 +745,33 @@ export const translations = {
     messageValidationShort: "संदेश कम से कम 5 अक्षरों का होना चाहिए।",
     sendSmsButton: "SMS लिखें",
     smsDisclaimer: "यह आपके फ़ोन के SMS एप्लिकेशन को खोलने का प्रयास करेगा। मानक मैसेजिंग दरें लागू हो सकती हैं।",
-    myCourseSectionTitle: "मेरे नामांकित कोर्स", // नया
-    myCourseSectionDesc: "अपनी अध्ययन सामग्री एक्सेस करें और अपनी प्रगति ट्रैक करें।", // नया
-    myCourseContentPlaceholder: "आपके नामांकित कोर्स और सीखने की गतिविधियाँ यहाँ दिखाई देंगी जब आप नामांकन करेंगे। कोर्स खोजने के लिए हमारे 'स्टडी मटेरियल' सेक्शन का अन्वेषण करें!", // नया
-    learningHubDesc: "लाइव क्लास, वीडियो लेक्चर और डाउनलोड करने योग्य अध्ययन सामग्री सभी एक ही स्थान पर एक्सेस करें।", // नया
-    closePlayer: "प्लेयर बंद करें", // नया
-    noVideosAvailable: "कोई वीडियो उपलब्ध नहीं है।", // नया
-    allLiveClassesAdmin: "सभी निर्धारित कक्षाएं (एडमिन दृश्य)", // नया
-    pastEventAdmin: "पिछला कार्यक्रम", // नया
-    viewLinkAdmin: "लिंक देखें", // नया
-    viewPublicPage: "सार्वजनिक पेज देखें", // नया
-    adminManageDownloads: "डाउनलोड प्रबंधित करें (एडमिन)", // नया
-    videoTypeLabel: "वीडियो प्रकार", // नया
-    youtubeLink: "यूट्यूब लिंक", // नया
-    localFilePlaceholder: "स्थानीय फ़ाइल (केवल मेटाडेटा)", // नया
-    videoTitleLabel: "वीडियो शीर्षक", // नया
-    videoTitlePlaceholder: "वीडियो शीर्षक दर्ज करें", // नया
-    videoSubjectLabel: "वीडियो विषय", // नया
-    videoSubjectPlaceholder: "वीडियो विषय दर्ज करें", // नया
-    videoUrlLabel: "यूट्यूब वीडियो यूआरएल", // नया
-    noFileChosen: "कोई फ़ाइल नहीं चुनी गई", // नया
-    addVideoButton: "वीडियो जोड़ें", // नया
-    videoAddedSuccess: "वीडियो मेटाडेटा सफलतापूर्वक जोड़ा गया!", // नया
-    videoGalleryAdmin: "वीडियो गैलरी (एडमिन दृश्य)", // नया
-    videoAdminValidation: "वीडियो के लिए शीर्षक और विषय आवश्यक हैं।", // नया
-    youtubeUrlRequired: "यूट्यूब वीडियो प्रकार के लिए यूट्यूब यूआरएल आवश्यक है।", // नया
-    fileRequiredForLocal: "स्थानीय फ़ाइल प्रकार के लिए एक फ़ाइल का चयन किया जाना चाहिए (केवल मेटाडेटा)।", // नया
+    myCourseSectionTitle: "मेरे नामांकित कोर्स",
+    myCourseSectionDesc: "अपनी अध्ययन सामग्री एक्सेस करें और अपनी प्रगति ट्रैक करें।",
+    myCourseContentPlaceholder: "आपके नामांकित कोर्स और सीखने की गतिविधियाँ यहाँ दिखाई देंगी जब आप नामांकन करेंगे। कोर्स खोजने के लिए हमारे 'स्टडी मटेरियल' सेक्शन का अन्वेषण करें!",
+    complete: "पूर्ण",
+    viewCourseContent: "सामग्री देखें",
+    learningHubDesc: "लाइव क्लास, वीडियो लेक्चर और डाउनलोड करने योग्य अध्ययन सामग्री सभी एक ही स्थान पर एक्सेस करें।",
+    closePlayer: "प्लेयर बंद करें",
+    noVideosAvailable: "कोई वीडियो उपलब्ध नहीं है।",
+    allLiveClassesAdmin: "सभी निर्धारित कक्षाएं (एडमिन दृश्य)",
+    pastEventAdmin: "पिछला कार्यक्रम",
+    viewLinkAdmin: "लिंक देखें",
+    viewPublicPage: "सार्वजनिक पेज देखें",
+    adminManageDownloads: "डाउनलोड प्रबंधित करें (एडमिन)",
+    videoTypeLabel: "वीडियो प्रकार",
+    youtubeLink: "यूट्यूब लिंक",
+    localFilePlaceholder: "स्थानीय फ़ाइल (केवल मेटाडेटा)",
+    videoTitleLabel: "वीडियो शीर्षक",
+    videoTitlePlaceholder: "वीडियो शीर्षक दर्ज करें",
+    videoSubjectLabel: "वीडियो विषय",
+    videoSubjectPlaceholder: "वीडियो विषय दर्ज करें",
+    videoUrlLabel: "यूट्यूब वीडियो यूआरएल",
+    noFileChosen: "कोई फ़ाइल नहीं चुनी गई",
+    addVideoButton: "वीडियो जोड़ें",
+    videoAddedSuccess: "वीडियो मेटाडेटा सफलतापूर्वक जोड़ा गया!",
+    videoGalleryAdmin: "वीडियो गैलरी (एडमिन दृश्य)",
+    videoAdminValidation: "वीडियो के लिए शीर्षक और विषय आवश्यक हैं।",
+    youtubeUrlRequired: "यूट्यूब वीडियो प्रकार के लिए यूट्यूब यूआरएल आवश्यक है।",
+    fileRequiredForLocal: "स्थानीय फ़ाइल प्रकार के लिए एक फ़ाइल का चयन किया जाना चाहिए (केवल मेटाडेटा)।",
   }
 }
