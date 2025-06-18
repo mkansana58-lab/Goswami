@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, CalendarDays, ClipboardCheck, PlaySquare, LayoutDashboard, AlertTriangle, ExternalLink, LogIn, DownloadCloud, ListChecks, FileQuestion, NewspaperIcon, BookOpenIcon, Briefcase, ShieldCheck, Star, Info, Tv2, Library } from 'lucide-react'; // Added Library, Tv2
+import { Users, CalendarDays, ClipboardCheck, PlaySquare, LayoutDashboard, AlertTriangle, ExternalLink, LogIn, DownloadCloud, ListChecks, NewspaperIcon, BookOpenIcon, Briefcase, ShieldCheck, Star, Info, Tv2, Library } from 'lucide-react'; // Added Library, Tv2
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -29,7 +29,6 @@ const adminSections: AdminSection[] = [
   { key: 'videos', titleKey: 'manageVideos', descriptionKey: 'manageVideosDesc', href: '/videos', icon: PlaySquare },
   { key: 'downloads', titleKey: 'navDownloads', descriptionKey: 'adminManageDownloadsDesc', href: '/downloads', icon: DownloadCloud },
   { key: 'syllabus', titleKey: 'navSyllabus', descriptionKey: 'adminSyllabusDesc', href: '/syllabus', icon: ListChecks, managementNoteKey: 'adminManageSyllabusNote'},
-  { key: 'quizzes', titleKey: 'navQuiz', descriptionKey: 'adminQuizDesc', href: '/quiz', icon: FileQuestion, managementNoteKey: 'adminManageQuizzesNote'},
   { key: 'currentAffairs', titleKey: 'navCurrentAffairs', descriptionKey: 'adminCurrentAffairsDesc', href: '/current-affairs', icon: NewspaperIcon, managementNoteKey: 'adminManageCurrentAffairsNote'},
   { key: 'studyBooks', titleKey: 'navStudyBooks', descriptionKey: 'adminStudyBooksDesc', href: '/study-books', icon: BookOpenIcon, managementNoteKey: 'adminManageBooksNote'},
   { key: 'jobAlerts', titleKey: 'navJobAlerts', descriptionKey: 'adminJobAlertsDesc', href: '/job-alerts', icon: Briefcase, managementNoteKey: 'adminManageJobAlertsNote'},
@@ -47,7 +46,7 @@ export default function AdminPanelPage() {
     if (typeof window !== 'undefined') {
       const isAdminLoggedIn = localStorage.getItem(ADMIN_LOGGED_IN_KEY) === 'true';
       if (!isAdminLoggedIn) {
-        setIsAuthorized(false); 
+        setIsAuthorized(false);
       } else {
         setIsAuthorized(true);
       }
@@ -131,6 +130,3 @@ export default function AdminPanelPage() {
     </div>
   );
 }
-    
-
-    

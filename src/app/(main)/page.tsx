@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLanguage } from '@/hooks/use-language';
-import { 
+import {
   ClipboardCheck, Gift, Newspaper, ListChecks, Home as HomeIcon, CalendarDays, Library, UserCircle, PackageSearch, PlaySquare, Tv2, DownloadCloud, Cpu
 } from 'lucide-react';
 import Image from 'next/image';
@@ -16,7 +16,7 @@ import { usePathname } from 'next/navigation';
 
 
 const featureGridLinks = [
-  { href: '/study-material', labelKey: 'navStudyMaterial', icon: Library, descriptionKey: 'studyMaterialHubDesc' }, 
+  { href: '/study-material', labelKey: 'navStudyMaterial', icon: Library, descriptionKey: 'studyMaterialHubDesc' },
   { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck, descriptionKey: 'navTests' },
   { href: '/learning-hub?tab=live-classes', labelKey: 'navLiveClasses', icon: Tv2, descriptionKey: 'liveClassesDesc'},
   { href: '/learning-hub?tab=videos', labelKey: 'navVideos', icon: PlaySquare, descriptionKey: 'videoLectures' },
@@ -60,15 +60,15 @@ export default function HomePage() {
         setStudentName(null);
       }
     }
-  }, []); // Dependencies: localStorage and state setters are stable
+  }, []);
 
   useEffect(() => {
     setIsClient(true);
-    updateLoginState(); 
+    updateLoginState();
 
     window.addEventListener('studentProfileUpdated', updateLoginState);
     window.addEventListener('studentLoggedOut', updateLoginState);
-    
+
     const handleStorage = (event: StorageEvent) => {
       if (event.key === STUDENT_LOGGED_IN_KEY || event.key === STUDENT_PROFILE_LOCALSTORAGE_KEY) {
         updateLoginState();
@@ -81,7 +81,7 @@ export default function HomePage() {
       window.removeEventListener('studentLoggedOut', updateLoginState);
       window.removeEventListener('storage', handleStorage);
     };
-  }, [updateLoginState]); 
+  }, [updateLoginState]);
 
   useEffect(() => {
     if(isClient) {
@@ -91,19 +91,19 @@ export default function HomePage() {
 
 
   return (
-    <div className="space-y-6 md:space-y-8 bg-background"> 
+    <div className="space-y-6 md:space-y-8 bg-background">
       <section className="text-left py-4">
         <h2 className="text-xl font-semibold text-foreground mb-4">
           {isClient && isStudentLoggedIn && studentName ? `${t('greetingDynamic')} ${studentName}!` : t('helloTeam')}
         </h2>
         <Card className="overflow-hidden shadow-lg rounded-lg border-none">
-          <Image 
-            src="https://placehold.co/1200x400.png" 
+          <Image
+            src="https://placehold.co/1200x400.png"
             alt={t('placeholderBanner')}
-            width={1200} 
-            height={400} 
+            width={1200}
+            height={400}
             className="w-full h-auto object-cover"
-            data-ai-hint="course promotion exam foundation" 
+            data-ai-hint="course promotion exam foundation"
           />
         </Card>
       </section>
@@ -124,12 +124,12 @@ export default function HomePage() {
       </section>
 
       <InspirationalMessages />
-      
+
       {isClient && (
         <section className="hidden md:block pt-8">
           <h3 className="text-lg font-semibold text-center text-primary mb-4">{t('exploreSections')}</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {getDesktopExploreLinks(isStudentLoggedIn, t).map((link) => ( 
+              {getDesktopExploreLinks(isStudentLoggedIn, t).map((link) => (
                    <Link href={link.href} key={`${link.href}-desktop-bottom-${link.labelKey}`} passHref>
                       <Card className="bg-card hover:shadow-lg hover:border-accent transition-all duration-300 cursor-pointer h-full flex flex-col items-center text-center p-4 rounded-lg border border-muted">
                           <link.icon className="h-10 w-10 text-primary mb-2" />

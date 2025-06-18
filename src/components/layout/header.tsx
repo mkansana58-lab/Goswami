@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import {
   BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, LogOut, LayoutDashboard,
-  Home, DownloadCloud, MoreHorizontal, ScissorsLineDashed, HelpingHand, FileText, MessageSquare, Briefcase, BookOpen, FileQuestion, ListChecks, Bell, LogIn,
+  Home, DownloadCloud, MoreHorizontal, ScissorsLineDashed, HelpingHand, FileText, MessageSquare, Briefcase, BookOpen, ListChecks, Bell, LogIn,
   Gift, History, Newspaper, CalendarDays, CheckCircle, XCircle, Info, Tv2, School, Library, UserCircle, Settings, Mail, PackageSearch
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle as RadixSheetTitle } from '@/components/ui/sheet';
@@ -23,7 +23,7 @@ import { STUDENT_LOGGED_IN_KEY, STUDENT_USERNAME_KEY, STUDENT_PROFILE_LOCALSTORA
 
 const primaryNavLinks = [
   { href: '/', labelKey: 'navHome', icon: Home },
-  { href: '/study-material', labelKey: 'navStudyMaterial', icon: Library }, 
+  { href: '/study-material', labelKey: 'navStudyMaterial', icon: Library },
   { href: '/learning-hub', labelKey: 'navLearningHub', icon: PackageSearch },
   { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays },
   { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck },
@@ -31,7 +31,6 @@ const primaryNavLinks = [
 
 const secondaryNavLinks = [
   { href: '/current-affairs', labelKey: 'currentAffairs', icon: Newspaper },
-  { href: '/quiz', labelKey: 'navQuiz', icon: FileQuestion },
   { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks },
   { href: '/study-books', labelKey: 'ourBooks', icon: BookOpen },
   { href: '/job-alerts', labelKey: 'navJobAlerts', icon: Briefcase },
@@ -103,7 +102,7 @@ export function Header() {
             setStudentProfile(null);
           }
         } else {
-           setStudentProfile(null); 
+           setStudentProfile(null);
         }
       } else {
         setStudentProfile(null);
@@ -158,15 +157,15 @@ export function Header() {
     setIsAdminLoggedIn(false);
     setIsMobileMenuOpen(false);
     router.push('/');
-    router.refresh(); 
+    router.refresh();
   };
-  
+
   const handleStudentLogout = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STUDENT_LOGGED_IN_KEY);
       localStorage.removeItem(STUDENT_USERNAME_KEY);
       localStorage.removeItem(STUDENT_PROFILE_LOCALSTORAGE_KEY);
-      window.dispatchEvent(new Event('studentLoggedOut')); 
+      window.dispatchEvent(new Event('studentLoggedOut'));
     }
     setIsStudentLoggedIn(false);
     setStudentProfile(null);
@@ -175,7 +174,7 @@ export function Header() {
   };
 
   const handleNotificationDropdownOpenChange = (open: boolean) => {
-    if (!open && hasUnreadNotifications && notifications.length > 0) { 
+    if (!open && hasUnreadNotifications && notifications.length > 0) {
       localStorage.setItem(LAST_NOTIFICATION_VIEW_KEY, notifications[0].timestamp.toMillis().toString());
       setHasUnreadNotifications(false);
     }
@@ -189,7 +188,7 @@ export function Header() {
   ].filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === l.labelKey));
 
   const uniqueSecondaryLinksForDesktop = secondaryNavLinks
-    .filter(link => !primaryNavLinks.some(pLink => pLink.href === link.href && pLink.labelKey === link.labelKey))
+    .filter(link => !primaryNavLinks.some(pLink => pLink.href === link.href && pLink.labelKey === pLink.labelKey))
     .filter((link, index, self) => index === self.findIndex((l) => l.href === link.href && l.labelKey === l.labelKey));
 
   const getNotificationIcon = (type: string) => {
