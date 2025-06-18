@@ -10,9 +10,9 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { InspirationalMessages } from '@/components/home/inspirational-messages';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { STUDENT_LOGGED_IN_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants';
-import { usePathname } from 'next/navigation'; // Added for pathname listener
+import { usePathname } from 'next/navigation';
 
 
 const featureGridLinks = [
@@ -27,9 +27,7 @@ const featureGridLinks = [
   { href: '/current-affairs', labelKey: 'navCurrentAffairs', icon: Newspaper, descriptionKey: 'currentAffairsDesc' },
 ];
 
-// This function defines links for the DESKTOP "Explore Sections" grid.
-// The actual mobile bottom navigation is now handled by the global BottomNavigationBar component.
-const getDesktopExploreLinks = (isStudentLoggedIn: boolean) => [
+const getDesktopExploreLinks = (isStudentLoggedIn: boolean, t: (key: any) => string) => [
     { href: '/', labelKey: 'navHome', icon: HomeIcon, descriptionKey: 'navHome' },
     ...(isStudentLoggedIn ? [{ href: '/student-profile', labelKey: 'studentProfileTitle', icon: UserCircle, descriptionKey: 'studentProfileTitle' }] : []),
     { href: '/learning-hub', labelKey: 'navLearningHub', icon: PackageSearch, descriptionKey: 'learningHubDesc' },
@@ -44,8 +42,7 @@ export default function HomePage() {
   const [studentName, setStudentName] = useState<string | null>(null);
   const currentPathname = usePathname();
 
-
-  const updateLoginState = () => {
+  const updateLoginState = useCallback(() => {
     if (typeof window !== 'undefined') {
       const loggedIn = localStorage.getItem(STUDENT_LOGGED_IN_KEY) === 'true';
       setIsStudentLoggedIn(loggedIn);
@@ -63,7 +60,7 @@ export default function HomePage() {
         setStudentName(null);
       }
     }
-  };
+  }, []); // Dependencies: localStorage and state setters are stable
 
   useEffect(() => {
     setIsClient(true);
@@ -84,19 +81,16 @@ export default function HomePage() {
       window.removeEventListener('studentLoggedOut', updateLoginState);
       window.removeEventListener('storage', handleStorage);
     };
-  }, []); // updateLoginState is stable due to useCallback or if it doesn't depend on changing state/props
+  }, [updateLoginState]); 
 
   useEffect(() => {
     if(isClient) {
       updateLoginState();
     }
-  }, [isClient, currentPathname]);
+  }, [isClient, currentPathname, updateLoginState]);
 
-
-  const desktopExploreLinks = getDesktopExploreLinks(isStudentLoggedIn);
 
   return (
-    // Removed pb-16 for mobile from this div as layout handles it
     <div className="space-y-6 md:space-y-8 bg-background"> 
       <section className="text-left py-4">
         <h2 className="text-xl font-semibold text-foreground mb-4">
@@ -131,22 +125,22 @@ export default function HomePage() {
 
       <InspirationalMessages />
       
-      {/* The fixed bottom navigation for mobile has been removed from here and is now global in layout.tsx */}
-      
-      <section className="hidden md:block pt-8">
-        <h3 className="text-lg font-semibold text-center text-primary mb-4">{t('exploreSections')}</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {desktopExploreLinks.map((link) => ( // Using desktopExploreLinks now
-                 <Link href={link.href} key={`${link.href}-desktop-bottom`} passHref>
-                    <Card className="bg-card hover:shadow-lg hover:border-accent transition-all duration-300 cursor-pointer h-full flex flex-col items-center text-center p-4 rounded-lg border border-muted">
-                        <link.icon className="h-10 w-10 text-primary mb-2" />
-                        <CardTitle className="text-md font-semibold text-foreground">{t(link.labelKey as any)}</CardTitle>
-                        <p className="text-xs text-muted-foreground mt-1">{t(link.descriptionKey as any)}</p>
-                    </Card>
-                 </Link>
-            ))}
-        </div>
-      </section>
+      {isClient && (
+        <section className="hidden md:block pt-8">
+          <h3 className="text-lg font-semibold text-center text-primary mb-4">{t('exploreSections')}</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {getDesktopExploreLinks(isStudentLoggedIn, t).map((link) => ( 
+                   <Link href={link.href} key={`${link.href}-desktop-bottom-${link.labelKey}`} passHref>
+                      <Card className="bg-card hover:shadow-lg hover:border-accent transition-all duration-300 cursor-pointer h-full flex flex-col items-center text-center p-4 rounded-lg border border-muted">
+                          <link.icon className="h-10 w-10 text-primary mb-2" />
+                          <CardTitle className="text-md font-semibold text-foreground">{t(link.labelKey as any)}</CardTitle>
+                          <p className="text-xs text-muted-foreground mt-1">{t(link.descriptionKey as any)}</p>
+                      </Card>
+                   </Link>
+              ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
