@@ -378,7 +378,7 @@ export const translations = {
     localFilePlaceholder: "Local File (Metadata Only)",
     videoTitleLabel: "Video Title",
     videoTitlePlaceholder: "Enter video title",
-    videoSubjectLabel: "Subject",
+    videoSubjectLabel: "Video Subject",
     videoSubjectPlaceholder: "Enter video subject",
     videoUrlLabel: "YouTube Video URL",
     noFileChosen: "No file chosen",

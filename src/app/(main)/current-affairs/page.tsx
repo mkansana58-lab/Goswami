@@ -95,7 +95,7 @@ export default function CurrentAffairsPage() {
               ) : (
                 <Wand2 className="mr-2 h-4 w-4" />
               )}
-              {isLoading && articles.length === 0 ? t('loading') : (language === 'hi' ? 'नए करेंट अफेयर्स उत्पन्न करें' : 'Generate Fresh Current Affairs')}
+              {isLoading && articles.length === 0 ? t('loading') : (t('generateNewCurrentAffairs') || (language === 'hi' ? 'नए करेंट अफेयर्स उत्पन्न करें' : 'Generate Fresh Current Affairs'))}
             </Button>
             <div className="flex gap-2">
                 <Button onClick={() => handleLanguageChangeAndFetch('en')} variant={language === 'en' ? 'default' : 'outline'} disabled={isLoading} className="gap-1">
@@ -113,7 +113,7 @@ export default function CurrentAffairsPage() {
               <p className="ml-2">{t('loading')}</p>
             </div>
           ) : !isLoading && articles.length === 0 && !isInitialLoad ? (
-              <p className="text-center text-muted-foreground py-6">{language === 'hi' ? 'कोई करेंट अफेयर्स आइटम उत्पन्न नहीं हुआ या उपलब्ध नहीं है।' : 'No current affairs items generated or available.'}</p>
+              <p className="text-center text-muted-foreground py-6">{t('noCurrentAffairsGenerated') || (language === 'hi' ? 'कोई करेंट अफेयर्स आइटम उत्पन्न नहीं हुआ या उपलब्ध नहीं है।' : 'No current affairs items generated or available.')}</p>
           ) : articles.length > 0 ? (
             articles.map((article) => (
               <Card key={article.id} className="p-4 shadow-sm hover:shadow-md transition-shadow">
