@@ -395,6 +395,9 @@ export const translations = {
     category: "Category",
     generateNewCurrentAffairs: "Generate Fresh Current Affairs",
     noCurrentAffairsGenerated: "No current affairs items generated or available.",
+    contactInformation: "Contact Information",
+    academyPhoneNumber: "Mobile",
+    academyEmailAddress: "Email",
   },
   hi: {
     appName: "गो स्वामी डिफेंस अकादमी",
@@ -789,5 +792,10 @@ export const translations = {
     category: "श्रेणी",
     generateNewCurrentAffairs: "नए करेंट अफेयर्स उत्पन्न करें",
     noCurrentAffairsGenerated: "कोई करेंट अफेयर्स आइटम उत्पन्न नहीं हुआ या उपलब्ध नहीं है। ",
+    contactInformation: "संपर्क जानकारी",
+    academyPhoneNumber: "मोबाइल",
+    academyEmailAddress: "ईमेल",
   }
 }
+
+    
