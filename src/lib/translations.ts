@@ -6,7 +6,7 @@ export const translations = {
     appName: "Go Swami Defence Academy",
     navHome: "Home",
     navSchedule: "Class Schedule",
-    navTests: "Test Access",
+    navTests: "Test Series", // Updated
     navVideos: "Video Classes",
     navScholarship: "Scholarship",
     navAITutor: "AI Tutor",
@@ -35,8 +35,8 @@ export const translations = {
     classScheduleTitle: "Daily Class Schedule",
     homeworkAssignments: "Homework Assignments",
     importantUpdates: "Important Updates",
-    mockTests: "Mock Tests",
-    previousYearPapers: "Previous Year Papers",
+    mockTests: "Mock Tests", // Kept for general reference, page content changed
+    previousYearPapers: "Previous Year Papers", // Kept for general reference, page content changed
     uploadTest: "Upload New Test",
     adminUploadOnly: "This section is for admin use only.",
     availableTests: "Available Tests",
@@ -169,7 +169,7 @@ export const translations = {
     manageSchedule: "Manage Schedule & Updates",
     manageScheduleDesc: "Add or remove class schedules, homework, and general updates.",
     manageTests: "Manage Tests",
-    manageTestsDesc: "View and manage mock tests and previous year papers. (Manage via Firestore 'mockTestsFS' & 'previousPapersFS')",
+    manageTestsDesc: "View and manage mock tests and previous year papers. (Now AI Generated Model Papers)", // Updated
     manageVideos: "Manage Video Lectures",
     manageVideosDesc: "View and manage video lectures for students. (Manage via Firestore 'videosFS')",
     manageLiveClasses: "Manage Live Classes",
@@ -201,7 +201,7 @@ export const translations = {
     author: "Author",
     fileType: "File Type",
     questions: "Questions",
-    startQuiz: "Start Quiz",
+    startQuiz: "Start Quiz", // Kept, might be reused or removed if not fitting.
     lastDateApply: "Last Date to Apply",
     viewDetails: "View Details",
     adminLogout: "Admin Logout",
@@ -219,9 +219,9 @@ export const translations = {
     noDownloadsAvailable: "No downloadable files available at the moment.",
     adminManageDownloadsNote: "Admin: Manage files by uploading to Firebase Storage and adding metadata to 'downloadableFiles' collection in Firestore.",
     Syllabus: "Syllabus",
-    MockTests: "Mock Tests",
+    MockTests: "Mock Tests", // Kept for general reference, page content changed
     Notes: "Notes",
-    PreviousYearPapers: "Previous Year Papers",
+    PreviousYearPapers: "Previous Year Papers", // Kept for general reference, page content changed
     noNewNotifications: "No new notifications",
     examNameLabel: "Exam Name",
     examNamePlaceholder: "e.g., NDA Entrance",
@@ -398,12 +398,39 @@ export const translations = {
     contactInformation: "Contact Information",
     academyPhoneNumber: "Mobile",
     academyEmailAddress: "Email",
+
+    // Test Series / AI Model Paper
+    aiModelTestTitle: "AI Model Test Paper",
+    aiModelTestDesc: "Enter your details to start an AI-generated model test paper.",
+    selectYourClass: "Select Your Class",
+    selectYourClassPlaceholder: "Choose your class level",
+    startTestButton: "Start Test Paper",
+    nameAndClassRequired: "Name and Class are required to start the test.",
+    generatingTest: "Generating your test paper, please wait...",
+    question: "Question",
+    correctAnswer: "Correct Answer",
+    explanation: "Explanation",
+    submitAnswer: "Submit Answer",
+    nextQuestion: "Next Question",
+    finishTest: "Finish Test",
+    testResultTitle: "Test Result & Certificate",
+    testCertificateDesc: "Here is your performance summary for the model test paper.",
+    class: "Class",
+    tryAnotherTest: "Try Another Test Paper",
+    totalQuestions: "Total Questions",
+    score: "Score",
+    studentNamePlaceholder: "Enter your full name",
+    englishSubject: "English",
+    mathsSubject: "Mathematics",
+    gkSubject: "General Knowledge",
+    noTestPaperGenerated: "Could not generate test paper. Please try again.",
+    errorGeneratingTest: "Error generating test. Please try again later.",
   },
   hi: {
     appName: "गो स्वामी डिफेंस अकादमी",
     navHome: "होम",
     navSchedule: "कक्षा सारणी",
-    navTests: "टेस्ट सीरीज",
+    navTests: "टेस्ट सीरीज", // Updated
     navVideos: "वीडियो क्लास",
     navScholarship: "छात्रवृत्ति",
     navAITutor: "AI ट्यूटर",
@@ -432,8 +459,8 @@ export const translations = {
     classScheduleTitle: "दैनिक कक्षा सारणी",
     homeworkAssignments: "होमवर्क",
     importantUpdates: "महत्वपूर्ण सूचनाएँ",
-    mockTests: "मॉक टेस्ट",
-    previousYearPapers: "पिछले वर्ष के पेपर",
+    mockTests: "मॉक टेस्ट", // Kept for general reference, page content changed
+    previousYearPapers: "पिछले वर्ष के पेपर", // Kept for general reference, page content changed
     uploadTest: "नया टेस्ट अपलोड करें",
     adminUploadOnly: "यह अनुभाग केवल एडमिन उपयोग के लिए है।",
     availableTests: "उपलब्ध टेस्ट",
@@ -566,7 +593,7 @@ export const translations = {
     manageSchedule: "शेड्यूल और अपडेट प्रबंधित करें",
     manageScheduleDesc: "कक्षा शेड्यूल, होमवर्क और सामान्य अपडेट जोड़ें या हटाएं।",
     manageTests: "टेस्ट प्रबंधित करें",
-    manageTestsDesc: "मॉक टेस्ट और पिछले वर्ष के प्रश्नपत्र देखें और प्रबंधित करें। (Firestore 'mockTestsFS' और 'previousPapersFS' के माध्यम से प्रबंधित करें)",
+    manageTestsDesc: "मॉक टेस्ट और पिछले वर्ष के प्रश्नपत्र देखें और प्रबंधित करें। (अब AI द्वारा उत्पन्न मॉडल पेपर)", // Updated
     manageVideos: "वीडियो व्याख्यान प्रबंधित करें",
     manageVideosDesc: "छात्रों के लिए वीडियो व्याख्यान देखें और प्रबंधित करें। (Firestore 'videosFS' के माध्यम से प्रबंधित करें)",
     manageLiveClasses: "लाइव क्लास प्रबंधित करें",
@@ -598,7 +625,7 @@ export const translations = {
     author: "लेखक",
     fileType: "फ़ाइल का प्रकार",
     questions: "प्रश्न",
-    startQuiz: "क्विज़ शुरू करें",
+    startQuiz: "क्विज़ शुरू करें", // Kept, might be reused or removed if not fitting.
     lastDateApply: "आवेदन की अंतिम तिथि",
     viewDetails: "विवरण देखें",
     adminLogout: "एडमिन लॉगआउट",
@@ -616,9 +643,9 @@ export const translations = {
     noDownloadsAvailable: "फिलहाल कोई डाउनलोड करने योग्य फ़ाइलें उपलब्ध नहीं हैं।",
     adminManageDownloadsNote: "एडमिन: Firebase Storage में फ़ाइलें अपलोड करके और Firestore में 'downloadableFiles' कलेक्शन में मेटाडेटा जोड़कर फ़ाइलों का प्रबंधन करें।",
     Syllabus: "सिलेबस",
-    MockTests: "मॉक टेस्ट",
+    MockTests: "मॉक टेस्ट", // Kept for general reference, page content changed
     Notes: "नोट्स",
-    PreviousYearPapers: "पिछले वर्ष के प्रश्नपत्र",
+    PreviousYearPapers: "पिछले वर्ष के प्रश्नपत्र", // Kept for general reference, page content changed
     noNewNotifications: "कोई नई सूचना नहीं है",
     examNameLabel: "परीक्षा का नाम",
     examNamePlaceholder: "उदा., एनडीए प्रवेश परीक्षा",
@@ -795,7 +822,32 @@ export const translations = {
     contactInformation: "संपर्क जानकारी",
     academyPhoneNumber: "मोबाइल",
     academyEmailAddress: "ईमेल",
+
+    // Test Series / AI Model Paper
+    aiModelTestTitle: "AI मॉडल टेस्ट पेपर",
+    aiModelTestDesc: "AI-द्वारा उत्पन्न मॉडल टेस्ट पेपर शुरू करने के लिए अपना विवरण दर्ज करें।",
+    selectYourClass: "अपनी कक्षा चुनें",
+    selectYourClassPlaceholder: "अपनी कक्षा का स्तर चुनें",
+    startTestButton: "टेस्ट पेपर शुरू करें",
+    nameAndClassRequired: "टेस्ट शुरू करने के लिए नाम और कक्षा आवश्यक हैं।",
+    generatingTest: "आपका टेस्ट पेपर तैयार किया जा रहा है, कृपया प्रतीक्षा करें...",
+    question: "प्रश्न",
+    correctAnswer: "सही उत्तर",
+    explanation: "स्पष्टीकरण",
+    submitAnswer: "उत्तर जमा करें",
+    nextQuestion: "अगला प्रश्न",
+    finishTest: "टेस्ट समाप्त करें",
+    testResultTitle: "परीक्षा परिणाम और प्रमाण पत्र",
+    testCertificateDesc: "मॉडल टेस्ट पेपर के लिए आपके प्रदर्शन का सारांश यहाँ है।",
+    class: "कक्षा",
+    tryAnotherTest: "दूसरा टेस्ट पेपर आज़माएँ",
+    totalQuestions: "कुल प्रश्न",
+    score: "स्कोर",
+    studentNamePlaceholder: "अपना पूरा नाम दर्ज करें",
+    englishSubject: "अंग्रेज़ी",
+    mathsSubject: "गणित",
+    gkSubject: "सामान्य ज्ञान",
+    noTestPaperGenerated: "टेस्ट पेपर उत्पन्न नहीं किया जा सका। कृपया पुनः प्रयास करें।",
+    errorGeneratingTest: "टेस्ट उत्पन्न करने में त्रुटि। कृपया बाद में पुनः प्रयास करें।",
   }
 }
-
-    
