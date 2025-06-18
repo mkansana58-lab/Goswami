@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLanguage } from '@/hooks/use-language';
 import { 
-  ShoppingBag, ClipboardCheck, Gift, History, Newspaper, FileQuestion, ListChecks, BookOpen, Briefcase, GraduationCap, Home as HomeIcon, Bell, CalendarDays, Library, UserCircle, PackageSearch
+  ClipboardCheck, Gift, Newspaper, ListChecks, Home as HomeIcon, CalendarDays, Library, UserCircle, PackageSearch, PlaySquare, Tv2, DownloadCloud, Cpu
 } from 'lucide-react';
 import Image from 'next/image';
 import { InspirationalMessages } from '@/components/home/inspirational-messages';
@@ -15,16 +15,15 @@ import { STUDENT_LOGGED_IN_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/c
 
 
 const featureGridLinks = [
-  { href: '/study-material', labelKey: 'paidCourses', icon: ShoppingBag, descriptionKey: 'premiumCoursesDesc' }, 
-  { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck, descriptionKey: 'navTests' },
-  { href: '/study-material', labelKey: 'freeCourses', icon: Gift, descriptionKey: 'freeCoursesDesc' }, 
-  { href: '/tests', labelKey: 'previousPapersNav', icon: History, descriptionKey: 'previousYearPapers' }, 
-  { href: '/current-affairs', labelKey: 'currentAffairs', icon: Newspaper, descriptionKey: 'navCurrentAffairs' },
-  { href: '/quiz', labelKey: 'navQuiz', icon: FileQuestion, descriptionKey: 'quizDesc' },
-  { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks, descriptionKey: 'syllabusDesc' },
-  { href: '/study-books', labelKey: 'ourBooks', icon: BookOpen, descriptionKey: 'studyBooksDesc' }, 
-  { href: '/job-alerts', labelKey: 'navJobAlerts', icon: Briefcase, descriptionKey: 'jobAlertsDesc' },
   { href: '/study-material', labelKey: 'navStudyMaterial', icon: Library, descriptionKey: 'studyMaterialHubDesc' }, 
+  { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck, descriptionKey: 'navTests' },
+  { href: '/learning-hub?tab=live-classes', labelKey: 'navLiveClasses', icon: Tv2, descriptionKey: 'liveClassesDesc'},
+  { href: '/learning-hub?tab=videos', labelKey: 'navVideos', icon: PlaySquare, descriptionKey: 'videoLectures' },
+  { href: '/learning-hub?tab=downloads', labelKey: 'navDownloads', icon: DownloadCloud, descriptionKey: 'downloadsDesc' },
+  { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks, descriptionKey: 'syllabusDesc' },
+  { href: '/ai-tutor', labelKey: 'navAITutor', icon: Cpu, descriptionKey: 'aiTutorDesc' },
+  { href: '/scholarship', labelKey: 'navScholarship', icon: Gift, descriptionKey: 'scholarshipFormDesc' },
+  { href: '/current-affairs', labelKey: 'navCurrentAffairs', icon: Newspaper, descriptionKey: 'currentAffairsDesc' },
 ];
 
 const getBottomNavSimulatedLinks = (isStudentLoggedIn: boolean) => [
@@ -141,3 +140,4 @@ export default function HomePage() {
     </div>
   );
 }
+
