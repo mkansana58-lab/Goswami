@@ -12,7 +12,8 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const QuizQuestionSchema = z.object({
+// Made internal (removed export)
+const QuizQuestionSchema = z.object({
   questionText: z.string().describe('The text of the quiz question.'),
   options: z.array(z.string()).length(4).describe('An array of exactly four string options for the question.'),
   correctAnswerIndex: z.number().min(0).max(3).describe('The 0-based index of the correct answer in the options array.'),
@@ -20,7 +21,8 @@ export const QuizQuestionSchema = z.object({
 });
 export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
 
-export const GenerateQuizInputSchema = z.object({
+// Made internal (removed export)
+const GenerateQuizInputSchema = z.object({
   classLevel: z.string().describe('The class level for which the quiz should be generated (e.g., "Class 6", "Class 10").'),
   subject: z.string().default('General Knowledge').describe('The subject of the quiz (e.g., "Mathematics", "Science", "General Knowledge").'),
   numQuestions: z.number().positive().max(10).min(3).default(5).describe('Number of questions to generate for the quiz (between 3 and 10).'),
@@ -28,7 +30,8 @@ export const GenerateQuizInputSchema = z.object({
 });
 export type GenerateQuizInput = z.infer<typeof GenerateQuizInputSchema>;
 
-export const GenerateQuizOutputSchema = z.object({
+// Made internal (removed export)
+const GenerateQuizOutputSchema = z.object({
   quizTitle: z.string().describe('A suitable title for the generated quiz, incorporating class level and subject.'),
   questions: z.array(QuizQuestionSchema).describe('A list of generated quiz questions.')
 });
@@ -99,3 +102,4 @@ const generateQuizFlow = ai.defineFlow(
     return {...output, questions: questionsWithExplanation };
   }
 );
+
