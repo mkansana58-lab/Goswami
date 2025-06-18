@@ -69,14 +69,14 @@ const prompt = ai.definePrompt({
 
     Based on the activity type and item details, craft a suitable notification message.
     Examples of good notification messages:
-    - For 'new_live_class' (English): "📢 New Live Class! '${itemName}' on ${itemDetails} is scheduled. Don't miss out!"
-    - For 'new_live_class' (Hindi): "📢 नई लाइव क्लास! '${itemName}' (${itemDetails}) निर्धारित है। जरूर जुड़ें!"
-    - For 'new_homework_assignment' (English): "📚 Homework Alert! '${itemName}' assignment: '${itemDetails}' is due soon. Check it out!"
-    - For 'new_homework_assignment' (Hindi): "📚 होमवर्क अलर्ट! '${itemName}' असाइनमेंट: '${itemDetails}' जल्द ही जमा करना है। इसे देखें!"
-    - For 'new_schedule_item' (English): "🗓️ Schedule Update! '${itemName}' has been added to the schedule. Details: ${itemDetails}."
-    - For 'new_schedule_item' (Hindi): "🗓️ शेड्यूल अपडेट! '${itemName}' को शेड्यूल में जोड़ा गया है। विवरण: ${itemDetails}।"
-    - For 'new_academy_update' (English): "🔔 Important Update! '${itemName}'. ${itemDetails ? itemDetails : 'Tap to see details.'}"
-    - For 'new_academy_update' (Hindi): "🔔 महत्वपूर्ण अपडेट! '${itemName}'। ${itemDetails ? itemDetails : 'विवरण देखने के लिए टैप करें।'}"
+    - For 'new_live_class' (English): "📢 New Live Class! '[Item Name]' on [Item Details] is scheduled. Don't miss out!"
+    - For 'new_live_class' (Hindi): "📢 नई लाइव क्लास! '[Item Name]' ([Item Details]) निर्धारित है। जरूर जुड़ें!"
+    - For 'new_homework_assignment' (English): "📚 Homework Alert! '[Item Name]' assignment: '[Item Details]' is due soon. Check it out!"
+    - For 'new_homework_assignment' (Hindi): "📚 होमवर्क अलर्ट! '[Item Name]' असाइनमेंट: '[Item Details]' जल्द ही जमा करना है। इसे देखें!"
+    - For 'new_schedule_item' (English): "🗓️ Schedule Update! '[Item Name]' has been added to the schedule. Details: [Item Details]."
+    - For 'new_schedule_item' (Hindi): "🗓️ शेड्यूल अपडेट! '[Item Name]' को शेड्यूल में जोड़ा गया है। विवरण: [Item Details]।"
+    - For 'new_academy_update' (English): "🔔 Important Update! '[Item Name]'. [Item Details Optional - e.g., 'Tap to see details.']"
+    - For 'new_academy_update' (Hindi): "🔔 महत्वपूर्ण अपडेट! '[Item Name]'। [Item Details Optional - e.g., 'विवरण देखने के लिए टैप करें।']"
 
     Generate only the notificationMessage.
   `,
