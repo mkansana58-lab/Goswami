@@ -12,6 +12,7 @@ import Image from 'next/image';
 import { InspirationalMessages } from '@/components/home/inspirational-messages';
 import { useEffect, useState } from 'react';
 import { STUDENT_LOGGED_IN_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants';
+import { usePathname } from 'next/navigation'; // Added for pathname listener
 
 
 const featureGridLinks = [
@@ -26,7 +27,9 @@ const featureGridLinks = [
   { href: '/current-affairs', labelKey: 'navCurrentAffairs', icon: Newspaper, descriptionKey: 'currentAffairsDesc' },
 ];
 
-const getBottomNavSimulatedLinks = (isStudentLoggedIn: boolean) => [
+// This function defines links for the DESKTOP "Explore Sections" grid.
+// The actual mobile bottom navigation is now handled by the global BottomNavigationBar component.
+const getDesktopExploreLinks = (isStudentLoggedIn: boolean) => [
     { href: '/', labelKey: 'navHome', icon: HomeIcon, descriptionKey: 'navHome' },
     ...(isStudentLoggedIn ? [{ href: '/student-profile', labelKey: 'studentProfileTitle', icon: UserCircle, descriptionKey: 'studentProfileTitle' }] : []),
     { href: '/learning-hub', labelKey: 'navLearningHub', icon: PackageSearch, descriptionKey: 'learningHubDesc' },
@@ -39,6 +42,8 @@ export default function HomePage() {
   const [isClient, setIsClient] = useState(false);
   const [isStudentLoggedIn, setIsStudentLoggedIn] = useState(false);
   const [studentName, setStudentName] = useState<string | null>(null);
+  const currentPathname = usePathname();
+
 
   const updateLoginState = () => {
     if (typeof window !== 'undefined') {
@@ -62,21 +67,37 @@ export default function HomePage() {
 
   useEffect(() => {
     setIsClient(true);
-    updateLoginState(); // Initial check
+    updateLoginState(); 
 
     window.addEventListener('studentProfileUpdated', updateLoginState);
     window.addEventListener('studentLoggedOut', updateLoginState);
+    
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === STUDENT_LOGGED_IN_KEY || event.key === STUDENT_PROFILE_LOCALSTORAGE_KEY) {
+        updateLoginState();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
 
     return () => {
       window.removeEventListener('studentProfileUpdated', updateLoginState);
       window.removeEventListener('studentLoggedOut', updateLoginState);
+      window.removeEventListener('storage', handleStorage);
     };
-  }, []);
+  }, []); // updateLoginState is stable due to useCallback or if it doesn't depend on changing state/props
 
-  const bottomNavSimulatedLinks = getBottomNavSimulatedLinks(isStudentLoggedIn);
+  useEffect(() => {
+    if(isClient) {
+      updateLoginState();
+    }
+  }, [isClient, currentPathname]);
+
+
+  const desktopExploreLinks = getDesktopExploreLinks(isStudentLoggedIn);
 
   return (
-    <div className="space-y-6 md:space-y-8 pb-16 md:pb-8 bg-background">
+    // Removed pb-16 for mobile from this div as layout handles it
+    <div className="space-y-6 md:space-y-8 bg-background"> 
       <section className="text-left py-4">
         <h2 className="text-xl font-semibold text-foreground mb-4">
           {isClient && isStudentLoggedIn && studentName ? `${t('greetingDynamic')} ${studentName}!` : t('helloTeam')}
@@ -109,24 +130,13 @@ export default function HomePage() {
       </section>
 
       <InspirationalMessages />
-
-      <div className="fixed bottom-0 left-0 right-0 md:hidden bg-background border-t border-border shadow-top p-2 z-40">
-        <div className="container mx-auto flex justify-around items-center h-14">
-          {bottomNavSimulatedLinks.map((link) => (
-            <Link href={link.href} key={`${link.href}-mobile-bottom`} passHref>
-              <div className="flex flex-col items-center justify-center text-center cursor-pointer group">
-                <link.icon className="h-6 w-6 mb-0.5 text-muted-foreground group-hover:text-primary transition-colors" />
-                <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors">{t(link.labelKey as any)}</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
+      
+      {/* The fixed bottom navigation for mobile has been removed from here and is now global in layout.tsx */}
       
       <section className="hidden md:block pt-8">
         <h3 className="text-lg font-semibold text-center text-primary mb-4">{t('exploreSections')}</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {bottomNavSimulatedLinks.map((link) => (
+            {desktopExploreLinks.map((link) => ( // Using desktopExploreLinks now
                  <Link href={link.href} key={`${link.href}-desktop-bottom`} passHref>
                     <Card className="bg-card hover:shadow-lg hover:border-accent transition-all duration-300 cursor-pointer h-full flex flex-col items-center text-center p-4 rounded-lg border border-muted">
                         <link.icon className="h-10 w-10 text-primary mb-2" />
@@ -140,4 +150,3 @@ export default function HomePage() {
     </div>
   );
 }
-
