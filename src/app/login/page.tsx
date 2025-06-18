@@ -77,7 +77,7 @@ export default function AdminLoginPage() {
             {t('loginButton')}
           </Button>
           <p className="text-xs text-center text-muted-foreground">
-            {t('adminLoginNav')}: {t('adminLoginCredentialsNote') || 'Enter admin credentials to login.'}
+            {t('adminLoginCredentialsNote') || 'Enter admin credentials to login.'}
           </p>
         </CardContent>
       </Card>
@@ -85,10 +85,4 @@ export default function AdminLoginPage() {
   );
 }
 
-// Add/Update to translations:
-// passwordLabel: "Password" (EN), "पासवर्ड" (HI)
-// adminLoginCredentialsNote: "Enter admin credentials to login." (EN)
-// adminLoginCredentialsNote: "लॉगिन करने के लिए एडमिन क्रेडेंशियल दर्ज करें।" (HI)
-// loginError: "Invalid username or password." (EN) (Already exists)
-// loginError: "अमान्य यूज़रनेम या पासवर्ड।" (HI) (Already exists)
     

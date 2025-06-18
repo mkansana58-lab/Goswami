@@ -78,14 +78,16 @@ const generateQuizFlow = ai.defineFlow(
     outputSchema: GenerateQuizOutputSchema,
   },
   async (input) => {
-    const {output} = await prompt(input);
-    if (!output || !output.questions || output.questions.length === 0) {
+    const {output} = await prompt(input); // output can be null or GenerateQuizOutput
+
+    // Handle cases where the AI fails to generate a valid structure or returns empty/problematic content
+    if (!output || !output.questions || output.questions.length === 0 || 
+        (output.questions.length === 1 && output.questions[0].options && output.questions[0].options.length === 4 && output.questions[0].options[1] === '-')) {
       const errorMsg = input.language === 'hi' ? 'क्षमा करें, अभी क्विज़ उत्पन्न करना संभव नहीं है।' : 'Sorry, generating the quiz is not possible at the moment.';
       const fallbackTitle = input.language === 'hi' ? `${input.classLevel} ${input.subject} प्रश्नोत्तरी` : `${input.classLevel} ${input.subject} Quiz`;
-      // Return a minimal structure if generation fails or is empty
       return {
-        quizTitle: output?.quizTitle || fallbackTitle,
-        questions: output?.questions && output.questions.length > 0 ? output.questions : [{
+        quizTitle: output?.quizTitle || fallbackTitle, // Use output's title if available, else fallback
+        questions: [{ // Always return a single error question
             questionText: errorMsg,
             options: [input.language === 'hi' ? 'पुनः प्रयास करें' : 'Try Again', '-', '-', '-'],
             correctAnswerIndex: 0,
@@ -93,7 +95,8 @@ const generateQuizFlow = ai.defineFlow(
         }]
       };
     }
-    // Ensure explanations are present, even if empty, to match schema expectations if needed by UI
+
+    // If we reach here, output and output.questions are valid and non-empty
     const questionsWithExplanation = output.questions.map(q => ({
         ...q,
         explanation: q.explanation || (input.language === 'hi' ? 'कोई स्पष्टीकरण उपलब्ध नहीं है।' : 'No explanation available.')
@@ -103,3 +106,4 @@ const generateQuizFlow = ai.defineFlow(
   }
 );
 
+    

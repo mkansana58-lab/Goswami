@@ -6,12 +6,13 @@ import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tv2, PlaySquare, DownloadCloud, Loader2, FileText, AlertTriangle } from 'lucide-react';
+import { Tv2, PlaySquare, DownloadCloud, Loader2, FileText, AlertTriangle, Youtube } from 'lucide-react';
 import Image from 'next/image';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, Timestamp, query, orderBy, onSnapshot, Unsubscribe } from 'firebase/firestore';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import Link from 'next/link';
 
 // Types from original pages, slightly adapted
 interface LiveClassData {
@@ -51,6 +52,7 @@ interface GroupedDownloads {
 const LIVE_CLASSES_COLLECTION = 'liveClasses';
 const VIDEOS_COLLECTION = 'videosFS';
 const DOWNLOADS_COLLECTION = 'downloadableFiles';
+const YOUTUBE_CHANNEL_LINK = "https://youtube.com/@mohitkansana-s1h?si=jZgFU7nBEj_4_XTX";
 
 export default function LearningHubPage() {
   const { t, language } = useLanguage();
@@ -202,7 +204,14 @@ export default function LearningHubPage() {
 
             {/* Live Classes Tab */}
             <TabsContent value="live-classes">
-              <h3 className="text-2xl font-semibold text-secondary-foreground mb-6 text-center">{t('upcomingLiveClasses')}</h3>
+              <div className="flex flex-col items-center mb-6">
+                <h3 className="text-2xl font-semibold text-secondary-foreground mb-2 text-center">{t('upcomingLiveClasses')}</h3>
+                 <Button asChild variant="outline" size="sm" className="mb-4 bg-red-50 hover:bg-red-100 border-red-600 text-red-700">
+                    <a href={YOUTUBE_CHANNEL_LINK} target="_blank" rel="noopener noreferrer">
+                        <Youtube className="mr-2 h-4 w-4" /> {t('viewLiveScheduleButton') || "View Full Schedule on YouTube"}
+                    </a>
+                </Button>
+              </div>
               {isLoadingLiveClasses && !fetchErrorLiveClasses ? (
                 <div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="ml-2">{t('loading')}</p></div>
               ) : fetchErrorLiveClasses ? (
@@ -243,6 +252,14 @@ export default function LearningHubPage() {
 
             {/* Video Classes Tab */}
             <TabsContent value="videos">
+              <div className="flex flex-col items-center mb-6">
+                <h3 className="text-2xl font-semibold text-secondary-foreground mb-2 text-center">{t('videoLectures')}</h3>
+                <Button asChild variant="outline" size="sm" className="mb-4 bg-red-50 hover:bg-red-100 border-red-600 text-red-700">
+                    <a href={YOUTUBE_CHANNEL_LINK} target="_blank" rel="noopener noreferrer">
+                        <Youtube className="mr-2 h-4 w-4" /> {t('watchMoreVideosButton') || "Watch More on YouTube"}
+                    </a>
+                </Button>
+              </div>
               {selectedVideoUrl && currentVideoForPlayer ? (
                 <Card className="shadow-lg mt-4">
                   <CardHeader><CardTitle className="text-xl font-headline text-primary">{currentVideoForPlayer.title}</CardTitle><CardDescription>{t('subject')}: {currentVideoForPlayer.subject}</CardDescription></CardHeader>
@@ -280,6 +297,14 @@ export default function LearningHubPage() {
 
             {/* Downloads Tab */}
             <TabsContent value="downloads">
+              <div className="flex flex-col items-center mb-6">
+                <h3 className="text-2xl font-semibold text-secondary-foreground mb-2 text-center">{t('navDownloads')}</h3>
+                 <Button asChild variant="outline" size="sm" className="mb-4 bg-red-50 hover:bg-red-100 border-red-600 text-red-700">
+                    <a href={YOUTUBE_CHANNEL_LINK} target="_blank" rel="noopener noreferrer">
+                        <Youtube className="mr-2 h-4 w-4" /> {t('downloadMoreButton') || "More Resources on YouTube"}
+                    </a>
+                </Button>
+              </div>
               {isLoadingDownloads && !fetchErrorDownloads ? (
                 <div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="ml-2">{t('loading')}</p></div>
               ) : fetchErrorDownloads ? (
@@ -308,3 +333,5 @@ export default function LearningHubPage() {
     </div>
   );
 }
+
+    

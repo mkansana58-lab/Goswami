@@ -3,8 +3,8 @@
 
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Newspaper, Loader2, ExternalLink, Wand2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Newspaper, Loader2, Wand2, Languages } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import type { CurrentAffairsItem } from '@/ai/flows/generate-current-affairs-flow';
 import { getAIGeneratedCurrentAffairs } from './actions';
@@ -16,17 +16,17 @@ interface DisplayArticle extends CurrentAffairsItem {
 }
 
 export default function CurrentAffairsPage() {
-  const { t, language } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const { toast } = useToast();
   const [articles, setArticles] = useState<DisplayArticle[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  const fetchAIArticles = async () => {
+  const fetchAIArticles = useCallback(async (currentLang: 'en' | 'hi') => {
     setIsLoading(true);
     setArticles([]); // Clear previous articles
     try {
-      const result = await getAIGeneratedCurrentAffairs({ language, count: 10 }); // Fetch 10 articles
+      const result = await getAIGeneratedCurrentAffairs({ language: currentLang, count: 25 }); // Fetch 25 articles
       if ('error' in result) {
         toast({
           title: t('errorOccurred'),
@@ -35,7 +35,6 @@ export default function CurrentAffairsPage() {
         });
         setArticles([]);
       } else {
-        // Add a unique ID to each article for React keys
         const articlesWithId = result.articles.map((article, index) => ({
           ...article,
           id: `ai-article-${Date.now()}-${index}`
@@ -54,24 +53,27 @@ export default function CurrentAffairsPage() {
       setIsLoading(false);
       setIsInitialLoad(false);
     }
-  };
+  }, [toast, t, language]); // language is listed for t, but currentLang is passed to avoid stale closure for immediate fetch
   
-  // Optional: Fetch initial articles on component mount
-  // useEffect(() => {
-  //   fetchAIArticles();
-  // // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [language]);
+  const handleLanguageChangeAndFetch = (newLang: 'en' | 'hi') => {
+    setLanguage(newLang); // This will update context and trigger re-renders if other components depend on `language`
+    fetchAIArticles(newLang); // Fetch immediately with the new language
+  };
 
+  // Optional: Fetch initial articles on component mount based on current language context
+   useEffect(() => {
+     fetchAIArticles(language);
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, []); // Fetch only on initial mount with the initial language context
 
   const formatDate = (dateString: string) => {
     try {
-      // Assuming dateString is 'YYYY-MM-DD'
-      const date = new Date(dateString + 'T00:00:00'); // Add time to avoid timezone issues
+      const date = new Date(dateString + 'T00:00:00'); 
       return date.toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-CA', {
         year: 'numeric', month: 'long', day: 'numeric'
       });
     } catch (e) {
-      return dateString; // Fallback to original string if parsing fails
+      return dateString; 
     }
   };
 
@@ -86,18 +88,26 @@ export default function CurrentAffairsPage() {
           <CardDescription className="text-lg">{t('currentAffairsDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="text-center mb-6">
-            <Button onClick={fetchAIArticles} disabled={isLoading} className="bg-accent text-accent-foreground hover:bg-accent/90">
-              {isLoading ? (
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6">
+            <Button onClick={() => fetchAIArticles(language)} disabled={isLoading} className="bg-accent text-accent-foreground hover:bg-accent/90">
+              {isLoading && articles.length === 0 ? ( // Show loader on button only if no articles are displayed yet
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <Wand2 className="mr-2 h-4 w-4" />
               )}
-              {isLoading ? t('loading') : (language === 'hi' ? 'नए करेंट अफेयर्स उत्पन्न करें' : 'Generate Fresh Current Affairs')}
+              {isLoading && articles.length === 0 ? t('loading') : (language === 'hi' ? 'नए करेंट अफेयर्स उत्पन्न करें' : 'Generate Fresh Current Affairs')}
             </Button>
+            <div className="flex gap-2">
+                <Button onClick={() => handleLanguageChangeAndFetch('en')} variant={language === 'en' ? 'default' : 'outline'} disabled={isLoading} className="gap-1">
+                    <Languages className="h-4 w-4" /> {t('english')}
+                </Button>
+                <Button onClick={() => handleLanguageChangeAndFetch('hi')} variant={language === 'hi' ? 'default' : 'outline'} disabled={isLoading} className="gap-1">
+                    <Languages className="h-4 w-4" /> {t('hindi')}
+                </Button>
+            </div>
           </div>
 
-          {isLoading && isInitialLoad ? (
+          {isLoading && articles.length === 0 ? ( // Show main page loader only if no articles are displayed
             <div className="flex justify-center items-center py-10">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="ml-2">{t('loading')}</p>
@@ -114,26 +124,18 @@ export default function CurrentAffairsPage() {
                   {article.sourceName && ` | ${t('source') || 'Source'}: ${article.sourceName}`}
                 </CardDescription>
                 <p className="text-sm text-foreground mb-3 whitespace-pre-wrap">{article.summary}</p>
-                {/* Removed ExternalLink as AI doesn't provide actual URLs */}
               </Card>
             ))
           ) : (
              !isInitialLoad && <p className="text-center text-muted-foreground py-6">{t('noCurrentAffairsAvailable')}</p>
           )}
           <p className="text-center text-sm text-muted-foreground pt-4">
-            {language === 'hi' ? 'करेंट अफेयर्स AI द्वारा उत्पन्न होते हैं। सटीकता भिन्न हो सकती है।' : 'Current affairs are AI-generated. Accuracy may vary.'}
+            {language === 'hi' ? 'करेंट अफेयर्स AI द्वारा उत्पन्न होते हैं। सटीकता भिन्न हो सकती है। AI को भविष्य की घटनाओं या बहुत हाल की विशिष्ट तिथियों के बारे में जानकारी सीमित हो सकती है।' : 'Current affairs are AI-generated. Accuracy may vary. AI may have limited knowledge of future events or very recent specific dates.'}
           </p>
         </CardContent>
       </Card>
     </div>
   );
 }
-// Add/update to translations:
-// category: "Category" (EN/HI)
-// AI generated current affairs note: (The new note at the bottom)
 
-// Also need to update translations for button:
-// generateNewCurrentAffairs: "Generate Fresh Current Affairs" (EN)
-// उत्पन्न नए करेंट अफेयर्स: "नए करेंट अफेयर्स उत्पन्न करें" (HI) (This is an example, use appropriate key)
-// noCurrentAffairsGenerated: "No current affairs items generated or available."
-// कोई करेंट अफेयर्स उत्पन्न नहीं हुआ: "कोई करेंट अफेयर्स आइटम उत्पन्न नहीं हुआ या उपलब्ध नहीं है।"
+    

@@ -209,7 +209,7 @@ export const translations = {
     viewDetails: "View Details",
     adminLogout: "Admin Logout",
     adminLoginNav: "Admin Login",
-    adminLoginCredentialsNote: "Enter admin username ('admin') and password ('Mohit@123') to login.",
+    adminLoginCredentialsNote: "Enter admin credentials to login.",
     adminAccessNote: "To access this panel, please login as an administrator.",
     validationDateYYYYMMDD: "Date must be in YYYY-MM-DD format.",
     validationTimeHHMM: "Time must be in HH:MM format (24-hour).",
@@ -419,6 +419,12 @@ export const translations = {
     quizReviewAnswers: "Review Answers:",
     quizYourAnswer: "Your Answer",
     quizCorrectAnswer: "Correct Answer",
+    viewLiveScheduleButton: "View Full Schedule on YouTube",
+    downloadMoreButton: "More Resources on YouTube",
+    watchMoreVideosButton: "Watch More on YouTube",
+    category: "Category",
+    generateNewCurrentAffairs: "Generate Fresh Current Affairs", 
+    noCurrentAffairsGenerated: "No current affairs items generated or available.",
   },
   hi: {
     appName: "गो स्वामी डिफेंस अकादमी",
@@ -627,7 +633,7 @@ export const translations = {
     viewDetails: "विवरण देखें",
     adminLogout: "एडमिन लॉगआउट",
     adminLoginNav: "एडमिन लॉगिन",
-    adminLoginCredentialsNote: "लॉगिन करने के लिए एडमिन यूज़रनेम ('admin') और पासवर्ड ('Mohit@123') दर्ज करें।",
+    adminLoginCredentialsNote: "लॉगिन करने के लिए एडमिन क्रेडेंशियल दर्ज करें।",
     adminAccessNote: "इस पैनल तक पहुंचने के लिए, कृपया एडमिन के रूप में लॉगिन करें।",
     validationDateYYYYMMDD: "दिनांक YYYY-MM-DD प्रारूप में होना चाहिए।",
     validationTimeHHMM: "समय HH:MM प्रारूप (24-घंटे) में होना चाहिए।",
@@ -837,6 +843,13 @@ export const translations = {
     quizReviewAnswers: "उत्तरों की समीक्षा करें:",
     quizYourAnswer: "आपका उत्तर",
     quizCorrectAnswer: "सही उत्तर",
+    viewLiveScheduleButton: "यूट्यूब पर पूरा शेड्यूल देखें",
+    downloadMoreButton: "यूट्यूब पर और संसाधन",
+    watchMoreVideosButton: "यूट्यूब पर और वीडियो देखें",
+    category: "श्रेणी",
+    generateNewCurrentAffairs: "नए करेंट अफेयर्स उत्पन्न करें", 
+    noCurrentAffairsGenerated: "कोई करेंट अफेयर्स आइटम उत्पन्न नहीं हुआ या उपलब्ध नहीं है। ",
   }
 }
 
+    
