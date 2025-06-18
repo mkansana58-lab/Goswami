@@ -13,7 +13,7 @@ import { InspirationalMessages } from '@/components/home/inspirational-messages'
 import React, { useEffect, useState, useCallback } from 'react';
 import { STUDENT_LOGGED_IN_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils'; // Added this import
+import { cn } from '@/lib/utils';
 
 
 const featureGridLinks = [
@@ -36,11 +36,11 @@ const getDesktopExploreLinks = (isStudentLoggedIn: boolean, t: (key: any) => str
 ];
 
 const sliderImages = [
-  { src: 'https://placehold.co/1200x400.png', altTextKey: 'placeholderBanner', dataAiHint: 'coaching classroom students' },
-  { src: 'https://placehold.co/1200x400.png', altTextKey: 'placeholderBanner', dataAiHint: 'teacher guidance lecture' },
-  { src: 'https://placehold.co/1200x400.png', altTextKey: 'placeholderBanner', dataAiHint: 'defence training physical' },
-  { src: 'https://placehold.co/1200x400.png', altTextKey: 'placeholderBanner', dataAiHint: 'academy campus building' },
-  { src: 'https://placehold.co/1200x400.png', altTextKey: 'placeholderBanner', dataAiHint: 'group study discussion' },
+  { src: 'https://placehold.co/1200x400.png', altTextKey: 'placeholderBanner', dataAiHint: 'colorful students' },
+  { src: 'https://placehold.co/1200x400.png', altTextKey: 'placeholderBanner', dataAiHint: 'vibrant classroom' },
+  { src: 'https://placehold.co/1200x400.png', altTextKey: 'placeholderBanner', dataAiHint: 'bright academy' },
+  { src: 'https://placehold.co/1200x400.png', altTextKey: 'placeholderBanner', dataAiHint: 'dynamic learning' },
+  { src: 'https://placehold.co/1200x400.png', altTextKey: 'placeholderBanner', dataAiHint: 'energetic coaching' },
 ];
 
 export default function HomePage() {
@@ -209,5 +209,4 @@ export default function HomePage() {
     </div>
   );
 }
-
     
