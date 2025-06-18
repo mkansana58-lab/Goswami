@@ -68,20 +68,20 @@ const generateCurrentAffairsFlow = ai.defineFlow(
     outputSchema: GenerateCurrentAffairsOutputSchema,
   },
   async (input) => {
+    console.log('generateCurrentAffairsFlow: Invoked with input language:', input.language, 'and count:', input.count); // Added console log
     const {output} = await prompt(input);
     if (!output || !output.articles || output.articles.length === 0) {
-      // Fallback or error handling if output is null/undefined or no articles
       const errorMsg = input.language === 'hi' ? 'क्षमा करें, अभी करेंट अफेयर्स उत्पन्न करना संभव नहीं है।' : 'Sorry, generating current affairs is not possible at the moment.';
+      console.warn('generateCurrentAffairsFlow: AI returned no articles or invalid output. Using fallback.');
       return {
         articles: [{
             title: errorMsg,
             summary: input.language === 'hi' ? 'कृपया बाद में प्रयास करें।' : 'Please try again later.',
-            publishedAtSuggestion: new Date().toISOString().split('T')[0] // Today's date
+            publishedAtSuggestion: new Date().toISOString().split('T')[0]
         }]
       };
     }
+    console.log('generateCurrentAffairsFlow: Successfully generated', output.articles.length, 'articles.');
     return output;
   }
 );
-
-    
