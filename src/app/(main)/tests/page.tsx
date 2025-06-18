@@ -16,9 +16,7 @@ import type { TestPaper, TestSubject, TestQuestion } from '@/ai/flows/generate-t
 import { STUDENT_LOGGED_IN_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants';
 import type { StudentProfileData } from '../student-profile/page';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-// FormItem and FormControl were imported here, but they are not needed for the quiz options part.
-// If they are used elsewhere (like the initial student details form), keep the import.
-// For this fix, they are removed from the quiz options section.
+
 
 type TestStage = "details" | "generating" | "inProgress" | "completed";
 
@@ -32,7 +30,7 @@ interface UserAnswer {
 const classLevels = ["Class6", "Class7", "Class8", "Class9", "Class10", "Class11", "Class12"];
 
 export default function AIPoweredTestPage() {
-  const { t, language } = useLanguage();
+  const { t, language } = useLanguage(); // Get current language
   const { toast } = useToast();
 
   const [stage, setStage] = useState<TestStage>("details");
@@ -83,12 +81,13 @@ export default function AIPoweredTestPage() {
     setCurrentSubjectIndex(0);
     setCurrentQuestionIndex(0);
 
+    // Pass the current app language to the AI generation flow
     const result = await generateAIMockTest({ studentClass: t(studentClass as any) || studentClass, language });
     if ('error'in result) {
         toast({ title: t('errorOccurred'), description: result.error, variant: "destructive" });
         setStage("details");
         setTestPaper(null); // Ensure testPaper is null on error
-    } else if (result.title.toLowerCase().includes("error")) { // Check for error indication from flow
+    } else if (result.title.toLowerCase().includes("error") || (result.title.toLowerCase().includes("त्रुटि") && language === 'hi') ) { // Check for error indication from flow
         const firstQuestionText = result.subjects[0]?.questions[0]?.questionText || (language === 'hi' ? 'AI मॉडल पेपर बनाने में असमर्थ था।' : 'AI was unable to generate the model paper.');
         toast({ title: t('errorOccurred'), description: firstQuestionText, variant: "destructive" });
         setStage("details");
@@ -190,7 +189,7 @@ export default function AIPoweredTestPage() {
                     {subject.questions.map((q, qIdx) => {
                       const userAnswer = userAnswers.find(ua => ua.subjectIndex === sIdx && ua.questionIndex === qIdx);
                       return (
-                        <Card key={`${sIdx}-${qIdx}`} className="p-3 mb-2 border rounded-md">
+                        <Card key={`${sIdx}-${qIdx}`} className="p-3 mb-2 border rounded-md bg-background">
                           <p className="font-medium text-sm">Q{qIdx+1}: {q.questionText}</p>
                           <p className={`text-xs ${userAnswer?.isCorrect ? 'text-green-600' : 'text-red-600'}`}>
                             {t('yourAnswer') || "Your Answer"}: {userAnswer !== undefined ? q.options[userAnswer.selectedOptionIndex] : (t('notAttempted') || "Not Attempted")}
@@ -230,13 +229,17 @@ export default function AIPoweredTestPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-lg font-medium text-foreground whitespace-pre-wrap">{currentQuestion.questionText}</p>
+          
           <RadioGroup value={selectedOption ?? undefined} onValueChange={setSelectedOption} disabled={showAnswer}>
             {currentQuestion.options.map((option, index) => (
-              <div key={index} className={`flex items-center space-x-3 p-3 border rounded-md hover:bg-background transition-colors 
-                ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'border-green-500 bg-green-500/10 text-green-700' : ''}
-                ${showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'border-red-500 bg-red-500/10 text-red-700' : ''}
-                ${!showAnswer && selectedOption === index.toString() ? 'border-primary bg-primary/10' : ''}
-              `}>
+              <div
+                key={index}
+                className={`flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors cursor-pointer
+                  ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'border-green-500 bg-green-500/10 text-green-700' : ''}
+                  ${showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'border-red-500 bg-red-500/10 text-red-700' : ''}
+                  ${!showAnswer && selectedOption === index.toString() ? 'border-primary bg-primary/10' : 'border-input'}
+                `}
+              >
                 <RadioGroupItem value={index.toString()} id={`option-${index}`} />
                 <Label htmlFor={`option-${index}`} className="font-normal text-base cursor-pointer flex-grow">{option}</Label>
                 {showAnswer && index === currentQuestion.correctAnswerIndex && <CheckCircle className="h-5 w-5 text-green-500" />}
@@ -317,5 +320,3 @@ export default function AIPoweredTestPage() {
     </Card>
   );
 }
-
-    
