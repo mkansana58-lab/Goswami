@@ -2,212 +2,247 @@
 "use client";
 
 import { useState, useEffect, type ChangeEvent } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useLanguage } from '@/hooks/use-language';
-import { useToast } from '@/hooks/use-toast';
-import { db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { User, Camera, Home, Phone, Mail, Loader2, ShieldAlert, LogOut, GraduationCap } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
+import { User, Mail, Phone, Home, BookOpen, Edit3, Loader2, LogOut, Percent, ExternalLink } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { STUDENT_LOGGED_IN_KEY, STUDENT_USERNAME_KEY } from '../student-login/page';
+import { Progress } from '@/components/ui/progress';
+import Link from 'next/link';
+import { STUDENT_LOGGED_IN_KEY, STUDENT_USERNAME_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants';
 
-export const STUDENT_PROFILE_LOCALSTORAGE_KEY = 'studentProfileGoSwami'; // For caching name/photo
 
-const profileFormSchemaDefinition = (t: (key: string) => string) => z.object({
+interface EnrolledCourse {
+  id: string;
+  titleKey: keyof ReturnType<typeof useLanguage>['t'];
+  progress: number; // 0-100
+  descriptionKey: keyof ReturnType<typeof useLanguage>['t'];
+}
+
+export interface StudentProfileData {
+  name: string;
+  email: string;
+  mobile: string;
+  currentClass: string;
+  address: string;
+  photoDataUrl?: string;
+  dataAiHint?: string;
+  enrolledCourses?: EnrolledCourse[];
+}
+
+const formSchemaDefinition = (t: (key: string) => string) => z.object({
   name: z.string().min(2, { message: t('studentNameValidation') }),
-  photoDataUrl: z.string().optional(), // Storing photo as Data URL
-  address: z.string().min(5, { message: t('addressValidation') }),
-  mobile: z.string().min(10, { message: t('phoneValidation') }).regex(/^\+?[0-9\s-()]*$/, { message: t('phoneInvalidChars') }),
   email: z.string().email({ message: t('emailValidation') }),
+  mobile: z.string().min(10, { message: t('phoneValidation') }).regex(/^\+?[0-9\s-()]*$/, { message: t('phoneInvalidChars') }),
+  currentClass: z.string().min(1, { message: t('classValidation') }),
+  address: z.string().min(5, { message: t('addressValidation') }),
+  photoDataUrl: z.string().optional(),
 });
 
-type ProfileFormValues = z.infer<ReturnType<typeof profileFormSchemaDefinition>>;
-
-const STUDENT_PROFILES_COLLECTION = 'studentProfiles';
+type StudentProfileFormValues = z.infer<ReturnType<typeof formSchemaDefinition>>;
 
 export default function StudentProfilePage() {
   const { t } = useLanguage();
-  const router = useRouter();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [currentStudentUsername, setCurrentStudentUsername] = useState<string | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const [profileData, setProfileData] = useState<StudentProfileData | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  const currentFormSchema = profileFormSchemaDefinition(t);
-  const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(currentFormSchema),
-    defaultValues: { name: "", photoDataUrl: "", address: "", mobile: "", email: "" },
+  const form = useForm<StudentProfileFormValues>({
+    resolver: zodResolver(formSchemaDefinition(t)),
+    defaultValues: { name: "", email: "", mobile: "", currentClass: "", address: "", photoDataUrl: "" },
   });
 
   useEffect(() => {
+    setIsClient(true);
     if (typeof window !== 'undefined') {
       const isLoggedIn = localStorage.getItem(STUDENT_LOGGED_IN_KEY) === 'true';
-      const username = localStorage.getItem(STUDENT_USERNAME_KEY);
-      if (!isLoggedIn || !username) {
+      if (!isLoggedIn) {
         router.replace('/student-login');
-      } else {
-        setCurrentStudentUsername(username);
-        fetchProfile(username);
+        return;
       }
-    }
-  }, [router]);
-
-  const fetchProfile = async (username: string) => {
-    setIsLoading(true);
-    try {
-      const docRef = doc(db, STUDENT_PROFILES_COLLECTION, username);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data() as ProfileFormValues;
-        form.reset(data);
-        if (data.photoDataUrl) {
-          setPhotoPreview(data.photoDataUrl);
+      const storedProfile = localStorage.getItem(STUDENT_PROFILE_LOCALSTORAGE_KEY);
+      if (storedProfile) {
+        const parsedProfile: StudentProfileData = JSON.parse(storedProfile);
+        setProfileData(parsedProfile);
+        form.reset({
+          name: parsedProfile.name || "",
+          email: parsedProfile.email || "",
+          mobile: parsedProfile.mobile || "",
+          currentClass: parsedProfile.currentClass || "",
+          address: parsedProfile.address || "",
+          photoDataUrl: parsedProfile.photoDataUrl || "",
+        });
+        if (parsedProfile.photoDataUrl) {
+          setPreviewImage(parsedProfile.photoDataUrl);
         }
-        // Update localStorage cache for header
-        localStorage.setItem(STUDENT_PROFILE_LOCALSTORAGE_KEY, JSON.stringify({ name: data.name, photoDataUrl: data.photoDataUrl }));
-
       } else {
-        // If no profile, but username exists (e.g. from student_login page), prefill email with dummy
-        form.setValue('email', `${username}@example.com`); 
-        console.log("No such profile document! Initializing form.");
+        // If no profile, set some defaults or fetch from a "logged in" user state
+        const username = localStorage.getItem(STUDENT_USERNAME_KEY) || 'student';
+        const defaultProfile: StudentProfileData = {
+          name: "Go Swami Student",
+          email: `${username}@example.com`,
+          mobile: "9876543210",
+          currentClass: "10th",
+          address: "123 Defence Colony, New Delhi",
+          photoDataUrl: "https://placehold.co/150x150.png?text=Student",
+          dataAiHint: "student avatar",
+          enrolledCourses: [
+             { id: "SAMPLE001", titleKey: "sainikSchoolCourseTitle", progress: 25, descriptionKey: "sainikSchoolCourseTitle" },
+          ]
+        };
+        setProfileData(defaultProfile);
+        form.reset(defaultProfile);
+        if (defaultProfile.photoDataUrl) setPreviewImage(defaultProfile.photoDataUrl);
+        localStorage.setItem(STUDENT_PROFILE_LOCALSTORAGE_KEY, JSON.stringify(defaultProfile));
       }
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      toast({ title: t('errorOccurred'), description: t('fetchErrorDetails'), variant: 'destructive' });
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [router, form, t]);
 
-  const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const dataUrl = reader.result as string;
-        setPhotoPreview(dataUrl);
-        form.setValue('photoDataUrl', dataUrl); // Set for form submission
+        const base64String = reader.result as string;
+        setPreviewImage(base64String);
+        form.setValue('photoDataUrl', base64String);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const onSubmit: SubmitHandler<ProfileFormValues> = async (data) => {
-    if (!currentStudentUsername) return;
-    setIsSaving(true);
-    try {
-      const profileData = {
-        ...data,
-        photoDataUrl: photoPreview || '', // Ensure photoPreview is used if form value isn't directly set
-        updatedAt: serverTimestamp(),
-      };
-      await setDoc(doc(db, STUDENT_PROFILES_COLLECTION, currentStudentUsername), profileData, { merge: true });
-      toast({ title: t('profileUpdateSuccessTitle'), description: t('profileUpdateSuccessMessage') });
-      // Update localStorage cache for header
-      localStorage.setItem(STUDENT_PROFILE_LOCALSTORAGE_KEY, JSON.stringify({ name: data.name, photoDataUrl: photoPreview }));
-      // Trigger a custom event to notify header to update (optional, direct localStorage read on nav is also an option)
-      window.dispatchEvent(new Event('studentProfileUpdated'));
-
-    } catch (error) {
-      console.error("Error saving profile:", error);
-      toast({ title: t('errorOccurred'), description: t('saveErrorDetails'), variant: 'destructive' });
-    } finally {
-      setIsSaving(false);
-    }
+  const onSubmit: SubmitHandler<StudentProfileFormValues> = (data) => {
+    setIsLoading(true);
+    const updatedProfile: StudentProfileData = {
+      ...profileData, // keep existing non-form fields like enrolledCourses
+      ...data, 
+      photoDataUrl: previewImage || profileData?.photoDataUrl || '', // Ensure photoDataUrl is correctly taken from preview or existing
+      dataAiHint: profileData?.dataAiHint || (previewImage ? "student avatar custom" : "student avatar default")
+    };
+    
+    localStorage.setItem(STUDENT_PROFILE_LOCALSTORAGE_KEY, JSON.stringify(updatedProfile));
+    setProfileData(updatedProfile); // Update local state
+    
+    toast({ title: t('profileUpdateSuccessTitle'), description: t('profileUpdateSuccessMessage') });
+    window.dispatchEvent(new Event('studentProfileUpdated')); // Notify header
+    setIsLoading(false);
   };
 
   const handleStudentLogout = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STUDENT_LOGGED_IN_KEY);
       localStorage.removeItem(STUDENT_USERNAME_KEY);
-      localStorage.removeItem(STUDENT_PROFILE_LOCALSTORAGE_KEY); // Clear profile cache
-      window.dispatchEvent(new Event('studentLoggedOut')); // Notify header
+      localStorage.removeItem(STUDENT_PROFILE_LOCALSTORAGE_KEY); // Also clear profile
+      window.dispatchEvent(new Event('studentLoggedOut'));
     }
-    router.push('/student-login');
+    router.replace('/student-login');
   };
 
-
-  if (isLoading) {
-    return <div className="flex justify-center items-center h-screen"><Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="ml-2">{t('loading')}</p></div>;
+  if (!isClient || !profileData) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2">{t('loading')}</p>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-8 space-y-8">
+    <div className="max-w-3xl mx-auto space-y-8">
       <Card className="shadow-xl">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4 relative w-32 h-32 mx-auto">
-            <Image
-              src={photoPreview || "https://placehold.co/128x128.png"}
-              alt={t('profilePhotoAlt')}
-              width={128}
-              height={128}
-              className="rounded-full object-cover border-4 border-primary"
-              data-ai-hint="profile avatar"
-            />
-            <Label htmlFor="photoUpload" className="absolute bottom-0 right-0 bg-accent text-accent-foreground p-2 rounded-full cursor-pointer hover:bg-accent/80">
-              <Camera className="h-5 w-5" />
-              <Input id="photoUpload" type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
-            </Label>
+        <CardHeader className="text-center pb-4">
+          <div className="relative w-32 h-32 mx-auto mb-4 group">
+            <Avatar className="w-full h-full border-4 border-primary shadow-lg">
+              <AvatarImage src={previewImage || profileData.photoDataUrl} alt={profileData.name} data-ai-hint={profileData.dataAiHint || "student avatar"}/>
+              <AvatarFallback className="text-4xl bg-muted text-primary">{profileData.name?.[0]?.toUpperCase() || 'S'}</AvatarFallback>
+            </Avatar>
+            <label htmlFor="photoUpload" className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+              <Edit3 className="h-8 w-8 text-white" />
+              <input id="photoUpload" type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+            </label>
           </div>
-          <CardTitle className="text-3xl font-bold font-headline text-primary">{t('studentProfileTitle')}</CardTitle>
+          <CardTitle className="text-3xl font-bold font-headline text-primary">{profileData.name || t('studentProfileTitle')}</CardTitle>
           <CardDescription>{t('studentProfileDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel><User className="inline mr-2 h-4 w-4"/>{t('studentName')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel><Mail className="inline mr-2 h-4 w-4"/>{t('emailAddress')}</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="mobile" render={({ field }) => (<FormItem><FormLabel><Phone className="inline mr-2 h-4 w-4"/>{t('phoneNumber')}</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel><Home className="inline mr-2 h-4 w-4"/>{t('address')}</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
-              
-              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg h-12" disabled={isSaving}>
-                {isSaving ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" />{t('saving')}</> : t('saveProfileButton')}
+              <div className="grid md:grid-cols-2 gap-6">
+                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel><User className="inline h-4 w-4 mr-1"/>{t('studentName')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel><Mail className="inline h-4 w-4 mr-1"/>{t('emailAddress')}</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>)} />
+              </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                <FormField control={form.control} name="mobile" render={({ field }) => (<FormItem><FormLabel><Phone className="inline h-4 w-4 mr-1"/>{t('phoneNumber')}</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="currentClass" render={({ field }) => (<FormItem><FormLabel><BookOpen className="inline h-4 w-4 mr-1"/>{t('currentClass')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+              </div>
+              <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel><Home className="inline h-4 w-4 mr-1"/>{t('address')}</FormLabel><FormControl><Textarea {...field} rows={3}/></FormControl><FormMessage /></FormItem>)} />
+              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg h-12" disabled={isLoading}>
+                {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <User className="mr-2 h-5 w-5"/>}
+                {isLoading ? t('saving') : t('saveProfileButton')}
               </Button>
             </form>
           </Form>
         </CardContent>
-         <CardContent className="border-t pt-6 text-center">
-            <Button variant="outline" onClick={handleStudentLogout} className="text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive">
-              <LogOut className="mr-2 h-4 w-4" /> {t('studentLogoutButton')}
-            </Button>
-          </CardContent>
+         <CardFooter className="flex-col items-center pt-4">
+           <Button variant="destructive" onClick={handleStudentLogout} className="w-full md:w-auto">
+            <LogOut className="mr-2 h-4 w-4" />{t('studentLogoutButton')}
+          </Button>
+        </CardFooter>
       </Card>
 
-      {/* My Course Section - Merged Content */}
+      {/* My Course Section Merged Here */}
       <Card className="shadow-xl">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold font-headline text-primary flex items-center">
-            <GraduationCap className="mr-3 h-8 w-8 text-accent" />
-            {t('myCourseSectionTitle')}
-          </CardTitle>
+          <CardTitle className="text-2xl font-headline text-primary flex items-center"><BookOpen className="mr-3 h-7 w-7 text-accent"/>{t('myCourseSectionTitle')}</CardTitle>
           <CardDescription>{t('myCourseSectionDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
-           <div className="overflow-hidden rounded-lg shadow-md mb-4">
-            <Image
-              src="https://placehold.co/800x300.png"
-              alt={t('myCourseSectionTitle')}
-              width={800}
-              height={300}
-              className="w-full h-auto object-cover"
-              data-ai-hint="student dashboard course"
-            />
-          </div>
-          <p className="text-center text-muted-foreground">
-            {t('myCourseContentPlaceholder')}
-          </p>
-          {/* Future: List enrolled courses, progress, links to course material etc. */}
+          {profileData.enrolledCourses && profileData.enrolledCourses.length > 0 ? (
+            <div className="space-y-4">
+              {profileData.enrolledCourses.map(course => (
+                <Card key={course.id} className="p-4 shadow-sm hover:shadow-md transition-shadow bg-muted/50">
+                  <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                    <div className="flex-grow">
+                      <h3 className="text-lg font-semibold text-secondary-foreground">{t(course.titleKey)}</h3>
+                      <p className="text-sm text-muted-foreground mb-2">{t(course.descriptionKey)}</p>
+                      <div className="flex items-center gap-2">
+                        <Progress value={course.progress} className="w-full sm:w-2/3 h-3" />
+                        <span className="text-xs font-medium text-primary">{course.progress}% {t('complete') || 'Complete'}</span>
+                      </div>
+                    </div>
+                    <Button asChild variant="outline" size="sm" className="mt-2 sm:mt-0">
+                      <Link href="/study-material"> {/* Or a more specific course link if available */}
+                        {t('viewCourseContent') || "View Content"} <ExternalLink className="ml-2 h-3 w-3"/>
+                      </Link>
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground py-6">{t('myCourseContentPlaceholder')}</p>
+          )}
         </CardContent>
       </Card>
     </div>
   );
 }
+
+// Add to translations:
+// myCourseSectionTitle: "My Enrolled Courses"
+// myCourseSectionDesc: "Access your learning materials and track your progress."
+// myCourseContentPlaceholder: "Your enrolled courses and learning activities will appear here once you enroll. Explore our 'Study Material' section to find courses!"
+// complete: "Complete"
+// viewCourseContent: "View Content"

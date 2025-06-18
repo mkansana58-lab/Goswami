@@ -11,8 +11,7 @@ import {
 import Image from 'next/image';
 import { InspirationalMessages } from '@/components/home/inspirational-messages';
 import { useEffect, useState } from 'react';
-import { STUDENT_LOGGED_IN_KEY } from './student-login/page';
-import { STUDENT_PROFILE_LOCALSTORAGE_KEY } from './student-profile/page';
+import { STUDENT_LOGGED_IN_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants';
 
 
 const featureGridLinks = [

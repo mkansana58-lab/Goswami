@@ -8,13 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/hooks/use-language';
-import { UserCircle, ShieldCheck } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from "@/hooks/use-toast";
+import { ShieldAlert, UserCircle, Loader2 } from 'lucide-react';
+import { STUDENT_LOGGED_IN_KEY, STUDENT_USERNAME_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants';
+import type { StudentProfileData } from '../student-profile/page'; // Assuming type is exported here
 
-export const STUDENT_LOGGED_IN_KEY = 'studentLoggedInGoSwami';
-export const STUDENT_USERNAME_KEY = 'studentUsernameGoSwami';
-const DUMMY_USERNAME = 'student';
-const DUMMY_PASSWORD = 'goswami123';
+// Dummy user credentials
+const DUMMY_USERNAME = "student";
+const DUMMY_PASSWORD = "password123";
 
 export default function StudentLoginPage() {
   const { t } = useLanguage();
@@ -23,32 +24,62 @@ export default function StudentLoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
     if (typeof window !== 'undefined' && localStorage.getItem(STUDENT_LOGGED_IN_KEY) === 'true') {
-      router.replace('/student-profile'); // Or home page
+      router.push('/student-profile');
     }
   }, [router]);
 
   const handleStudentLogin = () => {
-    if (username === DUMMY_USERNAME && password === DUMMY_PASSWORD) {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(STUDENT_LOGGED_IN_KEY, 'true');
-        localStorage.setItem(STUDENT_USERNAME_KEY, username); // Store username
-        // Clear any minimal profile from localStorage to force fetch or show defaults
-        localStorage.removeItem('studentProfileGoSwami'); 
-        toast({ title: t('loginSuccessTitle'), description: t('loginSuccessMessageStudent') });
-        router.push('/student-profile'); 
+    setIsLoading(true);
+    setError('');
+    // Simulate API call
+    setTimeout(() => {
+      if (username === DUMMY_USERNAME && password === DUMMY_PASSWORD) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STUDENT_LOGGED_IN_KEY, 'true');
+          localStorage.setItem(STUDENT_USERNAME_KEY, username);
+          
+          // Store a dummy profile if one doesn't exist
+          const existingProfile = localStorage.getItem(STUDENT_PROFILE_LOCALSTORAGE_KEY);
+          if (!existingProfile) {
+            const dummyProfile: StudentProfileData = {
+              name: "Go Swami Student",
+              email: `${username}@example.com`,
+              mobile: "9876543210",
+              currentClass: "10th",
+              address: "123 Defence Colony, New Delhi",
+              photoDataUrl: "https://placehold.co/150x150.png?text=Student",
+              dataAiHint: "student avatar",
+              enrolledCourses: [
+                { id: "SAMPLE001", titleKey: "sainikSchoolCourseTitle", progress: 25, descriptionKey: "sainikSchoolCourseTitle" },
+              ]
+            };
+            localStorage.setItem(STUDENT_PROFILE_LOCALSTORAGE_KEY, JSON.stringify(dummyProfile));
+          }
+          
+          toast({ title: t('loginSuccessTitle'), description: t('loginSuccessMessageStudent')});
+          window.dispatchEvent(new Event('studentProfileUpdated')); // Notify header
+          router.push('/student-profile');
+        }
+      } else {
+        setError(t('loginError') || 'Invalid username or password.');
       }
-    } else {
-      setError(t('loginError') || 'Invalid username or password.');
-    }
+      setIsLoading(false);
+    }, 500);
   };
-  
+
   if (!isClient) {
-    return null; // Or a loading spinner
+    return (
+       <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2">{t('loading')}</p>
+      </div>
+    );
   }
 
   return (
@@ -66,13 +97,10 @@ export default function StudentLoginPage() {
             <Label htmlFor="username">{t('usernameLabel')}</Label>
             <Input
               id="username"
-              placeholder={t('usernamePlaceholder')}
+              placeholder={t('usernamePlaceholder') || "Enter your username"}
               value={username}
-              onChange={(e) => {
-                setUsername(e.target.value);
-                setError('');
-              }}
-              className="h-12"
+              onChange={(e) => { setUsername(e.target.value); setError(''); }}
+              className="h-12 text-base"
             />
           </div>
           <div className="space-y-2">
@@ -80,33 +108,26 @@ export default function StudentLoginPage() {
             <Input
               id="password"
               type="password"
-              placeholder={t('passwordPlaceholder')}
+              placeholder={t('passwordPlaceholder') || "Enter your password"}
               value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setError(''); 
-              }}
-              className="h-12"
+              onChange={(e) => { setPassword(e.target.value); setError(''); }}
+              className="h-12 text-base"
             />
           </div>
 
           {error && <p className="text-sm text-destructive text-center">{error}</p>}
           
-          <Button onClick={handleStudentLogin} className="w-full h-12 bg-accent text-accent-foreground hover:bg-accent/90 text-lg">
-            {t('loginButton')}
+          <Button onClick={handleStudentLogin} className="w-full h-12 bg-accent text-accent-foreground hover:bg-accent/90 text-lg" disabled={isLoading}>
+            {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+            {isLoading ? t('loading') : t('loginButton')}
           </Button>
-          <Card className="mt-4 p-3 bg-primary/10 border-primary/30">
-            <CardDescription className="text-center text-sm text-primary-foreground/80">
+          <Card className="mt-4 bg-primary/5 border-primary/30 p-3">
+            <CardDescription className="text-xs text-center text-primary/80">
               {t('dummyCredentialsInfo')}<br />
               <strong>{t('usernameLabel')}:</strong> {DUMMY_USERNAME}<br />
               <strong>{t('passwordLabel')}:</strong> {DUMMY_PASSWORD}
             </CardDescription>
           </Card>
-           <div className="text-center mt-4">
-            <Button variant="link" onClick={() => router.push('/login')} className="text-sm">
-              <ShieldCheck className="mr-2 h-4 w-4" /> {t('adminLoginNav')}
-            </Button>
-          </div>
         </CardContent>
       </Card>
     </div>

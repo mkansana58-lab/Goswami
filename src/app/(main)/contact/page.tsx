@@ -14,7 +14,7 @@ import { useLanguage } from '@/hooks/use-language';
 import { Mail, Phone, MessageSquare, User, Send, Info } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
-import { STUDENT_USERNAME_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '../student-login/page'; // For prefilling
+import { STUDENT_USERNAME_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants'; // For prefilling
 
 const USER_EMAIL = "mohitkansana82@gmail.com";
 const USER_PHONE = "9694251069";

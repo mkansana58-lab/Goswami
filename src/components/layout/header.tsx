@@ -18,8 +18,7 @@ import React, { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, limit, getDocs, Timestamp, serverTimestamp, addDoc, onSnapshot } from 'firebase/firestore';
 import Image from 'next/image';
-import { STUDENT_LOGGED_IN_KEY, STUDENT_USERNAME_KEY } from '@/app/(main)/student-login/page';
-import { STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/app/(main)/student-profile/page';
+import { STUDENT_LOGGED_IN_KEY, STUDENT_USERNAME_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants';
 
 
 const primaryNavLinks = [
@@ -281,3 +280,5 @@ export function Header() {
     </header>
   );
 }
+
+    
