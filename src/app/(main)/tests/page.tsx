@@ -16,7 +16,9 @@ import type { TestPaper, TestSubject, TestQuestion } from '@/ai/flows/generate-t
 import { STUDENT_LOGGED_IN_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants';
 import type { StudentProfileData } from '../student-profile/page';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { FormItem, FormControl } from '@/components/ui/form'; // Added FormItem and FormControl
+// FormItem and FormControl were imported here, but they are not needed for the quiz options part.
+// If they are used elsewhere (like the initial student details form), keep the import.
+// For this fix, they are removed from the quiz options section.
 
 type TestStage = "details" | "generating" | "inProgress" | "completed";
 
@@ -230,16 +232,16 @@ export default function AIPoweredTestPage() {
           <p className="text-lg font-medium text-foreground whitespace-pre-wrap">{currentQuestion.questionText}</p>
           <RadioGroup value={selectedOption ?? undefined} onValueChange={setSelectedOption} disabled={showAnswer}>
             {currentQuestion.options.map((option, index) => (
-              <FormItem key={index} className={`flex items-center space-x-3 p-3 border rounded-md hover:bg-background transition-colors 
+              <div key={index} className={`flex items-center space-x-3 p-3 border rounded-md hover:bg-background transition-colors 
                 ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'border-green-500 bg-green-500/10 text-green-700' : ''}
                 ${showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'border-red-500 bg-red-500/10 text-red-700' : ''}
                 ${!showAnswer && selectedOption === index.toString() ? 'border-primary bg-primary/10' : ''}
               `}>
-                <FormControl><RadioGroupItem value={index.toString()} id={`option-${index}`} /></FormControl>
+                <RadioGroupItem value={index.toString()} id={`option-${index}`} />
                 <Label htmlFor={`option-${index}`} className="font-normal text-base cursor-pointer flex-grow">{option}</Label>
                 {showAnswer && index === currentQuestion.correctAnswerIndex && <CheckCircle className="h-5 w-5 text-green-500" />}
                 {showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex && <XCircle className="h-5 w-5 text-red-500" />}
-              </FormItem>
+              </div>
             ))}
           </RadioGroup>
 
@@ -315,3 +317,5 @@ export default function AIPoweredTestPage() {
     </Card>
   );
 }
+
+    
