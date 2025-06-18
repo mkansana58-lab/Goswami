@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label"; // Added import for Label
 import { generateQuizForUser } from './actions';
 import type { GenerateQuizOutput, QuizQuestion } from '@/ai/flows/generate-quiz-flow';
 import { Loader2, FileQuestion, Award, CheckCircle, XCircle, History } from 'lucide-react';
