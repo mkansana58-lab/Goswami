@@ -6,7 +6,7 @@ export const translations = {
     appName: "Go Swami Defence Academy",
     navHome: "Home",
     navSchedule: "Class Schedule",
-    navTests: "Test Series", // Updated
+    navTests: "Test Series",
     navVideos: "Video Classes",
     navScholarship: "Scholarship",
     navAITutor: "AI Tutor",
@@ -35,8 +35,8 @@ export const translations = {
     classScheduleTitle: "Daily Class Schedule",
     homeworkAssignments: "Homework Assignments",
     importantUpdates: "Important Updates",
-    mockTests: "Mock Tests", // Kept for general reference, page content changed
-    previousYearPapers: "Previous Year Papers", // Kept for general reference, page content changed
+    mockTests: "Mock Tests",
+    previousYearPapers: "Previous Year Papers",
     uploadTest: "Upload New Test",
     adminUploadOnly: "This section is for admin use only.",
     availableTests: "Available Tests",
@@ -169,7 +169,7 @@ export const translations = {
     manageSchedule: "Manage Schedule & Updates",
     manageScheduleDesc: "Add or remove class schedules, homework, and general updates.",
     manageTests: "Manage Tests",
-    manageTestsDesc: "View and manage mock tests and previous year papers. (Now AI Generated Model Papers)", // Updated
+    manageTestsDesc: "View and manage mock tests and previous year papers. (Now AI Generated Model Papers)",
     manageVideos: "Manage Video Lectures",
     manageVideosDesc: "View and manage video lectures for students. (Manage via Firestore 'videosFS')",
     manageLiveClasses: "Manage Live Classes",
@@ -201,7 +201,7 @@ export const translations = {
     author: "Author",
     fileType: "File Type",
     questions: "Questions",
-    startQuiz: "Start Quiz", // Kept, might be reused or removed if not fitting.
+    startQuiz: "Start Quiz",
     lastDateApply: "Last Date to Apply",
     viewDetails: "View Details",
     adminLogout: "Admin Logout",
@@ -219,9 +219,9 @@ export const translations = {
     noDownloadsAvailable: "No downloadable files available at the moment.",
     adminManageDownloadsNote: "Admin: Manage files by uploading to Firebase Storage and adding metadata to 'downloadableFiles' collection in Firestore.",
     Syllabus: "Syllabus",
-    MockTests: "Mock Tests", // Kept for general reference, page content changed
+    MockTests: "Mock Tests",
     Notes: "Notes",
-    PreviousYearPapers: "Previous Year Papers", // Kept for general reference, page content changed
+    PreviousYearPapers: "Previous Year Papers",
     noNewNotifications: "No new notifications",
     examNameLabel: "Exam Name",
     examNamePlaceholder: "e.g., NDA Entrance",
@@ -398,8 +398,6 @@ export const translations = {
     contactInformation: "Contact Information",
     academyPhoneNumber: "Mobile",
     academyEmailAddress: "Email",
-
-    // Test Series / AI Model Paper
     aiModelTestTitle: "AI Model Test Paper",
     aiModelTestDesc: "Enter your details to start an AI-generated model test paper.",
     selectYourClass: "Select Your Class",
@@ -425,12 +423,28 @@ export const translations = {
     gkSubject: "General Knowledge",
     noTestPaperGenerated: "Could not generate test paper. Please try again.",
     errorGeneratingTest: "Error generating test. Please try again later.",
+    notificationGenerationFailedTitle: "Notification Failed",
+    notificationGenerationFailedDesc: "The item was saved, but AI notification could not be generated.",
+    timeUpTitle: "Time's Up!",
+    testAutoSubmitted: "Your test has been automatically submitted as the time is up.",
+    downloadCertificate: "Download Certificate",
+    shareResult: "Share Result",
+    myTestScore: "My Test Score in",
+    shareMessageAcademy: "Achieved at Go Swami Defence Academy!",
+    shareFailed: "Could not share result at this time.",
+    featureNotSupported: "Feature Not Supported",
+    shareNotSupported: "Web Share API is not available on your browser or device.",
+    academyStampAlt: "Academy Stamp",
+    academyAddressPlaceholder: "Defence Colony, Alwar (Raj.)",
+    reviewAnswers: "Review Your Answers",
+    yourAnswer: "Your Answer",
+    notAttempted: "Not Attempted",
   },
   hi: {
     appName: "गो स्वामी डिफेंस अकादमी",
     navHome: "होम",
     navSchedule: "कक्षा सारणी",
-    navTests: "टेस्ट सीरीज", // Updated
+    navTests: "टेस्ट सीरीज",
     navVideos: "वीडियो क्लास",
     navScholarship: "छात्रवृत्ति",
     navAITutor: "AI ट्यूटर",
@@ -459,8 +473,8 @@ export const translations = {
     classScheduleTitle: "दैनिक कक्षा सारणी",
     homeworkAssignments: "होमवर्क",
     importantUpdates: "महत्वपूर्ण सूचनाएँ",
-    mockTests: "मॉक टेस्ट", // Kept for general reference, page content changed
-    previousYearPapers: "पिछले वर्ष के पेपर", // Kept for general reference, page content changed
+    mockTests: "मॉक टेस्ट",
+    previousYearPapers: "पिछले वर्ष के पेपर",
     uploadTest: "नया टेस्ट अपलोड करें",
     adminUploadOnly: "यह अनुभाग केवल एडमिन उपयोग के लिए है।",
     availableTests: "उपलब्ध टेस्ट",
@@ -593,7 +607,7 @@ export const translations = {
     manageSchedule: "शेड्यूल और अपडेट प्रबंधित करें",
     manageScheduleDesc: "कक्षा शेड्यूल, होमवर्क और सामान्य अपडेट जोड़ें या हटाएं।",
     manageTests: "टेस्ट प्रबंधित करें",
-    manageTestsDesc: "मॉक टेस्ट और पिछले वर्ष के प्रश्नपत्र देखें और प्रबंधित करें। (अब AI द्वारा उत्पन्न मॉडल पेपर)", // Updated
+    manageTestsDesc: "मॉक टेस्ट और पिछले वर्ष के प्रश्नपत्र देखें और प्रबंधित करें। (अब AI द्वारा उत्पन्न मॉडल पेपर)",
     manageVideos: "वीडियो व्याख्यान प्रबंधित करें",
     manageVideosDesc: "छात्रों के लिए वीडियो व्याख्यान देखें और प्रबंधित करें। (Firestore 'videosFS' के माध्यम से प्रबंधित करें)",
     manageLiveClasses: "लाइव क्लास प्रबंधित करें",
@@ -625,7 +639,7 @@ export const translations = {
     author: "लेखक",
     fileType: "फ़ाइल का प्रकार",
     questions: "प्रश्न",
-    startQuiz: "क्विज़ शुरू करें", // Kept, might be reused or removed if not fitting.
+    startQuiz: "क्विज़ शुरू करें",
     lastDateApply: "आवेदन की अंतिम तिथि",
     viewDetails: "विवरण देखें",
     adminLogout: "एडमिन लॉगआउट",
@@ -643,9 +657,9 @@ export const translations = {
     noDownloadsAvailable: "फिलहाल कोई डाउनलोड करने योग्य फ़ाइलें उपलब्ध नहीं हैं।",
     adminManageDownloadsNote: "एडमिन: Firebase Storage में फ़ाइलें अपलोड करके और Firestore में 'downloadableFiles' कलेक्शन में मेटाडेटा जोड़कर फ़ाइलों का प्रबंधन करें।",
     Syllabus: "सिलेबस",
-    MockTests: "मॉक टेस्ट", // Kept for general reference, page content changed
+    MockTests: "मॉक टेस्ट",
     Notes: "नोट्स",
-    PreviousYearPapers: "पिछले वर्ष के प्रश्नपत्र", // Kept for general reference, page content changed
+    PreviousYearPapers: "पिछले वर्ष के प्रश्नपत्र",
     noNewNotifications: "कोई नई सूचना नहीं है",
     examNameLabel: "परीक्षा का नाम",
     examNamePlaceholder: "उदा., एनडीए प्रवेश परीक्षा",
@@ -822,8 +836,6 @@ export const translations = {
     contactInformation: "संपर्क जानकारी",
     academyPhoneNumber: "मोबाइल",
     academyEmailAddress: "ईमेल",
-
-    // Test Series / AI Model Paper
     aiModelTestTitle: "AI मॉडल टेस्ट पेपर",
     aiModelTestDesc: "AI-द्वारा उत्पन्न मॉडल टेस्ट पेपर शुरू करने के लिए अपना विवरण दर्ज करें।",
     selectYourClass: "अपनी कक्षा चुनें",
@@ -849,5 +861,22 @@ export const translations = {
     gkSubject: "सामान्य ज्ञान",
     noTestPaperGenerated: "टेस्ट पेपर उत्पन्न नहीं किया जा सका। कृपया पुनः प्रयास करें।",
     errorGeneratingTest: "टेस्ट उत्पन्न करने में त्रुटि। कृपया बाद में पुनः प्रयास करें।",
+    notificationGenerationFailedTitle: "सूचना उत्पन्न करने में विफल",
+    notificationGenerationFailedDesc: "आइटम सहेजा गया था, लेकिन AI सूचना उत्पन्न नहीं की जा सकी।",
+    timeUpTitle: "समय समाप्त!",
+    testAutoSubmitted: "समय समाप्त होने के कारण आपका टेस्ट स्वचालित रूप से सबमिट कर दिया गया है।",
+    downloadCertificate: "प्रमाणपत्र डाउनलोड करें",
+    shareResult: "परिणाम साझा करें",
+    myTestScore: "मेरा टेस्ट स्कोर",
+    shareMessageAcademy: "गो स्वामी डिफेंस अकादमी में प्राप्त किया!",
+    shareFailed: "इस समय परिणाम साझा नहीं किया जा सका।",
+    featureNotSupported: "सुविधा समर्थित नहीं है",
+    shareNotSupported: "वेब शेयर एपीआई आपके ब्राउज़र या डिवाइस पर समर्थित नहीं है।",
+    academyStampAlt: "अकादमी की मोहर",
+    academyAddressPlaceholder: "डिफेंस कॉलोनी, अलवर (राज.)",
+    reviewAnswers: "अपने उत्तरों की समीक्षा करें",
+    yourAnswer: "आपका उत्तर",
+    notAttempted: "प्रयास नहीं किया",
   }
 }
+

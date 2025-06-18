@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, AlertTriangle, Award, BookCopy, ChevronLeft, ChevronRight, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
+import { Loader2, AlertTriangle, Award, BookCopy, ChevronLeft, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, Share2, CheckBadge } from 'lucide-react';
+import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
 import { generateAIMockTest } from './actions';
 import type { TestPaper, TestSubject, TestQuestion } from '@/ai/flows/generate-test-paper-flow';
@@ -28,9 +29,10 @@ interface UserAnswer {
 }
 
 const classLevels = ["Class6", "Class7", "Class8", "Class9", "Class10", "Class11", "Class12"];
+const TEST_DURATION_MINUTES = 40;
 
 export default function AIPoweredTestPage() {
-  const { t, language } = useLanguage(); // Get current language
+  const { t, language } = useLanguage();
   const { toast } = useToast();
 
   const [stage, setStage] = useState<TestStage>("details");
@@ -45,6 +47,8 @@ export default function AIPoweredTestPage() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [score, setScore] = useState(0);
   const [currentDate, setCurrentDate] = useState('');
+  const [timeLeft, setTimeLeft] = useState(TEST_DURATION_MINUTES * 60);
+  const [timerActive, setTimerActive] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -55,7 +59,6 @@ export default function AIPoweredTestPage() {
           try {
             const profile: StudentProfileData = JSON.parse(profileRaw);
             setStudentName(profile.name || '');
-            // Match stored class if it's one of the options, otherwise default
             if (profile.currentClass && classLevels.map(cl => t(cl as any)).includes(profile.currentClass)) {
               setStudentClass(profile.currentClass);
             } else if (profile.currentClass && classLevels.includes(profile.currentClass.replace(/\s+/g, ''))) {
@@ -67,6 +70,22 @@ export default function AIPoweredTestPage() {
     }
     setCurrentDate(new Date().toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-CA'));
   }, [language, t]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (timerActive && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prevTime) => prevTime - 1);
+      }, 1000);
+    } else if (timerActive && timeLeft === 0) {
+      setTimerActive(false);
+      setStage("completed");
+      toast({ title: t('timeUpTitle') || "Time's Up!", description: t('testAutoSubmitted') || "Your test has been automatically submitted." });
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [timerActive, timeLeft, toast, t]);
 
   const handleStartTest = async () => {
     if (!studentName || !studentClass) {
@@ -80,21 +99,24 @@ export default function AIPoweredTestPage() {
     setScore(0);
     setCurrentSubjectIndex(0);
     setCurrentQuestionIndex(0);
-
-    // Pass the current app language to the AI generation flow
+    setTimeLeft(TEST_DURATION_MINUTES * 60);
+    
     const result = await generateAIMockTest({ studentClass: t(studentClass as any) || studentClass, language });
     if ('error'in result) {
         toast({ title: t('errorOccurred'), description: result.error, variant: "destructive" });
         setStage("details");
-        setTestPaper(null); // Ensure testPaper is null on error
-    } else if (result.title.toLowerCase().includes("error") || (result.title.toLowerCase().includes("त्रुटि") && language === 'hi') ) { // Check for error indication from flow
+        setTestPaper(null);
+        setTimerActive(false);
+    } else if (result.title.toLowerCase().includes("error") || (result.title.toLowerCase().includes("त्रुटि") && language === 'hi') ) {
         const firstQuestionText = result.subjects[0]?.questions[0]?.questionText || (language === 'hi' ? 'AI मॉडल पेपर बनाने में असमर्थ था।' : 'AI was unable to generate the model paper.');
         toast({ title: t('errorOccurred'), description: firstQuestionText, variant: "destructive" });
         setStage("details");
         setTestPaper(null);
+        setTimerActive(false);
     } else {
         setTestPaper(result);
         setStage("inProgress");
+        setTimerActive(true);
     }
   };
 
@@ -131,17 +153,47 @@ export default function AIPoweredTestPage() {
       setCurrentQuestionIndex(0);
     } else {
       setStage("completed");
+      setTimerActive(false);
     }
   };
   
   const handleTryAgain = () => {
     setStage("details");
     setTestPaper(null);
-    // Keep studentName and studentClass, or reset if desired
+    setTimerActive(false);
   };
 
   const getTotalQuestions = () => {
     return testPaper?.subjects.reduce((total, subject) => total + subject.questions.length, 0) || 0;
+  };
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
+  
+  const handleDownloadCertificate = () => {
+    if (typeof window !== 'undefined') {
+        window.print();
+    }
+  };
+
+  const handleShareCertificate = async () => {
+    if (typeof window !== 'undefined' && navigator.share && testPaper) {
+        try {
+            await navigator.share({
+                title: t('testResultTitle'),
+                text: `${t('myTestScore')} ${studentName}: ${score}/${getTotalQuestions()} in ${testPaper.title}. ${t('shareMessageAcademy') || "Achieved at Go Swami Defence Academy!"}`,
+                url: window.location.href,
+            });
+        } catch (error) {
+            console.error('Error sharing certificate:', error);
+            toast({ title: t('errorOccurred'), description: t('shareFailed') || "Could not share result." });
+        }
+    } else if (typeof window !== 'undefined') {
+        toast({ title: t('featureNotSupported') || "Feature Not Supported", description: t('shareNotSupported') || "Web Share API is not supported on your browser." });
+    }
   };
 
 
@@ -159,27 +211,35 @@ export default function AIPoweredTestPage() {
     const percentage = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
 
     return (
-      <Card className="max-w-2xl mx-auto shadow-xl border-primary/50 transform transition-all duration-500 scale-100">
-        <CardHeader className="text-center bg-gradient-to-r from-primary/10 via-background to-primary/10 py-8">
-          <Award className="h-20 w-20 text-accent mx-auto mb-4" />
-          <CardTitle className="text-3xl font-bold text-primary">{t('testResultTitle')}</CardTitle>
-          <CardDescription className="text-md text-muted-foreground">{t('testCertificateDesc')}</CardDescription>
+      <Card className="max-w-2xl mx-auto shadow-xl border-primary/50 transform transition-all duration-500 scale-100 print:shadow-none print:border-none">
+        <CardHeader className="text-center bg-gradient-to-br from-primary/10 via-background to-primary/10 py-8 print:bg-none">
+          <Award className="h-20 w-20 text-accent mx-auto mb-4 print:text-black" />
+          <CardTitle className="text-3xl font-bold text-primary print:text-black">{t('testResultTitle')}</CardTitle>
+          <CardDescription className="text-md text-muted-foreground print:text-gray-700">{t('testCertificateDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
+          <div className="flex justify-between items-center mb-4">
+            <Image src="https://placehold.co/100x100.png" alt={t('academyStampAlt') || "Academy Stamp"} width={80} height={80} data-ai-hint="academy logo stamp" className="opacity-75 print:opacity-100" />
+            <div className="text-right">
+                <p className="text-sm font-bold text-primary print:text-black">Go Swami Defence Academy</p>
+                <p className="text-xs text-muted-foreground print:text-gray-600">{t('academyAddressPlaceholder') || "Academy Address, City, State"}</p>
+            </div>
+          </div>
+
           <div className="text-center space-y-1">
             <p className="text-xl font-semibold">{studentName}</p>
             <p className="text-sm text-muted-foreground">{t('class')}: {t(studentClass as any) || studentClass}</p>
           </div>
-          <Card className="bg-muted/50 p-4">
+          <Card className="bg-muted/50 p-4 print:bg-gray-100 print:border">
             <CardContent className="text-center space-y-2 p-0">
               <p className="text-lg font-medium">{testPaper.title}</p>
-              <p className="text-4xl font-bold text-primary">{score} / {totalQuestions}</p>
-              <p className="text-lg text-accent">({percentage}%)</p>
-              <p className="text-sm text-muted-foreground">{t('date')}: {currentDate}</p>
+              <p className="text-4xl font-bold text-primary print:text-black">{score} / {totalQuestions}</p>
+              <p className="text-lg text-accent print:text-blue-600">({percentage}%)</p>
+              <p className="text-sm text-muted-foreground print:text-gray-700">{t('date')}: {currentDate}</p>
             </CardContent>
           </Card>
           
-          <Accordion type="single" collapsible className="w-full">
+          <Accordion type="single" collapsible className="w-full print:hidden">
             <AccordionItem value="item-1">
               <AccordionTrigger>{t('reviewAnswers') || "Review Your Answers"}</AccordionTrigger>
               <AccordionContent>
@@ -206,7 +266,13 @@ export default function AIPoweredTestPage() {
             </AccordionItem>
           </Accordion>
         </CardContent>
-        <CardFooter className="flex justify-center p-6">
+        <CardFooter className="flex flex-col sm:flex-row justify-center gap-2 p-6 print:hidden">
+          <Button onClick={handleDownloadCertificate} variant="outline">
+            <Download className="mr-2 h-4 w-4" /> {t('downloadCertificate')}
+          </Button>
+          <Button onClick={handleShareCertificate} variant="outline">
+            <Share2 className="mr-2 h-4 w-4" /> {t('shareResult')}
+          </Button>
           <Button onClick={handleTryAgain} className="bg-accent text-accent-foreground hover:bg-accent/90">
             <RotateCcw className="mr-2 h-4 w-4" /> {t('tryAnotherTest')}
           </Button>
@@ -222,9 +288,15 @@ export default function AIPoweredTestPage() {
     return (
       <Card className="max-w-2xl mx-auto shadow-lg">
         <CardHeader>
-          <CardTitle className="text-2xl font-headline text-primary">
-            {currentSubject.subjectName} - {t('question')} {questionNumber} / {totalQuestionsInSubject}
-          </CardTitle>
+            <div className="flex justify-between items-center">
+                <CardTitle className="text-xl md:text-2xl font-headline text-primary">
+                    {currentSubject.subjectName} - {t('question')} {questionNumber} / {totalQuestionsInSubject}
+                </CardTitle>
+                <div className="flex items-center gap-2 text-lg font-semibold text-destructive">
+                    <TimerIcon className="h-5 w-5"/>
+                    {formatTime(timeLeft)}
+                </div>
+            </div>
           <CardDescription className="text-md pt-1">{testPaper?.title}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -232,18 +304,24 @@ export default function AIPoweredTestPage() {
           
           <RadioGroup value={selectedOption ?? undefined} onValueChange={setSelectedOption} disabled={showAnswer}>
             {currentQuestion.options.map((option, index) => (
-              <div
-                key={index}
-                className={`flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors cursor-pointer
-                  ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'border-green-500 bg-green-500/10 text-green-700' : ''}
-                  ${showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'border-red-500 bg-red-500/10 text-red-700' : ''}
-                  ${!showAnswer && selectedOption === index.toString() ? 'border-primary bg-primary/10' : 'border-input'}
-                `}
-              >
-                <RadioGroupItem value={index.toString()} id={`option-${index}`} />
-                <Label htmlFor={`option-${index}`} className="font-normal text-base cursor-pointer flex-grow">{option}</Label>
-                {showAnswer && index === currentQuestion.correctAnswerIndex && <CheckCircle className="h-5 w-5 text-green-500" />}
-                {showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex && <XCircle className="h-5 w-5 text-red-500" />}
+              <div key={index} className="flex items-center space-x-3">
+                <RadioGroupItem value={index.toString()} id={`option-${index}`} 
+                  className={`
+                    ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'border-green-500 ring-green-500' : ''}
+                    ${showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'border-red-500 ring-red-500' : ''}
+                  `}
+                />
+                <Label htmlFor={`option-${index}`} 
+                  className={`font-normal text-base cursor-pointer flex-grow p-3 border rounded-md hover:bg-muted/50 transition-colors
+                    ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'border-green-500 bg-green-500/10 text-green-700' : ''}
+                    ${showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'border-red-500 bg-red-500/10 text-red-700' : ''}
+                    ${!showAnswer && selectedOption === index.toString() ? 'border-primary bg-primary/10' : 'border-input'}
+                  `}
+                >
+                  {option}
+                  {showAnswer && index === currentQuestion.correctAnswerIndex && <CheckCircle className="inline h-5 w-5 ml-2 text-green-500" />}
+                  {showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex && <XCircle className="inline h-5 w-5 ml-2 text-red-500" />}
+                </Label>
               </div>
             ))}
           </RadioGroup>
@@ -279,7 +357,6 @@ export default function AIPoweredTestPage() {
     );
   }
 
-  // Default: User Details Form (stage === "details")
   return (
     <Card className="max-w-lg mx-auto shadow-xl">
       <CardHeader className="text-center">
@@ -320,3 +397,4 @@ export default function AIPoweredTestPage() {
     </Card>
   );
 }
+
