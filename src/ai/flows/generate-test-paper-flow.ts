@@ -15,7 +15,7 @@ const TestQuestionSchema = z.object({
   questionText: z.string().describe('The main text of the question.'),
   options: z.array(z.string()).length(4).describe('An array of exactly four multiple-choice options.'),
   correctAnswerIndex: z.number().min(0).max(3).describe('The 0-based index of the correct option in the options array.'),
-  explanation: z.string().optional().describe('A brief explanation for the correct answer (optional).')
+  explanation: z.string().optional().describe('A brief explanation for the correct answer (optional). Respond in the language of the input test paper language.')
 });
 export type TestQuestion = z.infer<typeof TestQuestionSchema>;
 
@@ -63,7 +63,7 @@ const prompt = ai.definePrompt({
     - Provide the main question text.
     - Provide exactly 4 multiple-choice options.
     - Indicate the 0-based index of the correct answer.
-    - Optionally, provide a brief explanation for the correct answer.
+    - Optionally, provide a brief explanation for the correct answer (this explanation must also be in the {{language}}).
 
     The difficulty level of the questions should be appropriate for a student in {{{studentClass}}} preparing for defence academy entrance.
     Focus on topics relevant to Sainik School, Military School, NDA foundation type exams.
@@ -80,38 +80,48 @@ const generateTestPaperFlow = ai.defineFlow(
     outputSchema: TestPaperSchema,
   },
   async (input) => {
-    console.log('generateTestPaperFlow: Invoked with input:', input); // Log input
+    console.log('generateTestPaperFlow: Invoked with input language:', input.language, 'and class:', input.studentClass);
     try {
       const {output} = await prompt(input);
       if (!output || !output.subjects || output.subjects.length !== 3 || 
-          output.subjects.some(s => !s.subjectName || s.questions.length !== 10) || !output.title) {
-        console.warn('generateTestPaperFlow: AI returned invalid, incomplete data, or missing title/subject names. Output:', JSON.stringify(output));
+          output.subjects.some(s => !s.subjectName || !s.questions || s.questions.length !== 10) || !output.title) {
+        console.warn('generateTestPaperFlow: AI returned invalid, incomplete data, or missing title/subject names. Output structure issues noted.');
         const errorMsg = input.language === 'hi' 
           ? 'क्षमा करें, AI मॉडल पेपर बनाने में असमर्थ था या अपूर्ण डेटा लौटाया। कृपया पुनः प्रयास करें।' 
           : 'Sorry, the AI was unable to generate the model paper or returned incomplete data. Please try again.';
-        // Construct a fallback TestPaper object that signals an error but fits the schema.
+        
+        const dummyQuestion: TestQuestion = { questionText: errorMsg, options: ['N/A', 'N/A', 'N/A', 'N/A'], correctAnswerIndex: 0, explanation: errorMsg };
         return {
             title: input.language === 'hi' ? 'त्रुटि: मॉडल पेपर उत्पन्न नहीं हो सका' : 'Error: Could Not Generate Model Paper',
             subjects: [
-                { subjectName: input.language === 'hi' ? 'त्रुटि विषय 1' : 'Error Subject 1', questions: [{ questionText: errorMsg, options: ['N/A', 'N/A', 'N/A', 'N/A'], correctAnswerIndex: 0, explanation: errorMsg }] },
-                { subjectName: input.language === 'hi' ? 'त्रुटि विषय 2' : 'Error Subject 2', questions: [{ questionText: errorMsg, options: ['N/A', 'N/A', 'N/A', 'N/A'], correctAnswerIndex: 0, explanation: errorMsg }] },
-                { subjectName: input.language === 'hi' ? 'त्रुटि विषय 3' : 'Error Subject 3', questions: [{ questionText: errorMsg, options: ['N/A', 'N/A', 'N/A', 'N/A'], correctAnswerIndex: 0, explanation: errorMsg }] },
+                { subjectName: input.language === 'hi' ? 'त्रुटि विषय 1' : 'Error Subject 1', questions: Array(10).fill(dummyQuestion) },
+                { subjectName: input.language === 'hi' ? 'त्रुटि विषय 2' : 'Error Subject 2', questions: Array(10).fill(dummyQuestion) },
+                { subjectName: input.language === 'hi' ? 'त्रुटि विषय 3' : 'Error Subject 3', questions: Array(10).fill(dummyQuestion) },
             ]
         };
       }
-      console.log('generateTestPaperFlow: Successfully generated test paper.');
+      console.log('generateTestPaperFlow: Successfully generated test paper titled:', output.title);
       return output;
     } catch (error: any) {
         console.error('generateTestPaperFlow: Error during generation:', error);
-        const errorMessage = input.language === 'hi' ? 'मॉडल पेपर बनाते समय एक अप्रत्याशित त्रुटि हुई।' : 'An unexpected error occurred while generating the model paper.';
+        const genericErrorMsg = input.language === 'hi' ? 'मॉडल पेपर बनाते समय एक अप्रत्याशित त्रुटि हुई।' : 'An unexpected error occurred while generating the model paper.';
+        const errorDetail = error.message ? String(error.message).substring(0, 100) : (input.language === 'hi' ? 'अज्ञात त्रुटि' : 'Unknown error');
+        
+        const dummyErrorQuestion: TestQuestion = {
+          questionText: genericErrorMsg,
+          options: ['N/A', 'N/A', 'N/A', 'N/A'],
+          correctAnswerIndex: 0,
+          explanation: errorDetail,
+        };
         return {
             title: input.language === 'hi' ? 'त्रुटि: मॉडल पेपर उत्पन्न नहीं हो सका' : 'Error: Could Not Generate Model Paper',
             subjects: [
-                { subjectName: input.language === 'hi' ? 'त्रुटि विषय 1' : 'Error Subject 1', questions: [{ questionText: errorMessage, options: ['N/A', 'N/A', 'N/A', 'N/A'], correctAnswerIndex: 0, explanation: error.message || (input.language === 'hi' ? 'अज्ञात त्रुटि' : 'Unknown error') }] },
-                { subjectName: input.language === 'hi' ? 'त्रुटि विषय 2' : 'Error Subject 2', questions: [{ questionText: errorMessage, options: ['N/A', 'N/A', 'N/A', 'N/A'], correctAnswerIndex: 0, explanation: error.message || (input.language === 'hi' ? 'अज्ञात त्रुटि' : 'Unknown error') }] },
-                { subjectName: input.language === 'hi' ? 'त्रुटि विषय 3' : 'Error Subject 3', questions: [{ questionText: errorMessage, options: ['N/A', 'N/A', 'N/A', 'N/A'], correctAnswerIndex: 0, explanation: error.message || (input.language === 'hi' ? 'अज्ञात त्रुटि' : 'Unknown error') }] },
+                { subjectName: input.language === 'hi' ? 'त्रुटि विषय 1' : 'Error Subject 1', questions: Array(10).fill(dummyErrorQuestion) },
+                { subjectName: input.language === 'hi' ? 'त्रुटि विषय 2' : 'Error Subject 2', questions: Array(10).fill(dummyErrorQuestion) },
+                { subjectName: input.language === 'hi' ? 'त्रुटि विषय 3' : 'Error Subject 3', questions: Array(10).fill(dummyErrorQuestion) },
             ]
         };
     }
   }
 );
+
