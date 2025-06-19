@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, type ChangeEvent } from 'react';
@@ -9,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, AlertTriangle, Award, BookCopy, ChevronLeft, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, Share2, LogOut } from 'lucide-react'; // Added LogOut for finish early
+import { Loader2, AlertTriangle, Award, BookCopy, ChevronLeft, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, Share2, LogOut, Stamp } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
 import { generateAIMockTest } from './actions';
@@ -160,7 +159,6 @@ export default function AIPoweredTestPage() {
   const handleFinishEarly = () => {
     setTimerActive(false);
     setStage("completed");
-    // Score is already calculated based on submitted answers
   };
 
   const handleTryAgain = () => {
@@ -193,12 +191,19 @@ export default function AIPoweredTestPage() {
                 text: `${t('myTestScore')} ${studentName}: ${score}/${getTotalQuestions()} ${t('inText')} ${testPaper.title}. ${t('shareMessageAcademy') || "Achieved at Go Swami Defence Academy!"}`,
                 url: window.location.href,
             });
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error sharing certificate:', error);
-            toast({ title: t('errorOccurred'), description: t('shareFailed') || "Could not share result." });
+            if (error.name === 'AbortError') {
+                // User cancelled the share operation, typically not an error to display
+                console.log('Share operation aborted by user.');
+            } else if (error.name === 'NotAllowedError' || error.message.toLowerCase().includes('permission denied')) {
+                 toast({ title: t('errorOccurred'), description: t('sharePermissionDenied') || "Sharing permission was denied. Please check your browser settings or try again." , variant: "destructive"});
+            } else {
+                toast({ title: t('errorOccurred'), description: t('shareFailed') || "Could not share result." , variant: "destructive"});
+            }
         }
     } else if (typeof window !== 'undefined') {
-        toast({ title: t('featureNotSupported') || "Feature Not Supported", description: t('shareNotSupported') || "Web Share API is not supported on your browser." });
+        toast({ title: t('featureNotSupported') || "Feature Not Supported", description: t('shareNotSupported') || "Web Share API is not supported on your browser or device." });
     }
   };
 
@@ -225,7 +230,7 @@ export default function AIPoweredTestPage() {
         </CardHeader>
         <CardContent className="p-6 space-y-4">
           <div className="flex justify-between items-center mb-4">
-            <Image src="https://placehold.co/100x100.png" alt={t('academyStampAlt') || "Academy Stamp"} width={80} height={80} data-ai-hint="academy logo stamp" className="opacity-75 print:opacity-100" />
+             <Image src="https://placehold.co/100x100.png?text=Stamp" alt={t('academyStampAlt') || "Academy Stamp"} width={80} height={80} data-ai-hint="academy logo stamp" className="opacity-75 print:opacity-100" />
             <div className="text-right">
                 <p className="text-sm font-bold text-primary print:text-black">Go Swami Defence Academy</p>
                 <p className="text-xs text-muted-foreground print:text-gray-600">{t('academyAddressPlaceholder') || "Academy Address, City, State"}</p>
@@ -409,3 +414,8 @@ export default function AIPoweredTestPage() {
     </Card>
   );
 }
+
+// Add these to translations.ts
+// sharePermissionDenied: "Sharing permission was denied. Please check your browser settings or try again." (EN/HI)
+// sharePermissionDenied_hi: "शेयर करने की अनुमति अस्वीकार कर दी गई। कृपया अपनी ब्राउज़र सेटिंग्स जांचें या पुनः प्रयास करें।"
+
