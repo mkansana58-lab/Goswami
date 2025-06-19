@@ -14,7 +14,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { STUDENT_LOGGED_IN_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-// MainNews component is removed from homepage, so no import needed
+import { MainNews } from '@/components/home/main-news';
 
 
 const featureGridLinks = [
@@ -99,14 +99,14 @@ export default function HomePage() {
           {isClient && isStudentLoggedIn && studentName ? `${t('greetingDynamic')} ${studentName}!` : t('helloTeam')}
         </h2>
         <div className="relative w-full max-w-5xl mx-auto overflow-hidden rounded-lg shadow-lg group">
-          <div className="relative h-[250px] sm:h-[300px] md:h-[400px] w-full">
+          <div className="relative h-[200px] sm:h-[250px] md:h-[300px] w-full">
             <Image
-              src="https://placehold.co/1200x400.png" // Static image
+              src="https://placehold.co/1200x300.png" 
               alt={t('scholarshipExamsBanner')}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover"
-              data-ai-hint="scholarship exams app" // AI hint for this specific image
+              data-ai-hint="scholarship exams app" 
               priority
             />
           </div>
@@ -124,9 +124,6 @@ export default function HomePage() {
           </div>
         </Card>
       </section>
-
-      {/* MainNews component is no longer rendered on the homepage directly */}
-      {/* <MainNews /> */}
 
       <section>
         <div className="grid grid-cols-3 gap-3 md:gap-4">
