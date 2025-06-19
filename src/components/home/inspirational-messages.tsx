@@ -4,8 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronsRight, ChevronsLeft } from 'lucide-react';
-import { Button } from '../ui/button';
+import { cn } from '@/lib/utils';
 
 const quotes = {
   en: [
@@ -26,41 +25,46 @@ const quotes = {
 
 export function InspirationalMessages() {
   const { language, t } = useLanguage();
-  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+  const [currentQuotes, setCurrentQuotes] = useState<string[]>(quotes[language]);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentQuoteIndex((prevIndex) => (prevIndex + 1) % quotes[language].length);
-    }, 7000); // Change quote every 7 seconds
-    return () => clearInterval(timer);
+    setCurrentQuotes(quotes[language]);
   }, [language]);
 
-  const handleNextQuote = () => {
-    setCurrentQuoteIndex((prevIndex) => (prevIndex + 1) % quotes[language].length);
-  };
-
-  const handlePrevQuote = () => {
-    setCurrentQuoteIndex((prevIndex) => (prevIndex - 1 + quotes[language].length) % quotes[language].length);
-  };
-
   return (
-    <Card className="w-full shadow-lg bg-card border-primary mt-8">
+    <Card className="w-full shadow-lg bg-card border-primary mt-8 overflow-hidden">
       <CardHeader>
         <CardTitle className="text-center text-2xl font-headline text-primary">{t('inspiringQuote')}</CardTitle>
       </CardHeader>
-      <CardContent className="text-center min-h-[100px] flex flex-col items-center justify-center">
-        <p className="text-lg italic text-foreground">
-          "{quotes[language][currentQuoteIndex]}"
-        </p>
-        <div className="mt-4 flex justify-center space-x-2">
-          <Button variant="outline" size="icon" onClick={handlePrevQuote} aria-label="Previous quote">
-            <ChevronsLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={handleNextQuote} aria-label="Next quote">
-            <ChevronsRight className="h-4 w-4" />
-          </Button>
+      <CardContent className="text-center h-20 md:h-24 relative overflow-hidden">
+        <div className="animate-marquee-vertical whitespace-nowrap absolute inset-x-0">
+          {currentQuotes.map((quote, index) => (
+            <p key={`${language}-${index}-top`} className="text-lg italic text-foreground py-2 h-20 md:h-24 flex items-center justify-center">
+              "{quote}"
+            </p>
+          ))}
+          {/* Duplicate for seamless scrolling */}
+          {currentQuotes.map((quote, index) => (
+            <p key={`${language}-${index}-bottom`} className="text-lg italic text-foreground py-2 h-20 md:h-24 flex items-center justify-center">
+              "{quote}"
+            </p>
+          ))}
         </div>
       </CardContent>
+      <style jsx global>{`
+        @keyframes marquee-vertical {
+          0% { transform: translateY(0%); }
+          100% { transform: translateY(-50%); }
+        }
+        .animate-marquee-vertical {
+          animation: marquee-vertical ${currentQuotes.length * 7}s linear infinite;
+        }
+        .animate-marquee-vertical:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
     </Card>
   );
 }
+
+    

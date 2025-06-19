@@ -5,7 +5,6 @@ export const translations = {
   en: {
     appName: "Go Swami Defence Academy",
     navHome: "Home",
-    navSchedule: "Class Schedule",
     navTests: "Test Series",
     navVideos: "Video Classes",
     navScholarship: "Scholarship",
@@ -423,11 +422,17 @@ export const translations = {
     watchMoreVideosButton: "Watch More on YouTube",
     downloadMoreButton: "More Resources on YouTube",
     closePlayer: "Close Player",
+    mainNewsTitle: "Main News",
+    sainikMilitaryRmsNewsTitle: "Sainik School / Military School / RMS News",
+    jnvNewsTitle: "Jawahar Navodaya Vidyalaya (JNV) News",
+    neetMedicalNewsTitle: "NEET / Medical Exams News",
+    sscGovtJobsNewsTitle: "SSC / Government Recruitment News",
+    railwayRrbNewsTitle: "Railway Recruitment / RRB News",
+    cuetNdaUpscNewsTitle: "CUET / NDA / UPSC News",
   },
   hi: {
     appName: "गो स्वामी डिफेंस अकादमी",
     navHome: "मुख्य पृष्ठ",
-    navSchedule: "कक्षा सारणी",
     navTests: "टेस्ट सीरीज",
     navVideos: "वीडियो कक्षाएं",
     navScholarship: "छात्रवृत्ति",
@@ -845,5 +850,14 @@ export const translations = {
     watchMoreVideosButton: "यूट्यूब पर और वीडियो देखें",
     downloadMoreButton: "यूट्यूब पर और संसाधन",
     closePlayer: "प्लेयर बंद करें",
+    mainNewsTitle: "प्रमुख खबरें",
+    sainikMilitaryRmsNewsTitle: "सैनिक स्कूल / मिलिट्री स्कूल / RMS समाचार",
+    jnvNewsTitle: "जवाहर नवोदय विद्यालय (JNV) समाचार",
+    neetMedicalNewsTitle: "NEET / मेडिकल परीक्षा समाचार",
+    sscGovtJobsNewsTitle: "SSC / सरकारी भर्ती समाचार",
+    railwayRrbNewsTitle: "रेलवे भर्ती / RRB समाचार",
+    cuetNdaUpscNewsTitle: "CUET / NDA / UPSC समाचार",
   }
 };
+
+    

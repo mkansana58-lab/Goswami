@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLanguage } from '@/hooks/use-language';
 import {
-  ClipboardCheck, Gift, Newspaper, ListChecks, Home as HomeIcon, CalendarDays, Library, UserCircle, PackageSearch, PlaySquare, Tv2, DownloadCloud, Cpu, ChevronLeft, ChevronRight
+  ClipboardCheck, Gift, Newspaper, ListChecks, Home as HomeIcon, PackageSearch, PlaySquare, Tv2, DownloadCloud, Cpu, ChevronLeft, ChevronRight, Library, UserCircle, CalendarDays
 } from 'lucide-react';
 import Image from 'next/image';
 import { InspirationalMessages } from '@/components/home/inspirational-messages';
+import { MainNews } from '@/components/home/main-news'; // Import MainNews
 import React, { useEffect, useState, useCallback } from 'react';
 import { STUDENT_LOGGED_IN_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants';
 import { usePathname } from 'next/navigation';
@@ -32,7 +33,7 @@ const getDesktopExploreLinks = (isStudentLoggedIn: boolean, t: (key: any) => str
     { href: '/', labelKey: 'navHome', icon: HomeIcon, descriptionKey: 'navHome' },
     ...(isStudentLoggedIn ? [{ href: '/student-profile', labelKey: 'studentProfileTitle', icon: UserCircle, descriptionKey: 'studentProfileTitle' }] : []),
     { href: '/learning-hub', labelKey: 'navLearningHub', icon: PackageSearch, descriptionKey: 'learningHubDesc' },
-    { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays, descriptionKey: 'navSchedule' },
+    // { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays, descriptionKey: 'navSchedule' }, // Removed Schedule
 ];
 
 const sliderImages = [
@@ -173,6 +174,8 @@ export default function HomePage() {
         </Card>
       </section>
 
+      <MainNews /> {/* Added MainNews component */}
+
       <section>
         <div className="grid grid-cols-3 gap-3 md:gap-4">
           {featureGridLinks.map((link) => (
@@ -209,4 +212,5 @@ export default function HomePage() {
     </div>
   );
 }
+
     

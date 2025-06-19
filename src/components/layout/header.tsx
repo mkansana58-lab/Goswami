@@ -25,7 +25,7 @@ const primaryNavLinks = [
   { href: '/', labelKey: 'navHome', icon: Home },
   { href: '/study-material', labelKey: 'navStudyMaterial', icon: Library },
   { href: '/learning-hub', labelKey: 'navLearningHub', icon: PackageSearch },
-  { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays },
+  // { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays }, // Removed Schedule
   { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck },
 ];
 
@@ -112,9 +112,8 @@ export function Header() {
 
   useEffect(() => {
     setIsClient(true);
-    checkLoginStatus(); // Initial check on mount
+    checkLoginStatus(); 
 
-    // Listen for custom events dispatched from login/logout/profile update
     window.addEventListener('studentProfileUpdated', checkLoginStatus);
     window.addEventListener('studentLoggedOut', checkLoginStatus);
 
@@ -122,9 +121,9 @@ export function Header() {
       window.removeEventListener('studentProfileUpdated', checkLoginStatus);
       window.removeEventListener('studentLoggedOut', checkLoginStatus);
     };
-  }, []); // Run only once on mount and clean up
+  }, []); 
 
-   useEffect(() => { // Re-check on pathname change too, for SPA navigations
+   useEffect(() => { 
     if(isClient) {
       checkLoginStatus();
     }
@@ -194,8 +193,9 @@ export function Header() {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'new_live_class': return <Tv2 className="h-4 w-4 text-blue-500 flex-shrink-0" />;
-      case 'new_schedule_item': case 'new_homework_item': case 'new_update_item': return <CalendarDays className="h-4 w-4 text-green-500 flex-shrink-0" />;
-      case 'important': return <Info className="h-4 w-4 text-yellow-500 flex-shrink-0" />;
+      case 'new_schedule_item': return <CalendarDays className="h-4 w-4 text-green-500 flex-shrink-0" />;
+      case 'new_homework_assignment': return <ListChecks className="h-4 w-4 text-orange-500 flex-shrink-0" />;
+      case 'new_academy_update': return <Info className="h-4 w-4 text-purple-500 flex-shrink-0" />;
       default: return <Bell className="h-4 w-4 text-gray-500 flex-shrink-0" />;
     }
   };
@@ -288,3 +288,5 @@ export function Header() {
     </header>
   );
 }
+
+    
