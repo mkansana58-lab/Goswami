@@ -12,7 +12,7 @@ import {
   BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, LogOut, LayoutDashboard,
   Home, DownloadCloud, MoreHorizontal, ScissorsLineDashed, HelpingHand, FileText, MessageSquare, Briefcase, BookOpen, ListChecks, Bell, LogIn,
   Gift, History, Newspaper, CalendarDays, CheckCircle, XCircle, Info, Tv2, School, Library, UserCircle, Settings, Mail, PackageSearch, Youtube, Megaphone
-} from 'lucide-react'; // Added Youtube, Megaphone
+} from 'lucide-react'; 
 import { Sheet, SheetContent, SheetTrigger, SheetTitle as RadixSheetTitle } from '@/components/ui/sheet';
 import React, { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
@@ -199,6 +199,7 @@ export function Header() {
       case 'new_academy_update': return <Info className="h-4 w-4 text-purple-500 flex-shrink-0" />;
       case 'youtube_update': return <Youtube className="h-4 w-4 text-red-500 flex-shrink-0" />;
       case 'general_announcement': return <Megaphone className="h-4 w-4 text-yellow-500 flex-shrink-0" />;
+      case 'news_item': return <Newspaper className="h-4 w-4 text-teal-500 flex-shrink-0" />; // Added icon for news
       default: return <Bell className="h-4 w-4 text-gray-500 flex-shrink-0" />;
     }
   };
