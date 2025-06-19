@@ -10,11 +10,11 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { InspirationalMessages } from '@/components/home/inspirational-messages';
-// import { MainNews } from '@/components/home/main-news'; // Removed MainNews import
 import React, { useEffect, useState, useCallback } from 'react';
 import { STUDENT_LOGGED_IN_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { MainNews } from '@/components/home/main-news';
 
 
 const featureGridLinks = [
@@ -174,7 +174,8 @@ export default function HomePage() {
         </Card>
       </section>
 
-      {/* <MainNews /> Removed MainNews component from here */}
+      {/* MainNews component is no longer rendered on the homepage directly */}
+      {/* <MainNews /> */}
 
       <section>
         <div className="grid grid-cols-3 gap-3 md:gap-4">

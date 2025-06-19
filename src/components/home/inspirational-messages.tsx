@@ -36,16 +36,16 @@ export function InspirationalMessages() {
       <CardHeader>
         <CardTitle className="text-center text-2xl font-headline text-primary">{t('inspiringQuote')}</CardTitle>
       </CardHeader>
-      <CardContent className="text-center h-20 md:h-24 relative overflow-hidden">
+      <CardContent className="text-center h-24 md:h-28 relative overflow-hidden"> {/* Increased height */}
         <div className="animate-marquee-vertical whitespace-nowrap absolute inset-x-0">
           {currentQuotes.map((quote, index) => (
-            <p key={`${language}-${index}-top`} className="text-lg italic text-foreground py-2 h-20 md:h-24 flex items-center justify-center">
+            <p key={`${language}-${index}-top`} className="text-lg italic text-foreground h-24 md:h-28 flex items-center justify-center leading-tight px-2"> {/* Increased height */}
               "{quote}"
             </p>
           ))}
           {/* Duplicate for seamless scrolling */}
           {currentQuotes.map((quote, index) => (
-            <p key={`${language}-${index}-bottom`} className="text-lg italic text-foreground py-2 h-20 md:h-24 flex items-center justify-center">
+            <p key={`${language}-${index}-bottom`} className="text-lg italic text-foreground h-24 md:h-28 flex items-center justify-center leading-tight px-2"> {/* Increased height */}
               "{quote}"
             </p>
           ))}
@@ -57,7 +57,7 @@ export function InspirationalMessages() {
           100% { transform: translateY(-50%); }
         }
         .animate-marquee-vertical {
-          animation: marquee-vertical ${currentQuotes.length * 4}s linear infinite; /* Adjusted speed from 7s to 4s per quote cycle */
+          animation: marquee-vertical ${currentQuotes.length * 5}s linear infinite; /* Adjusted speed from 4s to 5s per quote cycle */
         }
         .animate-marquee-vertical:hover {
           animation-play-state: paused;
