@@ -46,8 +46,11 @@ const prompt = ai.definePrompt({
     The items should cover a mix of categories such as National, International, Sports, Science & Technology, Economy, and Defence.
     Ensure the information is presented clearly and concisely.
     For each item, provide a title, a summary, an optional category, an optional plausible source name (do not invent obscure sources), and a suggested publication date (YYYY-MM-DD format).
+    
+    ALL content (titles, summaries, categories, source names) MUST be in the {{language}}.
+    If the language is 'hi' (Hindi), ALL text MUST be in Devanagari script.
+
     Prioritize generating events that would plausibly occur or be reported between December 2024 and July 2025 if your knowledge allows for such informed forecasting or common recurring events. If specific events for this future period are not within your knowledge, please generate the most recent and relevant current affairs items based on your latest training data (e.g., from the last 1-6 months).
-    Provide the response in {{language}}. For Hindi responses, use Devanagari script.
 
     Example of a single article structure (though you will provide an array of these):
     Title: Major Defence Exercise 'Yudh Abhyas' Concludes
@@ -68,7 +71,7 @@ const generateCurrentAffairsFlow = ai.defineFlow(
     outputSchema: GenerateCurrentAffairsOutputSchema,
   },
   async (input) => {
-    console.log('generateCurrentAffairsFlow: Invoked with input language:', input.language, 'and count:', input.count); // Added console log
+    console.log('generateCurrentAffairsFlow: Invoked with input language:', input.language, 'and count:', input.count);
     const {output} = await prompt(input);
     if (!output || !output.articles || output.articles.length === 0) {
       const errorMsg = input.language === 'hi' ? 'क्षमा करें, अभी करेंट अफेयर्स उत्पन्न करना संभव नहीं है।' : 'Sorry, generating current affairs is not possible at the moment.';
