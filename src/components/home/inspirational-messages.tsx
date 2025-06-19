@@ -36,16 +36,16 @@ export function InspirationalMessages() {
       <CardHeader>
         <CardTitle className="text-center text-2xl font-headline text-primary">{t('inspiringQuote')}</CardTitle>
       </CardHeader>
-      <CardContent className="text-center h-24 md:h-28 relative overflow-hidden"> {/* Increased height */}
+      <CardContent className="text-center h-28 md:h-32 relative overflow-hidden"> {/* Increased height */}
         <div className="animate-marquee-vertical whitespace-nowrap absolute inset-x-0">
           {currentQuotes.map((quote, index) => (
-            <p key={`${language}-${index}-top`} className="text-lg italic text-foreground h-24 md:h-28 flex items-center justify-center leading-tight px-2"> {/* Increased height */}
+            <p key={`${language}-${index}-top`} className="text-lg italic text-foreground h-28 md:h-32 flex items-center justify-center leading-tight px-2"> {/* Increased height */}
               "{quote}"
             </p>
           ))}
           {/* Duplicate for seamless scrolling */}
           {currentQuotes.map((quote, index) => (
-            <p key={`${language}-${index}-bottom`} className="text-lg italic text-foreground h-24 md:h-28 flex items-center justify-center leading-tight px-2"> {/* Increased height */}
+            <p key={`${language}-${index}-bottom`} className="text-lg italic text-foreground h-28 md:h-32 flex items-center justify-center leading-tight px-2"> {/* Increased height */}
               "{quote}"
             </p>
           ))}
@@ -54,10 +54,11 @@ export function InspirationalMessages() {
       <style jsx global>{`
         @keyframes marquee-vertical {
           0% { transform: translateY(0%); }
-          100% { transform: translateY(-50%); }
+          100% { transform: translateY(-50%); } /* This should be -50% for a two-set continuous scroll */
         }
         .animate-marquee-vertical {
-          animation: marquee-vertical ${currentQuotes.length * 5}s linear infinite; /* Adjusted speed from 4s to 5s per quote cycle */
+          /* Each quote visible for 5s, total animation time = quotes.length * 5s */
+          animation: marquee-vertical ${currentQuotes.length * 7}s linear infinite; /* Adjusted speed, 7s per quote cycle */
         }
         .animate-marquee-vertical:hover {
           animation-play-state: paused;

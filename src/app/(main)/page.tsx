@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLanguage } from '@/hooks/use-language';
 import {
-  ClipboardCheck, Gift, Newspaper, ListChecks, Home as HomeIcon, PackageSearch, PlaySquare, Tv2, DownloadCloud, Cpu, ChevronLeft, ChevronRight, Library, UserCircle, CalendarDays
+  ClipboardCheck, Gift, Newspaper, ListChecks, Home as HomeIcon, PackageSearch, PlaySquare, Tv2, DownloadCloud, Cpu, Library, UserCircle, CalendarDays
 } from 'lucide-react';
 import Image from 'next/image';
 import { InspirationalMessages } from '@/components/home/inspirational-messages';
@@ -14,7 +14,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { STUDENT_LOGGED_IN_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { MainNews } from '@/components/home/main-news';
+// MainNews component is removed from homepage, so no import needed
 
 
 const featureGridLinks = [
@@ -36,13 +36,6 @@ const getDesktopExploreLinks = (isStudentLoggedIn: boolean, t: (key: any) => str
     { href: '/latest-news', labelKey: 'navLatestNews', icon: Newspaper, descriptionKey: 'latestNewsPageDesc' },
 ];
 
-const sliderImages = [
-  { src: 'https://placehold.co/1200x400.png', altTextKey: 'placeholderBanner', dataAiHint: 'colorful students' },
-  { src: 'https://placehold.co/1200x400.png', altTextKey: 'placeholderBanner', dataAiHint: 'vibrant classroom' },
-  { src: 'https://placehold.co/1200x400.png', altTextKey: 'placeholderBanner', dataAiHint: 'bright academy' },
-  { src: 'https://placehold.co/1200x400.png', altTextKey: 'placeholderBanner', dataAiHint: 'dynamic learning' },
-  { src: 'https://placehold.co/1200x400.png', altTextKey: 'scholarshipExamsBanner', dataAiHint: 'scholarship exams app' },
-];
 
 export default function HomePage() {
   const { t } = useLanguage();
@@ -50,7 +43,6 @@ export default function HomePage() {
   const [isStudentLoggedIn, setIsStudentLoggedIn] = useState(false);
   const [studentName, setStudentName] = useState<string | null>(null);
   const currentPathname = usePathname();
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const updateLoginState = useCallback(() => {
     if (typeof window !== 'undefined') {
@@ -99,13 +91,6 @@ export default function HomePage() {
     }
   }, [isClient, currentPathname, updateLoginState]);
 
-  const nextImage = () => {
-    setCurrentImageIndex((prevIndex) => (prevIndex + 1) % sliderImages.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prevIndex) => (prevIndex - 1 + sliderImages.length) % sliderImages.length);
-  };
 
   return (
     <div className="space-y-6 md:space-y-8 bg-background">
@@ -116,48 +101,14 @@ export default function HomePage() {
         <div className="relative w-full max-w-5xl mx-auto overflow-hidden rounded-lg shadow-lg group">
           <div className="relative h-[250px] sm:h-[300px] md:h-[400px] w-full">
             <Image
-              key={currentImageIndex} 
-              src={sliderImages[currentImageIndex].src}
-              alt={t(sliderImages[currentImageIndex].altTextKey as any)}
+              src="https://placehold.co/1200x400.png" // Static image
+              alt={t('scholarshipExamsBanner')}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-cover transition-opacity duration-700 ease-in-out"
-              data-ai-hint={sliderImages[currentImageIndex].dataAiHint}
-              priority={currentImageIndex === 0}
+              className="object-cover"
+              data-ai-hint="scholarship exams app" // AI hint for this specific image
+              priority
             />
-          </div>
-          <Button
-            onClick={prevImage}
-            variant="ghost"
-            size="icon"
-            className="absolute top-1/2 left-1 sm:left-2 transform -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-1 sm:p-2 rounded-full opacity-50 group-hover:opacity-100 transition-opacity"
-            aria-label="Previous Image"
-          >
-            <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
-          </Button>
-          <Button
-            onClick={nextImage}
-            variant="ghost"
-            size="icon"
-            className="absolute top-1/2 right-1 sm:right-2 transform -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-1 sm:p-2 rounded-full opacity-50 group-hover:opacity-100 transition-opacity"
-            aria-label="Next Image"
-          >
-            <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
-          </Button>
-           <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/50 to-transparent">
-            <div className="flex justify-center space-x-2">
-              {sliderImages.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentImageIndex(index)}
-                  className={cn(
-                    "h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full transition-all",
-                    currentImageIndex === index ? "bg-white scale-125" : "bg-white/50 hover:bg-white/75"
-                  )}
-                  aria-label={`Go to image ${index + 1}`}
-                />
-              ))}
-            </div>
           </div>
         </div>
         

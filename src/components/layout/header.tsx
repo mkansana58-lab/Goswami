@@ -199,7 +199,7 @@ export function Header() {
       case 'new_academy_update': return <Info className="h-4 w-4 text-purple-500 flex-shrink-0" />;
       case 'youtube_update': return <Youtube className="h-4 w-4 text-red-500 flex-shrink-0" />;
       case 'general_announcement': return <Megaphone className="h-4 w-4 text-yellow-500 flex-shrink-0" />;
-      case 'news_item': return <Newspaper className="h-4 w-4 text-teal-500 flex-shrink-0" />; // Added icon for news
+      case 'news_item': return <Newspaper className="h-4 w-4 text-teal-500 flex-shrink-0" />;
       default: return <Bell className="h-4 w-4 text-gray-500 flex-shrink-0" />;
     }
   };
@@ -271,7 +271,7 @@ export function Header() {
             <DropdownMenuContent align="end" className="w-80 md:w-96 bg-popover border-border shadow-lg max-h-[400px] overflow-y-auto">
               <DropdownMenuLabel className="flex justify-between items-center">{t('notifications')}</DropdownMenuLabel><DropdownMenuSeparator />
               {notifications.length === 0 ? (<DropdownMenuItem disabled className="text-muted-foreground text-center py-4">{t('noNewNotifications')}</DropdownMenuItem>)
-               : (notifications.map(notif => (<DropdownMenuItem key={notif.id} asChild className="cursor-pointer focus:bg-muted p-2 hover:bg-muted/80"><Link href={notif.link || '#'} className="flex items-start gap-3 text-sm w-full">{getNotificationIcon(notif.type)}<div className="flex-1 space-y-0.5"><p className="font-medium text-popover-foreground leading-tight line-clamp-3">{notif.message}</p><p className="text-xs text-muted-foreground">{notif.timestamp?.toDate().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})} - {notif.timestamp?.toDate().toLocaleDateString([], {day: '2-digit', month: 'short'})}</p></div></Link></DropdownMenuItem>)))}
+               : (notifications.map(notif => (<DropdownMenuItem key={notif.id} asChild className="cursor-pointer focus:bg-muted p-2 hover:bg-muted/80"><Link href={notif.link || '#'} className="flex items-start gap-3 text-sm w-full">{getNotificationIcon(notif.type)}<div className="flex-1 space-y-0.5 overflow-hidden"><p className="font-medium text-popover-foreground line-clamp-3">{notif.message}</p><p className="text-xs text-muted-foreground">{notif.timestamp?.toDate().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})} - {notif.timestamp?.toDate().toLocaleDateString([], {day: '2-digit', month: 'short'})}</p></div></Link></DropdownMenuItem>)))}
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
