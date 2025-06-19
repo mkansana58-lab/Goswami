@@ -83,9 +83,12 @@ const generateTestPaperFlow = ai.defineFlow(
     console.log('generateTestPaperFlow: Invoked with input language:', input.language, 'and class:', input.studentClass);
     try {
       const {output} = await prompt(input);
-      if (!output || !output.subjects || output.subjects.length !== 3 || 
-          output.subjects.some(s => !s.subjectName || !s.questions || s.questions.length !== 10) || !output.title) {
-        console.warn('generateTestPaperFlow: AI returned invalid, incomplete data, or missing title/subject names. Output structure issues noted.');
+      
+      if (!output || !output.title || !Array.isArray(output.subjects) || output.subjects.length !== 3 || 
+          output.subjects.some(s => typeof s !== 'object' || s === null || !s.subjectName || !Array.isArray(s.questions) || s.questions.length !== 10)) {
+        
+        console.warn('generateTestPaperFlow: AI returned invalid, incomplete data, or missing title/subject names. Output structure issues noted. Input was:', JSON.stringify(input));
+        
         const errorMsg = input.language === 'hi' 
           ? 'क्षमा करें, AI मॉडल पेपर बनाने में असमर्थ था या अपूर्ण डेटा लौटाया। कृपया पुनः प्रयास करें।' 
           : 'Sorry, the AI was unable to generate the model paper or returned incomplete data. Please try again.';
@@ -124,4 +127,3 @@ const generateTestPaperFlow = ai.defineFlow(
     }
   }
 );
-
