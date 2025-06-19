@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, AlertTriangle, Award, BookCopy, ChevronLeft, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, Share2, CheckBadge } from 'lucide-react';
+import { Loader2, AlertTriangle, Award, BookCopy, ChevronLeft, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, Share2, LogOut } from 'lucide-react'; // Added LogOut for finish early
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
 import { generateAIMockTest } from './actions';
@@ -152,11 +152,17 @@ export default function AIPoweredTestPage() {
       setCurrentSubjectIndex(sI => sI + 1);
       setCurrentQuestionIndex(0);
     } else {
-      setStage("completed");
       setTimerActive(false);
+      setStage("completed");
     }
   };
   
+  const handleFinishEarly = () => {
+    setTimerActive(false);
+    setStage("completed");
+    // Score is already calculated based on submitted answers
+  };
+
   const handleTryAgain = () => {
     setStage("details");
     setTestPaper(null);
@@ -184,7 +190,7 @@ export default function AIPoweredTestPage() {
         try {
             await navigator.share({
                 title: t('testResultTitle'),
-                text: `${t('myTestScore')} ${studentName}: ${score}/${getTotalQuestions()} in ${testPaper.title}. ${t('shareMessageAcademy') || "Achieved at Go Swami Defence Academy!"}`,
+                text: `${t('myTestScore')} ${studentName}: ${score}/${getTotalQuestions()} ${t('inText')} ${testPaper.title}. ${t('shareMessageAcademy') || "Achieved at Go Swami Defence Academy!"}`,
                 url: window.location.href,
             });
         } catch (error) {
@@ -304,7 +310,11 @@ export default function AIPoweredTestPage() {
           
           <RadioGroup value={selectedOption ?? undefined} onValueChange={setSelectedOption} disabled={showAnswer}>
             {currentQuestion.options.map((option, index) => (
-              <div key={index} className="flex items-center space-x-3">
+              <div key={index} className={`flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors 
+                ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'border-green-500 bg-green-500/10' : ''}
+                ${showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'border-red-500 bg-red-500/10' : ''}
+                ${!showAnswer && selectedOption === index.toString() ? 'border-primary bg-primary/10' : 'border-input'}
+              `}>
                 <RadioGroupItem value={index.toString()} id={`option-${index}`} 
                   className={`
                     ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'border-green-500 ring-green-500' : ''}
@@ -312,10 +322,9 @@ export default function AIPoweredTestPage() {
                   `}
                 />
                 <Label htmlFor={`option-${index}`} 
-                  className={`font-normal text-base cursor-pointer flex-grow p-3 border rounded-md hover:bg-muted/50 transition-colors
-                    ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'border-green-500 bg-green-500/10 text-green-700' : ''}
-                    ${showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'border-red-500 bg-red-500/10 text-red-700' : ''}
-                    ${!showAnswer && selectedOption === index.toString() ? 'border-primary bg-primary/10' : 'border-input'}
+                  className={`font-normal text-base cursor-pointer flex-grow
+                    ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'text-green-700' : ''}
+                    ${showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'text-red-700' : ''}
                   `}
                 >
                   {option}
@@ -339,7 +348,7 @@ export default function AIPoweredTestPage() {
             </Card>
           )}
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex flex-col sm:flex-row gap-2">
           {showAnswer ? (
             <Button onClick={handleNext} className="w-full bg-primary hover:bg-primary/90">
               {currentSubjectIndex === (testPaper?.subjects.length ?? 0) - 1 && currentQuestionIndex === totalQuestionsInSubject - 1 
@@ -352,6 +361,9 @@ export default function AIPoweredTestPage() {
               {t('submitAnswer')}
             </Button>
           )}
+           <Button onClick={handleFinishEarly} variant="outline" className="w-full sm:w-auto" disabled={showAnswer}>
+             <LogOut className="mr-2 h-4 w-4" /> {t('finishTestEarly') || "Finish Test Early"}
+           </Button>
         </CardFooter>
       </Card>
     );
@@ -397,4 +409,3 @@ export default function AIPoweredTestPage() {
     </Card>
   );
 }
-

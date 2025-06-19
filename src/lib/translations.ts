@@ -429,7 +429,8 @@ export const translations = {
     testAutoSubmitted: "Your test has been automatically submitted as the time is up.",
     downloadCertificate: "Download Certificate",
     shareResult: "Share Result",
-    myTestScore: "My Test Score in",
+    myTestScore: "My Test Score",
+    inText: "in",
     shareMessageAcademy: "Achieved at Go Swami Defence Academy!",
     shareFailed: "Could not share result at this time.",
     featureNotSupported: "Feature Not Supported",
@@ -439,6 +440,7 @@ export const translations = {
     reviewAnswers: "Review Your Answers",
     yourAnswer: "Your Answer",
     notAttempted: "Not Attempted",
+    finishTestEarly: "Finish Test Early",
   },
   hi: {
     appName: "गो स्वामी डिफेंस अकादमी",
@@ -867,7 +869,8 @@ export const translations = {
     testAutoSubmitted: "समय समाप्त होने के कारण आपका टेस्ट स्वचालित रूप से सबमिट कर दिया गया है।",
     downloadCertificate: "प्रमाणपत्र डाउनलोड करें",
     shareResult: "परिणाम साझा करें",
-    myTestScore: "मेरा टेस्ट स्कोर",
+    myTestScore: "मेरा परीक्षा स्कोर",
+    inText: "में",
     shareMessageAcademy: "गो स्वामी डिफेंस अकादमी में प्राप्त किया!",
     shareFailed: "इस समय परिणाम साझा नहीं किया जा सका।",
     featureNotSupported: "सुविधा समर्थित नहीं है",
@@ -877,6 +880,6 @@ export const translations = {
     reviewAnswers: "अपने उत्तरों की समीक्षा करें",
     yourAnswer: "आपका उत्तर",
     notAttempted: "प्रयास नहीं किया",
+    finishTestEarly: "टेस्ट जल्दी समाप्त करें",
   }
 }
-
