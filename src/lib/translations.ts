@@ -25,6 +25,7 @@ export const translations = {
     navSainikECounselling: "Sainik E-Counselling",
     navContact: "Contact Us",
     navLearningHub: "Learning Hub",
+    navLatestNews: "Latest News",
     language: "Language",
     english: "English",
     hindi: "Hindi",
@@ -429,6 +430,10 @@ export const translations = {
     sscGovtJobsNewsTitle: "SSC / Government Recruitment News",
     railwayRrbNewsTitle: "Railway Recruitment / RRB News",
     cuetNdaUpscNewsTitle: "CUET / NDA / UPSC News",
+    latestNewsPageTitle: "Latest News & Updates",
+    latestNewsPageDesc: "Stay informed with the latest happenings in exams and education.",
+    scholarshipExamsBanner: "Scholarship Exams Information",
+
   },
   hi: {
     appName: "गो स्वामी डिफेंस अकादमी",
@@ -453,6 +458,7 @@ export const translations = {
     navSainikECounselling: "सैनिक ई-काउंसलिंग",
     navContact: "हमसे संपर्क करें",
     navLearningHub: "लर्निंग हब",
+    navLatestNews: "नवीनतम समाचार",
     language: "भाषा",
     english: "अंग्रेजी",
     hindi: "हिंदी",
@@ -857,7 +863,9 @@ export const translations = {
     sscGovtJobsNewsTitle: "SSC / सरकारी भर्ती समाचार",
     railwayRrbNewsTitle: "रेलवे भर्ती / RRB समाचार",
     cuetNdaUpscNewsTitle: "CUET / NDA / UPSC समाचार",
+    latestNewsPageTitle: "नवीनतम समाचार और अपडेट",
+    latestNewsPageDesc: "परीक्षाओं और शिक्षा में नवीनतम घटनाओं से अवगत रहें।",
+    scholarshipExamsBanner: "छात्रवृत्ति परीक्षा सूचना",
   }
 };
-
     

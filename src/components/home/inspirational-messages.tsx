@@ -57,7 +57,7 @@ export function InspirationalMessages() {
           100% { transform: translateY(-50%); }
         }
         .animate-marquee-vertical {
-          animation: marquee-vertical ${currentQuotes.length * 7}s linear infinite;
+          animation: marquee-vertical ${currentQuotes.length * 4}s linear infinite; /* Adjusted speed from 7s to 4s per quote cycle */
         }
         .animate-marquee-vertical:hover {
           animation-play-state: paused;
@@ -66,5 +66,4 @@ export function InspirationalMessages() {
     </Card>
   );
 }
-
     

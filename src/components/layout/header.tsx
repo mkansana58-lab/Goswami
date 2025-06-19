@@ -25,11 +25,11 @@ const primaryNavLinks = [
   { href: '/', labelKey: 'navHome', icon: Home },
   { href: '/study-material', labelKey: 'navStudyMaterial', icon: Library },
   { href: '/learning-hub', labelKey: 'navLearningHub', icon: PackageSearch },
-  // { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays }, // Removed Schedule
   { href: '/tests', labelKey: 'testSeries', icon: ClipboardCheck },
 ];
 
 const secondaryNavLinks = [
+  { href: '/latest-news', labelKey: 'navLatestNews', icon: Newspaper },
   { href: '/current-affairs', labelKey: 'currentAffairs', icon: Newspaper },
   { href: '/syllabus', labelKey: 'navSyllabus', icon: ListChecks },
   { href: '/study-books', labelKey: 'ourBooks', icon: BookOpen },
@@ -288,5 +288,4 @@ export function Header() {
     </header>
   );
 }
-
     

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { InspirationalMessages } from '@/components/home/inspirational-messages';
-import { MainNews } from '@/components/home/main-news'; // Import MainNews
+// import { MainNews } from '@/components/home/main-news'; // Removed MainNews import
 import React, { useEffect, useState, useCallback } from 'react';
 import { STUDENT_LOGGED_IN_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants';
 import { usePathname } from 'next/navigation';
@@ -33,7 +33,7 @@ const getDesktopExploreLinks = (isStudentLoggedIn: boolean, t: (key: any) => str
     { href: '/', labelKey: 'navHome', icon: HomeIcon, descriptionKey: 'navHome' },
     ...(isStudentLoggedIn ? [{ href: '/student-profile', labelKey: 'studentProfileTitle', icon: UserCircle, descriptionKey: 'studentProfileTitle' }] : []),
     { href: '/learning-hub', labelKey: 'navLearningHub', icon: PackageSearch, descriptionKey: 'learningHubDesc' },
-    // { href: '/schedule', labelKey: 'navSchedule', icon: CalendarDays, descriptionKey: 'navSchedule' }, // Removed Schedule
+    { href: '/latest-news', labelKey: 'navLatestNews', icon: Newspaper, descriptionKey: 'latestNewsPageDesc' },
 ];
 
 const sliderImages = [
@@ -41,7 +41,7 @@ const sliderImages = [
   { src: 'https://placehold.co/1200x400.png', altTextKey: 'placeholderBanner', dataAiHint: 'vibrant classroom' },
   { src: 'https://placehold.co/1200x400.png', altTextKey: 'placeholderBanner', dataAiHint: 'bright academy' },
   { src: 'https://placehold.co/1200x400.png', altTextKey: 'placeholderBanner', dataAiHint: 'dynamic learning' },
-  { src: 'https://placehold.co/1200x400.png', altTextKey: 'placeholderBanner', dataAiHint: 'energetic coaching' },
+  { src: 'https://placehold.co/1200x400.png', altTextKey: 'scholarshipExamsBanner', dataAiHint: 'scholarship exams app' },
 ];
 
 export default function HomePage() {
@@ -174,7 +174,7 @@ export default function HomePage() {
         </Card>
       </section>
 
-      <MainNews /> {/* Added MainNews component */}
+      {/* <MainNews /> Removed MainNews component from here */}
 
       <section>
         <div className="grid grid-cols-3 gap-3 md:gap-4">
@@ -212,5 +212,4 @@ export default function HomePage() {
     </div>
   );
 }
-
     
