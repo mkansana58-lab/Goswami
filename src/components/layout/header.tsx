@@ -11,8 +11,8 @@ import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import {
   BookText, ClipboardCheck, PlaySquare, Users, Cpu, Languages, ShieldCheck, GraduationCap, Star, ClipboardList, Menu, LogOut, LayoutDashboard,
   Home, DownloadCloud, MoreHorizontal, ScissorsLineDashed, HelpingHand, FileText, MessageSquare, Briefcase, BookOpen, ListChecks, Bell, LogIn,
-  Gift, History, Newspaper, CalendarDays, CheckCircle, XCircle, Info, Tv2, School, Library, UserCircle, Settings, Mail, PackageSearch
-} from 'lucide-react';
+  Gift, History, Newspaper, CalendarDays, CheckCircle, XCircle, Info, Tv2, School, Library, UserCircle, Settings, Mail, PackageSearch, Youtube, Megaphone
+} from 'lucide-react'; // Added Youtube, Megaphone
 import { Sheet, SheetContent, SheetTrigger, SheetTitle as RadixSheetTitle } from '@/components/ui/sheet';
 import React, { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
@@ -45,6 +45,7 @@ const secondaryNavLinks = [
 const adminConsoleNavLinks = [
   { href: '/admin', labelKey: 'navAdminPanel', icon: LayoutDashboard },
   { href: '/registrations', labelKey: 'navViewRegistrations', icon: ClipboardList },
+  { href: '/admin/notifications', labelKey: 'manageNotificationsTitle', icon: Bell}
 ];
 
 const studentNavLinks = [
@@ -196,6 +197,8 @@ export function Header() {
       case 'new_schedule_item': return <CalendarDays className="h-4 w-4 text-green-500 flex-shrink-0" />;
       case 'new_homework_assignment': return <ListChecks className="h-4 w-4 text-orange-500 flex-shrink-0" />;
       case 'new_academy_update': return <Info className="h-4 w-4 text-purple-500 flex-shrink-0" />;
+      case 'youtube_update': return <Youtube className="h-4 w-4 text-red-500 flex-shrink-0" />;
+      case 'general_announcement': return <Megaphone className="h-4 w-4 text-yellow-500 flex-shrink-0" />;
       default: return <Bell className="h-4 w-4 text-gray-500 flex-shrink-0" />;
     }
   };
@@ -249,7 +252,7 @@ export function Header() {
 
         <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
           {primaryNavLinks.map((link) => (<Link key={`${link.href}-desktop-primary-${link.labelKey}`} href={link.href} className={cn("px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary", pathname === link.href ? "bg-muted text-primary font-semibold" : "text-foreground")}>{t(link.labelKey as any)}</Link>))}
-          {isClient && isAdminLoggedIn && adminConsoleNavLinks.map((link) => (<Link key={`${link.href}-desktop-admin`} href={link.href} className={cn("px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary flex items-center gap-1", pathname === link.href ? "bg-muted text-primary font-semibold" : "text-foreground")}><link.icon className="h-4 w-4" /> {t(link.labelKey as any)}</Link>))}
+          {isClient && isAdminLoggedIn && adminConsoleNavLinks.map((link) => (<Link key={`${link.href}-desktop-admin-${link.labelKey}`} href={link.href} className={cn("px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary flex items-center gap-1", pathname === link.href ? "bg-muted text-primary font-semibold" : "text-foreground")}><link.icon className="h-4 w-4" /> {t(link.labelKey as any)}</Link>))}
           {isClient && isStudentLoggedIn && studentNavLinks.map((link) => (<Link key={`${link.href}-desktop-student`} href={link.href} className={cn("px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary flex items-center gap-1", pathname === link.href ? "bg-muted text-primary font-semibold" : "text-foreground")}><link.icon className="h-4 w-4" /> {t(link.labelKey as any)}</Link>))}
           {uniqueSecondaryLinksForDesktop.length > 0 && (
             <DropdownMenu>

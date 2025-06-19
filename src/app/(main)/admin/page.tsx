@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, CalendarDays, ClipboardCheck, PlaySquare, LayoutDashboard, AlertTriangle, ExternalLink, LogIn, DownloadCloud, ListChecks, NewspaperIcon, BookOpenIcon, Briefcase, ShieldCheck, Star, Info, Tv2, Library } from 'lucide-react'; // Added Library, Tv2
+import { Users, CalendarDays, ClipboardCheck, PlaySquare, LayoutDashboard, AlertTriangle, ExternalLink, LogIn, DownloadCloud, ListChecks, NewspaperIcon, BookOpenIcon, Briefcase, ShieldCheck, Star, Info, Tv2, Library, Bell } from 'lucide-react'; // Added Bell for Notifications
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -32,7 +32,8 @@ const adminSections: AdminSection[] = [
   { key: 'currentAffairs', titleKey: 'navCurrentAffairs', descriptionKey: 'adminCurrentAffairsDesc', href: '/current-affairs', icon: NewspaperIcon, managementNoteKey: 'adminManageCurrentAffairsNote'},
   { key: 'studyBooks', titleKey: 'navStudyBooks', descriptionKey: 'adminStudyBooksDesc', href: '/study-books', icon: BookOpenIcon, managementNoteKey: 'adminManageBooksNote'},
   { key: 'jobAlerts', titleKey: 'navJobAlerts', descriptionKey: 'adminJobAlertsDesc', href: '/job-alerts', icon: Briefcase, managementNoteKey: 'adminManageJobAlertsNote'},
-  { key: 'courses', titleKey: 'manageCourses', descriptionKey: 'adminCoursesDesc', href: '/study-material', icon: Library, managementNoteKey: 'adminManageCoursesNote'}, // Changed icon to Library, href to /study-material
+  { key: 'courses', titleKey: 'manageCourses', descriptionKey: 'adminCoursesDesc', href: '/study-material', icon: Library, managementNoteKey: 'adminManageCoursesNote'},
+  { key: 'notifications', titleKey: 'manageNotificationsTitle', descriptionKey: 'manageNotificationsDesc', href: '/admin/notifications', icon: Bell, managementNoteKey: 'adminManageNotificationsNote'},
 ];
 
 
