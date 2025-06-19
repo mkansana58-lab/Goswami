@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { sainikSchoolsData, type SainikSchool, indianStates } from '@/lib/sainik-schools-data';
-import { School, User, Mail, Phone, MapPin, ChevronDown, Loader2 } from 'lucide-react';
+import { School, User, Mail, Phone, MapPin, Loader2, ExternalLink, LogIn, ListChecks, LayoutGrid } from 'lucide-react'; // Added ExternalLink, LogIn, ListChecks, LayoutGrid
 
 const formSchemaDefinition = (t: (key: string) => string) => z.object({
   studentName: z.string().min(2, { message: t('studentNameValidation') }),
@@ -51,39 +51,20 @@ export default function SainikECounsellingPage() {
   const onSubmit: SubmitHandler<ECounsellingFormValues> = async (data) => {
     setIsLoading(true);
     setSearched(true);
-    console.log("E-Counselling form data:", data);
+    console.log("E-Counselling form data for proximity search:", data);
 
-    // Simulate API call or heavy computation
     await new Promise(resolve => setTimeout(resolve, 500));
 
     let sortedSchools = [...sainikSchoolsData];
 
-    // Simplified sorting logic for prototype
     sortedSchools.sort((a, b) => {
       let scoreA = a.simulatedProximityScore;
       let scoreB = b.simulatedProximityScore;
-
-      // Prioritize schools in the same state
-      if (a.state.toLowerCase() === data.studentState.toLowerCase()) {
-        scoreA -= 50; // Big bonus for same state
-      }
-      if (b.state.toLowerCase() === data.studentState.toLowerCase()) {
-        scoreB -= 50;
-      }
-
-      // Prioritize schools in the same district (within the same state)
-      if (a.state.toLowerCase() === data.studentState.toLowerCase() && a.district.toLowerCase() === data.studentDistrict.toLowerCase()) {
-        scoreA -= 100; // Even bigger bonus for same district
-      }
-      if (b.state.toLowerCase() === data.studentState.toLowerCase() && b.district.toLowerCase() === data.studentDistrict.toLowerCase()) {
-        scoreB -= 100;
-      }
-      
-      if (scoreA !== scoreB) {
-        return scoreA - scoreB;
-      }
-      // Fallback to alphabetical sort if scores are equal
-      return a.name.localeCompare(b.name);
+      if (a.state.toLowerCase() === data.studentState.toLowerCase()) scoreA -= 50;
+      if (b.state.toLowerCase() === data.studentState.toLowerCase()) scoreB -= 50;
+      if (a.state.toLowerCase() === data.studentState.toLowerCase() && a.district.toLowerCase() === data.studentDistrict.toLowerCase()) scoreA -= 100;
+      if (b.state.toLowerCase() === data.studentState.toLowerCase() && b.district.toLowerCase() === data.studentDistrict.toLowerCase()) scoreB -= 100;
+      return scoreA !== scoreB ? scoreA - scoreB : a.name.localeCompare(b.name);
     });
     
     setFilteredSchools(sortedSchools);
@@ -101,9 +82,35 @@ export default function SainikECounsellingPage() {
           <CardDescription className="text-lg">{t('sainikECounsellingDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Official E-Counselling Links Section */}
+          <Card className="mb-8 bg-muted/30">
+            <CardHeader>
+                <CardTitle className="text-xl font-semibold text-secondary-foreground">{t('officialECounsellingLinksTitle')}</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Button asChild variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
+                <a href="https://pesa.ncog.gov.in/sainikschoolecounselling/signin" target="_blank" rel="noopener noreferrer">
+                  <LogIn className="mr-2 h-4 w-4"/> {t('eCounsellingLoginButton')} <ExternalLink className="ml-auto h-4 w-4 opacity-70"/>
+                </a>
+              </Button>
+              <Button asChild variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
+                <a href="https://pesa.ncog.gov.in/sainikschoolecounselling/WaitingListForCandidate" target="_blank" rel="noopener noreferrer">
+                  <ListChecks className="mr-2 h-4 w-4"/> {t('waitingListButton')} <ExternalLink className="ml-auto h-4 w-4 opacity-70"/>
+                </a>
+              </Button>
+              <Button asChild variant="outline" className="w-full border-primary text-primary hover:bg-primary/10 sm:col-span-2 lg:col-span-1">
+                <a href="https://pesa.ncog.gov.in/sainikschoolecounselling/ViewSeatAllocationMatrix" target="_blank" rel="noopener noreferrer">
+                  <LayoutGrid className="mr-2 h-4 w-4"/> {t('seatMatrixButton')} <ExternalLink className="ml-auto h-4 w-4 opacity-70"/>
+                </a>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Find Schools by Proximity Section */}
           <Card className="mb-6 bg-muted/50 p-0">
             <CardHeader>
-                <CardTitle className="text-xl font-semibold text-secondary-foreground">{t('sainikECounsellingFormTitle')}</CardTitle>
+                <CardTitle className="text-xl font-semibold text-secondary-foreground">{t('findSchoolsByProximityTitle')}</CardTitle>
+                <CardDescription>{t('findSchoolsByProximityDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...form}>
@@ -193,7 +200,6 @@ export default function SainikECounsellingPage() {
                       <TableHead>{t('schoolName')}</TableHead>
                       <TableHead>{t('schoolLocation')}</TableHead>
                       <TableHead>{t('schoolType')}</TableHead>
-                      {/* <TableHead className="text-right">{t('schoolDistance')}</TableHead> */}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -202,7 +208,6 @@ export default function SainikECounsellingPage() {
                         <TableCell className="font-medium">{school.name}</TableCell>
                         <TableCell>{school.city}, {school.district}, {school.state}</TableCell>
                         <TableCell>{school.type}</TableCell>
-                        {/* <TableCell className="text-right">{school.simulatedProximityScore}</TableCell> */}
                       </TableRow>
                     ))}
                   </TableBody>
@@ -228,56 +233,4 @@ export default function SainikECounsellingPage() {
     </div>
   );
 }
-// Add new translation keys:
-// sainikECounsellingTitle: "Sainik School E-Counselling",
-// sainikECounsellingDesc: "Enter your details to find Sainik Schools near you.",
-// sainikECounsellingFormTitle: "Student Information",
-// selectExam: "Select Exam",
-// sainikSchoolExam: "Sainik School Entrance",
-// rmsExam: "RMS Entrance",
-// otherExam: "Other",
-// studentState: "Your State",
-// studentDistrict: "Your District",
-// findSchools: "Find Schools",
-// schoolName: "School Name",
-// schoolLocation: "Location",
-// schoolType: "Type (Govt/Private)",
-// schoolDistance: "Proximity/Distance", // Or "निकटता/दूरी"
-// noSchoolsFound: "No schools found based on your criteria, or data is not yet available.",
-// enterDetailsToSeeSchools: "Please enter your state and district to see relevant Sainik Schools."
-// sainikSchoolListTitle: "List of Sainik Schools"
-// distanceDisclaimer: "Note: Distance shown is a simulation for prototype purposes and may not be accurate."
-// examValidation: "Please select an exam type."
-// stateValidation: "Please enter your state."
-// districtValidation: "Please enter your district."
-// sampleSchoolsNote: "sample schools shown. Actual list may vary."
-// totalSchoolsNoteGovt: "(Total 33 Govt. and "
-// totalSchoolsNotePrivate: "45 Private Sainik Schools exist)."
-
-
-// For Hindi:
-// sainikECounsellingTitle: "सैनिक स्कूल ई-काउंसलिंग",
-// sainikECounsellingDesc: "अपने आस-पास सैनिक स्कूल खोजने के लिए अपना विवरण दर्ज करें।",
-// sainikECounsellingFormTitle: "छात्र जानकारी",
-// selectExam: "परीक्षा चुनें",
-// sainikSchoolExam: "सैनिक स्कूल प्रवेश परीक्षा",
-// rmsExam: "RMS प्रवेश परीक्षा",
-// otherExam: "अन्य",
-// studentState: "आपका राज्य",
-// studentDistrict: "आपका जिला",
-// findSchools: "स्कूल खोजें",
-// schoolName: "स्कूल का नाम",
-// schoolLocation: "स्थान",
-// schoolType: "प्रकार (सरकारी/प्राइवेट)",
-// schoolDistance: "निकटता/दूरी",
-// noSchoolsFound: "आपके मानदंडों के आधार पर कोई स्कूल नहीं मिला, या डेटा अभी उपलब्ध नहीं है।",
-// enterDetailsToSeeSchools: "संबंधित सैनिक स्कूल देखने के लिए कृपया अपना राज्य और जिला दर्ज करें।"
-// sainikSchoolListTitle: "सैनिक स्कूलों की सूची"
-// distanceDisclaimer: "ध्यान दें: दिखाई गई दूरी प्रोटोटाइप उद्देश्यों के लिए एक सिमुलेशन है और सटीक नहीं हो सकती है।"
-// examValidation: "कृपया एक परीक्षा प्रकार चुनें।"
-// stateValidation: "कृपया अपना राज्य दर्ज करें।"
-// districtValidation: "कृपया अपना जिला दर्ज करें।"
-// sampleSchoolsNote: "नमूना स्कूल दिखाए गए हैं। वास्तविक सूची भिन्न हो सकती है।"
-// totalSchoolsNoteGovt: "(कुल 33 सरकारी और "
-// totalSchoolsNotePrivate: "45 प्राइवेट सैनिक स्कूल हैं)।"
     
