@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, type ChangeEvent } from 'react';
@@ -8,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, AlertTriangle, Award, BookCopy, ChevronLeft, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, Share2, LogOut, Stamp } from 'lucide-react';
+import { Loader2, AlertTriangle, Award, BookCopy, ChevronLeft, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, LogOut, Stamp } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
 import { generateAIMockTest } from './actions';
@@ -183,30 +184,6 @@ export default function AIPoweredTestPage() {
     }
   };
 
-  const handleShareCertificate = async () => {
-    if (typeof window !== 'undefined' && navigator.share && testPaper) {
-        try {
-            await navigator.share({
-                title: t('testResultTitle'),
-                text: `${t('myTestScore')} ${studentName}: ${score}/${getTotalQuestions()} ${t('inText')} ${testPaper.title}. ${t('shareMessageAcademy') || "Achieved at Go Swami Defence Academy!"}`,
-                url: window.location.href,
-            });
-        } catch (error: any) {
-            console.error('Error sharing certificate:', error);
-            if (error.name === 'AbortError') {
-                // User cancelled the share operation, typically not an error to display
-                console.log('Share operation aborted by user.');
-            } else if (error.name === 'NotAllowedError' || error.message.toLowerCase().includes('permission denied')) {
-                 toast({ title: t('errorOccurred'), description: t('sharePermissionDenied') || "Sharing permission was denied. Please check your browser settings or try again." , variant: "destructive"});
-            } else {
-                toast({ title: t('errorOccurred'), description: t('shareFailed') || "Could not share result." , variant: "destructive"});
-            }
-        }
-    } else if (typeof window !== 'undefined') {
-        toast({ title: t('featureNotSupported') || "Feature Not Supported", description: t('shareNotSupported') || "Web Share API is not supported on your browser or device." });
-    }
-  };
-
 
   if (stage === "generating") {
     return (
@@ -280,9 +257,6 @@ export default function AIPoweredTestPage() {
         <CardFooter className="flex flex-col sm:flex-row justify-center gap-2 p-6 print:hidden">
           <Button onClick={handleDownloadCertificate} variant="outline">
             <Download className="mr-2 h-4 w-4" /> {t('downloadCertificate')}
-          </Button>
-          <Button onClick={handleShareCertificate} variant="outline">
-            <Share2 className="mr-2 h-4 w-4" /> {t('shareResult')}
           </Button>
           <Button onClick={handleTryAgain} className="bg-accent text-accent-foreground hover:bg-accent/90">
             <RotateCcw className="mr-2 h-4 w-4" /> {t('tryAnotherTest')}
@@ -414,8 +388,3 @@ export default function AIPoweredTestPage() {
     </Card>
   );
 }
-
-// Add these to translations.ts
-// sharePermissionDenied: "Sharing permission was denied. Please check your browser settings or try again." (EN/HI)
-// sharePermissionDenied_hi: "शेयर करने की अनुमति अस्वीकार कर दी गई। कृपया अपनी ब्राउज़र सेटिंग्स जांचें या पुनः प्रयास करें।"
-
