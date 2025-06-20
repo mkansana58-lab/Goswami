@@ -1,258 +1,56 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { MessageSquare, Send, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, query, orderBy, onSnapshot, Timestamp, serverTimestamp } from 'firebase/firestore';
-import { useToast } from '@/hooks/use-toast';
+import { MessageSquare, ExternalLink } from 'lucide-react'; // MessageSquare can be replaced with Whatsapp icon if available
+import Link from 'next/link';
 
-const CHAT_COLLECTION_NAME = 'chatMessages';
-const USER_ID_KEY = 'goSwamiChatUserId';
-const DISPLAY_NAME_KEY = 'goSwamiChatDisplayName';
+// Placeholder WhatsApp Channel Link - Replace with your actual channel link
+const WHATSAPP_CHANNEL_LINK = "https://whatsapp.com/channel/YOUR_CHANNEL_ID_HERE"; 
+// Or use a click-to-chat link like: "https://wa.me/91YOURPHONENUMBER"
 
-interface ChatMessage {
-  id: string; 
-  text: string;
-  userId: string;
-  displayName: string;
-  timestamp: Timestamp; 
-}
-
-export default function ChatPage() {
+export default function WhatsAppChannelPage() {
   const { t } = useLanguage();
-  const { toast } = useToast();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [inputValue, setInputValue] = useState('');
-  const [currentUserId, setCurrentUserId] = useState<string>('');
-  const [currentDisplayName, setCurrentDisplayName] = useState<string>('');
-  const [tempDisplayName, setTempDisplayName] = useState<string>('');
-  const [isDisplayNameSet, setIsDisplayNameSet] = useState(false);
-
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (isClient) {
-      console.log("ChatPage: Client detected. Initializing user ID and display name...");
-      let userId = localStorage.getItem(USER_ID_KEY);
-      if (!userId) {
-        userId = Math.random().toString(36).substring(2, 15);
-        localStorage.setItem(USER_ID_KEY, userId);
-        console.log("ChatPage: New user ID generated and stored:", userId);
-      } else {
-        console.log("ChatPage: Existing user ID found:", userId);
-      }
-      setCurrentUserId(userId);
-
-      const storedDisplayName = localStorage.getItem(DISPLAY_NAME_KEY);
-      if (storedDisplayName) {
-        setCurrentDisplayName(storedDisplayName);
-        setTempDisplayName(storedDisplayName);
-        setIsDisplayNameSet(true);
-        console.log("ChatPage: Stored display name found:", storedDisplayName);
-      } else {
-        setCurrentDisplayName(t('anonymousUser') || 'Anonymous');
-        console.log("ChatPage: No stored display name, using default.");
-      }
-    }
-  }, [isClient, t]);
-
-  useEffect(() => {
-    if (!isClient || !currentUserId) {
-      console.log("ChatPage: Firestore listener not attached - isClient:", isClient, "currentUserId:", currentUserId);
-      return;
-    }
-
-    console.log("ChatPage: Setting up Firestore onSnapshot listener for collection:", CHAT_COLLECTION_NAME);
-    const q = query(collection(db, CHAT_COLLECTION_NAME), orderBy("timestamp", "asc"));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const fetchedMessages: ChatMessage[] = [];
-      console.log("ChatPage: onSnapshot triggered. Snapshot size:", querySnapshot.size, "Docs found:", querySnapshot.docs.length);
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        console.log("ChatPage: Fetched message doc ID:", doc.id, "Data:", data, "Timestamp type:", typeof data.timestamp, "Is Firestore Timestamp:", data.timestamp instanceof Timestamp);
-        fetchedMessages.push({ id: doc.id, ...data } as ChatMessage);
-      });
-      setMessages(fetchedMessages);
-      console.log("ChatPage: Messages state updated with", fetchedMessages.length, "messages.");
-    }, (error) => {
-      console.error("ChatPage: Error fetching chat messages from Firestore (onSnapshot):", { message: error.message, code: error.code, stack: error.stack });
-      toast({
-        title: t('errorOccurred'),
-        description: t('fetchErrorDetails') + (error.message ? ` (${error.message})` : ''),
-        variant: "destructive",
-      });
-    });
-
-    return () => {
-      console.log("ChatPage: Unsubscribing from Firestore onSnapshot listener.");
-      unsubscribe();
-    };
-  }, [isClient, currentUserId, t, toast]);
-
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      const viewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
-      if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight;
-      }
-    }
-  }, [messages]);
-
-  const handleSetDisplayName = () => {
-    if (tempDisplayName.trim() === '') {
-      toast({ title: t('errorOccurred'), description: t('displayNameCannotBeEmpty') || "Display name cannot be empty.", variant: "destructive" });
-      return;
-    }
-    setCurrentDisplayName(tempDisplayName.trim());
-    localStorage.setItem(DISPLAY_NAME_KEY, tempDisplayName.trim());
-    setIsDisplayNameSet(true);
-    console.log("ChatPage: Display name set to:", tempDisplayName.trim());
-    toast({ title: t('displayNameSetSuccess') || "Display name updated!"});
-  };
-
-  const handleSendMessage = async () => {
-    if (inputValue.trim() === '') {
-        toast({ title: t('errorOccurred'), description: t('messageCannotBeEmpty') || "Message cannot be empty.", variant: "destructive" });
-        return;
-    }
-    if (!isDisplayNameSet && !currentDisplayName) {
-        toast({ title: t('errorOccurred'), description: t('setDisplayNamePrompt') || "Please set your display name first.", variant: "destructive"});
-        return;
-    }
-
-    console.log("ChatPage: Attempting to send message...");
-    const newMessagePayload = {
-      text: inputValue.trim(),
-      userId: currentUserId,
-      displayName: currentDisplayName || (t('anonymousUser') || 'Anonymous'),
-      timestamp: serverTimestamp()
-    };
-    console.log("ChatPage: New message payload:", newMessagePayload);
-
-    try {
-      const docRef = await addDoc(collection(db, CHAT_COLLECTION_NAME), newMessagePayload);
-      console.log("ChatPage: Message sent to Firestore successfully. Document ID:", docRef.id);
-      setInputValue('');
-    } catch (error: any) {
-      console.error("ChatPage: Error sending message to Firestore (addDoc):", { message: error.message, code: error.code, details: error.details, stack: error.stack, fullError: error });
-      toast({
-        title: t('errorOccurred'),
-        description: `${t('saveErrorDetails') || "Could not send message."} ${error.message ? `(${error.message})` : 'Please check console and Firebase setup.'}`,
-        variant: "destructive",
-      });
-    }
-    console.log("ChatPage: Finished send message attempt.");
-  };
-
-  const formatTimestamp = (timestamp: Date | null) => {
-    if (!timestamp) return '';
-    return timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8 flex flex-col h-[calc(100vh-10rem)]">
-      <Card className="shadow-xl flex-grow flex flex-col">
-        <CardHeader className="text-center pb-4 border-b">
-          <div className="flex justify-center mb-2">
-            <MessageSquare className="h-10 w-10 text-primary" />
+    <div className="max-w-xl mx-auto space-y-8 py-8">
+      <Card className="shadow-xl border-primary/30">
+        <CardHeader className="text-center pb-6">
+          <div className="flex justify-center mb-4">
+            {/* Consider using a WhatsApp icon if you add one, for now MessageSquare or a generic chat icon */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor" className="text-green-500">
+              <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.38 1.25 4.85L2 22l5.25-1.38c1.45.73 3.08 1.15 4.79 1.15h.01c5.46 0 9.91-4.45 9.91-9.91s-4.45-9.91-9.91-9.91zm0 18.06c-1.58 0-3.12-.42-4.44-1.15l-.32-.19-3.31.87.89-3.23-.21-.33c-.8-1.34-1.28-2.95-1.28-4.66 0-4.48 3.64-8.12 8.12-8.12 4.48 0 8.12 3.64 8.12 8.12s-3.64 8.12-8.12 8.12zm4.44-5.74c-.24-.12-1.43-.71-1.65-.79-.22-.08-.38-.12-.54.12-.16.24-.62.79-.76.95-.14.16-.28.18-.52.06s-1.03-.38-1.96-1.21c-.73-.64-1.22-1.43-1.36-1.67-.14-.24-.02-.38.11-.5.11-.11.24-.28.37-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42s-.54-1.3-.74-1.78c-.19-.48-.39-.41-.53-.42h-.48c-.15 0-.38.04-.58.24-.2.2-.76.74-.76 1.81s.78 2.1.89 2.24c.11.14 1.53 2.32 3.72 3.27.52.23.93.37 1.25.47.55.17 1.05.15 1.44.09.43-.06 1.43-.58 1.63-1.14.2-.56.2-.94.14-1.06s-.22-.18-.46-.3z"/>
+            </svg>
           </div>
-          <CardTitle className="text-2xl font-bold font-headline text-primary">{t('navChat')}</CardTitle>
-          <CardDescription className="text-md">{t('chatRoomDesc') || "Join the conversation! Messages are shared with everyone."}</CardDescription>
+          <CardTitle className="text-3xl font-bold font-headline text-primary">{t('joinWhatsAppChannelTitle')}</CardTitle>
+          <CardDescription className="text-lg">{t('joinWhatsAppChannelDesc')}</CardDescription>
         </CardHeader>
-        <CardContent className="p-0 flex-grow flex flex-col">
-          {!isDisplayNameSet && isClient && (
-            <div className="p-4 border-b bg-muted/50">
-              <Label htmlFor="displayNameInput" className="text-sm font-medium">{t('displayNameLabel') || "Set Your Display Name:"}</Label>
-              <div className="flex gap-2 mt-1">
-                <Input
-                  id="displayNameInput"
-                  placeholder={t('displayNamePlaceholder') || "Enter your name"}
-                  value={tempDisplayName}
-                  onChange={(e) => setTempDisplayName(e.target.value)}
-                  className="flex-grow text-sm"
-                />
-                <Button onClick={handleSetDisplayName} size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
-                  {t('setDisplayNameButton') || "Set Name"}
-                </Button>
-              </div>
-            </div>
-          )}
-           {isDisplayNameSet && isClient && (
-             <div className="p-2 text-xs text-center text-muted-foreground border-b">
-                {t('chattingAs') || "Chatting as:"} <strong className="text-primary">{currentDisplayName}</strong>
-                <Button variant="link" size="sm" className="h-auto p-0 ml-1 text-xs" onClick={() => setIsDisplayNameSet(false)}>{t('changeNameButton') || "(Change)"}</Button>
-            </div>
-           )}
-
-          <ScrollArea className="flex-grow p-4 space-y-4" ref={scrollAreaRef}>
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex flex-col mb-3 ${
-                  msg.userId === currentUserId ? 'items-end' : 'items-start'
-                }`}
-              >
-                <div
-                  className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg shadow-md break-words ${
-                    msg.userId === currentUserId
-                      ? 'bg-primary text-primary-foreground rounded-br-none'
-                      : 'bg-muted text-foreground rounded-bl-none'
-                  }`}
-                >
-                  {msg.userId !== currentUserId && (
-                    <p className="text-xs font-semibold mb-0.5 opacity-70">{msg.displayName}</p>
-                  )}
-                  <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
-                </div>
-                <span className="text-xs text-muted-foreground mt-1 px-1">
-                  {msg.timestamp ? formatTimestamp(msg.timestamp.toDate()) : t('sending') || 'Sending...'}
-                </span>
-              </div>
-            ))}
-            {messages.length === 0 && isClient && (
-              <p className="text-center text-muted-foreground py-10">{t('chatStartConversation') || "Type a message to start the conversation."}</p>
-            )}
-          </ScrollArea>
-          <div className="border-t p-4 bg-background">
-            <div className="flex gap-2 items-center">
-              <Input
-                placeholder={isDisplayNameSet ? (t('typeYourMessage') || "अपना संदेश लिखें...") : (t('setDisplayNameFirst') || "Set your name to chat")}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    if(isDisplayNameSet) handleSendMessage();
-                  }
-                }}
-                className="flex-grow text-sm"
-                disabled={!isDisplayNameSet && isClient}
-              />
-              <Button 
-                onClick={handleSendMessage} 
-                className="bg-accent text-accent-foreground hover:bg-accent/90"
-                aria-label={t('sendButton') || "भेजें"}
-                disabled={!isDisplayNameSet && isClient}
-              >
-                <Send className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
+        <CardContent className="text-center space-y-6">
+          <Button asChild className="w-full max-w-xs mx-auto h-12 text-lg bg-green-500 hover:bg-green-600 text-white">
+            <Link href={WHATSAPP_CHANNEL_LINK} target="_blank" rel="noopener noreferrer">
+              {t('openWhatsAppChannelButton')} <ExternalLink className="ml-2 h-5 w-5" />
+            </Link>
+          </Button>
+          <p className="text-sm text-muted-foreground px-4">
+            {t('whatsAppChannelNote')}
+          </p>
         </CardContent>
       </Card>
     </div>
   );
+}
 
-    
+// Add to translations:
+// joinWhatsAppChannelTitle: "Join Our WhatsApp Channel" / "हमारे व्हाट्सएप चैनल से जुड़ें"
+// joinWhatsAppChannelDesc: "Stay connected with us on WhatsApp for the latest updates, discussions, and direct support." / "नवीनतम अपडेट, चर्चाओं और सीधे समर्थन के लिए व्हाट्सएप पर हमसे जुड़े रहें।"
+// openWhatsAppChannelButton: "Open WhatsApp Channel" / "व्हाट्सएप चैनल खोलें"
+// whatsAppChannelNote: "This will open WhatsApp (app or web). Please ensure you have WhatsApp installed or are logged into WhatsApp Web." / "यह व्हाट्सएप (ऐप या वेब) खोलेगा। कृपया सुनिश्चित करें कि आपके पास व्हाट्सएप इंस्टॉल है या आप व्हाट्सएप वेब में लॉग इन हैं।"
+
+// Update existing translations:
+// navChat: "WhatsApp Channel" / "व्हाट्सएप चैनल"
+// chatRoomDesc: "Connect with us on our WhatsApp Channel for updates and discussions." / "अपडेट और चर्चाओं के लिए हमारे व्हाट्सएप चैनल से जुड़ें।"
+// (Removing old chat related keys if any are specific to the Firestore chat)
+// displayNameLabel, displayNamePlaceholder, setDisplayNameButton, displayNameSetSuccess, displayNameCannotBeEmpty, messageCannotBeEmpty, setDisplayNamePrompt, anonymousUser, chattingAs, changeNameButton, sending, setDisplayNameFirst, chatStartConversation
+// typeYourMessage, sendButton
