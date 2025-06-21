@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview Generates a test paper with questions for multiple subjects using an AI model.
+ * @fileOverview Generates a test paper with questions for one or more subjects using an AI model.
  *
  * - generateTestPaper - A function that handles the test paper generation.
  * - GenerateTestPaperInput - The input type for the function.
@@ -20,20 +20,21 @@ const TestQuestionSchema = z.object({
 export type TestQuestion = z.infer<typeof TestQuestionSchema>;
 
 const TestSubjectSchema = z.object({
-  subjectName: z.string().describe('The name of the subject (e.g., English, Mathematics, General Knowledge). If language is Hindi, provide Hindi subject names like अंग्रेजी, गणित, सामान्य ज्ञान.'),
+  subjectName: z.string().describe('The name of the subject (e.g., Mathematics, General Knowledge). If language is Hindi, provide Hindi subject names like गणित, सामान्य ज्ञान, तर्कशक्ति, हिंदी.'),
   questions: z.array(TestQuestionSchema).describe('An array of questions for this subject.')
 });
 export type TestSubject = z.infer<typeof TestSubjectSchema>;
 
 const GenerateTestPaperInputSchema = z.object({
-  studentClass: z.string().describe('The class level of the student (e.g., "Class 6", "Class 10"). This will determine the difficulty.'),
-  language: z.enum(['en', 'hi']).default('en').describe('Language for the test paper (English or Hindi).')
+  studentClass: z.string().describe('The class level of the student (e.g., "Class 6", "Class 9"). This will determine the difficulty.'),
+  language: z.enum(['en', 'hi']).default('en').describe('Language for the test paper (English or Hindi).'),
+  subjectName: z.enum(['Mathematics', 'General Knowledge', 'Reasoning', 'Hindi', 'English']).optional().describe('The specific subject for the test. If omitted, a default multi-subject test is generated.')
 });
 export type GenerateTestPaperInput = z.infer<typeof GenerateTestPaperInputSchema>;
 
 const TestPaperSchema = z.object({
-  title: z.string().describe('A suitable title for the generated test paper (e.g., "Model Test Paper for Class 8"). This title must also be in the specified language.'),
-  subjects: z.array(TestSubjectSchema).length(3).describe('An array of 3 subjects: English, Mathematics, and General Knowledge. Subject names MUST be in the specified language.')
+  title: z.string().describe('A suitable title for the generated test paper (e.g., "Model Test Paper for Class 9 - Mathematics"). This title must also be in the specified language.'),
+  subjects: z.array(TestSubjectSchema).min(1).describe('An array of subjects. If a specific subject was requested, this will contain only that one subject.')
 });
 export type TestPaper = z.infer<typeof TestPaperSchema>;
 
@@ -46,18 +47,23 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateTestPaperInputSchema},
   output: {schema: TestPaperSchema},
   prompt: `
-    You are an expert question paper setter for competitive defence academy entrance exams.
+    You are an expert question paper setter for competitive defence academy entrance exams in India.
     Your task is to generate a model test paper for a student of {{{studentClass}}}.
 
     The test paper, including the main title, all subject names, all question text, all options, and any explanations, MUST be in the {{language}} language.
     If the language is 'hi' (Hindi), ALL content (title, subject names, questions, options, explanations) MUST be in Devanagari script.
-    For Hindi, subject names should be "अंग्रेजी", "गणित", and "सामान्य ज्ञान".
 
-    The test paper should have a suitable title, also in the {{language}}.
-    The test paper must contain exactly 3 subjects:
-    1.  Subject 1 (e.g., English/अंग्रेजी): 10 multiple-choice questions.
-    2.  Subject 2 (e.g., Mathematics/गणित): 10 multiple-choice questions.
-    3.  Subject 3 (e.g., General Knowledge/सामान्य ज्ञान): 10 multiple-choice questions.
+    {{#if subjectName}}
+    The test paper must contain exactly ONE subject: {{{subjectName}}}.
+    Generate exactly 10 multiple-choice questions for this subject.
+    For Hindi, the subject name should be the Hindi translation (e.g., 'Mathematics' becomes 'गणित', 'Reasoning' becomes 'तर्कशक्ति').
+    The title of the test paper should reflect the single subject, e.g., "Class 9 Mathematics Model Paper".
+    {{else}}
+    The test paper must contain exactly 3 subjects: English, Mathematics, and General Knowledge.
+    Generate exactly 10 multiple-choice questions for each subject.
+    For Hindi, subject names should be "अंग्रेजी", "गणित", and "सामान्य ज्ञान".
+    The title should reflect a full model paper, e.g., "Class 6 Model Test Paper".
+    {{/if}}
 
     For each question:
     - Provide the main question text.
@@ -65,11 +71,10 @@ const prompt = ai.definePrompt({
     - Indicate the 0-based index of the correct answer.
     - Optionally, provide a brief explanation for the correct answer (this explanation must also be in the {{language}}).
 
-    The difficulty level of the questions should be appropriate for a student in {{{studentClass}}} preparing for defence academy entrance.
-    Focus on topics relevant to Sainik School, Military School, NDA foundation type exams.
-
+    The difficulty level of the questions should be appropriate for a student in {{{studentClass}}} preparing for defence academy entrance (like Sainik School).
+    For Reasoning, include topics like series completion, coding-decoding, analogies, and non-verbal reasoning.
+    
     Ensure your output strictly follows the JSON schema provided for TestPaper, TestSubject, and TestQuestion.
-    Each subject must have exactly 10 questions. Ensure subject names are also in the specified {{language}}.
   `,
 });
 
@@ -80,14 +85,14 @@ const generateTestPaperFlow = ai.defineFlow(
     outputSchema: TestPaperSchema,
   },
   async (input) => {
-    console.log('generateTestPaperFlow: Invoked with input language:', input.language, 'and class:', input.studentClass);
+    console.log('generateTestPaperFlow: Invoked with input:', JSON.stringify(input));
     try {
       const {output} = await prompt(input);
       
-      if (!output || !output.title || !Array.isArray(output.subjects) || output.subjects.length !== 3 || 
-          output.subjects.some(s => typeof s !== 'object' || s === null || !s.subjectName || !Array.isArray(s.questions) || s.questions.length !== 10)) {
+      if (!output || !output.title || !Array.isArray(output.subjects) || output.subjects.length === 0 || 
+          output.subjects.some(s => typeof s !== 'object' || s === null || !s.subjectName || !Array.isArray(s.questions) || s.questions.length === 0)) {
         
-        console.warn('generateTestPaperFlow: AI returned invalid, incomplete data, or missing title/subject names. Output structure issues noted. Input was:', JSON.stringify(input));
+        console.warn('generateTestPaperFlow: AI returned invalid or incomplete data. Input was:', JSON.stringify(input));
         
         const errorMsg = input.language === 'hi' 
           ? 'क्षमा करें, AI मॉडल पेपर बनाने में असमर्थ था या अपूर्ण डेटा लौटाया। कृपया पुनः प्रयास करें।' 
@@ -97,9 +102,7 @@ const generateTestPaperFlow = ai.defineFlow(
         return {
             title: input.language === 'hi' ? 'त्रुटि: मॉडल पेपर उत्पन्न नहीं हो सका' : 'Error: Could Not Generate Model Paper',
             subjects: [
-                { subjectName: input.language === 'hi' ? 'त्रुटि विषय 1' : 'Error Subject 1', questions: Array(10).fill(dummyQuestion) },
-                { subjectName: input.language === 'hi' ? 'त्रुटि विषय 2' : 'Error Subject 2', questions: Array(10).fill(dummyQuestion) },
-                { subjectName: input.language === 'hi' ? 'त्रुटि विषय 3' : 'Error Subject 3', questions: Array(10).fill(dummyQuestion) },
+                { subjectName: input.subjectName || (input.language === 'hi' ? 'त्रुटि विषय' : 'Error Subject'), questions: Array(10).fill(dummyQuestion) },
             ]
         };
       }
@@ -119,9 +122,7 @@ const generateTestPaperFlow = ai.defineFlow(
         return {
             title: input.language === 'hi' ? 'त्रुटि: मॉडल पेपर उत्पन्न नहीं हो सका' : 'Error: Could Not Generate Model Paper',
             subjects: [
-                { subjectName: input.language === 'hi' ? 'त्रुटि विषय 1' : 'Error Subject 1', questions: Array(10).fill(dummyErrorQuestion) },
-                { subjectName: input.language === 'hi' ? 'त्रुटि विषय 2' : 'Error Subject 2', questions: Array(10).fill(dummyErrorQuestion) },
-                { subjectName: input.language === 'hi' ? 'त्रुटि विषय 3' : 'Error Subject 3', questions: Array(10).fill(dummyErrorQuestion) },
+                { subjectName: input.subjectName || (input.language === 'hi' ? 'त्रुटि विषय' : 'Error Subject'), questions: Array(10).fill(dummyErrorQuestion) },
             ]
         };
     }

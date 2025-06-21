@@ -11,9 +11,8 @@ import { useLanguage } from '@/hooks/use-language';
 import { useToast } from "@/hooks/use-toast";
 import { UserCircle, Loader2 } from 'lucide-react';
 import { STUDENT_LOGGED_IN_KEY, STUDENT_USERNAME_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants';
-import type { StudentProfileData } from '../student-profile/page'; // Assuming type is exported here
+import type { StudentProfileData } from '../student-profile/page'; 
 
-// Dummy user credentials
 const DUMMY_USERNAME = "student";
 const DUMMY_PASSWORD = "password123";
 
@@ -30,41 +29,41 @@ export default function StudentLoginPage() {
   useEffect(() => {
     setIsClient(true);
     if (typeof window !== 'undefined' && localStorage.getItem(STUDENT_LOGGED_IN_KEY) === 'true') {
-      router.push('/student-profile');
+      router.push('/');
     }
   }, [router]);
 
   const handleStudentLogin = () => {
     setIsLoading(true);
     setError('');
-    // Simulate API call
+    
     setTimeout(() => {
-      if (username === DUMMY_USERNAME && password === DUMMY_PASSWORD) {
+      // Allow any username/password for this prototype version as requested
+      if (username.trim() !== '' && password.trim() !== '') {
         if (typeof window !== 'undefined') {
           localStorage.setItem(STUDENT_LOGGED_IN_KEY, 'true');
           localStorage.setItem(STUDENT_USERNAME_KEY, username);
           
-          // Store a dummy profile if one doesn't exist
           const existingProfile = localStorage.getItem(STUDENT_PROFILE_LOCALSTORAGE_KEY);
           if (!existingProfile) {
             const dummyProfile: StudentProfileData = {
-              name: "Go Swami Student",
+              name: username, // Use the entered username
               email: `${username}@example.com`,
               mobile: "9876543210",
-              currentClass: "10th",
+              currentClass: "9",
               address: "123 Defence Colony, New Delhi",
-              photoDataUrl: "https://placehold.co/150x150.png?text=Student",
+              photoDataUrl: "https://placehold.co/150x150.png",
               dataAiHint: "student avatar",
               enrolledCourses: [
-                { id: "SAMPLE001", titleKey: "sainikSchoolCourseTitle", progress: 25, descriptionKey: "sainikSchoolCourseTitle" },
+                { id: "SAMPLE001", titleKey: "sainikSchoolCourseTitle", progress: 25, descriptionKey: "sainikSchoolCourseDesc" },
               ]
             };
             localStorage.setItem(STUDENT_PROFILE_LOCALSTORAGE_KEY, JSON.stringify(dummyProfile));
           }
           
           toast({ title: t('loginSuccessTitle'), description: t('loginSuccessMessageStudent')});
-          window.dispatchEvent(new Event('studentProfileUpdated')); // Notify header
-          router.push('/student-profile');
+          window.dispatchEvent(new Event('studentProfileUpdated'));
+          router.push('/');
         }
       } else {
         setError(t('loginError') || 'Invalid username or password.');
@@ -97,7 +96,7 @@ export default function StudentLoginPage() {
             <Label htmlFor="username">{t('usernameLabel')}</Label>
             <Input
               id="username"
-              placeholder={t('usernamePlaceholder') || "Enter your username"}
+              placeholder={t('usernamePlaceholder') || "Enter any username"}
               value={username}
               onChange={(e) => { setUsername(e.target.value); setError(''); }}
               className="h-12 text-base"
@@ -108,7 +107,7 @@ export default function StudentLoginPage() {
             <Input
               id="password"
               type="password"
-              placeholder={t('passwordPlaceholder') || "Enter your password"}
+              placeholder={t('passwordPlaceholder') || "Enter any password"}
               value={password}
               onChange={(e) => { setPassword(e.target.value); setError(''); }}
               className="h-12 text-base"
@@ -123,9 +122,8 @@ export default function StudentLoginPage() {
           </Button>
           <Card className="mt-4 bg-primary/5 border-primary/30 p-3">
             <CardDescription className="text-xs text-center text-primary/80">
-              {t('dummyCredentialsInfo')}<br />
-              <strong className="font-medium">{t('usernameLabel')}:</strong> {DUMMY_USERNAME}<br />
-              <strong className="font-medium">{t('passwordLabel')}:</strong> {DUMMY_PASSWORD}
+              {t('dummyCredentialsInfo') || "For demonstration purposes, you can use any username and password to log in."}<br />
+              <strong className="font-medium">{t('usernameLabel')}:</strong> student <strong className="font-medium">{t('passwordLabel')}:</strong> password123
             </CardDescription>
           </Card>
         </CardContent>
