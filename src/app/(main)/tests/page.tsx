@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -8,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Award, BookCopy, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, FileText, BrainCircuit, Languages, ListChecks, ArrowLeft, GraduationCap, Shield, School, AlertTriangle, ClipboardCheck } from 'lucide-react';
+import { Loader2, Award, BookCopy, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, FileText, BrainCircuit, Languages, ListChecks, ArrowLeft, GraduationCap, Shield, School, AlertTriangle, ClipboardCheck, Trophy } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
 import { generateAIMockTest } from './actions';
@@ -17,67 +18,72 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { STUDENT_USERNAME_KEY } from '@/lib/constants';
 
-type TestStage = "selection" | "details" | "generating" | "inProgress" | "completed";
+type TestStage = "selection" | "details" | "subjectList" | "generating" | "inProgress" | "completed";
 type TestType = "sainik_school" | "rms" | "jnv" | "subject_wise";
 
 interface SubjectConfig {
   key: string;
   nameKey: keyof ReturnType<typeof useLanguage>['t'];
   icon: React.ElementType;
+  questions: number;
+  marksPerQuestion?: number;
+  totalMarks: number;
 }
 
-const testConfigs = {
+interface TestConfig {
+  [className: string]: SubjectConfig[];
+}
+
+const testConfigs: Record<TestType, TestConfig> = {
   sainik_school: {
     'Class 6': [
-      { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit },
-      { key: 'General Knowledge', nameKey: 'subjectGeneralKnowledge', icon: Languages },
-      { key: 'Language', nameKey: 'subjectLanguage', icon: FileText },
-      { key: 'Intelligence', nameKey: 'subjectReasoning', icon: BrainCircuit },
+      { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit, questions: 50, marksPerQuestion: 3, totalMarks: 150 },
+      { key: 'General Knowledge', nameKey: 'subjectGeneralKnowledge', icon: Languages, questions: 25, marksPerQuestion: 2, totalMarks: 50 },
+      { key: 'Language', nameKey: 'subjectLanguage', icon: FileText, questions: 25, marksPerQuestion: 2, totalMarks: 50 },
+      { key: 'Intelligence', nameKey: 'subjectReasoning', icon: BrainCircuit, questions: 25, marksPerQuestion: 2, totalMarks: 50 },
     ],
     'Class 9': [
-      { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit },
-      { key: 'English', nameKey: 'subjectEnglish', icon: FileText },
-      { key: 'Intelligence', nameKey: 'subjectReasoning', icon: BrainCircuit },
-      { key: 'General Science', nameKey: 'subjectGeneralScience', icon: Languages },
-      { key: 'Social Studies', nameKey: 'subjectSocialStudies', icon: ListChecks },
+      { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit, questions: 50, marksPerQuestion: 4, totalMarks: 200 },
+      { key: 'English', nameKey: 'subjectEnglish', icon: FileText, questions: 25, marksPerQuestion: 2, totalMarks: 50 },
+      { key: 'Intelligence', nameKey: 'subjectReasoning', icon: BrainCircuit, questions: 25, marksPerQuestion: 2, totalMarks: 50 },
+      { key: 'General Science', nameKey: 'subjectGeneralScience', icon: Languages, questions: 25, marksPerQuestion: 2, totalMarks: 50 },
+      { key: 'Social Studies', nameKey: 'subjectSocialStudies', icon: ListChecks, questions: 25, marksPerQuestion: 2, totalMarks: 50 },
     ],
   },
-   rms: {
+   rms: { // Duplicating Sainik for RMS as a placeholder
     'Class 6': [
-      { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit },
-      { key: 'General Knowledge', nameKey: 'subjectGeneralKnowledge', icon: Languages },
-      { key: 'Language', nameKey: 'subjectLanguage', icon: FileText },
-      { key: 'Intelligence', nameKey: 'subjectReasoning', icon: BrainCircuit },
+        { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit, questions: 50, totalMarks: 50 },
+        { key: 'English', nameKey: 'subjectEnglish', icon: FileText, questions: 50, totalMarks: 50 },
+        { key: 'Intelligence', nameKey: 'subjectReasoning', icon: BrainCircuit, questions: 50, totalMarks: 50 },
+        { key: 'General Knowledge', nameKey: 'subjectGeneralKnowledge', icon: Languages, questions: 50, totalMarks: 50 },
     ],
     'Class 9': [
-      { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit },
-      { key: 'English', nameKey: 'subjectEnglish', icon: FileText },
-      { key: 'Intelligence', nameKey: 'subjectReasoning', icon: BrainCircuit },
-      { key: 'General Science', nameKey: 'subjectGeneralScience', icon: Languages },
-      { key: 'Social Studies', nameKey: 'subjectSocialStudies', icon: ListChecks },
+        { key: 'Paper-I English', nameKey: 'subjectEnglish', icon: FileText, questions: 100, totalMarks: 100 },
+        { key: 'Paper-II Hindi & Social Science', nameKey: 'subjectSocialStudies', icon: ListChecks, questions: 100, totalMarks: 100 },
+        { key: 'Paper-III Maths & Science', nameKey: 'subjectGeneralScience', icon: Languages, questions: 100, totalMarks: 100 },
     ],
   },
   jnv: {
     'Class 6': [
-      { key: 'Mental Ability', nameKey: 'subjectMentalAbility', icon: BrainCircuit },
-      { key: 'Arithmetic', nameKey: 'subjectArithmetic', icon: BrainCircuit },
-      { key: 'Language', nameKey: 'subjectLanguage', icon: FileText },
+      { key: 'Mental Ability', nameKey: 'subjectMentalAbility', icon: BrainCircuit, questions: 40, totalMarks: 50 },
+      { key: 'Arithmetic', nameKey: 'subjectArithmetic', icon: BrainCircuit, questions: 20, totalMarks: 25 },
+      { key: 'Language', nameKey: 'subjectLanguage', icon: FileText, questions: 20, totalMarks: 25 },
     ],
     'Class 9': [
-      { key: 'English', nameKey: 'subjectEnglish', icon: FileText },
-      { key: 'Hindi', nameKey: 'subjectHindi', icon: FileText },
-      { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit },
-      { key: 'Science', nameKey: 'subjectGeneralScience', icon: Languages },
+      { key: 'English', nameKey: 'subjectEnglish', icon: FileText, questions: 15, totalMarks: 15 },
+      { key: 'Hindi', nameKey: 'subjectHindi', icon: FileText, questions: 15, totalMarks: 15 },
+      { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit, questions: 35, totalMarks: 35 },
+      { key: 'Science', nameKey: 'subjectGeneralScience', icon: Languages, questions: 35, totalMarks: 35 },
     ],
   },
   subject_wise: {
       'All': [
-          { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit },
-          { key: 'General Knowledge', nameKey: 'subjectGeneralKnowledge', icon: Languages },
-          { key: 'Reasoning', nameKey: 'subjectReasoning', icon: BrainCircuit },
-          { key: 'Hindi', nameKey: 'subjectHindi', icon: FileText },
-          { key: 'English', nameKey: 'subjectEnglish', icon: FileText },
-          { key: 'General Science', nameKey: 'subjectGeneralScience', icon: Languages },
+          { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit, questions: 15, totalMarks: 30 },
+          { key: 'General Knowledge', nameKey: 'subjectGeneralKnowledge', icon: Languages, questions: 15, totalMarks: 30 },
+          { key: 'Reasoning', nameKey: 'subjectReasoning', icon: BrainCircuit, questions: 15, totalMarks: 30 },
+          { key: 'Hindi', nameKey: 'subjectHindi', icon: FileText, questions: 15, totalMarks: 30 },
+          { key: 'English', nameKey: 'subjectEnglish', icon: FileText, questions: 15, totalMarks: 30 },
+          { key: 'General Science', nameKey: 'subjectGeneralScience', icon: Languages, questions: 15, totalMarks: 30 },
       ]
   }
 };
@@ -87,12 +93,17 @@ interface UserAnswer {
   selectedOptionIndex: number;
   isCorrect: boolean;
 }
+interface SubjectResult { score: number; totalQuestions: number; }
+type TestProgress = Record<string, SubjectResult>;
+
 
 const getTimerDuration = (testType: TestType, studentClass: string): number => {
     if(testType === 'sainik_school') return studentClass === 'Class 6' ? 150 * 60 : 180 * 60;
     if(testType === 'jnv') return studentClass === 'Class 6' ? 120 * 60 : 150 * 60;
-    return 30 * 60; // Default for subject-wise
+    if(testType === 'rms') return 150 * 60;
+    return 30 * 60; 
 }
+
 
 export default function TestSeriesPage() {
   const { t, language } = useLanguage();
@@ -104,8 +115,9 @@ export default function TestSeriesPage() {
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<SubjectConfig | null>(null);
   const [studentName, setStudentName] = useState('');
+  const [testProgress, setTestProgress] = useState<TestProgress>({});
   
-  const [testPaper, setTestPaper] = useState<TestPaper | null>(null);
+  const [activeTestPaper, setActiveTestPaper] = useState<TestPaper | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
@@ -113,25 +125,37 @@ export default function TestSeriesPage() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
 
+  // Load student name and progress from localStorage
   useEffect(() => {
     const storedName = localStorage.getItem(STUDENT_USERNAME_KEY);
     if(storedName) setStudentName(storedName);
-  }, []);
 
+    if (selectedTestType && selectedClass) {
+        const progressKey = `testProgress_${selectedTestType}_${selectedClass}`;
+        const storedProgress = localStorage.getItem(progressKey);
+        if (storedProgress) {
+            setTestProgress(JSON.parse(storedProgress));
+        } else {
+            setTestProgress({});
+        }
+    }
+  }, [selectedTestType, selectedClass]);
+  
+  // Timer effect
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (timerActive && timeLeft > 0) {
       interval = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
     } else if (timerActive && timeLeft === 0) {
-      setTimerActive(false);
-      setStage("completed");
+      handleFinishSubjectTest();
       toast({ title: t('timeUpTitle'), description: t('testAutoSubmitted') });
     }
     return () => { if (interval) clearInterval(interval); };
   }, [timerActive, timeLeft, toast, t]);
 
+
   const resetTestState = () => {
-    setTestPaper(null);
+    setActiveTestPaper(null);
     setCurrentQuestionIndex(0);
     setSelectedOption(null);
     setUserAnswers([]);
@@ -139,36 +163,61 @@ export default function TestSeriesPage() {
     setTimerActive(false);
   };
   
-  const handleStartTest = async () => {
-    if (!studentName || !selectedClass || !selectedSubject || !selectedTestType) {
-      toast({ title: t('errorOccurred'), description: t('nameAndClassRequired'), variant: "destructive" });
-      return;
-    }
+  const handleStartSubjectTest = async (subjectConfig: SubjectConfig) => {
+    setSelectedSubject(subjectConfig);
     setStage("generating");
     resetTestState();
-    setTimeLeft(getTimerDuration(selectedTestType, selectedClass));
     
     const result = await generateAIMockTest({ 
       studentName,
       studentClass: selectedClass, 
       language, 
-      testType: selectedTestType,
-      subject: selectedSubject.key 
+      testType: selectedTestType!,
+      subject: subjectConfig.key 
     });
     
     if ('error'in result || result.subjects.length === 0) {
       toast({ title: t('errorOccurred'), description: ('error' in result && result.error) || t('aiTestError'), variant: "destructive" });
-      setStage("details");
+      setStage("subjectList");
     } else {
-      setTestPaper(result);
+      setActiveTestPaper(result);
+      if (selectedTestType !== 'subject_wise') {
+          const totalDuration = getTimerDuration(selectedTestType!, selectedClass);
+          setTimeLeft(totalDuration);
+          setTimerActive(true);
+      }
       setStage("inProgress");
-      setTimerActive(true);
     }
   };
 
-  const currentSubjectData: TestSubject | undefined = testPaper?.subjects[0];
-  const currentQuestion: TestQuestion | undefined = currentSubjectData?.questions[currentQuestionIndex];
+  const handleFinishSubjectTest = () => {
+    const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
+    const newProgress = {
+      ...testProgress,
+      [selectedSubject!.key]: {
+        score: correctAnswers,
+        totalQuestions: activeTestPaper!.subjects[0].questions.length,
+      }
+    };
+    setTestProgress(newProgress);
+    const progressKey = `testProgress_${selectedTestType}_${selectedClass}`;
+    localStorage.setItem(progressKey, JSON.stringify(newProgress));
 
+    toast({ title: t('testSubmitted'), description: `${t('yourScoreIs')} ${correctAnswers}/${activeTestPaper!.subjects[0].questions.length}`});
+    resetTestState();
+    setStage("subjectList");
+  };
+
+  const handleNextQuestion = () => {
+    setShowAnswer(false);
+    setSelectedOption(null);
+    if (activeTestPaper && currentQuestionIndex < activeTestPaper.subjects[0].questions.length - 1) {
+      setCurrentQuestionIndex(qI => qI + 1);
+    } else {
+      handleFinishSubjectTest();
+    }
+  };
+  
   const handleSubmitAnswer = () => {
     if (selectedOption === null || !currentQuestion || !currentSubjectData) return;
     const selectedIdx = parseInt(selectedOption, 10);
@@ -176,85 +225,22 @@ export default function TestSeriesPage() {
     setUserAnswers(prev => [...prev, { questionIndex: currentQuestionIndex, selectedOptionIndex: selectedIdx, isCorrect }]);
     setShowAnswer(true);
   };
-
-  const handleNext = () => {
-    setShowAnswer(false);
-    setSelectedOption(null);
-    if (currentSubjectData && currentQuestionIndex < currentSubjectData.questions.length - 1) {
-      setCurrentQuestionIndex(qI => qI + 1);
-    } else {
-      setTimerActive(false);
-      setStage("completed");
-      toast({ title: t('testSubmitted'), description: `${t('yourScoreIs')} ${userAnswers.filter(a => a.isCorrect).length}/${currentSubjectData?.questions.length}`});
-    }
-  };
-
-  const getResultStatus = () => {
-    if (!currentSubjectData || !selectedTestType) return { statusKey: 'testResultFail', color: 'text-destructive' };
-    const score = userAnswers.filter(a => a.isCorrect).length;
-    
-    if (selectedTestType === 'sainik_school') {
-        const marks = userAnswers.reduce((total, answer) => {
-            if (answer.isCorrect) {
-              const question = currentSubjectData.questions[answer.questionIndex];
-              const subjectKey = selectedSubject?.key || '';
-              if (selectedClass === 'Class 6') {
-                 total += subjectKey === 'Mathematics' ? 3 : 2;
-              } else { // Class 9
-                 total += 2; // Assuming all subjects are 2 marks each for simplicity
-              }
-            }
-            return total;
-        }, 0);
-        if (selectedClass === 'Class 6') {
-            if (marks > 250) return { statusKey: 'testResultPass', color: 'text-green-500' };
-            if (marks >= 225) return { statusKey: 'testResultAverage', color: 'text-yellow-500' };
-            return { statusKey: 'testResultFail', color: 'text-destructive' };
-        } else { // Class 9
-            if (marks > 335) return { statusKey: 'testResultPass', color: 'text-green-500' };
-            if (marks >= 320) return { statusKey: 'testResultAverage', color: 'text-yellow-500' };
-            return { statusKey: 'testResultFail', color: 'text-destructive' };
-        }
-    } else if (selectedTestType === 'jnv') {
-        if (selectedClass === 'Class 6') {
-            if (score > 70) return { statusKey: 'testResultPass', color: 'text-green-500' };
-            if (score >= 60) return { statusKey: 'testResultAverage', color: 'text-yellow-500' };
-            return { statusKey: 'testResultFail', color: 'text-destructive' };
-        } else { // Class 9
-            if (score > 80) return { statusKey: 'testResultPass', color: 'text-green-500' };
-            if (score >= 70) return { statusKey: 'testResultAverage', color: 'text-yellow-500' };
-            return { statusKey: 'testResultFail', color: 'text-destructive' };
-        }
-    }
-    return { statusKey: 'testResultCompleted', color: 'text-primary' }; // Fallback for subject-wise/RMS
-  };
   
-  const TestSelectionCard = ({ type, titleKey, descriptionKey, icon: Icon }: { type: TestType, titleKey: string, descriptionKey: string, icon: React.ElementType }) => (
-    <Card className="p-6 flex flex-col items-start text-left bg-card hover:bg-muted/50 transition-colors duration-300">
-        <Icon className="h-10 w-10 text-primary mb-4"/>
-        <h3 className="text-xl font-headline font-semibold text-foreground">{t(titleKey as any)}</h3>
-        <p className="text-sm text-muted-foreground mt-1 mb-4 flex-grow">{t(descriptionKey as any)}</p>
-        <Button onClick={() => { setSelectedTestType(type); setStage('details'); }} className="w-full">
-            {t('startButton') || 'शुरू करें'}
-        </Button>
-    </Card>
-  );
-
-
+  const currentSubjectData: TestSubject | undefined = activeTestPaper?.subjects[0];
+  const currentQuestion: TestQuestion | undefined = currentSubjectData?.questions[currentQuestionIndex];
+  
   const renderSelectionScreen = () => (
-    <Card className="max-w-4xl mx-auto shadow-xl bg-background border-none">
+    <Card className="max-w-4xl mx-auto shadow-xl bg-card border-none">
       <CardHeader className="text-center">
-        <div className="flex justify-center mb-2">
-            <ClipboardCheck className="h-12 w-12 text-primary" />
-        </div>
+        <div className="flex justify-center mb-2"><ClipboardCheck className="h-12 w-12 text-primary" /></div>
         <CardTitle className="text-3xl font-bold font-headline text-foreground">{t('testSeries')}</CardTitle>
         <CardDescription>{t('selectTestType')}</CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <TestSelectionCard type="sainik_school" titleKey="sainikSchoolMockTest" descriptionKey="sainikSchoolMockTestDesc" icon={Shield} />
-          <TestSelectionCard type="rms" titleKey="rmsMockTest" descriptionKey="rmsMockTestDesc" icon={GraduationCap} />
-          <TestSelectionCard type="jnv" titleKey="jnvMockTest" descriptionKey="jnvMockTestDesc" icon={School} />
-          <TestSelectionCard type="subject_wise" titleKey="subjectWiseTest" descriptionKey="subjectWiseTestDesc" icon={BookCopy} />
+      <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Button onClick={() => { setSelectedTestType("sainik_school"); setStage('details'); }} className="h-20 text-lg flex items-center gap-3"><Shield className="h-6 w-6"/>{t('sainikSchoolMockTest')}</Button>
+        <Button onClick={() => { setSelectedTestType("rms"); setStage('details'); }} className="h-20 text-lg flex items-center gap-3"><GraduationCap className="h-6 w-6"/>{t('rmsMockTest')}</Button>
+        <Button onClick={() => { setSelectedTestType("jnv"); setStage('details'); }} className="h-20 text-lg flex items-center gap-3"><School className="h-6 w-6"/>{t('jnvMockTest')}</Button>
+        <Button onClick={() => { setSelectedTestType("subject_wise"); setStage('details'); }} className="h-20 text-lg md:col-span-2 lg:col-span-3 flex items-center gap-3"><BookCopy className="h-6 w-6"/>{t('subjectWiseTest')}</Button>
       </CardContent>
     </Card>
   );
@@ -264,13 +250,12 @@ export default function TestSeriesPage() {
     const classOptions = selectedTestType === 'subject_wise' 
       ? ['Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'NDA', 'CDS', 'UPSC', 'SSC']
       : ['Class 6', 'Class 9'];
-    const subjects = testConfigs[selectedTestType]?.[selectedClass as 'Class 6' | 'Class 9'] || testConfigs.subject_wise.All;
 
     return (
       <Card className="max-w-lg mx-auto shadow-xl bg-card">
         <CardHeader>
-            <Button variant="ghost" size="sm" onClick={() => { setStage('selection'); setSelectedClass(''); setSelectedSubject(null); }} className="absolute top-4 left-4"><ArrowLeft className="mr-2 h-4 w-4"/> {t('backButton')}</Button>
-            <CardTitle className="text-center pt-10 text-2xl font-bold font-headline text-foreground">{t(selectedTestType === 'sainik_school' ? 'sainikSchoolMockTest' : selectedTestType === 'jnv' ? 'jnvMockTest' : 'subjectWiseTest')}</CardTitle>
+            <Button variant="ghost" size="sm" onClick={() => { setStage('selection'); setSelectedClass(''); }} className="absolute top-4 left-4"><ArrowLeft className="mr-2 h-4 w-4"/> {t('backButton')}</Button>
+            <CardTitle className="text-center pt-10 text-2xl font-bold font-headline text-foreground">{t(selectedTestType === 'sainik_school' ? 'sainikSchoolMockTest' : selectedTestType === 'jnv' ? 'jnvMockTest' : selectedTestType === 'rms' ? 'rmsMockTest' : 'subjectWiseTest')}</CardTitle>
             <CardDescription className="text-center">{t('enterTestDetails')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -281,17 +266,48 @@ export default function TestSeriesPage() {
               <SelectContent>{classOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          {selectedClass && <div>
-            <Label>{t('subject')}</Label>
-            <div className="grid grid-cols-2 gap-2 mt-2">
-                {subjects.map(s => <Button key={s.key} variant={selectedSubject?.key === s.key ? "default" : "outline"} onClick={() => setSelectedSubject(s)} className="flex-col h-20 gap-1"><s.icon className="h-6 w-6"/><span>{t(s.nameKey)}</span></Button>)}
-            </div>
-          </div>}
-          <Button onClick={handleStartTest} className="w-full h-12 text-lg" disabled={!selectedClass || !selectedSubject || !studentName}>{t('startTestButton')}</Button>
+          <Button onClick={()=>setStage("subjectList")} className="w-full h-12 text-lg" disabled={!selectedClass || !studentName}>{t('startButton')}</Button>
         </CardContent>
       </Card>
     )
   };
+
+  const renderSubjectList = () => {
+    if (!selectedTestType || !selectedClass) return null;
+    const subjects = testConfigs[selectedTestType]?.[selectedClass] || testConfigs.subject_wise.All;
+    const allSubjectsCompleted = subjects.every(s => testProgress[s.key]);
+
+    return (
+      <div className="max-w-2xl mx-auto space-y-4">
+        <Button variant="ghost" size="sm" onClick={() => { setStage('details'); setTestProgress({}); }} className="mb-4"><ArrowLeft className="mr-2 h-4 w-4"/> {t('backButton')}</Button>
+        {subjects.map(subject => {
+            const result = testProgress[subject.key];
+            return (
+                <Card key={subject.key} className="bg-card shadow-md">
+                    <CardHeader>
+                        <CardTitle>{t(subject.nameKey)}</CardTitle>
+                        <CardDescription>{subject.questions} {t('questions')} | {subject.totalMarks} {t('marksLabel')}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {result ? (
+                             <div className="text-green-600 font-semibold">{t('testCompletedStatus')}: {result.score} / {result.totalQuestions}</div>
+                        ) : (
+                             <p className="text-muted-foreground">{t('testPendingStatus')}</p>
+                        )}
+                    </CardContent>
+                    <CardFooter>
+                       <Button onClick={()=> handleStartSubjectTest(subject)} className="w-full" disabled={!!result}>{result ? t('retakeTestButton') : t('startTestButton')}</Button>
+                    </CardFooter>
+                </Card>
+            )
+        })}
+        <Card className="bg-card shadow-md p-4 space-y-2">
+            <Button className="w-full" disabled={!allSubjectsCompleted} onClick={() => setStage('completed')}>{t('generateFinalCertificate')}</Button>
+            <Button variant="destructive" className="w-full" onClick={() => {setTestProgress({}); localStorage.removeItem(`testProgress_${selectedTestType}_${selectedClass}`);}}>{t('resetProgressButton')}</Button>
+        </Card>
+      </div>
+    )
+  }
   
   const renderTestScreen = () => {
     if (!currentQuestion || !currentSubjectData) return <div className="text-center">{t('loading')}</div>;
@@ -320,21 +336,57 @@ export default function TestSeriesPage() {
                 </Sheet>
                  <AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" disabled={showAnswer}>{t('finishTestEarly')}</Button></AlertDialogTrigger>
                     <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('confirmSubmitTitle')}</AlertDialogTitle><AlertDialogDescription>{t('confirmSubmitMessage')}</AlertDialogDescription></AlertDialogHeader>
-                    <AlertDialogFooter><AlertDialogCancel>{t('noButton')}</AlertDialogCancel><AlertDialogAction onClick={() => { setTimerActive(false); setStage('completed'); }}>{t('yesButton')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+                    <AlertDialogFooter><AlertDialogCancel>{t('noButton')}</AlertDialogCancel><AlertDialogAction onClick={handleFinishSubjectTest}>{t('yesButton')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
                 </AlertDialog>
             </div>
-            {showAnswer ? (<Button onClick={handleNext} className="w-full sm:w-auto">{questionNumber === totalQuestions ? t('finishTest') : t('nextQuestion')}<ChevronRight className="ml-2 h-4 w-4" /></Button>)
+            {showAnswer ? (<Button onClick={handleNextQuestion} className="w-full sm:w-auto">{questionNumber === totalQuestions ? t('finishTest') : t('nextQuestion')}<ChevronRight className="ml-2 h-4 w-4" /></Button>)
             : (<Button onClick={handleSubmitAnswer} disabled={selectedOption === null} className="w-full sm:w-auto">{t('submitAnswer')}</Button>)}
         </CardFooter>
       </Card>
     )
   };
 
-  const renderCompletionScreen = () => {
-    if (!testPaper || !currentSubjectData) return null;
-    const score = userAnswers.filter(a => a.isCorrect).length;
-    const totalQuestions = currentSubjectData.questions.length;
-    const { statusKey, color } = getResultStatus();
+ const renderCompletionScreen = () => {
+    if (!selectedTestType || !selectedClass) return null;
+
+    const subjects = testConfigs[selectedTestType]?.[selectedClass];
+    let totalObtainedMarks = 0;
+    let totalMarks = 0;
+
+    subjects.forEach(subject => {
+        const result = testProgress[subject.key];
+        if(result) {
+            totalObtainedMarks += result.score * (subject.marksPerQuestion || 1);
+        }
+        totalMarks += subject.totalMarks;
+    });
+
+    let statusKey = 'testResultFail';
+    let statusColor = 'text-destructive';
+
+    if (selectedTestType === 'sainik_school') {
+        if (selectedClass === 'Class 6') {
+            if (totalObtainedMarks > 250) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; }
+            else if (totalObtainedMarks >= 225) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
+        } else { // Class 9
+            if (totalObtainedMarks > 345) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; }
+            else if (totalObtainedMarks >= 320) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
+        }
+    } else if (selectedTestType === 'jnv') {
+        const totalQuestions = subjects.reduce((acc, s) => acc + s.questions, 0);
+        const correctAnswers = Object.values(testProgress).reduce((acc, r) => acc + r.score, 0);
+        if (selectedClass === 'Class 6') {
+            if (correctAnswers > 70) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; }
+            else if (correctAnswers >= 60) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
+        } else { // Class 9
+            if (correctAnswers > 80) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; }
+            else if (correctAnswers >= 70) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
+        }
+    } else { // RMS or Subject-wise
+        if ((totalObtainedMarks / totalMarks) >= 0.7) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; }
+        else if ((totalObtainedMarks / totalMarks) >= 0.5) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
+    }
+
 
     return (
       <Card className="max-w-2xl mx-auto shadow-xl border-border/50 print:shadow-none print:border-none bg-card">
@@ -351,11 +403,11 @@ export default function TestSeriesPage() {
               </CardHeader>
               <CardContent className="text-center p-0 space-y-2">
                   <p className="text-xl font-semibold">{studentName}</p>
-                  <p className="text-sm text-muted-foreground">{t(selectedTestType === 'sainik_school' ? 'sainikSchoolMockTest' : selectedTestType === 'jnv' ? 'jnvMockTest' : 'subjectWiseTest')} - {selectedClass} - {currentSubjectData.subjectName}</p>
+                  <p className="text-sm text-muted-foreground">{t(selectedTestType === 'sainik_school' ? 'sainikSchoolMockTest' : selectedTestType === 'jnv' ? 'jnvMockTest' : 'subjectWiseTest')} - {selectedClass}</p>
                   <Card className="bg-muted/50 p-4 print:bg-gray-100 print:border my-4">
                       <CardContent className="p-0">
-                          <p className="text-4xl font-bold text-primary print:text-black">{score} / {totalQuestions}</p>
-                          <p className={`text-xl font-bold ${color}`}>{t(statusKey)}</p>
+                          <p className="text-4xl font-bold text-primary print:text-black">{totalObtainedMarks} / {totalMarks}</p>
+                          <p className={`text-xl font-bold ${statusColor}`}>{t(statusKey)}</p>
                       </CardContent>
                   </Card>
                   <div className="relative h-20 w-20 mx-auto mt-4">
@@ -365,7 +417,7 @@ export default function TestSeriesPage() {
           </div>
           <CardFooter className="flex flex-col sm:flex-row justify-center gap-2 p-6 pt-0 print:hidden">
               <Button onClick={() => window.print()} variant="outline"><Download className="mr-2 h-4 w-4" /> {t('downloadCertificate')}</Button>
-              <Button onClick={() => setStage('selection')}><RotateCcw className="mr-2 h-4 w-4" /> {t('tryAnotherTest')}</Button>
+              <Button onClick={() => { setStage('selection'); setTestProgress({}); setSelectedTestType(null); setSelectedClass(''); }}><RotateCcw className="mr-2 h-4 w-4" /> {t('tryAnotherTest')}</Button>
           </CardFooter>
       </Card>
     )
@@ -375,6 +427,7 @@ export default function TestSeriesPage() {
     switch(stage) {
       case 'selection': return renderSelectionScreen();
       case 'details': return renderDetailsScreen();
+      case 'subjectList': return renderSubjectList();
       case 'generating': return <div className="flex flex-col items-center justify-center min-h-[50vh]"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="mt-4 text-lg text-muted-foreground">{t('generatingTest')}</p></div>;
       case 'inProgress': return renderTestScreen();
       case 'completed': return renderCompletionScreen();
@@ -384,4 +437,3 @@ export default function TestSeriesPage() {
 
   return <div className="max-w-4xl mx-auto space-y-8">{renderContent()}</div>;
 }
-    

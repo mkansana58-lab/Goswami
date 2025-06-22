@@ -28,7 +28,7 @@ export type TestSubject = z.infer<typeof TestSubjectSchema>;
 
 const GenerateTestPaperInputSchema = z.object({
   studentName: z.string().describe("The student's name for personalizing the test paper."),
-  testType: z.enum(['sainik_school', 'jnv', 'subject_wise']).describe("The type of mock test to generate."),
+  testType: z.enum(['sainik_school', 'jnv', 'rms', 'subject_wise']).describe("The type of mock test to generate."),
   studentClass: z.string().describe('The class level of the student (e.g., "Class 6", "Class 9", "NDA"). This determines difficulty.'),
   language: z.enum(['en', 'hi']).default('en').describe('Language for the test paper. For JNV Class 9, English questions must remain in English.'),
   subject: z.string().describe('The specific subject for the test (e.g., "Mathematics", "Mental Ability", "English").')
@@ -50,13 +50,13 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateTestPaperInputSchema},
   output: {schema: TestPaperSchema},
   prompt: `
-    You are an expert question paper setter for competitive entrance exams in India (Sainik School, JNV).
-    Generate a single-subject test paper for a student named {{{studentName}}} of {{{studentClass}}}.
-    The test paper, including the main title, subject name, questions, options, and explanations MUST be in the '{{language}}' language, unless a specific instruction overrides this (like for English subject questions).
+    You are an expert question paper setter for competitive entrance exams in India (Sainik School, RMS, JNV).
+    Your task is to generate a SINGLE-SUBJECT test paper part for a student named {{{studentName}}} of {{{studentClass}}}.
+    The entire test paper, including title, subject name, questions, options, and explanations MUST be in the '{{language}}' language, unless a specific rule overrides this.
     For Hindi ('hi'), ALL translatable content MUST be in Devanagari script.
 
-    Test Generation Rules based on testType:
-
+    TEST GENERATION RULES:
+    
     {{#if (eq testType "jnv")}}
       {{#if (eq studentClass "Class 6")}}
         Title: JNV Mock Test (Class 6) - {{{subject}}}
@@ -86,13 +86,32 @@ const prompt = ai.definePrompt({
         Title: Sainik School Mock Test (Class 6) - {{{subject}}}
         {{#if (eq subject "Mathematics")}}
           Generate 50 multiple-choice questions for Mathematics.
-        {{else}}
-          Generate 25 multiple-choice questions for {{{subject}}} (e.g., General Knowledge, Language, Intelligence).
+        {{else if (or (eq subject "General Knowledge") (eq subject "Language") (eq subject "Intelligence"))}}
+          Generate 25 multiple-choice questions for {{{subject}}}. Language questions should match the main '{{language}}' parameter.
         {{/if}}
       {{else if (eq studentClass "Class 9")}}
         Title: Sainik School Mock Test (Class 9) - {{{subject}}}
-        Generate 25 multiple-choice questions for {{{subject}}} (e.g., English, General Science, Social Studies, Mathematics, Intelligence). All questions must be in English.
+        {{#if (eq subject "Mathematics")}}
+          Generate 50 multiple-choice questions for Mathematics. Questions MUST be in English.
+        {{else if (or (eq subject "English") (eq subject "Intelligence") (eq subject "General Science") (eq subject "Social Studies"))}}
+          Generate 25 multiple-choice questions for {{{subject}}}. All questions MUST be in English.
+        {{/if}}
       {{/if}}
+    {{/if}}
+
+    {{#if (eq testType "rms")}}
+       Title: RMS Mock Test ({{{studentClass}}}) - {{{subject}}}
+        {{#if (eq studentClass "Class 6")}}
+             Generate 50 multiple-choice questions for {{{subject}}}.
+        {{else if (eq studentClass "Class 9")}}
+            {{#if (eq subject "Paper-I English")}}
+                Generate 100 questions for English.
+            {{else if (eq subject "Paper-II Hindi & Social Science")}}
+                Generate 50 questions for Hindi and 50 questions for Social Science.
+            {{else if (eq subject "Paper-III Maths & Science")}}
+                Generate 50 questions for Mathematics and 50 questions for Science.
+            {{/if}}
+        {{/if}}
     {{/if}}
 
     {{#if (eq testType "subject_wise")}}
@@ -107,8 +126,7 @@ const prompt = ai.definePrompt({
     4.  explanation: A brief, clear explanation for why the answer is correct, in the specified language.
     5.  figureImageUrl: (Optional) ONLY for JNV Class 6 Mental Ability. Provide a placeholder URL.
 
-    Ensure the difficulty is appropriate for the specified class.
-    Your entire response must be a single JSON object that strictly adheres to the provided output schema.
+    Ensure the difficulty is appropriate for the specified class. Your entire response must be a single JSON object that strictly adheres to the provided output schema.
   `,
 });
 

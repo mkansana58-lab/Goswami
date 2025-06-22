@@ -6,7 +6,7 @@
 @layer base {
   :root {
     /* Light Theme (New Default) */
-    --background: 0 0% 98%; /* Almost white */
+    --background: 210 40% 98%; /* Almost white */
     --foreground: 222.2 84% 4.9%; /* Dark Blueish Black */
 
     --muted: 210 40% 96.1%; /* Light Gray */
@@ -34,8 +34,6 @@
     --destructive-foreground: 0 0% 100%;
 
     --ring: 357 80% 65%;
-
-    --radius: 0.5rem;
 
     --chart-1: 357 80% 55%;
     --chart-2: 217 80% 55%;
