@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Award, BookCopy, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, FileText, BrainCircuit, Languages, ListChecks, ArrowLeft, GraduationCap, Shield, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
-import { generateTestPaper } from './actions';
+import { generateAIMockTest } from './actions';
 import type { TestPaper, TestSubject, TestQuestion } from '@/ai/flows/generate-test-paper-flow';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -134,7 +134,7 @@ export default function TestSeriesPage() {
     resetTestState();
     setTimeLeft(getTimerDuration(selectedTestType, selectedClass));
     
-    const result = await generateTestPaper({ 
+    const result = await generateAIMockTest({ 
       studentName,
       studentClass: selectedClass, 
       language, 
