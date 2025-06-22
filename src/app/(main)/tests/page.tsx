@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Award, BookCopy, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, FileText, BrainCircuit, Languages, ListChecks, ArrowLeft, GraduationCap, Shield, School, AlertTriangle, ClipboardCheck, Trophy } from 'lucide-react';
+import { Loader2, Award, BookCopy, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, FileText, BrainCircuit, Languages, ListChecks, ArrowLeft, GraduationCap, Shield, School, AlertTriangle, Trophy } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
 import { generateAIMockTest } from './actions';
@@ -18,6 +18,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { STUDENT_USERNAME_KEY } from '@/lib/constants';
 import { testConfigs, type SubjectConfig as SubjectConfigType, type TestType } from '@/lib/test-configs';
+import { cn } from '@/lib/utils';
 
 const subjectIcons: Record<string, React.ElementType> = {
   'Mathematics': BrainCircuit,
@@ -440,5 +441,7 @@ export default function TestSeriesPage() {
     }
   };
 
-  return <div className="max-w-5xl mx-auto space-y-8">{renderContent()}</div>;
+  return <div className="max-w-5xl mx-auto space-y-8">
+    {renderContent()}
+    </div>;
 }
