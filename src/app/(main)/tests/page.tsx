@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -9,276 +9,343 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Award, BookCopy, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, LogOut, FileText, BrainCircuit, Languages, Replace } from 'lucide-react';
+import { Loader2, Award, BookCopy, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, FileText, BrainCircuit, Languages, ListChecks, ArrowLeft, GraduationCap, Shield, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
-import { generateAIMockTest } from './actions';
+import { generateTestPaper } from './actions';
 import type { TestPaper, TestSubject, TestQuestion } from '@/ai/flows/generate-test-paper-flow';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { STUDENT_USERNAME_KEY } from '@/lib/constants';
 
 type TestStage = "selection" | "details" | "generating" | "inProgress" | "completed";
-type SubjectKey = 'Mathematics' | 'General Knowledge' | 'Reasoning' | 'Hindi';
+type TestType = "sainik_school" | "jnv" | "subject_wise";
+
+interface SubjectConfig {
+  key: string;
+  nameKey: keyof ReturnType<typeof useLanguage>['t'];
+  icon: React.ElementType;
+}
+
+const testConfigs = {
+  sainik_school: {
+    'Class 6': [
+      { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit },
+      { key: 'General Knowledge', nameKey: 'subjectGeneralKnowledge', icon: Languages },
+      { key: 'Language', nameKey: 'subjectLanguage', icon: FileText },
+      { key: 'Intelligence', nameKey: 'subjectReasoning', icon: BrainCircuit },
+    ],
+    'Class 9': [
+      { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit },
+      { key: 'English', nameKey: 'subjectEnglish', icon: FileText },
+      { key: 'Intelligence', nameKey: 'subjectReasoning', icon: BrainCircuit },
+      { key: 'General Science', nameKey: 'subjectGeneralScience', icon: Languages },
+      { key: 'Social Studies', nameKey: 'subjectSocialStudies', icon: ListChecks },
+    ],
+  },
+  jnv: {
+    'Class 6': [
+      { key: 'Mental Ability', nameKey: 'subjectMentalAbility', icon: BrainCircuit },
+      { key: 'Arithmetic', nameKey: 'subjectArithmetic', icon: BrainCircuit },
+      { key: 'Language', nameKey: 'subjectLanguage', icon: FileText },
+    ],
+    'Class 9': [
+      { key: 'English', nameKey: 'subjectEnglish', icon: FileText },
+      { key: 'Hindi', nameKey: 'subjectHindi', icon: FileText },
+      { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit },
+      { key: 'Science', nameKey: 'subjectGeneralScience', icon: Languages },
+    ],
+  },
+  subject_wise: {
+      'All': [
+          { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit },
+          { key: 'General Knowledge', nameKey: 'subjectGeneralKnowledge', icon: Languages },
+          { key: 'Reasoning', nameKey: 'subjectReasoning', icon: BrainCircuit },
+          { key: 'Hindi', nameKey: 'subjectHindi', icon: FileText },
+          { key: 'English', nameKey: 'subjectEnglish', icon: FileText },
+          { key: 'General Science', nameKey: 'subjectGeneralScience', icon: Languages },
+      ]
+  }
+};
 
 interface UserAnswer {
-  subjectIndex: number;
   questionIndex: number;
   selectedOptionIndex: number;
   isCorrect: boolean;
 }
 
-const TEST_DURATION_MINUTES = 20;
+const getTimerDuration = (testType: TestType, studentClass: string): number => {
+    if(testType === 'sainik_school') return studentClass === 'Class 6' ? 150 * 60 : 180 * 60;
+    if(testType === 'jnv') return studentClass === 'Class 6' ? 120 * 60 : 150 * 60;
+    return 30 * 60; // Default for subject-wise
+}
 
 export default function TestSeriesPage() {
   const { t, language } = useLanguage();
   const { toast } = useToast();
 
+  // State Management
   const [stage, setStage] = useState<TestStage>("selection");
-  const [selectedSubject, setSelectedSubject] = useState<SubjectKey | null>(null);
+  const [selectedTestType, setSelectedTestType] = useState<TestType | null>(null);
+  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState<SubjectConfig | null>(null);
   const [studentName, setStudentName] = useState('');
-  const [studentClass, setStudentClass] = useState('');
   
   const [testPaper, setTestPaper] = useState<TestPaper | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
   const [showAnswer, setShowAnswer] = useState(false);
-  const [score, setScore] = useState(0);
-  const [currentDate, setCurrentDate] = useState('');
-  const [timeLeft, setTimeLeft] = useState(TEST_DURATION_MINUTES * 60);
+  const [timeLeft, setTimeLeft] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
 
   useEffect(() => {
-    setCurrentDate(new Date().toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-CA'));
-  }, [language]);
+    const storedName = localStorage.getItem(STUDENT_USERNAME_KEY);
+    if(storedName) setStudentName(storedName);
+  }, []);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (timerActive && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prevTime) => prevTime - 1);
-      }, 1000);
+      interval = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
     } else if (timerActive && timeLeft === 0) {
       setTimerActive(false);
       setStage("completed");
       toast({ title: t('timeUpTitle'), description: t('testAutoSubmitted') });
     }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
+    return () => { if (interval) clearInterval(interval); };
   }, [timerActive, timeLeft, toast, t]);
 
-  const handleSubjectSelect = (subject: SubjectKey) => {
-    setSelectedSubject(subject);
-    setStage("details");
+  const resetTestState = () => {
+    setTestPaper(null);
+    setCurrentQuestionIndex(0);
+    setSelectedOption(null);
+    setUserAnswers([]);
+    setShowAnswer(false);
+    setTimerActive(false);
   };
-
+  
   const handleStartTest = async () => {
-    if (!studentName || !studentClass || !selectedSubject) {
+    if (!studentName || !selectedClass || !selectedSubject || !selectedTestType) {
       toast({ title: t('errorOccurred'), description: t('nameAndClassRequired'), variant: "destructive" });
       return;
     }
     setStage("generating");
-    setUserAnswers([]);
-    setShowAnswer(false);
-    setSelectedOption(null);
-    setScore(0);
-    setCurrentQuestionIndex(0);
-    setTimeLeft(TEST_DURATION_MINUTES * 60);
+    resetTestState();
+    setTimeLeft(getTimerDuration(selectedTestType, selectedClass));
     
-    const result = await generateAIMockTest({ studentClass, language, subjectName: selectedSubject });
+    const result = await generateTestPaper({ 
+      studentName,
+      studentClass: selectedClass, 
+      language, 
+      testType: selectedTestType,
+      subject: selectedSubject.key 
+    });
     
     if ('error'in result || result.subjects.length === 0) {
-        toast({ title: t('errorOccurred'), description: ('error' in result && result.error) || t('aiTestError'), variant: "destructive" });
-        setStage("details");
+      toast({ title: t('errorOccurred'), description: ('error' in result && result.error) || t('aiTestError'), variant: "destructive" });
+      setStage("details");
     } else {
-        setTestPaper(result);
-        setStage("inProgress");
-        setTimerActive(true);
+      setTestPaper(result);
+      setStage("inProgress");
+      setTimerActive(true);
     }
   };
 
-  const currentSubject: TestSubject | undefined = testPaper?.subjects[0];
-  const currentQuestion: TestQuestion | undefined = currentSubject?.questions[currentQuestionIndex];
+  const currentSubjectData: TestSubject | undefined = testPaper?.subjects[0];
+  const currentQuestion: TestQuestion | undefined = currentSubjectData?.questions[currentQuestionIndex];
 
   const handleSubmitAnswer = () => {
-    if (selectedOption === null || !currentQuestion || !currentSubject) return;
-
+    if (selectedOption === null || !currentQuestion || !currentSubjectData) return;
     const selectedIdx = parseInt(selectedOption, 10);
     const isCorrect = selectedIdx === currentQuestion.correctAnswerIndex;
-    
-    setUserAnswers(prev => [...prev, {
-      subjectIndex: 0,
-      questionIndex: currentQuestionIndex,
-      selectedOptionIndex: selectedIdx,
-      isCorrect
-    }]);
-
-    if (isCorrect) {
-      setScore(s => s + 1);
-    }
+    setUserAnswers(prev => [...prev, { questionIndex: currentQuestionIndex, selectedOptionIndex: selectedIdx, isCorrect }]);
     setShowAnswer(true);
   };
 
   const handleNext = () => {
     setShowAnswer(false);
     setSelectedOption(null);
-
-    if (currentSubject && currentQuestionIndex < currentSubject.questions.length - 1) {
+    if (currentSubjectData && currentQuestionIndex < currentSubjectData.questions.length - 1) {
       setCurrentQuestionIndex(qI => qI + 1);
     } else {
       setTimerActive(false);
       setStage("completed");
+      toast({ title: t('testSubmitted'), description: `${t('yourScoreIs')} ${userAnswers.filter(a => a.isCorrect).length}/${currentSubjectData?.questions.length}`});
     }
   };
-  
-  const handleFinishEarly = () => {
-    setTimerActive(false);
-    setStage("completed");
+
+  const getResultStatus = () => {
+    if (!currentSubjectData) return { statusKey: 'testResultFail', color: 'text-destructive' };
+    const score = userAnswers.filter(a => a.isCorrect).length;
+    const totalQuestions = currentSubjectData.questions.length;
+    
+    if (selectedTestType === 'sainik_school') {
+        const marks = score * (selectedSubject?.key === 'Mathematics' && selectedClass === 'Class 6' ? 3 : 2);
+        const totalMarks = totalQuestions * (selectedSubject?.key === 'Mathematics' && selectedClass === 'Class 6' ? 3 : 2);
+        if (selectedClass === 'Class 6') {
+            if (marks > 250) return { statusKey: 'testResultPass', color: 'text-green-500' };
+            if (marks >= 225) return { statusKey: 'testResultAverage', color: 'text-yellow-500' };
+            return { statusKey: 'testResultFail', color: 'text-destructive' };
+        } else { // Class 9
+            if (marks > 335) return { statusKey: 'testResultPass', color: 'text-green-500' };
+            if (marks >= 320) return { statusKey: 'testResultAverage', color: 'text-yellow-500' };
+            return { statusKey: 'testResultFail', color: 'text-destructive' };
+        }
+    } else if (selectedTestType === 'jnv') {
+        if (selectedClass === 'Class 6') {
+            if (score > 70) return { statusKey: 'testResultPass', color: 'text-green-500' };
+            if (score >= 60) return { statusKey: 'testResultAverage', color: 'text-yellow-500' };
+            return { statusKey: 'testResultFail', color: 'text-destructive' };
+        } else { // Class 9
+            if (score > 80) return { statusKey: 'testResultPass', color: 'text-green-500' };
+            if (score >= 70) return { statusKey: 'testResultAverage', color: 'text-yellow-500' };
+            return { statusKey: 'testResultFail', color: 'text-destructive' };
+        }
+    }
+    return { statusKey: 'testResultCompleted', color: 'text-primary' }; // Fallback for subject-wise
   };
 
-  const handleTryAgain = () => {
-    setStage("selection");
-    setSelectedSubject(null);
-    setTestPaper(null);
-    setTimerActive(false);
-  };
-  
-  const handleDownloadCertificate = () => {
-    if (typeof window !== 'undefined') window.print();
-  };
+  const renderSelectionScreen = () => (
+    <Card className="max-w-4xl mx-auto shadow-xl bg-card">
+      <CardHeader className="text-center"><CardTitle className="text-3xl font-bold font-headline text-foreground">{t('testSeries')}</CardTitle><CardDescription>{t('selectTestType')}</CardDescription></CardHeader>
+      <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="p-6 flex flex-col items-center justify-center text-center hover:bg-muted cursor-pointer" onClick={() => { setSelectedTestType('sainik_school'); setStage('details'); }}>
+              <Shield className="h-12 w-12 text-primary mb-4"/>
+              <h3 className="text-xl font-semibold">{t('sainikSchoolMockTest')}</h3>
+          </Card>
+          <Card className="p-6 flex flex-col items-center justify-center text-center hover:bg-muted cursor-pointer" onClick={() => { setSelectedTestType('jnv'); setStage('details'); }}>
+              <GraduationCap className="h-12 w-12 text-primary mb-4"/>
+              <h3 className="text-xl font-semibold">{t('jnvMockTest')}</h3>
+          </Card>
+          <Card className="p-6 flex flex-col items-center justify-center text-center hover:bg-muted cursor-pointer" onClick={() => { setSelectedTestType('subject_wise'); setStage('details'); }}>
+              <BookCopy className="h-12 w-12 text-primary mb-4"/>
+              <h3 className="text-xl font-semibold">{t('subjectWiseTest')}</h3>
+          </Card>
+      </CardContent>
+    </Card>
+  );
 
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-  };
+  const renderDetailsScreen = () => {
+    if (!selectedTestType) return null;
+    const classOptions = selectedTestType === 'subject_wise' 
+      ? ['Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'NDA', 'CDS', 'UPSC', 'SSC']
+      : ['Class 6', 'Class 9'];
+    const subjects = testConfigs[selectedTestType]?.[selectedClass as 'Class 6' | 'Class 9'] || testConfigs.subject_wise.All;
 
-  if (stage === "selection") {
-    const subjects: { key: SubjectKey; icon: React.ElementType; labelKey: keyof ReturnType<typeof useLanguage>['t'] }[] = [
-        { key: 'Mathematics', icon: Replace, labelKey: 'subjectMathematics' },
-        { key: 'General Knowledge', icon: Languages, labelKey: 'subjectGeneralKnowledge' },
-        { key: 'Reasoning', icon: BrainCircuit, labelKey: 'subjectReasoning' },
-        { key: 'Hindi', icon: FileText, labelKey: 'subjectHindi' },
-    ];
     return (
-      <Card className="max-w-2xl mx-auto shadow-xl">
-        <CardHeader className="text-center">
-          <BookCopy className="h-16 w-16 text-primary mx-auto mb-4" />
-          <CardTitle className="text-3xl font-bold font-headline text-primary">{t('testSeries')}</CardTitle>
-          <CardDescription className="text-lg">{t('selectSubjectForTest')}</CardDescription>
+      <Card className="max-w-lg mx-auto shadow-xl bg-card">
+        <CardHeader>
+            <Button variant="ghost" size="sm" onClick={() => { setStage('selection'); setSelectedClass(''); setSelectedSubject(null); }} className="absolute top-4 left-4"><ArrowLeft className="mr-2 h-4 w-4"/> {t('backButton')}</Button>
+            <CardTitle className="text-center pt-10 text-2xl font-bold font-headline text-foreground">{t(selectedTestType === 'sainik_school' ? 'sainikSchoolMockTest' : selectedTestType === 'jnv' ? 'jnvMockTest' : 'subjectWiseTest')}</CardTitle>
+            <CardDescription className="text-center">{t('enterTestDetails')}</CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4">
-          {subjects.map(subject => (
-            <Button key={subject.key} onClick={() => handleSubjectSelect(subject.key)} className="h-24 flex-col gap-2 text-lg bg-card text-card-foreground border hover:bg-muted" variant="outline">
-              <subject.icon className="h-8 w-8 text-primary" />
-              {t(subject.labelKey)}
-            </Button>
-          ))}
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (stage === "details" && selectedSubject) {
-    return (
-      <Card className="max-w-lg mx-auto shadow-xl">
-        <CardHeader className="text-center">
-          <BookCopy className="h-16 w-16 text-primary mx-auto mb-4" />
-          <CardTitle className="text-3xl font-bold font-headline text-primary">{t(selectedSubject === 'Mathematics' ? 'subjectMathematics' : selectedSubject === 'General Knowledge' ? 'subjectGeneralKnowledge' : selectedSubject === 'Reasoning' ? 'subjectReasoning' : 'subjectHindi')} Test</CardTitle>
-          <CardDescription className="text-lg">{t('aiModelTestDesc')}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
+          <div><Label htmlFor="studentName">{t('studentName')}</Label><Input id="studentName" value={studentName} onChange={(e) => setStudentName(e.target.value)} placeholder={t('studentNamePlaceholder')} className="h-11 mt-1 bg-muted/50 border-border"/></div>
           <div>
-            <Label htmlFor="studentName" className="text-base">{t('studentName')}</Label>
-            <Input id="studentName" value={studentName} onChange={(e) => setStudentName(e.target.value)} placeholder={t('studentNamePlaceholder')} className="h-12 text-base mt-1" />
-          </div>
-          <div>
-            <Label htmlFor="studentClass" className="text-base">{t('selectYourClass')}</Label>
-            <Select value={studentClass} onValueChange={setStudentClass}>
-              <SelectTrigger className="h-12 text-base mt-1"><SelectValue placeholder={t('selectYourClassPlaceholder')} /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Class 6">{t('Class6')}</SelectItem>
-                <SelectItem value="Class 9">{t('Class9')}</SelectItem>
-              </SelectContent>
+            <Label>{t('selectYourClass')}</Label>
+            <Select value={selectedClass} onValueChange={setSelectedClass}><SelectTrigger className="h-11 mt-1 bg-muted/50 border-border"><SelectValue placeholder={t('selectYourClassPlaceholder')} /></SelectTrigger>
+              <SelectContent>{classOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <Button onClick={handleStartTest} className="w-full h-14 text-lg bg-accent text-accent-foreground hover:bg-accent/90">{t('startTestButton')}</Button>
+          {selectedClass && <div>
+            <Label>{t('subject')}</Label>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+                {subjects.map(s => <Button key={s.key} variant={selectedSubject?.key === s.key ? "default" : "outline"} onClick={() => setSelectedSubject(s)} className="flex-col h-20 gap-1"><s.icon className="h-6 w-6"/><span>{t(s.nameKey)}</span></Button>)}
+            </div>
+          </div>}
+          <Button onClick={handleStartTest} className="w-full h-12 text-lg" disabled={!selectedClass || !selectedSubject || !studentName}>{t('startTestButton')}</Button>
         </CardContent>
       </Card>
-    );
-  }
-
-  if (stage === "generating") {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)]">
-        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <p className="text-lg text-muted-foreground">{t('generatingTest')}</p>
-      </div>
-    );
-  }
-
-  if (stage === "completed" && testPaper && currentSubject) {
-    const totalQuestions = currentSubject.questions.length;
-    const percentage = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
-    return (
-      <Card className="max-w-2xl mx-auto shadow-xl border-primary/50 print:shadow-none print:border-none">
-        <CardHeader className="text-center bg-gradient-to-br from-primary/10 via-background to-primary/10 py-8 print:bg-none">
-          <Award className="h-20 w-20 text-accent mx-auto mb-4 print:text-black" />
-          <CardTitle className="text-3xl font-bold text-primary print:text-black">{t('testResultTitle')}</CardTitle>
-          <CardDescription className="text-md text-muted-foreground print:text-gray-700">{testPaper.title}</CardDescription>
-        </CardHeader>
-        <CardContent className="p-6 space-y-4">
-          <div className="text-center space-y-1"><p className="text-xl font-semibold">{studentName}</p><p className="text-sm text-muted-foreground">{t('class')}: {studentClass}</p></div>
-          <Card className="bg-muted/50 p-4 print:bg-gray-100 print:border">
-            <CardContent className="text-center space-y-2 p-0">
-              <p className="text-4xl font-bold text-primary print:text-black">{score} / {totalQuestions}</p>
-              <p className="text-lg text-accent print:text-blue-600">({percentage}%)</p>
-              <p className="text-sm text-muted-foreground print:text-gray-700">{t('date')}: {currentDate}</p>
-            </CardContent>
-          </Card>
-        </CardContent>
-        <CardFooter className="flex flex-col sm:flex-row justify-center gap-2 p-6 print:hidden">
-          <Button onClick={handleDownloadCertificate} variant="outline"><Download className="mr-2 h-4 w-4" /> {t('downloadCertificate')}</Button>
-          <Button onClick={handleTryAgain} className="bg-accent text-accent-foreground hover:bg-accent/90"><RotateCcw className="mr-2 h-4 w-4" /> {t('tryAnotherTest')}</Button>
-        </CardFooter>
-      </Card>
-    );
-  }
+    )
+  };
   
-  if (stage === "inProgress" && currentQuestion && currentSubject) {
+  const renderTestScreen = () => {
+    if (!currentQuestion || !currentSubjectData) return <div className="text-center">{t('loading')}</div>;
     const questionNumber = currentQuestionIndex + 1;
-    const totalQuestionsInSubject = currentSubject.questions.length;
+    const totalQuestions = currentSubjectData.questions.length;
     return (
-      <Card className="max-w-2xl mx-auto shadow-lg">
-        <CardHeader>
-            <div className="flex justify-between items-center"><CardTitle className="text-xl md:text-2xl font-headline text-primary">{currentSubject.subjectName} - {t('question')} {questionNumber} / {totalQuestionsInSubject}</CardTitle><div className="flex items-center gap-2 text-lg font-semibold text-destructive"><TimerIcon className="h-5 w-5"/>{formatTime(timeLeft)}</div></div>
-        </CardHeader>
+      <Card className="max-w-3xl mx-auto shadow-lg bg-card">
+        <CardHeader><div className="flex justify-between items-center"><CardTitle className="text-xl md:text-2xl text-foreground">{currentSubjectData.subjectName} ({questionNumber}/{totalQuestions})</CardTitle><div className="flex items-center gap-2 text-lg font-semibold text-primary"><TimerIcon className="h-5 w-5"/>{new Date(timeLeft * 1000).toISOString().substr(14, 5)}</div></div></CardHeader>
         <CardContent className="space-y-6">
-          <p className="text-lg font-medium text-foreground whitespace-pre-wrap">{currentQuestion.questionText}</p>
+          <p className="text-lg font-medium text-foreground/90 whitespace-pre-wrap">{currentQuestion.questionText}</p>
+          {currentQuestion.figureImageUrl && <div className="flex justify-center"><Image src={currentQuestion.figureImageUrl} alt="Question Figure" width={150} height={100} className="rounded-md bg-white"/></div>}
           <RadioGroup value={selectedOption ?? undefined} onValueChange={setSelectedOption} disabled={showAnswer}>
             {currentQuestion.options.map((option, index) => (
-              <div key={index} className={`flex items-center space-x-3 p-3 border rounded-md transition-colors ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'border-green-500 bg-green-500/10' : ''} ${showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'border-red-500 bg-red-500/10' : ''} ${!showAnswer && selectedOption === index.toString() ? 'border-primary bg-primary/10' : 'border-input'}`}>
+              <div key={index} className={`flex items-center space-x-3 p-3 border rounded-md transition-colors ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'border-green-500 bg-green-500/10' : ''} ${showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'border-red-500 bg-red-500/10' : ''} ${!showAnswer && selectedOption === index.toString() ? 'border-primary bg-primary/10' : 'border-border'}`}>
                 <RadioGroupItem value={index.toString()} id={`option-${index}`} />
-                <Label htmlFor={`option-${index}`} className={`font-normal text-base cursor-pointer flex-grow ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'text-green-700' : ''} ${showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'text-red-700' : ''}`}>
-                  {option}
-                  {showAnswer && index === currentQuestion.correctAnswerIndex && <CheckCircle className="inline h-5 w-5 ml-2 text-green-500" />}
-                  {showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex && <XCircle className="inline h-5 w-5 ml-2 text-red-500" />}
-                </Label>
+                <Label htmlFor={`option-${index}`} className={`font-normal text-base cursor-pointer flex-grow ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'text-green-400' : ''} ${showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'text-red-400' : ''}`}>{option}{showAnswer && index === currentQuestion.correctAnswerIndex && <CheckCircle className="inline h-5 w-5 ml-2 text-green-500" />}{showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex && <XCircle className="inline h-5 w-5 ml-2 text-red-500" />}</Label>
               </div>
             ))}
           </RadioGroup>
-
-          {showAnswer && currentQuestion.explanation && (
-            <Card className="bg-muted/70 p-4"><CardContent className="p-0 space-y-2"><p className="text-sm font-semibold">{t('explanation')}:</p><p className="text-sm text-muted-foreground whitespace-pre-wrap">{currentQuestion.explanation}</p></CardContent></Card>
-          )}
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row gap-2">
-          {showAnswer ? (<Button onClick={handleNext} className="w-full bg-primary hover:bg-primary/90">{currentQuestionIndex === totalQuestionsInSubject - 1 ? t('finishTest') : t('nextQuestion')}<ChevronRight className="ml-2 h-4 w-4" /></Button>)
-          : (<Button onClick={handleSubmitAnswer} disabled={selectedOption === null} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">{t('submitAnswer')}</Button>)}
-           <Button onClick={handleFinishEarly} variant="outline" className="w-full sm:w-auto" disabled={showAnswer}><LogOut className="mr-2 h-4 w-4" /> {t('finishTestEarly')}</Button>
+            <Sheet>
+              <SheetTrigger asChild><Button variant="outline" disabled={!currentQuestion.explanation}>{t('viewSolution')}</Button></SheetTrigger>
+              <SheetContent><SheetHeader><SheetTitle>{t('solutionLabel')}</SheetTitle><SheetDescription>{currentQuestion.questionText}</SheetDescription></SheetHeader><div className="py-4 whitespace-pre-wrap">{currentQuestion.explanation || t('noExplanationAvailable')}</div></SheetContent>
+            </Sheet>
+            {showAnswer ? (<Button onClick={handleNext} className="w-full">{questionNumber === totalQuestions ? t('finishTest') : t('nextQuestion')}<ChevronRight className="ml-2 h-4 w-4" /></Button>)
+            : (<Button onClick={handleSubmitAnswer} disabled={selectedOption === null} className="w-full">{t('submitAnswer')}</Button>)}
+            <AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" className="w-full sm:w-auto" disabled={showAnswer}>{t('finishTestEarly')}</Button></AlertDialogTrigger>
+                <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('confirmSubmitTitle')}</AlertDialogTitle><AlertDialogDescription>{t('confirmSubmitMessage')}</AlertDialogDescription></AlertDialogHeader>
+                <AlertDialogFooter><AlertDialogCancel>{t('noButton')}</AlertDialogCancel><AlertDialogAction onClick={() => setStage('completed')}>{t('yesButton')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+            </AlertDialog>
         </CardFooter>
       </Card>
-    );
-  }
+    )
+  };
 
-  return <div>{t('loading')}...</div>;
+  const renderCompletionScreen = () => {
+    if (!testPaper || !currentSubjectData) return null;
+    const score = userAnswers.filter(a => a.isCorrect).length;
+    const totalQuestions = currentSubjectData.questions.length;
+    const { statusKey, color } = getResultStatus();
+
+    return (
+      <Card className="max-w-2xl mx-auto shadow-xl border-border/50 print:shadow-none print:border-none bg-card">
+          <div id="certificate" className="p-6 space-y-4">
+              <CardHeader className="text-center p-0">
+                  <div className="flex justify-center items-center gap-4">
+                      <Image src="/logo.png" alt="Academy Logo" width={80} height={80} className="print:block hidden" />
+                      <div className="flex-col text-center">
+                          <CardTitle className="text-3xl font-bold text-primary print:text-black">{t('appName')}</CardTitle>
+                          <CardDescription className="text-sm text-muted-foreground print:text-gray-700">खड़गपुर, धौलपुर, राजस्थान 328023</CardDescription>
+                      </div>
+                  </div>
+                  <h2 className="text-2xl font-semibold text-foreground pt-4 print:text-black">{t('testResultTitle')}</h2>
+              </CardHeader>
+              <CardContent className="text-center p-0 space-y-2">
+                  <p className="text-xl font-semibold">{studentName}</p>
+                  <p className="text-sm text-muted-foreground">{t(selectedTestType === 'sainik_school' ? 'sainikSchoolMockTest' : selectedTestType === 'jnv' ? 'jnvMockTest' : 'subjectWiseTest')} - {selectedClass} - {currentSubjectData.subjectName}</p>
+                  <Card className="bg-muted/50 p-4 print:bg-gray-100 print:border my-4">
+                      <CardContent className="p-0">
+                          <p className="text-4xl font-bold text-primary print:text-black">{score} / {totalQuestions}</p>
+                          <p className={`text-xl font-bold ${color}`}>{t(statusKey)}</p>
+                      </CardContent>
+                  </Card>
+                  <div className="relative h-20 w-20 mx-auto mt-4">
+                      <Image src="/stamp.png" alt="Academy Stamp" width={80} height={80} className="opacity-70 print:opacity-100" />
+                  </div>
+              </CardContent>
+          </div>
+          <CardFooter className="flex flex-col sm:flex-row justify-center gap-2 p-6 pt-0 print:hidden">
+              <Button onClick={() => window.print()} variant="outline"><Download className="mr-2 h-4 w-4" /> {t('downloadCertificate')}</Button>
+              <Button onClick={() => setStage('selection')}><RotateCcw className="mr-2 h-4 w-4" /> {t('tryAnotherTest')}</Button>
+          </CardFooter>
+      </Card>
+    )
+  };
+  
+  const renderContent = () => {
+    switch(stage) {
+      case 'selection': return renderSelectionScreen();
+      case 'details': return renderDetailsScreen();
+      case 'generating': return <div className="flex flex-col items-center justify-center min-h-[50vh]"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="mt-4 text-lg text-muted-foreground">{t('generatingTest')}</p></div>;
+      case 'inProgress': return renderTestScreen();
+      case 'completed': return renderCompletionScreen();
+      default: return <div className="text-center text-destructive">Error: Invalid stage.</div>;
+    }
+  };
+
+  return <div className="max-w-4xl mx-auto space-y-8">{renderContent()}</div>;
 }

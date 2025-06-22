@@ -9,12 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/hooks/use-language';
 import { useToast } from "@/hooks/use-toast";
-import { UserCircle, Loader2 } from 'lucide-react';
+import { UserCircle, Loader2, LogIn } from 'lucide-react';
 import { STUDENT_LOGGED_IN_KEY, STUDENT_USERNAME_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants';
 import type { StudentProfileData } from '../student-profile/page'; 
-
-const DUMMY_USERNAME = "student";
-const DUMMY_PASSWORD = "password123";
 
 export default function StudentLoginPage() {
   const { t } = useLanguage();
@@ -38,7 +35,6 @@ export default function StudentLoginPage() {
     setError('');
     
     setTimeout(() => {
-      // Allow any username/password for this prototype version as requested
       if (username.trim() !== '' && password.trim() !== '') {
         if (typeof window !== 'undefined') {
           localStorage.setItem(STUDENT_LOGGED_IN_KEY, 'true');
@@ -47,7 +43,7 @@ export default function StudentLoginPage() {
           const existingProfile = localStorage.getItem(STUDENT_PROFILE_LOCALSTORAGE_KEY);
           if (!existingProfile) {
             const dummyProfile: StudentProfileData = {
-              name: username, // Use the entered username
+              name: username,
               email: `${username}@example.com`,
               mobile: "9876543210",
               currentClass: "9",
@@ -82,16 +78,16 @@ export default function StudentLoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-8rem)] bg-muted/20 py-8 px-4">
-      <Card className="w-full max-w-md shadow-xl border-primary/20">
-        <CardHeader className="text-center">
+    <div className="flex items-center justify-center min-h-[calc(100vh-8rem)] bg-background p-4">
+      <Card className="w-full max-w-md shadow-2xl bg-card border-border/50">
+        <CardHeader className="text-center space-y-4 pt-8">
           <div className="flex justify-center mb-3">
             <UserCircle className="h-16 w-16 text-primary" />
           </div>
-          <CardTitle className="text-3xl font-bold font-headline text-primary">{t('studentLoginTitle')}</CardTitle>
-          <CardDescription className="text-lg">{t('studentLoginDesc')}</CardDescription>
+          <CardTitle className="text-3xl font-bold font-headline text-foreground">{t('studentLoginTitle')}</CardTitle>
+          <CardDescription className="text-muted-foreground">{t('studentLoginDesc')}</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 p-8">
           <div className="space-y-2">
             <Label htmlFor="username">{t('usernameLabel')}</Label>
             <Input
@@ -99,7 +95,7 @@ export default function StudentLoginPage() {
               placeholder={t('usernamePlaceholder') || "Enter any username"}
               value={username}
               onChange={(e) => { setUsername(e.target.value); setError(''); }}
-              className="h-12 text-base"
+              className="h-12 bg-muted/50 border-border"
             />
           </div>
           <div className="space-y-2">
@@ -110,22 +106,19 @@ export default function StudentLoginPage() {
               placeholder={t('passwordPlaceholder') || "Enter any password"}
               value={password}
               onChange={(e) => { setPassword(e.target.value); setError(''); }}
-              className="h-12 text-base"
+              className="h-12 bg-muted/50 border-border"
             />
           </div>
 
-          {error && <p className="text-sm text-destructive text-center">{error}</p>}
+          {error && <p className="text-sm text-destructive text-center pt-2">{error}</p>}
           
-          <Button onClick={handleStudentLogin} className="w-full h-12 bg-accent text-accent-foreground hover:bg-accent/90 text-lg" disabled={isLoading}>
-            {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+          <Button onClick={handleStudentLogin} className="w-full h-12 text-lg font-semibold" disabled={isLoading}>
+            {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <LogIn className="mr-2 h-5 w-5"/>}
             {isLoading ? t('loading') : t('loginButton')}
           </Button>
-          <Card className="mt-4 bg-primary/5 border-primary/30 p-3">
-            <CardDescription className="text-xs text-center text-primary/80">
-              {t('dummyCredentialsInfo') || "For demonstration purposes, you can use any username and password to log in."}<br />
-              <strong className="font-medium">{t('usernameLabel')}:</strong> student <strong className="font-medium">{t('passwordLabel')}:</strong> password123
-            </CardDescription>
-          </Card>
+          <p className="text-xs text-center text-muted-foreground pt-4">
+              {t('dummyCredentialsInfo')}
+          </p>
         </CardContent>
       </Card>
     </div>

@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/hooks/use-language';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 const quotes = {
   en: [
@@ -23,7 +23,7 @@ const quotes = {
 };
 
 export function InspirationalMessages() {
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
   const [currentQuotes, setCurrentQuotes] = useState<string[]>(quotes[language]);
   const [isClient, setIsClient] = useState(false);
 
@@ -36,40 +36,25 @@ export function InspirationalMessages() {
   }, [language]);
   
   if (!isClient) {
-    return (
-      <Card className="w-full shadow-lg bg-card border-primary mt-8 overflow-hidden">
-        <CardHeader>
-          <CardTitle className="text-center text-xl font-headline text-primary">{t('inspiringQuote')}</CardTitle>
-        </CardHeader>
-        <CardContent className="text-center h-32 md:h-40 relative flex items-center justify-center">
-          <p className="text-lg italic text-foreground px-4">{t('loading')}</p>
-        </CardContent>
-      </Card>
-    );
+    return <div className="h-10 w-full bg-card rounded-md"></div>;
   }
 
   return (
-    <Card className="w-full shadow-lg bg-red-600 text-white mt-8 overflow-hidden">
-      <CardHeader>
-        <CardTitle className="text-center text-xl font-headline text-white">{t('inspiringQuoteTitle') || "रक्षकों की एक पीढ़ी को प्रेरित करना"}</CardTitle>
-      </CardHeader>
-      <CardContent className="text-center h-40 md:h-48 relative overflow-hidden group">
-        {currentQuotes.length > 0 && (
-          <div className="animate-marquee-vertical group-hover:[animation-play-state:paused] whitespace-normal absolute inset-x-0">
-            {currentQuotes.map((quote, index) => (
-              <p key={`${language}-${index}-top`} className="text-xl md:text-2xl italic h-40 md:h-48 flex items-center justify-center leading-relaxed px-6">
-                "{quote}"
-              </p>
-            ))}
-            {/* Duplicate for seamless scrolling */}
-            {currentQuotes.map((quote, index) => (
-              <p key={`${language}-${index}-bottom`} className="text-xl md:text-2xl italic h-40 md:h-48 flex items-center justify-center leading-relaxed px-6">
-                "{quote}"
-              </p>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <div className="relative flex h-10 w-full overflow-x-hidden bg-card border border-border rounded-md">
+      <div className="animate-marquee whitespace-nowrap flex items-center">
+        {currentQuotes.map((quote, index) => (
+          <span key={`${language}-${index}`} className="mx-12 text-md text-foreground/80">
+            "{quote}"
+          </span>
+        ))}
+      </div>
+      <div className="absolute top-0 animate-marquee2 whitespace-nowrap flex items-center">
+         {currentQuotes.map((quote, index) => (
+          <span key={`${language}-${index}-2`} className="mx-12 text-md text-foreground/80">
+            "{quote}"
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }

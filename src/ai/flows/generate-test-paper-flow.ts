@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview Generates a test paper with questions for one or more subjects using an AI model.
+ * @fileOverview Generates tailored mock test papers for JNV and Sainik School entrance exams.
  *
  * - generateTestPaper - A function that handles the test paper generation.
  * - GenerateTestPaperInput - The input type for the function.
@@ -12,29 +12,32 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const TestQuestionSchema = z.object({
-  questionText: z.string().describe('The main text of the question.'),
+  questionText: z.string().describe('The main text of the question, including any context or data needed.'),
+  figureImageUrl: z.string().optional().describe("URL for an image if the question is figure-based (e.g., for JNV Mental Ability). Use https://placehold.co/150x100.png as a placeholder if needed."),
   options: z.array(z.string()).length(4).describe('An array of exactly four multiple-choice options.'),
   correctAnswerIndex: z.number().min(0).max(3).describe('The 0-based index of the correct option in the options array.'),
-  explanation: z.string().optional().describe('A brief explanation for the correct answer (optional). Respond in the language of the input test paper language.')
+  explanation: z.string().optional().describe('A brief explanation for the correct answer. This must also be in the specified response language.')
 });
 export type TestQuestion = z.infer<typeof TestQuestionSchema>;
 
 const TestSubjectSchema = z.object({
-  subjectName: z.string().describe('The name of the subject (e.g., Mathematics, General Knowledge). If language is Hindi, provide Hindi subject names like गणित, सामान्य ज्ञान, तर्कशक्ति, हिंदी.'),
+  subjectName: z.string().describe('The name of the subject.'),
   questions: z.array(TestQuestionSchema).describe('An array of questions for this subject.')
 });
 export type TestSubject = z.infer<typeof TestSubjectSchema>;
 
 const GenerateTestPaperInputSchema = z.object({
-  studentClass: z.string().describe('The class level of the student (e.g., "Class 6", "Class 9"). This will determine the difficulty.'),
-  language: z.enum(['en', 'hi']).default('en').describe('Language for the test paper (English or Hindi).'),
-  subjectName: z.enum(['Mathematics', 'General Knowledge', 'Reasoning', 'Hindi', 'English']).optional().describe('The specific subject for the test. If omitted, a default multi-subject test is generated.')
+  studentName: z.string().describe("The student's name for personalizing the test paper."),
+  testType: z.enum(['sainik_school', 'jnv', 'subject_wise']).describe("The type of mock test to generate."),
+  studentClass: z.string().describe('The class level of the student (e.g., "Class 6", "Class 9", "NDA"). This determines difficulty.'),
+  language: z.enum(['en', 'hi']).default('en').describe('Language for the test paper. For JNV Class 9, English questions must remain in English.'),
+  subject: z.string().describe('The specific subject for the test (e.g., "Mathematics", "Mental Ability", "English").')
 });
 export type GenerateTestPaperInput = z.infer<typeof GenerateTestPaperInputSchema>;
 
 const TestPaperSchema = z.object({
-  title: z.string().describe('A suitable title for the generated test paper (e.g., "Model Test Paper for Class 9 - Mathematics"). This title must also be in the specified language.'),
-  subjects: z.array(TestSubjectSchema).min(1).describe('An array of subjects. If a specific subject was requested, this will contain only that one subject.')
+  title: z.string().describe('A suitable title for the generated test paper in the specified language.'),
+  subjects: z.array(TestSubjectSchema).min(1).describe('An array containing exactly one subject for this test part.')
 });
 export type TestPaper = z.infer<typeof TestPaperSchema>;
 
@@ -47,34 +50,65 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateTestPaperInputSchema},
   output: {schema: TestPaperSchema},
   prompt: `
-    You are an expert question paper setter for competitive defence academy entrance exams in India.
-    Your task is to generate a model test paper for a student of {{{studentClass}}}.
+    You are an expert question paper setter for competitive entrance exams in India (Sainik School, JNV).
+    Generate a single-subject test paper for a student named {{{studentName}}} of {{{studentClass}}}.
+    The test paper, including the main title, subject name, questions, options, and explanations MUST be in the '{{language}}' language, unless a specific instruction overrides this (like for English subject questions).
+    For Hindi ('hi'), ALL translatable content MUST be in Devanagari script.
 
-    The test paper, including the main title, all subject names, all question text, all options, and any explanations, MUST be in the {{language}} language.
-    If the language is 'hi' (Hindi), ALL content (title, subject names, questions, options, explanations) MUST be in Devanagari script.
+    Test Generation Rules based on testType:
 
-    {{#if subjectName}}
-    The test paper must contain exactly ONE subject: {{{subjectName}}}.
-    Generate exactly 10 multiple-choice questions for this subject.
-    For Hindi, the subject name should be the Hindi translation (e.g., 'Mathematics' becomes 'गणित', 'Reasoning' becomes 'तर्कशक्ति').
-    The title of the test paper should reflect the single subject, e.g., "Class 9 Mathematics Model Paper".
-    {{else}}
-    The test paper must contain exactly 3 subjects: English, Mathematics, and General Knowledge.
-    Generate exactly 10 multiple-choice questions for each subject.
-    For Hindi, subject names should be "अंग्रेजी", "गणित", and "सामान्य ज्ञान".
-    The title should reflect a full model paper, e.g., "Class 6 Model Test Paper".
+    {{#if (eq testType "jnv")}}
+      {{#if (eq studentClass "Class 6")}}
+        Title: JNV Mock Test (Class 6) - {{{subject}}}
+        {{#if (eq subject "Mental Ability")}}
+          Generate 40 multiple-choice questions for Mental Ability. These are figure-based questions. For 'questionText', briefly describe the task (e.g., "Find the figure that completes the pattern."). For 'figureImageUrl', provide a placeholder URL like "https://placehold.co/150x100.png".
+        {{else if (eq subject "Arithmetic")}}
+          Generate 20 multiple-choice questions for Arithmetic.
+        {{else if (eq subject "Language")}}
+          Generate 20 multiple-choice questions for Language (Hindi or English based on the main language parameter).
+        {{/if}}
+      {{else if (eq studentClass "Class 9")}}
+        Title: JNV Mock Test (Class 9) - {{{subject}}}
+        {{#if (eq subject "English")}}
+          Generate 15 multiple-choice questions for English. IMPORTANT: These questions and options MUST be in English, regardless of the main language parameter.
+        {{else if (eq subject "Hindi")}}
+          Generate 15 multiple-choice questions for Hindi. These questions and options MUST be in Hindi (Devanagari script).
+        {{else if (eq subject "Science")}}
+          Generate 35 multiple-choice questions for Science.
+        {{else if (eq subject "Mathematics")}}
+          Generate 35 multiple-choice questions for Mathematics.
+        {{/if}}
+      {{/if}}
     {{/if}}
 
-    For each question:
-    - Provide the main question text.
-    - Provide exactly 4 multiple-choice options.
-    - Indicate the 0-based index of the correct answer.
-    - Optionally, provide a brief explanation for the correct answer (this explanation must also be in the {{language}}).
+    {{#if (eq testType "sainik_school")}}
+      {{#if (eq studentClass "Class 6")}}
+        Title: Sainik School Mock Test (Class 6) - {{{subject}}}
+        {{#if (eq subject "Mathematics")}}
+          Generate 50 multiple-choice questions for Mathematics.
+        {{else}}
+          Generate 25 multiple-choice questions for {{{subject}}} (e.g., General Knowledge, Language, Intelligence).
+        {{/if}}
+      {{else if (eq studentClass "Class 9")}}
+        Title: Sainik School Mock Test (Class 9) - {{{subject}}}
+        Generate 25 multiple-choice questions for {{{subject}}} (e.g., English, General Science, Social Studies, Mathematics, Intelligence). All questions must be in English.
+      {{/if}}
+    {{/if}}
 
-    The difficulty level of the questions should be appropriate for a student in {{{studentClass}}} preparing for defence academy entrance (like Sainik School).
-    For Reasoning, include topics like series completion, coding-decoding, analogies, and non-verbal reasoning.
-    
-    Ensure your output strictly follows the JSON schema provided for TestPaper, TestSubject, and TestQuestion.
+    {{#if (eq testType "subject_wise")}}
+      Title: Practice Test - {{{subject}}}
+      Generate 15 multiple-choice questions for {{{subject}}} suitable for a {{{studentClass}}} student.
+    {{/if}}
+
+    For EACH question, you MUST provide:
+    1.  questionText: The full text of the question.
+    2.  options: An array of EXACTLY four string options.
+    3.  correctAnswerIndex: The 0-based index of the correct option.
+    4.  explanation: A brief, clear explanation for why the answer is correct, in the specified language.
+    5.  figureImageUrl: (Optional) ONLY for JNV Class 6 Mental Ability. Provide a placeholder URL.
+
+    Ensure the difficulty is appropriate for the specified class.
+    Your entire response must be a single JSON object that strictly adheres to the provided output schema.
   `,
 });
 
@@ -102,7 +136,7 @@ const generateTestPaperFlow = ai.defineFlow(
         return {
             title: input.language === 'hi' ? 'त्रुटि: मॉडल पेपर उत्पन्न नहीं हो सका' : 'Error: Could Not Generate Model Paper',
             subjects: [
-                { subjectName: input.subjectName || (input.language === 'hi' ? 'त्रुटि विषय' : 'Error Subject'), questions: Array(10).fill(dummyQuestion) },
+                { subjectName: input.subject || 'Error', questions: Array(10).fill(dummyQuestion) },
             ]
         };
       }
@@ -122,7 +156,7 @@ const generateTestPaperFlow = ai.defineFlow(
         return {
             title: input.language === 'hi' ? 'त्रुटि: मॉडल पेपर उत्पन्न नहीं हो सका' : 'Error: Could Not Generate Model Paper',
             subjects: [
-                { subjectName: input.subjectName || (input.language === 'hi' ? 'त्रुटि विषय' : 'Error Subject'), questions: Array(10).fill(dummyErrorQuestion) },
+                { subjectName: input.subject || 'Error', questions: Array(10).fill(dummyErrorQuestion) },
             ]
         };
     }
