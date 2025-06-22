@@ -50,7 +50,7 @@ const testConfigs: Record<TestType, TestConfig> = {
       { key: 'Social Studies', nameKey: 'subjectSocialStudies', icon: ListChecks, questions: 25, marksPerQuestion: 2, totalMarks: 50 },
     ],
   },
-   rms: { // Duplicating Sainik for RMS as a placeholder
+   rms: {
     'Class 6': [
         { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit, questions: 50, totalMarks: 50 },
         { key: 'English', nameKey: 'subjectEnglish', icon: FileText, questions: 50, totalMarks: 50 },
@@ -176,8 +176,8 @@ export default function TestSeriesPage() {
       subject: subjectConfig.key 
     });
     
-    if ('error'in result || result.subjects.length === 0) {
-      toast({ title: t('errorOccurred'), description: ('error' in result && result.error) || t('aiTestError'), variant: "destructive" });
+    if ('error'in result || !result.subjects || result.subjects.length === 0 || result.subjects[0].questions.length === 0) {
+      toast({ title: t('errorOccurred'), description: ('error' in result && result.error) || t('aiTestGenerationError'), variant: "destructive" });
       setStage("subjectList");
     } else {
       setActiveTestPaper(result);
@@ -232,7 +232,9 @@ export default function TestSeriesPage() {
   const renderSelectionScreen = () => (
     <Card className="max-w-4xl mx-auto shadow-xl bg-card border-none">
       <CardHeader className="text-center">
-        <div className="flex justify-center mb-2"><ClipboardCheck className="h-12 w-12 text-primary" /></div>
+        <div className="flex justify-center mb-2">
+            <Trophy className="h-12 w-12 text-primary" />
+        </div>
         <CardTitle className="text-3xl font-bold font-headline text-foreground">{t('testSeries')}</CardTitle>
         <CardDescription>{t('selectTestType')}</CardDescription>
       </CardHeader>
@@ -290,20 +292,29 @@ export default function TestSeriesPage() {
                     </CardHeader>
                     <CardContent>
                         {result ? (
-                             <div className="text-green-600 font-semibold">{t('testCompletedStatus')}: {result.score} / {result.totalQuestions}</div>
+                             <div className="font-semibold text-primary">{t('score')}: {result.score} / {result.totalQuestions}</div>
                         ) : (
                              <p className="text-muted-foreground">{t('testPendingStatus')}</p>
                         )}
                     </CardContent>
                     <CardFooter>
-                       <Button onClick={()=> handleStartSubjectTest(subject)} className="w-full" disabled={!!result}>{result ? t('retakeTestButton') : t('startTestButton')}</Button>
+                       <Button onClick={()=> handleStartSubjectTest(subject)} className="w-full">
+                           {result ? t('retakeTestButton') : t('startTestButton')}
+                       </Button>
                     </CardFooter>
                 </Card>
             )
         })}
         <Card className="bg-card shadow-md p-4 space-y-2">
-            <Button className="w-full" disabled={!allSubjectsCompleted} onClick={() => setStage('completed')}>{t('generateFinalCertificate')}</Button>
-            <Button variant="destructive" className="w-full" onClick={() => {setTestProgress({}); localStorage.removeItem(`testProgress_${selectedTestType}_${selectedClass}`);}}>{t('resetProgressButton')}</Button>
+            <Button className="w-full" disabled={!allSubjectsCompleted} onClick={() => setStage('completed')}>
+              <Award className="mr-2 h-4 w-4" />{t('generateFinalCertificate')}
+            </Button>
+             <p className="text-xs text-muted-foreground text-center">
+                {!allSubjectsCompleted && t('allSubjectsCompleteToCertify')}
+             </p>
+            <Button variant="destructive" className="w-full" onClick={() => {setTestProgress({}); localStorage.removeItem(`testProgress_${selectedTestType}_${selectedClass}`);}}>
+                <RotateCcw className="mr-2 h-4 w-4" />{t('resetProgressButton')}
+            </Button>
         </Card>
       </div>
     )
@@ -423,12 +434,19 @@ export default function TestSeriesPage() {
     )
   };
   
+  const renderGeneratingScreen = () => (
+     <div className="flex flex-col items-center justify-center min-h-[50vh]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-lg text-muted-foreground">{t('generatingTest')}</p>
+      </div>
+  );
+  
   const renderContent = () => {
     switch(stage) {
       case 'selection': return renderSelectionScreen();
       case 'details': return renderDetailsScreen();
       case 'subjectList': return renderSubjectList();
-      case 'generating': return <div className="flex flex-col items-center justify-center min-h-[50vh]"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="mt-4 text-lg text-muted-foreground">{t('generatingTest')}</p></div>;
+      case 'generating': return renderGeneratingScreen();
       case 'inProgress': return renderTestScreen();
       case 'completed': return renderCompletionScreen();
       default: return <div className="text-center text-destructive">Error: Invalid stage.</div>;
@@ -437,3 +455,4 @@ export default function TestSeriesPage() {
 
   return <div className="max-w-4xl mx-auto space-y-8">{renderContent()}</div>;
 }
+

@@ -495,7 +495,15 @@ export const translations = {
     settings: "Settings",
     settingsDesc: "Adjust app appearance and behavior.",
     darkMode: "Dark Mode",
-    eyeComfortMode: "Eye Comfort Mode"
+    eyeComfortMode: "Eye Comfort Mode",
+    marksLabel: "Marks",
+    retakeTestButton: "Retake Test",
+    resetProgressButton: "Reset Progress",
+
+    generateFinalCertificate: "Generate Final Certificate",
+    allSubjectsCompleteToCertify: "Please complete all subjects to generate the certificate.",
+    testPendingStatus: "Pending",
+    aiTestGenerationError: "Unexpected error generating AI test. Please try again.",
   },
   hi: {
     appName: "गो स्वामी डिफेंस अकादमी",
@@ -990,6 +998,13 @@ export const translations = {
     settings: "सेटिंग्स",
     settingsDesc: "ऐप की दिखावट और व्यवहार को समायोजित करें।",
     darkMode: "डार्क मोड",
-    eyeComfortMode: "आई कम्फर्ट मोड"
+    eyeComfortMode: "आई कम्फर्ट मोड",
+    marksLabel: "अंक",
+    retakeTestButton: "फिर से टेस्ट दें",
+    resetProgressButton: "प्रगति रीसेट करें",
+    generateFinalCertificate: "अंतिम प्रमाणपत्र बनाएं",
+    allSubjectsCompleteToCertify: "प्रमाणपत्र बनाने के लिए कृपया सभी विषय पूरे करें।",
+    testPendingStatus: "लंबित",
+    aiTestGenerationError: "AI टेस्ट बनाने में अप्रत्याशित त्रुटि हुई। कृपया पुनः प्रयास करें।"
   }
 };
