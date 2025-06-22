@@ -9,10 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Award, BookCopy, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, FileText, BrainCircuit, Languages, ListChecks, ArrowLeft, GraduationCap, Shield, School, AlertTriangle, Trophy, ClipboardCheck, Printer, Solution } from 'lucide-react';
+import { Loader2, Award, BookCopy, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, FileText, BrainCircuit, Languages, ListChecks, ArrowLeft, GraduationCap, Shield, School, AlertTriangle, Trophy, Printer } from 'lucide-react';
+import { Solution } from '@/components/ui/lucide-icons';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
-import { generateTestPaper } from './actions';
+import { generateAIMockTest } from './actions';
 import type { TestPaper, TestSubject, TestQuestion } from '@/ai/flows/generate-test-paper-flow';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -114,11 +115,13 @@ export default function TestSeriesPage() {
   }, [selectedTestType, selectedClass, isClient]);
   
   const handleFinishTest = useCallback(() => {
-    if (!activeTestPaper || !selectedTestType) return;
+    if (!activeTestPaper) return;
     setTimerActive(false);
 
+    const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
+    toast({ title: t('testSubmitted'), description: `${t('yourScoreIs')} ${correctAnswers}/${activeTestPaper.subjects[0].questions.length}`});
+
     if(selectedTestType !== 'subject_wise' && selectedSubject) {
-        const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
         const newProgress = {
         ...testProgress,
         [selectedSubject.key]: {
@@ -135,9 +138,6 @@ export default function TestSeriesPage() {
     } else {
         setStage("completed");
     }
-
-    const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
-    toast({ title: t('testSubmitted'), description: `${t('yourScoreIs')} ${correctAnswers}/${activeTestPaper.subjects[0].questions.length}`});
     
   }, [activeTestPaper, userAnswers, testProgress, selectedSubject, toast, t, isClient, selectedTestType, selectedClass]);
   
@@ -164,7 +164,6 @@ export default function TestSeriesPage() {
   };
   
   const handleStartTest = async (subjectConfig: SubjectConfig | null) => {
-    // This function now handles both mock tests and subject-wise tests
     if(!selectedTestType || !selectedClass || !studentName) {
         toast({ title: t('errorOccurred'), description: t('nameAndClassRequired'), variant: 'destructive'});
         return;
@@ -181,13 +180,13 @@ export default function TestSeriesPage() {
         subjectKey = subjectConfig.key;
         setSelectedSubject(subjectConfig);
     } else {
-        return; // Should not happen
+        return; 
     }
     
     setStage("generating");
     resetTestState();
     
-    const result = await generateTestPaper({ 
+    const result = await generateAIMockTest({ 
       studentName,
       studentClass: selectedClass, 
       language, 
@@ -243,13 +242,13 @@ export default function TestSeriesPage() {
     <Card className="max-w-xl mx-auto shadow-xl bg-card border-none">
       <CardHeader className="text-center">
         <div className="flex justify-center mb-2">
-            <ClipboardCheck className="h-12 w-12 text-primary" />
+            <Trophy className="h-12 w-12 text-primary" />
         </div>
         <CardTitle className="text-3xl font-bold font-headline text-foreground">{t('testSeries')}</CardTitle>
         <CardDescription>{t('selectTestType')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <Card className="bg-muted/50">
+        <Card className="bg-muted/50 hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center gap-4 space-y-0 p-4">
             <Shield className="h-10 w-10 text-primary flex-shrink-0" />
             <div className="flex-grow">
@@ -258,11 +257,11 @@ export default function TestSeriesPage() {
             </div>
           </CardHeader>
           <CardFooter className="p-4 pt-0">
-             <Button onClick={() => { setSelectedTestType("sainik_school"); setStage('details'); }} className="w-full bg-primary hover:bg-primary/90">{t('startButton')}</Button>
+             <Button onClick={() => { setSelectedTestType("sainik_school"); setStage('details'); }} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">{t('startButton')}</Button>
           </CardFooter>
         </Card>
 
-        <Card className="bg-muted/50">
+        <Card className="bg-muted/50 hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center gap-4 space-y-0 p-4">
             <GraduationCap className="h-10 w-10 text-primary flex-shrink-0" />
             <div className="flex-grow">
@@ -271,11 +270,11 @@ export default function TestSeriesPage() {
             </div>
           </CardHeader>
           <CardFooter className="p-4 pt-0">
-            <Button onClick={() => { setSelectedTestType("rms"); setStage('details'); }} className="w-full bg-primary hover:bg-primary/90">{t('startButton')}</Button>
+            <Button onClick={() => { setSelectedTestType("rms"); setStage('details'); }} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">{t('startButton')}</Button>
           </CardFooter>
         </Card>
 
-        <Card className="bg-muted/50">
+        <Card className="bg-muted/50 hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center gap-4 space-y-0 p-4">
             <School className="h-10 w-10 text-primary flex-shrink-0" />
             <div className="flex-grow">
@@ -284,11 +283,11 @@ export default function TestSeriesPage() {
             </div>
           </CardHeader>
           <CardFooter className="p-4 pt-0">
-             <Button onClick={() => { setSelectedTestType("jnv"); setStage('details'); }} className="w-full bg-primary hover:bg-primary/90">{t('startButton')}</Button>
+             <Button onClick={() => { setSelectedTestType("jnv"); setStage('details'); }} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">{t('startButton')}</Button>
           </CardFooter>
         </Card>
 
-        <Card className="bg-muted/50">
+        <Card className="bg-muted/50 hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center gap-4 space-y-0 p-4">
             <BookCopy className="h-10 w-10 text-primary flex-shrink-0" />
             <div className="flex-grow">
@@ -297,7 +296,7 @@ export default function TestSeriesPage() {
             </div>
           </CardHeader>
           <CardFooter className="p-4 pt-0">
-             <Button onClick={() => { setSelectedTestType("subject_wise"); setStage('details'); }} className="w-full bg-primary hover:bg-primary/90">{t('startButton')}</Button>
+             <Button onClick={() => { setSelectedTestType("subject_wise"); setStage('details'); }} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">{t('startButton')}</Button>
           </CardFooter>
         </Card>
 
@@ -314,6 +313,15 @@ export default function TestSeriesPage() {
     const subjectOptions = testConfigs.subject_wise.All;
 
     const handleProceed = () => {
+        if (!studentName || !selectedClass) {
+            toast({ title: t('errorOccurred'), description: t('nameAndClassRequired'), variant: 'destructive'});
+            return;
+        }
+        if (isSubjectWise && !subjectWiseSubject) {
+            toast({ title: t('errorOccurred'), description: t('subjectIsRequired'), variant: 'destructive'});
+            return;
+        }
+
         if (isSubjectWise) {
             handleStartTest(null);
         } else {
@@ -341,7 +349,7 @@ export default function TestSeriesPage() {
               <div>
                 <Label>{t('subject')}</Label>
                 <Select value={subjectWiseSubject} onValueChange={setSubjectWiseSubject}><SelectTrigger className="h-11 mt-1 bg-muted/50 border-border"><SelectValue placeholder={t('selectSubjectForTest')} /></SelectTrigger>
-                  <SelectContent>{subjectOptions.map(s => <SelectItem key={s.key} value={s.key}>{t(s.nameKey as any)}</SelectItem>)}</SelectContent>
+                  <SelectContent>{subjectOptions.map(s => <SelectItem key={s.key} value={s.key}>{t(s.nameKey as any) || s.key}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
@@ -350,7 +358,7 @@ export default function TestSeriesPage() {
               </div>
             </>
           )}
-          <Button onClick={handleProceed} className="w-full h-12 text-lg" disabled={!selectedClass || !studentName || (isSubjectWise && !subjectWiseSubject)}>{t('startButton')}</Button>
+          <Button onClick={handleProceed} className="w-full h-12 text-lg bg-primary text-primary-foreground hover:bg-primary/90">{t('startButton')}</Button>
         </CardContent>
       </Card>
     )
@@ -384,7 +392,7 @@ export default function TestSeriesPage() {
                                   <Button size="sm" onClick={() => handleStartTest(subject)} variant="outline">{t('retakeTestButton')}</Button>
                                 </>
                              ) : (
-                                <Button size="sm" onClick={() => handleStartTest(subject)}>{t('startTestButton')}</Button>
+                                <Button size="sm" onClick={() => handleStartTest(subject)} className="bg-primary text-primary-foreground hover:bg-primary/90">{t('startTestButton')}</Button>
                              )}
                            </div>
                         </Card>
@@ -393,7 +401,7 @@ export default function TestSeriesPage() {
             </CardContent>
         </Card>
         <Card className="bg-card shadow-md p-4 space-y-2">
-            <Button className="w-full" disabled={!allSubjectsCompleted} onClick={() => setStage('completed')}>
+            <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={!allSubjectsCompleted} onClick={() => setStage('completed')}>
               <Award className="mr-2 h-4 w-4" />{t('generateFinalCertificate')}
             </Button>
              {!allSubjectsCompleted && 
@@ -444,28 +452,27 @@ export default function TestSeriesPage() {
                     <AlertDialogFooter><AlertDialogCancel>{t('noButton')}</AlertDialogCancel><AlertDialogAction onClick={handleFinishTest}>{t('yesButton')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
                 </AlertDialog>
             </div>
-            {showAnswer ? (<Button onClick={handleNextQuestion} className="w-full sm:w-auto">{questionNumber === totalQuestions ? t('finishTest') : t('nextQuestion')}<ChevronRight className="ml-2 h-4 w-4" /></Button>)
-            : (<Button onClick={handleSubmitAnswer} disabled={selectedOption === null} className="w-full sm:w-auto">{t('submitAnswer')}</Button>)}
+            {showAnswer ? (<Button onClick={handleNextQuestion} className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90">{questionNumber === totalQuestions ? t('finishTest') : t('nextQuestion')}<ChevronRight className="ml-2 h-4 w-4" /></Button>)
+            : (<Button onClick={handleSubmitAnswer} disabled={selectedOption === null} className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90">{t('submitAnswer')}</Button>)}
         </CardFooter>
       </Card>
     )
   };
 
  const renderCompletionScreen = () => {
-    if (!selectedTestType || !selectedClass || !activeTestPaper) return null;
+    if (!selectedTestType || !selectedClass) return null;
     const isSubjectWise = selectedTestType === 'subject_wise';
 
     let totalObtainedMarks = 0;
     let totalMarks = 0;
     let statusKey = 'testResultFail';
-    let statusColor = 'text-destructive';
     let adviceKey = 'adviceFail';
     
-    if (isSubjectWise) {
+    if (isSubjectWise && activeTestPaper) {
         totalObtainedMarks = userAnswers.filter(a => a.isCorrect).length;
         totalMarks = activeTestPaper.subjects[0].questions.length;
-        if (totalObtainedMarks > 20) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; adviceKey = 'advicePass'; }
-        else if (totalObtainedMarks >= 15) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; adviceKey = 'adviceAverage'; }
+        if (totalObtainedMarks >= 20) { statusKey = 'testResultPass'; adviceKey = 'advicePass'; }
+        else if (totalObtainedMarks >= 15) { statusKey = 'testResultAverage'; adviceKey = 'adviceAverage'; }
     } else {
         subjectsForCurrentTest.forEach(subject => {
             const result = testProgress[subject.key];
@@ -474,21 +481,21 @@ export default function TestSeriesPage() {
         });
 
         if (selectedTestType === 'sainik_school' && selectedClass === 'Class 6') {
-            if (totalObtainedMarks > 250) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; adviceKey = 'advicePass'; }
-            else if (totalObtainedMarks >= 225) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; adviceKey = 'adviceAverage'; }
+            if (totalObtainedMarks >= 250) { statusKey = 'testResultPass'; adviceKey = 'advicePass'; }
+            else if (totalObtainedMarks >= 225) { statusKey = 'testResultAverage'; adviceKey = 'adviceAverage'; }
         } else if (selectedTestType === 'sainik_school' && selectedClass === 'Class 9') {
-            if (totalObtainedMarks > 345) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; adviceKey = 'advicePass'; }
-            else if (totalObtainedMarks >= 320) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; adviceKey = 'adviceAverage'; }
+            if (totalObtainedMarks >= 345) { statusKey = 'testResultPass'; adviceKey = 'advicePass'; }
+            else if (totalObtainedMarks >= 320) { statusKey = 'testResultAverage'; adviceKey = 'adviceAverage'; }
         } else if (selectedTestType === 'jnv' && selectedClass === 'Class 6') {
-            if (totalObtainedMarks > 70) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; adviceKey = 'advicePass'; }
-            else if (totalObtainedMarks >= 60) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; adviceKey = 'adviceAverage'; }
+            if (totalObtainedMarks >= 70) { statusKey = 'testResultPass'; adviceKey = 'advicePass'; }
+            else if (totalObtainedMarks >= 60) { statusKey = 'testResultAverage'; adviceKey = 'adviceAverage'; }
         } else if (selectedTestType === 'jnv' && selectedClass === 'Class 9') {
-            if (totalObtainedMarks > 80) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; adviceKey = 'advicePass'; }
-            else if (totalObtainedMarks >= 70) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; adviceKey = 'adviceAverage'; }
+            if (totalObtainedMarks > 80) { statusKey = 'testResultPass'; adviceKey = 'advicePass'; }
+            else if (totalObtainedMarks >= 70) { statusKey = 'testResultAverage'; adviceKey = 'adviceAverage'; }
         }
     }
     
-    const testTitle = isSubjectWise ? `${t(subjectWiseSubject as any) || subjectWiseSubject} ${t('subjectWiseTest')}` : t(selectedTestType === 'sainik_school' ? 'sainikSchoolMockTest' : 'jnvMockTest');
+    const testTitle = isSubjectWise ? `${t(subjectWiseSubject as any) || subjectWiseSubject} ${t('subjectWiseTest')}` : t(selectedTestType as any);
 
     return (
       <div className="max-w-md mx-auto space-y-4">
@@ -509,7 +516,7 @@ export default function TestSeriesPage() {
             <p className="text-3xl font-bold text-blue-900">{studentName}</p>
             <p className="text-sm text-gray-700 whitespace-pre-wrap">{t('certificateCompletedText').replace('{testName}', testTitle).replace('{class}', selectedClass)}</p>
             <p className="text-4xl font-bold text-blue-900 my-2">{totalObtainedMarks} <span className="text-2xl text-gray-600">/ {totalMarks}</span></p>
-            <p className={`text-xl font-bold ${statusKey === 'testResultPass' ? 'text-green-600' : statusKey === 'testResultAverage' ? 'text-yellow-600' : 'text-red-600'}`}>{t(statusKey)} ({t(statusKey.replace('testResult', 'status').toLowerCase() as any)})</p>
+            <p className={`text-xl font-bold ${statusKey === 'testResultPass' ? 'text-green-600' : statusKey === 'testResultAverage' ? 'text-yellow-600' : 'text-red-600'}`}>{t(statusKey as any)} ({t(statusKey.replace('testResult', 'status').toLowerCase() as any)})</p>
             <p className="text-xs text-gray-500 italic">{t(adviceKey as any)}</p>
           </div>
           <div className="flex justify-between items-end mt-4 text-xs text-gray-600">
