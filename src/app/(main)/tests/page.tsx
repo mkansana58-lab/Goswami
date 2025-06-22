@@ -9,16 +9,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Award, BookCopy, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, FileText, BrainCircuit, Languages, ListChecks, ArrowLeft, GraduationCap, Shield, School, AlertTriangle, Trophy, ClipboardCheck } from 'lucide-react';
+import { Loader2, Award, BookCopy, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, FileText, BrainCircuit, Languages, ListChecks, ArrowLeft, GraduationCap, Shield, School, AlertTriangle, Trophy, ClipboardCheck, Printer, Solution } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
-import { generateAIMockTest } from './actions';
+import { generateTestPaper } from './actions';
 import type { TestPaper, TestSubject, TestQuestion } from '@/ai/flows/generate-test-paper-flow';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { STUDENT_USERNAME_KEY } from '@/lib/constants';
 import { testConfigs, type SubjectConfig as SubjectConfigType, type TestType } from '@/lib/test-configs';
 import { cn } from '@/lib/utils';
+import { Slider } from '@/components/ui/slider';
+
 
 const subjectIcons: Record<string, React.ElementType> = {
   'Mathematics': BrainCircuit,
@@ -35,13 +37,14 @@ const subjectIcons: Record<string, React.ElementType> = {
   'Paper-I English': FileText,
   'Paper-II Hindi & Social Science': ListChecks,
   'Paper-III Maths & Science': Languages,
+  'Science': Languages,
 };
 
 interface SubjectConfig extends SubjectConfigType {
   icon: React.ElementType;
 }
 
-type TestStage = "selection" | "details" | "subjectList" | "generating" | "inProgress" | "completed";
+type TestStage = "selection" | "details" | "subjectList" | "generating" | "inProgress" | "completed" | "review";
 
 interface UserAnswer {
   questionIndex: number;
@@ -80,6 +83,8 @@ export default function TestSeriesPage() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [subjectWiseTimer, setSubjectWiseTimer] = useState(15);
+  const [subjectWiseSubject, setSubjectWiseSubject] = useState('');
 
   // Load student name and progress from localStorage
   useEffect(() => {
@@ -90,6 +95,10 @@ export default function TestSeriesPage() {
 
   useEffect(() => {
     if (!isClient || !selectedTestType || !selectedClass) return;
+    if(selectedTestType === 'subject_wise') {
+        setTestProgress({});
+        return;
+    }
     const progressKey = `testProgress_${selectedTestType}_${selectedClass}`;
     try {
         const storedProgress = localStorage.getItem(progressKey);
@@ -104,32 +113,32 @@ export default function TestSeriesPage() {
     }
   }, [selectedTestType, selectedClass, isClient]);
   
-  // Timer effect
-  const handleFinishSubjectTest = useCallback(() => {
-    if (!activeTestPaper || !selectedSubject) return;
+  const handleFinishTest = useCallback(() => {
+    if (!activeTestPaper || !selectedTestType) return;
     setTimerActive(false);
 
-    const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
-    const newProgress = {
-      ...testProgress,
-      [selectedSubject.key]: {
-        score: correctAnswers,
-        totalQuestions: activeTestPaper.subjects[0].questions.length,
-      }
-    };
-    setTestProgress(newProgress);
-    if (isClient && selectedTestType && selectedClass) {
-        const progressKey = `testProgress_${selectedTestType}_${selectedClass}`;
-        localStorage.setItem(progressKey, JSON.stringify(newProgress));
+    if(selectedTestType !== 'subject_wise' && selectedSubject) {
+        const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
+        const newProgress = {
+        ...testProgress,
+        [selectedSubject.key]: {
+            score: correctAnswers,
+            totalQuestions: activeTestPaper.subjects[0].questions.length,
+        }
+        };
+        setTestProgress(newProgress);
+        if (isClient && selectedClass) {
+            const progressKey = `testProgress_${selectedTestType}_${selectedClass}`;
+            localStorage.setItem(progressKey, JSON.stringify(newProgress));
+        }
+        setStage("subjectList");
+    } else {
+        setStage("completed");
     }
 
+    const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
     toast({ title: t('testSubmitted'), description: `${t('yourScoreIs')} ${correctAnswers}/${activeTestPaper.subjects[0].questions.length}`});
-    setActiveTestPaper(null);
-    setCurrentQuestionIndex(0);
-    setSelectedOption(null);
-    setUserAnswers([]);
-    setShowAnswer(false);
-    setStage("subjectList");
+    
   }, [activeTestPaper, userAnswers, testProgress, selectedSubject, toast, t, isClient, selectedTestType, selectedClass]);
   
   useEffect(() => {
@@ -137,11 +146,11 @@ export default function TestSeriesPage() {
     if (timerActive && timeLeft > 0) {
       interval = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
     } else if (timerActive && timeLeft === 0) {
-      handleFinishSubjectTest();
+      handleFinishTest();
       toast({ title: t('timeUpTitle'), description: t('testAutoSubmitted') });
     }
     return () => { if (interval) clearInterval(interval); };
-  }, [timerActive, timeLeft, toast, t, handleFinishSubjectTest]);
+  }, [timerActive, timeLeft, toast, t, handleFinishTest]);
 
 
   const resetTestState = () => {
@@ -154,29 +163,50 @@ export default function TestSeriesPage() {
     setTimeLeft(0);
   };
   
-  const handleStartSubjectTest = async (subjectConfig: SubjectConfig) => {
-    setSelectedSubject(subjectConfig);
+  const handleStartTest = async (subjectConfig: SubjectConfig | null) => {
+    // This function now handles both mock tests and subject-wise tests
+    if(!selectedTestType || !selectedClass || !studentName) {
+        toast({ title: t('errorOccurred'), description: t('nameAndClassRequired'), variant: 'destructive'});
+        return;
+    }
+    
+    let subjectKey: string;
+    if (selectedTestType === 'subject_wise') {
+        if (!subjectWiseSubject) {
+            toast({ title: t('errorOccurred'), description: t('subjectIsRequired'), variant: 'destructive'});
+            return;
+        }
+        subjectKey = subjectWiseSubject;
+    } else if (subjectConfig) {
+        subjectKey = subjectConfig.key;
+        setSelectedSubject(subjectConfig);
+    } else {
+        return; // Should not happen
+    }
+    
     setStage("generating");
     resetTestState();
     
-    const result = await generateAIMockTest({ 
+    const result = await generateTestPaper({ 
       studentName,
       studentClass: selectedClass, 
       language, 
-      testType: selectedTestType!,
-      subject: subjectConfig.key 
+      testType: selectedTestType,
+      subject: subjectKey,
     });
     
     if ('error'in result || !result.subjects || result.subjects.length === 0 || result.subjects[0].questions.length === 0) {
       toast({ title: t('errorOccurred'), description: ('error' in result && result.error) || t('aiTestGenerationError'), variant: "destructive" });
-      setStage("subjectList");
+      setStage(selectedTestType === 'subject_wise' ? "details" : "subjectList");
     } else {
       setActiveTestPaper(result);
       if (selectedTestType !== 'subject_wise') {
-          const totalDuration = getTimerDuration(selectedTestType!, selectedClass);
+          const totalDuration = getTimerDuration(selectedTestType, selectedClass);
           setTimeLeft(totalDuration);
-          setTimerActive(true);
+      } else {
+          setTimeLeft(subjectWiseTimer * 60);
       }
+      setTimerActive(true);
       setStage("inProgress");
     }
   };
@@ -187,7 +217,7 @@ export default function TestSeriesPage() {
     if (activeTestPaper && currentQuestionIndex < activeTestPaper.subjects[0].questions.length - 1) {
       setCurrentQuestionIndex(qI => qI + 1);
     } else {
-      handleFinishSubjectTest();
+      handleFinishTest();
     }
   };
   
@@ -204,7 +234,8 @@ export default function TestSeriesPage() {
 
   const subjectsForCurrentTest = useMemo(() => {
     if (!selectedTestType || !selectedClass) return [];
-    const subjects = testConfigs[selectedTestType]?.[selectedClass] || testConfigs.subject_wise.All;
+    const subjects = testConfigs[selectedTestType]?.[selectedClass];
+    if (!subjects) return [];
     return subjects.map(s => ({...s, icon: subjectIcons[s.key] || BookCopy}));
   }, [selectedTestType, selectedClass]);
   
@@ -227,7 +258,7 @@ export default function TestSeriesPage() {
             </div>
           </CardHeader>
           <CardFooter className="p-4 pt-0">
-             <Button onClick={() => { setSelectedTestType("sainik_school"); setStage('details'); }} className="w-full">{t('startButton')}</Button>
+             <Button onClick={() => { setSelectedTestType("sainik_school"); setStage('details'); }} className="w-full bg-primary hover:bg-primary/90">{t('startButton')}</Button>
           </CardFooter>
         </Card>
 
@@ -240,7 +271,7 @@ export default function TestSeriesPage() {
             </div>
           </CardHeader>
           <CardFooter className="p-4 pt-0">
-            <Button onClick={() => { setSelectedTestType("rms"); setStage('details'); }} className="w-full">{t('startButton')}</Button>
+            <Button onClick={() => { setSelectedTestType("rms"); setStage('details'); }} className="w-full bg-primary hover:bg-primary/90">{t('startButton')}</Button>
           </CardFooter>
         </Card>
 
@@ -253,7 +284,7 @@ export default function TestSeriesPage() {
             </div>
           </CardHeader>
           <CardFooter className="p-4 pt-0">
-             <Button onClick={() => { setSelectedTestType("jnv"); setStage('details'); }} className="w-full">{t('startButton')}</Button>
+             <Button onClick={() => { setSelectedTestType("jnv"); setStage('details'); }} className="w-full bg-primary hover:bg-primary/90">{t('startButton')}</Button>
           </CardFooter>
         </Card>
 
@@ -266,7 +297,7 @@ export default function TestSeriesPage() {
             </div>
           </CardHeader>
           <CardFooter className="p-4 pt-0">
-             <Button onClick={() => { setSelectedTestType("subject_wise"); setStage('details'); }} className="w-full">{t('startButton')}</Button>
+             <Button onClick={() => { setSelectedTestType("subject_wise"); setStage('details'); }} className="w-full bg-primary hover:bg-primary/90">{t('startButton')}</Button>
           </CardFooter>
         </Card>
 
@@ -276,9 +307,19 @@ export default function TestSeriesPage() {
 
   const renderDetailsScreen = () => {
     if (!selectedTestType) return null;
-    const classOptions = selectedTestType === 'subject_wise' 
+    const isSubjectWise = selectedTestType === 'subject_wise';
+    const classOptions = isSubjectWise
       ? ['Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'NDA', 'CDS', 'UPSC', 'SSC']
       : ['Class 6', 'Class 9'];
+    const subjectOptions = testConfigs.subject_wise.All;
+
+    const handleProceed = () => {
+        if (isSubjectWise) {
+            handleStartTest(null);
+        } else {
+            setStage("subjectList");
+        }
+    }
 
     return (
       <Card className="max-w-lg mx-auto shadow-xl bg-card">
@@ -295,7 +336,21 @@ export default function TestSeriesPage() {
               <SelectContent>{classOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <Button onClick={()=>setStage("subjectList")} className="w-full h-12 text-lg" disabled={!selectedClass || !studentName}>{t('startButton')}</Button>
+          {isSubjectWise && (
+            <>
+              <div>
+                <Label>{t('subject')}</Label>
+                <Select value={subjectWiseSubject} onValueChange={setSubjectWiseSubject}><SelectTrigger className="h-11 mt-1 bg-muted/50 border-border"><SelectValue placeholder={t('selectSubjectForTest')} /></SelectTrigger>
+                  <SelectContent>{subjectOptions.map(s => <SelectItem key={s.key} value={s.key}>{t(s.nameKey as any)}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor='timer-slider'>{t('setTimerDuration')} ({subjectWiseTimer} {t('minutes')})</Label>
+                <Slider id="timer-slider" defaultValue={[15]} value={[subjectWiseTimer]} max={35} min={1} step={1} onValueChange={(value) => setSubjectWiseTimer(value[0])} className="mt-2" />
+              </div>
+            </>
+          )}
+          <Button onClick={handleProceed} className="w-full h-12 text-lg" disabled={!selectedClass || !studentName || (isSubjectWise && !subjectWiseSubject)}>{t('startButton')}</Button>
         </CardContent>
       </Card>
     )
@@ -322,14 +377,14 @@ export default function TestSeriesPage() {
                                    <p className="text-xs text-muted-foreground">{subject.questions} {t('questions')} | {subject.totalMarks} {t('marksLabel')}</p>
                                </div>
                            </div>
-                           <div className="flex flex-col items-stretch sm:items-end gap-2 w-full sm:w-auto">
+                           <div className="flex items-center gap-2 w-full sm:w-auto">
                              {result ? (
                                 <>
-                                  <div className="font-semibold text-primary text-center sm:text-right">{t('score')}: {result.score} / {result.totalQuestions}</div>
-                                  <Button size="sm" onClick={() => handleStartSubjectTest(subject)} variant="outline">{t('retakeTestButton')}</Button>
+                                  <div className="font-semibold text-primary text-center sm:text-right text-lg">{result.score} / {result.totalQuestions}</div>
+                                  <Button size="sm" onClick={() => handleStartTest(subject)} variant="outline">{t('retakeTestButton')}</Button>
                                 </>
                              ) : (
-                                <Button size="sm" onClick={() => handleStartSubjectTest(subject)}>{t('startTestButton')}</Button>
+                                <Button size="sm" onClick={() => handleStartTest(subject)}>{t('startTestButton')}</Button>
                              )}
                            </div>
                         </Card>
@@ -358,7 +413,7 @@ export default function TestSeriesPage() {
   }
   
   const renderTestScreen = () => {
-    if (!currentQuestion || !currentSubjectData) return <div className="text-center">{t('loading')}</div>;
+    if (!currentQuestion || !currentSubjectData) return <div className="text-center">{t('generatingTest')}</div>;
     const questionNumber = currentQuestionIndex + 1;
     const totalQuestions = currentSubjectData.questions.length;
     return (
@@ -386,7 +441,7 @@ export default function TestSeriesPage() {
                 </Sheet>
                  <AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" disabled={showAnswer}>{t('finishTestEarly')}</Button></AlertDialogTrigger>
                     <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('confirmSubmitTitle')}</AlertDialogTitle><AlertDialogDescription>{t('confirmSubmitMessage')}</AlertDialogDescription></AlertDialogHeader>
-                    <AlertDialogFooter><AlertDialogCancel>{t('noButton')}</AlertDialogCancel><AlertDialogAction onClick={handleFinishSubjectTest}>{t('yesButton')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+                    <AlertDialogFooter><AlertDialogCancel>{t('noButton')}</AlertDialogCancel><AlertDialogAction onClick={handleFinishTest}>{t('yesButton')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
                 </AlertDialog>
             </div>
             {showAnswer ? (<Button onClick={handleNextQuestion} className="w-full sm:w-auto">{questionNumber === totalQuestions ? t('finishTest') : t('nextQuestion')}<ChevronRight className="ml-2 h-4 w-4" /></Button>)
@@ -397,83 +452,126 @@ export default function TestSeriesPage() {
   };
 
  const renderCompletionScreen = () => {
-    if (!selectedTestType || !selectedClass) return null;
+    if (!selectedTestType || !selectedClass || !activeTestPaper) return null;
+    const isSubjectWise = selectedTestType === 'subject_wise';
 
     let totalObtainedMarks = 0;
     let totalMarks = 0;
-    let totalCorrect = 0;
-    let totalQuestions = 0;
-
-    subjectsForCurrentTest.forEach(subject => {
-        const result = testProgress[subject.key];
-        if(result) {
-            totalObtainedMarks += result.score * (subject.marksPerQuestion || 1);
-            totalCorrect += result.score;
-        }
-        totalMarks += subject.totalMarks;
-        totalQuestions += subject.questions;
-    });
-
     let statusKey = 'testResultFail';
     let statusColor = 'text-destructive';
-    let passed = false;
+    let adviceKey = 'adviceFail';
+    
+    if (isSubjectWise) {
+        totalObtainedMarks = userAnswers.filter(a => a.isCorrect).length;
+        totalMarks = activeTestPaper.subjects[0].questions.length;
+        if (totalObtainedMarks > 20) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; adviceKey = 'advicePass'; }
+        else if (totalObtainedMarks >= 15) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; adviceKey = 'adviceAverage'; }
+    } else {
+        subjectsForCurrentTest.forEach(subject => {
+            const result = testProgress[subject.key];
+            if(result) totalObtainedMarks += result.score * (subject.marksPerQuestion || 1);
+            totalMarks += subject.totalMarks;
+        });
 
-    if (selectedTestType === 'sainik_school' && selectedClass === 'Class 6') {
-        if (totalObtainedMarks > 250) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; passed = true; }
-        else if (totalObtainedMarks >= 225) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
-    } else if (selectedTestType === 'sainik_school' && selectedClass === 'Class 9') {
-        if (totalObtainedMarks > 345) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; passed = true; }
-        else if (totalObtainedMarks >= 320) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
-    } else if (selectedTestType === 'jnv' && selectedClass === 'Class 6') {
-        if (totalCorrect > 70) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; passed = true; }
-        else if (totalCorrect >= 60) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
-    } else if (selectedTestType === 'jnv' && selectedClass === 'Class 9') {
-        if (totalCorrect > 80) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; passed = true; }
-        else if (totalCorrect >= 70) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
-    } else { // RMS or Subject-wise
-        if ((totalObtainedMarks / totalMarks) >= 0.7) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; passed = true; }
-        else if ((totalObtainedMarks / totalMarks) >= 0.5) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
+        if (selectedTestType === 'sainik_school' && selectedClass === 'Class 6') {
+            if (totalObtainedMarks > 250) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; adviceKey = 'advicePass'; }
+            else if (totalObtainedMarks >= 225) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; adviceKey = 'adviceAverage'; }
+        } else if (selectedTestType === 'sainik_school' && selectedClass === 'Class 9') {
+            if (totalObtainedMarks > 345) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; adviceKey = 'advicePass'; }
+            else if (totalObtainedMarks >= 320) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; adviceKey = 'adviceAverage'; }
+        } else if (selectedTestType === 'jnv' && selectedClass === 'Class 6') {
+            if (totalObtainedMarks > 70) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; adviceKey = 'advicePass'; }
+            else if (totalObtainedMarks >= 60) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; adviceKey = 'adviceAverage'; }
+        } else if (selectedTestType === 'jnv' && selectedClass === 'Class 9') {
+            if (totalObtainedMarks > 80) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; adviceKey = 'advicePass'; }
+            else if (totalObtainedMarks >= 70) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; adviceKey = 'adviceAverage'; }
+        }
     }
+    
+    const testTitle = isSubjectWise ? `${t(subjectWiseSubject as any) || subjectWiseSubject} ${t('subjectWiseTest')}` : t(selectedTestType === 'sainik_school' ? 'sainikSchoolMockTest' : 'jnvMockTest');
 
     return (
-      <Card className="max-w-2xl mx-auto shadow-xl border-border/50 print:shadow-none print:border-none bg-card">
-          <div id="certificate" className="p-6 space-y-4 bg-white text-black">
-              <CardHeader className="text-center p-0">
-                  <div className="flex justify-center items-center gap-4">
-                      <Image src="/logo.png" alt="Academy Logo" width={80} height={80} className="print:block hidden" />
-                      <div className="flex-col text-center">
-                          <CardTitle className="text-3xl font-bold text-primary print:text-black">{t('appName')}</CardTitle>
-                          <CardDescription className="text-sm text-muted-foreground print:text-gray-700">{t('academyAddressPlaceholder')}</CardDescription>
-                      </div>
-                  </div>
-                  <h2 className="text-2xl font-semibold text-foreground pt-4 print:text-black">{t('testResultTitle')}</h2>
-              </CardHeader>
-              <CardContent className="text-center p-0 space-y-2">
-                  <p className="text-xl font-semibold">{studentName}</p>
-                  <p className="text-sm text-muted-foreground">{t(selectedTestType === 'sainik_school' ? 'sainikSchoolMockTest' : selectedTestType === 'jnv' ? 'jnvMockTest' : 'subjectWiseTest')} - {selectedClass}</p>
-                  <Card className="bg-muted/50 p-4 print:bg-gray-100 print:border my-4">
-                      <CardContent className="p-0">
-                          <p className="text-4xl font-bold text-primary print:text-black">{totalObtainedMarks} / {totalMarks}</p>
-                          <p className={`text-xl font-bold ${statusColor}`}>{t(statusKey)}</p>
-                      </CardContent>
-                  </Card>
-                  <div className="relative h-20 w-20 mx-auto mt-4">
-                      <Image src="/stamp.png" alt={t('academyStampAlt')} width={80} height={80} className="opacity-70 print:opacity-100" />
-                  </div>
-              </CardContent>
+      <div className="max-w-md mx-auto space-y-4">
+        <div id="certificate" className="p-6 space-y-4 bg-white text-black border-4 border-blue-800 rounded-lg shadow-lg relative">
+          <div className='absolute top-4 right-4'>
+            <Image src="/logo.png" alt={t('appName')} width={60} height={60} />
           </div>
-          <CardFooter className="flex flex-col sm:flex-row justify-center gap-2 p-6 pt-0 print:hidden">
-              <Button onClick={() => window.print()} variant="outline"><Download className="mr-2 h-4 w-4" /> {t('downloadCertificate')}</Button>
-              <Button onClick={() => { setStage('selection'); setTestProgress({}); setSelectedTestType(null); setSelectedClass(''); }}><RotateCcw className="mr-2 h-4 w-4" /> {t('tryAnotherTest')}</Button>
-          </CardFooter>
-      </Card>
+          <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'>
+            <Image src="/logo.png" alt={t('appName')} width={150} height={150} className='opacity-10'/>
+          </div>
+          <div className="text-center space-y-1">
+            <p className="font-bold text-blue-900 text-2xl">{t('appName')}</p>
+            <p className="text-xs text-gray-600">{t('academyAddressPlaceholder')}</p>
+          </div>
+          <hr className="border-blue-800 my-2" />
+          <div className="text-center space-y-2">
+            <p className="text-sm text-gray-700">{t('certificateCertifiedThat')}</p>
+            <p className="text-3xl font-bold text-blue-900">{studentName}</p>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">{t('certificateCompletedText').replace('{testName}', testTitle).replace('{class}', selectedClass)}</p>
+            <p className="text-4xl font-bold text-blue-900 my-2">{totalObtainedMarks} <span className="text-2xl text-gray-600">/ {totalMarks}</span></p>
+            <p className={`text-xl font-bold ${statusKey === 'testResultPass' ? 'text-green-600' : statusKey === 'testResultAverage' ? 'text-yellow-600' : 'text-red-600'}`}>{t(statusKey)} ({t(statusKey.replace('testResult', 'status').toLowerCase() as any)})</p>
+            <p className="text-xs text-gray-500 italic">{t(adviceKey as any)}</p>
+          </div>
+          <div className="flex justify-between items-end mt-4 text-xs text-gray-600">
+            <div>
+              <p>{t('certificateDate')}</p>
+              <p className='font-semibold'>{new Date().toLocaleDateString('en-GB')}</p>
+            </div>
+            <div className="text-center">
+                <Image src="/stamp.png" alt={t('academyStampAlt')} width={70} height={70} className="mx-auto" />
+                <hr className="border-gray-600 mt-1"/>
+                <p>{t('certificateSignature')}</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row justify-center gap-2 print:hidden">
+            <Button onClick={() => setStage('review')} variant="outline"><Solution className="mr-2 h-4 w-4"/> {t('viewSolution')}</Button>
+            <Button onClick={() => window.print()}><Printer className="mr-2 h-4 w-4"/> {t('printDownloadButton')}</Button>
+            <Button onClick={() => { resetTestState(); setStage(isSubjectWise ? 'details' : 'subjectList'); }}><RotateCcw className="mr-2 h-4 w-4" /> {t('tryAnotherTest')}</Button>
+        </div>
+      </div>
     )
   };
   
+  const renderReviewScreen = () => {
+      if (!activeTestPaper || userAnswers.length === 0) return <div>{t('noAnswersToReview')}</div>;
+      return (
+          <div className='max-w-2xl mx-auto space-y-4'>
+              <Button onClick={() => setStage('completed')}><ArrowLeft className="mr-2 h-4 w-4"/> {t('backToCertificate')}</Button>
+              <h2 className='text-2xl font-bold text-center'>{t('reviewAnswers')}</h2>
+              {activeTestPaper.subjects[0].questions.map((q, index) => {
+                  const userAnswer = userAnswers.find(a => a.questionIndex === index);
+                  return (
+                    <Card key={index} className="p-4">
+                        <p className="font-semibold">{index + 1}. {q.questionText}</p>
+                        <ul className="list-none space-y-1 mt-2">
+                           {q.options.map((opt, optIndex) => (
+                               <li key={optIndex} className={cn('text-sm p-1 rounded', 
+                                   optIndex === q.correctAnswerIndex ? 'text-green-700 font-bold' : '', 
+                                   userAnswer?.selectedOptionIndex === optIndex && optIndex !== q.correctAnswerIndex ? 'text-red-700 line-through' : '')
+                               }>
+                                   {optIndex === q.correctAnswerIndex ? <CheckCircle className="inline h-4 w-4 mr-2 text-green-500"/> : 
+                                    userAnswer?.selectedOptionIndex === optIndex ? <XCircle className="inline h-4 w-4 mr-2 text-red-500"/> :
+                                    <span className='inline-block w-6'></span>
+                                   }
+                                   {opt}
+                               </li>
+                           ))}
+                        </ul>
+                        {userAnswer === undefined && <p className='text-sm text-yellow-600 mt-2'>{t('notAttempted')}</p>}
+                        <p className="text-xs text-muted-foreground mt-2"><span className='font-bold'>{t('explanation')}:</span> {q.explanation}</p>
+                    </Card>
+                  )
+              })}
+          </div>
+      )
+  }
+
   const renderGeneratingScreen = () => (
      <div className="flex flex-col items-center justify-center min-h-[50vh]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
         <p className="mt-4 text-lg text-muted-foreground">{t('generatingTest')}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t('generatingTestDesc')}</p>
       </div>
   );
   
@@ -485,6 +583,7 @@ export default function TestSeriesPage() {
       case 'generating': return renderGeneratingScreen();
       case 'inProgress': return renderTestScreen();
       case 'completed': return renderCompletionScreen();
+      case 'review': return renderReviewScreen();
       default: return <div className="text-center text-destructive">Error: Invalid stage.</div>;
     }
   };

@@ -60,7 +60,7 @@ const prompt = ai.definePrompt({
   input: {schema: PromptInputSchema},
   output: {schema: TestPaperSchema},
   prompt: `
-    You are an expert question paper setter for competitive entrance exams in India (Sainik School, RMS, JNV).
+    You are an expert question paper setter for competitive entrance exams in India (Sainik School, RMS, JNV) and general subjects.
     Your task is to generate a SINGLE-SUBJECT test paper for a student named {{{studentName}}} of {{{studentClass}}}.
     The subject for this test is '{{{subject}}}'.
     The test type is '{{{testType}}}'.
@@ -98,17 +98,20 @@ const generateTestPaperFlow = ai.defineFlow(
     let numberOfQuestions: number;
     let specialInstructions = "No special instructions.";
 
+    // Logic to find the correct configuration for the test
     const testTypeConfig = testConfigs[input.testType];
     const classConfig = testTypeConfig?.[input.studentClass] || testTypeConfig?.['All'];
     const subjectConfig = classConfig?.find(s => s.key === input.subject);
 
     if (!subjectConfig) {
-        console.error(`Could not find config for testType: ${input.testType}, class: ${input.studentClass}, subject: ${input.subject}`);
-        numberOfQuestions = 15;
-        specialInstructions = `Generate 15 general questions for ${input.subject} suitable for a ${input.studentClass} student.`
+      console.error(`Could not find config for testType: ${input.testType}, class: ${input.studentClass}, subject: ${input.subject}. This might happen for 'subject_wise' if the subject isn't in the 'All' category.`);
+      // Generic fallback for any unconfigured test, like a custom subject in 'subject_wise'
+      numberOfQuestions = 25; 
+      specialInstructions = `Generate 25 general questions for ${input.subject} suitable for a ${input.studentClass} student.`
     } else {
         numberOfQuestions = subjectConfig.questions;
 
+        // Overriding instructions based on specific test cases
         if (input.testType === 'jnv' && input.studentClass === 'Class 6' && input.subject === 'Mental Ability') {
             specialInstructions = "These are figure-based questions. For 'questionText', briefly describe the task (e.g., 'Find the figure that completes the pattern.'). For 'figureImageUrl', you MUST provide a placeholder URL like 'https://placehold.co/150x100.png'.";
         } else if (input.testType === 'jnv' && input.studentClass === 'Class 9' && input.subject === 'English') {
@@ -137,9 +140,9 @@ const generateTestPaperFlow = ai.defineFlow(
       }
       
       const generatedCount = output.subjects[0]?.questions?.length || 0;
-      if (generatedCount === 0) { 
-          console.warn(`generateTestPaperFlow: AI generated 0 questions, but ${numberOfQuestions} were requested.`);
-          throw new Error(input.language === 'hi' ? 'AI मॉडल ने इस विषय के लिए कोई प्रश्न नहीं बनाया।' : 'AI model did not generate any questions for this subject.');
+      if (generatedCount < numberOfQuestions) { 
+          console.warn(`generateTestPaperFlow: AI generated ${generatedCount} questions, but ${numberOfQuestions} were requested.`);
+          throw new Error(input.language === 'hi' ? `AI मॉडल ने इस विषय के लिए केवल ${generatedCount} प्रश्न बनाए, जबकि ${numberOfQuestions} का अनुरोध किया गया था।` : `AI model only generated ${generatedCount} questions for this subject, but ${numberOfQuestions} were requested.`);
       }
 
       console.log('generateTestPaperFlow: Successfully generated test paper titled:', output.title);
@@ -149,12 +152,19 @@ const generateTestPaperFlow = ai.defineFlow(
         const specificErrorMsg = error.message.includes('AI model') ? error.message : 
                                  (input.language === 'hi' ? 'मॉडल पेपर बनाते समय एक अप्रत्याशित त्रुटि हुई।' : 'An unexpected error occurred while generating the model paper.');
         
+        // Creating a more informative dummy question
         const dummyErrorQuestion: TestQuestion = {
           questionText: specificErrorMsg,
-          options: ['N/A', 'N/A', 'N/A', 'N/A'],
+          options: [
+              input.language === 'hi' ? 'पुनः प्रयास करें' : 'Try Again', 
+              input.language === 'hi' ? 'अलग विषय चुनें' : 'Choose a different subject', 
+              input.language === 'hi' ? 'नेटवर्क जांचें' : 'Check network', 
+              input.language === 'hi' ? 'व्यवस्थापक से संपर्क करें' : 'Contact admin'
+          ],
           correctAnswerIndex: 0,
-          explanation: error.message || (input.language === 'hi' ? 'अज्ञात त्रुटि' : 'Unknown error'),
+          explanation: error.message || (input.language === 'hi' ? 'अज्ञात त्रुटि। कंसोल में विवरण देखें।' : 'Unknown error. Check console for details.'),
         };
+
         return {
             title: input.language === 'hi' ? 'त्रुटि: मॉडल पेपर उत्पन्न नहीं हो सका' : 'Error: Could Not Generate Model Paper',
             subjects: [
