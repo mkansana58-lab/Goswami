@@ -1018,7 +1018,7 @@ export const translations = {
     minutes: "मिनट",
     printDownloadButton: "प्रिंट / डाउनलोड करें",
     certificateCertifiedThat: "प्रमाणित किया जाता है कि",
-    certificateCompletedText: "ने {testName} ({class}) सफलतापूर्वक पूर्ण किया है।",
+    certificateCompletedText: "{testName} ({class}) को सफलतापूर्वक पूर्ण किया है।",
     certificateDate: "जारी करने की तिथि",
     certificateSignature: "प्रशिक्षक के हस्ताक्षर",
     statusPass: "उत्तीर्ण",

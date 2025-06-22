@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Award, BookCopy, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, FileText, BrainCircuit, Languages, ListChecks, ArrowLeft, GraduationCap, Shield, School, AlertTriangle, Trophy, Printer } from 'lucide-react';
+import { Loader2, Award, BookCopy, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Printer, FileText, BrainCircuit, Languages, ListChecks, ArrowLeft, GraduationCap, Shield, School, Trophy } from 'lucide-react';
 import { Solution } from '@/components/ui/lucide-icons';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
@@ -68,7 +68,6 @@ export default function TestSeriesPage() {
   const { t, language } = useLanguage();
   const { toast } = useToast();
 
-  // State Management
   const [stage, setStage] = useState<TestStage>("selection");
   const [selectedTestType, setSelectedTestType] = useState<TestType | null>(null);
   const [selectedClass, setSelectedClass] = useState('');
@@ -87,7 +86,6 @@ export default function TestSeriesPage() {
   const [subjectWiseTimer, setSubjectWiseTimer] = useState(15);
   const [subjectWiseSubject, setSubjectWiseSubject] = useState('');
 
-  // Load student name and progress from localStorage
   useEffect(() => {
     setIsClient(true);
     const storedName = localStorage.getItem(STUDENT_USERNAME_KEY);

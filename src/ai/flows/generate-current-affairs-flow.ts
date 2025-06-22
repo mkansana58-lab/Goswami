@@ -50,14 +50,7 @@ const prompt = ai.definePrompt({
     ALL content (titles, summaries, categories, source names) MUST be in the {{language}} language.
     If the language is 'hi' (Hindi), ALL text MUST be in Devanagari script.
 
-    IMPORTANT: Focus on generating events from the last 6 months based on your latest training data. Do not generate events from the future (e.g., 2045 or 2065). Stick to recent, factual history.
-
-    Example of a single article structure (though you will provide an array of these):
-    Title: Major Defence Exercise 'Yudh Abhyas' Concludes
-    Summary: The joint military exercise 'Yudh Abhyas' between India and the USA concluded today, focusing on interoperability and counter-terrorism operations. The exercise involved advanced drills and strategic planning.
-    Category: Defence
-    SourceName: Press Information Bureau
-    PublishedAtSuggestion: (A recent YYYY-MM-DD date from the last 6 months)
+    IMPORTANT: Generate events from the last 6 months based on your latest training data. Do not generate events from the future (e.g., 2045 or 2065). Stick to recent, factual history. If you cannot find a sufficient number of distinct events, it is better to return fewer high-quality items than to invent or repeat information.
 
     Focus on events that are significant and likely to be asked in competitive exams.
     Do not browse the web. Generate content based on your existing knowledge up to your last training data.
@@ -74,12 +67,12 @@ const generateCurrentAffairsFlow = ai.defineFlow(
     console.log('generateCurrentAffairsFlow: Invoked with input language:', input.language, 'and count:', input.count);
     const {output} = await prompt(input);
     if (!output || !output.articles || output.articles.length === 0) {
-      const errorMsg = input.language === 'hi' ? 'क्षमा करें, अभी करेंट अफेयर्स उत्पन्न करना संभव नहीं है।' : 'Sorry, generating current affairs is not possible at the moment.';
+      const errorMsg = input.language === 'hi' ? 'क्षमा करें, AI इस समय करेंट अफेयर्स उत्पन्न नहीं कर सका।' : 'Sorry, the AI could not generate current affairs at this time.';
       console.warn('generateCurrentAffairsFlow: AI returned no articles or invalid output. Using fallback.');
       return {
         articles: [{
             title: errorMsg,
-            summary: input.language === 'hi' ? 'कृपया बाद में प्रयास करें।' : 'Please try again later.',
+            summary: input.language === 'hi' ? 'यह एक अस्थायी समस्या हो सकती है। कृपया कुछ देर बाद पुनः प्रयास करें।' : 'This might be a temporary issue. Please try again in a few moments.',
             publishedAtSuggestion: new Date().toISOString().split('T')[0]
         }]
       };

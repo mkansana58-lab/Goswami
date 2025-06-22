@@ -52,14 +52,12 @@ const suggestDifficultyLevelFlow = ai.defineFlow(
   async input => {
     const {output} = await prompt(input);
     if (!output || !output.difficultyLevel || !output.feedback) {
-      // If AI fails to provide core fields, return a structured error.
-      // Solution is optional, so not checking it here for fallback.
       console.warn("AI Tutor flow did not return expected fields. Output:", output);
-      const isHindi = /[\u0900-\u097F]/.test(input.problemText); // Basic Hindi check
+      const isHindi = /[\u0900-\u097F]/.test(input.problemText);
       return {
-        difficultyLevel: isHindi ? "आकलन करने में असमर्थ" : "Unable to assess",
-        solution: isHindi ? "समाधान उपलब्ध नहीं है।" : "Solution not available.",
-        feedback: isHindi ? "क्षमा करें, इस समय प्रतिक्रिया और सुझाव प्रदान करने में असमर्थ।" : "Sorry, unable to provide feedback and suggestions at this time.",
+        difficultyLevel: isHindi ? "आकलन करने में असमर्थ" : "Unable to Assess",
+        solution: isHindi ? "समाधान उत्पन्न नहीं किया जा सका।" : "A solution could not be generated.",
+        feedback: isHindi ? "AI इस समय अनुरोध को संसाधित नहीं कर सका। कृपया अपनी समस्या को फिर से लिखने का प्रयास करें या बाद में पुनः प्रयास करें।" : "The AI could not process the request at this time. Please try rephrasing your problem or try again later.",
       };
     }
     return output;
