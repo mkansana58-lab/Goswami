@@ -64,8 +64,8 @@ export function BottomNavigationBar() {
               "flex flex-col items-center justify-center text-center cursor-pointer group p-1 rounded-md w-1/4 max-w-[calc(25%-0.5rem)]",
               pathname === link.href ? "bg-muted text-primary" : "text-muted-foreground hover:bg-muted/50 hover:text-primary"
             )}>
-              <link.icon className={cn("h-5 w-5 mb-0.5 transition-colors", pathname === link.href ? "text-primary" : "text-muted-foreground group-hover:text-primary")} />
-              <span className="text-[10px] leading-tight transition-colors whitespace-nowrap overflow-hidden text-ellipsis w-full">
+              <link.icon className={cn("h-6 w-6 mb-0.5 transition-colors", pathname === link.href ? "text-primary" : "text-muted-foreground group-hover:text-primary")} />
+              <span className="text-xs w-full">
                 {t(link.labelKey as any)}
               </span>
             </div>

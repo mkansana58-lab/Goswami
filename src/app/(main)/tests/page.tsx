@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Award, BookCopy, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, FileText, BrainCircuit, Languages, ListChecks, ArrowLeft, GraduationCap, Shield, AlertTriangle } from 'lucide-react';
+import { Loader2, Award, BookCopy, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, FileText, BrainCircuit, Languages, ListChecks, ArrowLeft, GraduationCap, Shield, School, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
 import { generateAIMockTest } from './actions';
@@ -19,7 +19,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { STUDENT_USERNAME_KEY } from '@/lib/constants';
 
 type TestStage = "selection" | "details" | "generating" | "inProgress" | "completed";
-type TestType = "sainik_school" | "jnv" | "subject_wise";
+type TestType = "sainik_school" | "rms" | "jnv" | "subject_wise";
 
 interface SubjectConfig {
   key: string;
@@ -29,6 +29,21 @@ interface SubjectConfig {
 
 const testConfigs = {
   sainik_school: {
+    'Class 6': [
+      { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit },
+      { key: 'General Knowledge', nameKey: 'subjectGeneralKnowledge', icon: Languages },
+      { key: 'Language', nameKey: 'subjectLanguage', icon: FileText },
+      { key: 'Intelligence', nameKey: 'subjectReasoning', icon: BrainCircuit },
+    ],
+    'Class 9': [
+      { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit },
+      { key: 'English', nameKey: 'subjectEnglish', icon: FileText },
+      { key: 'Intelligence', nameKey: 'subjectReasoning', icon: BrainCircuit },
+      { key: 'General Science', nameKey: 'subjectGeneralScience', icon: Languages },
+      { key: 'Social Studies', nameKey: 'subjectSocialStudies', icon: ListChecks },
+    ],
+  },
+   rms: {
     'Class 6': [
       { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit },
       { key: 'General Knowledge', nameKey: 'subjectGeneralKnowledge', icon: Languages },
@@ -176,13 +191,22 @@ export default function TestSeriesPage() {
   };
 
   const getResultStatus = () => {
-    if (!currentSubjectData) return { statusKey: 'testResultFail', color: 'text-destructive' };
+    if (!currentSubjectData || !selectedTestType) return { statusKey: 'testResultFail', color: 'text-destructive' };
     const score = userAnswers.filter(a => a.isCorrect).length;
-    const totalQuestions = currentSubjectData.questions.length;
     
     if (selectedTestType === 'sainik_school') {
-        const marks = score * (selectedSubject?.key === 'Mathematics' && selectedClass === 'Class 6' ? 3 : 2);
-        const totalMarks = totalQuestions * (selectedSubject?.key === 'Mathematics' && selectedClass === 'Class 6' ? 3 : 2);
+        const marks = userAnswers.reduce((total, answer) => {
+            if (answer.isCorrect) {
+              const question = currentSubjectData.questions[answer.questionIndex];
+              const subjectKey = selectedSubject?.key || '';
+              if (selectedClass === 'Class 6') {
+                 total += subjectKey === 'Mathematics' ? 3 : 2;
+              } else { // Class 9
+                 total += 2; // Assuming all subjects are 2 marks each for simplicity
+              }
+            }
+            return total;
+        }, 0);
         if (selectedClass === 'Class 6') {
             if (marks > 250) return { statusKey: 'testResultPass', color: 'text-green-500' };
             if (marks >= 225) return { statusKey: 'testResultAverage', color: 'text-yellow-500' };
@@ -203,25 +227,35 @@ export default function TestSeriesPage() {
             return { statusKey: 'testResultFail', color: 'text-destructive' };
         }
     }
-    return { statusKey: 'testResultCompleted', color: 'text-primary' }; // Fallback for subject-wise
+    return { statusKey: 'testResultCompleted', color: 'text-primary' }; // Fallback for subject-wise/RMS
   };
+  
+  const TestSelectionCard = ({ type, titleKey, descriptionKey, icon: Icon }: { type: TestType, titleKey: string, descriptionKey: string, icon: React.ElementType }) => (
+    <Card className="p-6 flex flex-col items-start text-left bg-card hover:bg-muted/50 transition-colors duration-300">
+        <Icon className="h-10 w-10 text-primary mb-4"/>
+        <h3 className="text-xl font-headline font-semibold text-foreground">{t(titleKey as any)}</h3>
+        <p className="text-sm text-muted-foreground mt-1 mb-4 flex-grow">{t(descriptionKey as any)}</p>
+        <Button onClick={() => { setSelectedTestType(type); setStage('details'); }} className="w-full">
+            {t('startButton') || 'शुरू करें'}
+        </Button>
+    </Card>
+  );
+
 
   const renderSelectionScreen = () => (
-    <Card className="max-w-4xl mx-auto shadow-xl bg-card">
-      <CardHeader className="text-center"><CardTitle className="text-3xl font-bold font-headline text-foreground">{t('testSeries')}</CardTitle><CardDescription>{t('selectTestType')}</CardDescription></CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="p-6 flex flex-col items-center justify-center text-center hover:bg-muted cursor-pointer" onClick={() => { setSelectedTestType('sainik_school'); setStage('details'); }}>
-              <Shield className="h-12 w-12 text-primary mb-4"/>
-              <h3 className="text-xl font-semibold">{t('sainikSchoolMockTest')}</h3>
-          </Card>
-          <Card className="p-6 flex flex-col items-center justify-center text-center hover:bg-muted cursor-pointer" onClick={() => { setSelectedTestType('jnv'); setStage('details'); }}>
-              <GraduationCap className="h-12 w-12 text-primary mb-4"/>
-              <h3 className="text-xl font-semibold">{t('jnvMockTest')}</h3>
-          </Card>
-          <Card className="p-6 flex flex-col items-center justify-center text-center hover:bg-muted cursor-pointer" onClick={() => { setSelectedTestType('subject_wise'); setStage('details'); }}>
-              <BookCopy className="h-12 w-12 text-primary mb-4"/>
-              <h3 className="text-xl font-semibold">{t('subjectWiseTest')}</h3>
-          </Card>
+    <Card className="max-w-4xl mx-auto shadow-xl bg-background border-none">
+      <CardHeader className="text-center">
+        <div className="flex justify-center mb-2">
+            <ClipboardCheck className="h-12 w-12 text-primary" />
+        </div>
+        <CardTitle className="text-3xl font-bold font-headline text-foreground">{t('testSeries')}</CardTitle>
+        <CardDescription>{t('selectTestType')}</CardDescription>
+      </CardHeader>
+      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <TestSelectionCard type="sainik_school" titleKey="sainikSchoolMockTest" descriptionKey="sainikSchoolMockTestDesc" icon={Shield} />
+          <TestSelectionCard type="rms" titleKey="rmsMockTest" descriptionKey="rmsMockTestDesc" icon={GraduationCap} />
+          <TestSelectionCard type="jnv" titleKey="jnvMockTest" descriptionKey="jnvMockTestDesc" icon={School} />
+          <TestSelectionCard type="subject_wise" titleKey="subjectWiseTest" descriptionKey="subjectWiseTestDesc" icon={BookCopy} />
       </CardContent>
     </Card>
   );
@@ -272,24 +306,26 @@ export default function TestSeriesPage() {
           {currentQuestion.figureImageUrl && <div className="flex justify-center"><Image src={currentQuestion.figureImageUrl} alt="Question Figure" width={150} height={100} className="rounded-md bg-white"/></div>}
           <RadioGroup value={selectedOption ?? undefined} onValueChange={setSelectedOption} disabled={showAnswer}>
             {currentQuestion.options.map((option, index) => (
-              <div key={index} className={`flex items-center space-x-3 p-3 border rounded-md transition-colors ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'border-green-500 bg-green-500/10' : ''} ${showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'border-red-500 bg-red-500/10' : ''} ${!showAnswer && selectedOption === index.toString() ? 'border-primary bg-primary/10' : 'border-border'}`}>
+              <div key={index} className={`flex items-center space-x-3 p-3 border rounded-md transition-colors ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'border-green-500 bg-green-500/10' : ''} ${showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'border-destructive bg-destructive/10' : ''} ${!showAnswer && selectedOption === index.toString() ? 'border-primary bg-primary/10' : 'border-border'}`}>
                 <RadioGroupItem value={index.toString()} id={`option-${index}`} />
                 <Label htmlFor={`option-${index}`} className={`font-normal text-base cursor-pointer flex-grow ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'text-green-400' : ''} ${showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'text-red-400' : ''}`}>{option}{showAnswer && index === currentQuestion.correctAnswerIndex && <CheckCircle className="inline h-5 w-5 ml-2 text-green-500" />}{showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex && <XCircle className="inline h-5 w-5 ml-2 text-red-500" />}</Label>
               </div>
             ))}
           </RadioGroup>
         </CardContent>
-        <CardFooter className="flex flex-col sm:flex-row gap-2">
-            <Sheet>
-              <SheetTrigger asChild><Button variant="outline" disabled={!currentQuestion.explanation}>{t('viewSolution')}</Button></SheetTrigger>
-              <SheetContent><SheetHeader><SheetTitle>{t('solutionLabel')}</SheetTitle><SheetDescription>{currentQuestion.questionText}</SheetDescription></SheetHeader><div className="py-4 whitespace-pre-wrap">{currentQuestion.explanation || t('noExplanationAvailable')}</div></SheetContent>
-            </Sheet>
-            {showAnswer ? (<Button onClick={handleNext} className="w-full">{questionNumber === totalQuestions ? t('finishTest') : t('nextQuestion')}<ChevronRight className="ml-2 h-4 w-4" /></Button>)
-            : (<Button onClick={handleSubmitAnswer} disabled={selectedOption === null} className="w-full">{t('submitAnswer')}</Button>)}
-            <AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" className="w-full sm:w-auto" disabled={showAnswer}>{t('finishTestEarly')}</Button></AlertDialogTrigger>
-                <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('confirmSubmitTitle')}</AlertDialogTitle><AlertDialogDescription>{t('confirmSubmitMessage')}</AlertDialogDescription></AlertDialogHeader>
-                <AlertDialogFooter><AlertDialogCancel>{t('noButton')}</AlertDialogCancel><AlertDialogAction onClick={() => setStage('completed')}>{t('yesButton')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
-            </AlertDialog>
+        <CardFooter className="flex flex-col sm:flex-row justify-between gap-2">
+            <div className="flex gap-2">
+                <Sheet>
+                  <SheetTrigger asChild><Button variant="outline" disabled={!currentQuestion.explanation}>{t('viewSolution')}</Button></SheetTrigger>
+                  <SheetContent><SheetHeader><SheetTitle>{t('solutionLabel')}</SheetTitle><SheetDescription>{currentQuestion.questionText}</SheetDescription></SheetHeader><div className="py-4 whitespace-pre-wrap">{currentQuestion.explanation || t('noExplanationAvailable')}</div></SheetContent>
+                </Sheet>
+                 <AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" disabled={showAnswer}>{t('finishTestEarly')}</Button></AlertDialogTrigger>
+                    <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('confirmSubmitTitle')}</AlertDialogTitle><AlertDialogDescription>{t('confirmSubmitMessage')}</AlertDialogDescription></AlertDialogHeader>
+                    <AlertDialogFooter><AlertDialogCancel>{t('noButton')}</AlertDialogCancel><AlertDialogAction onClick={() => { setTimerActive(false); setStage('completed'); }}>{t('yesButton')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+                </AlertDialog>
+            </div>
+            {showAnswer ? (<Button onClick={handleNext} className="w-full sm:w-auto">{questionNumber === totalQuestions ? t('finishTest') : t('nextQuestion')}<ChevronRight className="ml-2 h-4 w-4" /></Button>)
+            : (<Button onClick={handleSubmitAnswer} disabled={selectedOption === null} className="w-full sm:w-auto">{t('submitAnswer')}</Button>)}
         </CardFooter>
       </Card>
     )
@@ -309,7 +345,7 @@ export default function TestSeriesPage() {
                       <Image src="/logo.png" alt="Academy Logo" width={80} height={80} className="print:block hidden" />
                       <div className="flex-col text-center">
                           <CardTitle className="text-3xl font-bold text-primary print:text-black">{t('appName')}</CardTitle>
-                          <CardDescription className="text-sm text-muted-foreground print:text-gray-700">खड़गपुर, धौलपुर, राजस्थान 328023</CardDescription>
+                          <CardDescription className="text-sm text-muted-foreground print:text-gray-700">{t('academyAddressPlaceholder')}</CardDescription>
                       </div>
                   </div>
                   <h2 className="text-2xl font-semibold text-foreground pt-4 print:text-black">{t('testResultTitle')}</h2>
@@ -324,7 +360,7 @@ export default function TestSeriesPage() {
                       </CardContent>
                   </Card>
                   <div className="relative h-20 w-20 mx-auto mt-4">
-                      <Image src="/stamp.png" alt="Academy Stamp" width={80} height={80} className="opacity-70 print:opacity-100" />
+                      <Image src="/stamp.png" alt={t('academyStampAlt')} width={80} height={80} className="opacity-70 print:opacity-100" />
                   </div>
               </CardContent>
           </div>
