@@ -10,13 +10,14 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { testConfigs } from '@/lib/test-configs';
 
 const TestQuestionSchema = z.object({
   questionText: z.string().describe('The main text of the question, including any context or data needed.'),
   figureImageUrl: z.string().optional().describe("URL for an image if the question is figure-based (e.g., for JNV Mental Ability). Use https://placehold.co/150x100.png as a placeholder if needed."),
   options: z.array(z.string()).length(4).describe('An array of exactly four multiple-choice options.'),
   correctAnswerIndex: z.number().min(0).max(3).describe('The 0-based index of the correct option in the options array.'),
-  explanation: z.string().optional().describe('A brief explanation for the correct answer. This must also be in the specified response language.')
+  explanation: z.string().optional().describe('A brief, clear explanation for the correct answer. This must also be in the specified response language.')
 });
 export type TestQuestion = z.infer<typeof TestQuestionSchema>;
 
@@ -25,6 +26,13 @@ const TestSubjectSchema = z.object({
   questions: z.array(TestQuestionSchema).describe('An array of questions for this subject.')
 });
 export type TestSubject = z.infer<typeof TestSubjectSchema>;
+
+const TestPaperSchema = z.object({
+  title: z.string().describe('A suitable title for the generated test paper in the specified language.'),
+  subjects: z.array(TestSubjectSchema).min(1).describe('An array containing exactly one subject for this test part.')
+});
+export type TestPaper = z.infer<typeof TestPaperSchema>;
+
 
 const GenerateTestPaperInputSchema = z.object({
   studentName: z.string().describe("The student's name for personalizing the test paper."),
@@ -35,100 +43,48 @@ const GenerateTestPaperInputSchema = z.object({
 });
 export type GenerateTestPaperInput = z.infer<typeof GenerateTestPaperInputSchema>;
 
-const TestPaperSchema = z.object({
-  title: z.string().describe('A suitable title for the generated test paper in the specified language.'),
-  subjects: z.array(TestSubjectSchema).min(1).describe('An array containing exactly one subject for this test part.')
+
+const PromptInputSchema = GenerateTestPaperInputSchema.extend({
+    numberOfQuestions: z.number().describe("The exact number of questions to generate for the test."),
+    specialInstructions: z.string().describe("Any special instructions for the test generation, such as language constraints or question types (e.g., figure-based).")
 });
-export type TestPaper = z.infer<typeof TestPaperSchema>;
+
 
 export async function generateTestPaper(input: GenerateTestPaperInput): Promise<TestPaper> {
   return generateTestPaperFlow(input);
 }
 
+
 const prompt = ai.definePrompt({
   name: 'generateTestPaperPrompt',
-  input: {schema: GenerateTestPaperInputSchema},
+  input: {schema: PromptInputSchema},
   output: {schema: TestPaperSchema},
   prompt: `
     You are an expert question paper setter for competitive entrance exams in India (Sainik School, RMS, JNV).
-    Your task is to generate a SINGLE-SUBJECT test paper part for a student named {{{studentName}}} of {{{studentClass}}}.
-    The entire test paper, including title, subject name, questions, options, and explanations MUST be in the '{{language}}' language, unless a specific rule overrides this.
+    Your task is to generate a SINGLE-SUBJECT test paper for a student named {{{studentName}}} of {{{studentClass}}}.
+    The subject for this test is '{{{subject}}}'.
+    The test type is '{{{testType}}}'.
+
+    You MUST generate EXACTLY {{{numberOfQuestions}}} multiple-choice questions for this subject.
+    The entire test paper, including title, subject name, questions, options, and explanations MUST be in the '{{language}}' language, unless a special instruction overrides this.
     For Hindi ('hi'), ALL translatable content MUST be in Devanagari script.
 
-    TEST GENERATION RULES:
-    
-    {{#if (eq testType "jnv")}}
-      {{#if (eq studentClass "Class 6")}}
-        Title: JNV Mock Test (Class 6) - {{{subject}}}
-        {{#if (eq subject "Mental Ability")}}
-          Generate 40 multiple-choice questions for Mental Ability. These are figure-based questions. For 'questionText', briefly describe the task (e.g., "Find the figure that completes the pattern."). For 'figureImageUrl', provide a placeholder URL like "https://placehold.co/150x100.png".
-        {{else if (eq subject "Arithmetic")}}
-          Generate 20 multiple-choice questions for Arithmetic.
-        {{else if (eq subject "Language")}}
-          Generate 20 multiple-choice questions for Language (Hindi or English based on the main language parameter).
-        {{/if}}
-      {{else if (eq studentClass "Class 9")}}
-        Title: JNV Mock Test (Class 9) - {{{subject}}}
-        {{#if (eq subject "English")}}
-          Generate 15 multiple-choice questions for English. IMPORTANT: These questions and options MUST be in English, regardless of the main language parameter.
-        {{else if (eq subject "Hindi")}}
-          Generate 15 multiple-choice questions for Hindi. These questions and options MUST be in Hindi (Devanagari script).
-        {{else if (eq subject "Science")}}
-          Generate 35 multiple-choice questions for Science.
-        {{else if (eq subject "Mathematics")}}
-          Generate 35 multiple-choice questions for Mathematics.
-        {{/if}}
-      {{/if}}
-    {{/if}}
+    Follow these SPECIAL INSTRUCTIONS very carefully:
+    {{{specialInstructions}}}
 
-    {{#if (eq testType "sainik_school")}}
-      {{#if (eq studentClass "Class 6")}}
-        Title: Sainik School Mock Test (Class 6) - {{{subject}}}
-        {{#if (eq subject "Mathematics")}}
-          Generate 50 multiple-choice questions for Mathematics.
-        {{else if (or (eq subject "General Knowledge") (eq subject "Language") (eq subject "Intelligence"))}}
-          Generate 25 multiple-choice questions for {{{subject}}}. Language questions should match the main '{{language}}' parameter.
-        {{/if}}
-      {{else if (eq studentClass "Class 9")}}
-        Title: Sainik School Mock Test (Class 9) - {{{subject}}}
-        {{#if (eq subject "Mathematics")}}
-          Generate 50 multiple-choice questions for Mathematics. Questions MUST be in English.
-        {{else if (or (eq subject "English") (eq subject "Intelligence") (eq subject "General Science") (eq subject "Social Studies"))}}
-          Generate 25 multiple-choice questions for {{{subject}}}. All questions MUST be in English.
-        {{/if}}
-      {{/if}}
-    {{/if}}
+    The title of the test paper should be appropriate for the test type, class, and subject.
 
-    {{#if (eq testType "rms")}}
-       Title: RMS Mock Test ({{{studentClass}}}) - {{{subject}}}
-        {{#if (eq studentClass "Class 6")}}
-             Generate 50 multiple-choice questions for {{{subject}}}.
-        {{else if (eq studentClass "Class 9")}}
-            {{#if (eq subject "Paper-I English")}}
-                Generate 100 questions for English.
-            {{else if (eq subject "Paper-II Hindi & Social Science")}}
-                Generate 50 questions for Hindi and 50 questions for Social Science.
-            {{else if (eq subject "Paper-III Maths & Science")}}
-                Generate 50 questions for Mathematics and 50 questions for Science.
-            {{/if}}
-        {{/if}}
-    {{/if}}
-
-    {{#if (eq testType "subject_wise")}}
-      Title: Practice Test - {{{subject}}}
-      Generate 15 multiple-choice questions for {{{subject}}} suitable for a {{{studentClass}}} student.
-    {{/if}}
-
-    For EACH question, you MUST provide:
+    For EACH of the {{{numberOfQuestions}}} questions, you MUST provide:
     1.  questionText: The full text of the question.
     2.  options: An array of EXACTLY four string options.
     3.  correctAnswerIndex: The 0-based index of the correct option.
     4.  explanation: A brief, clear explanation for why the answer is correct, in the specified language.
-    5.  figureImageUrl: (Optional) ONLY for JNV Class 6 Mental Ability. Provide a placeholder URL.
+    5.  figureImageUrl: (Optional) ONLY if the special instructions mention figure-based questions. Provide a placeholder URL like "https://placehold.co/150x100.png".
 
     Ensure the difficulty is appropriate for the specified class. Your entire response must be a single JSON object that strictly adheres to the provided output schema.
   `,
 });
+
 
 const generateTestPaperFlow = ai.defineFlow(
   {
@@ -138,26 +94,56 @@ const generateTestPaperFlow = ai.defineFlow(
   },
   async (input) => {
     console.log('generateTestPaperFlow: Invoked with input:', JSON.stringify(input));
+
+    let numberOfQuestions: number;
+    let specialInstructions = "No special instructions.";
+
+    const testTypeConfig = testConfigs[input.testType];
+    const classConfig = testTypeConfig?.[input.studentClass] || testTypeConfig?.['All'];
+    const subjectConfig = classConfig?.find(s => s.key === input.subject);
+
+    if (!subjectConfig) {
+      console.error(`Could not find config for testType: ${input.testType}, class: ${input.studentClass}, subject: ${input.subject}`);
+      numberOfQuestions = 15;
+      specialInstructions = `Generate 15 general questions for ${input.subject} suitable for a ${input.studentClass} student.`
+    } else {
+        numberOfQuestions = subjectConfig.questions;
+
+        if (input.testType === 'jnv' && input.studentClass === 'Class 6' && input.subject === 'Mental Ability') {
+            specialInstructions = "These are figure-based questions. For 'questionText', briefly describe the task (e.g., 'Find the figure that completes the pattern.'). For 'figureImageUrl', you MUST provide a placeholder URL like 'https://placehold.co/150x100.png'.";
+        } else if (input.testType === 'jnv' && input.studentClass === 'Class 9' && input.subject === 'English') {
+            specialInstructions = "IMPORTANT: The questions, options, and explanations for this English test MUST be in English, regardless of the main language parameter.";
+        } else if (input.testType === 'jnv' && input.studentClass === 'Class 9' && input.subject === 'Hindi') {
+            specialInstructions = "IMPORTANT: The questions, options, and explanations for this Hindi test MUST be in Hindi (Devanagari script).";
+        } else if (input.testType === 'sainik_school' && input.studentClass === 'Class 9') {
+            specialInstructions = "IMPORTANT: ALL questions, options, and explanations for this test MUST be in English.";
+        } else if (input.testType === 'sainik_school' && input.studentClass === 'Class 6' && input.subject === 'Language') {
+            specialInstructions = `The language for this test should be determined by the main 'language' parameter ('${input.language}'). If it is 'hi', use Hindi. If 'en', use English.`;
+        }
+    }
+
+    const promptInput = {
+        ...input,
+        numberOfQuestions,
+        specialInstructions
+    };
+
     try {
-      const {output} = await prompt(input);
+      const {output} = await prompt(promptInput);
       
       if (!output || !output.title || !Array.isArray(output.subjects) || output.subjects.length === 0 || 
           output.subjects.some(s => typeof s !== 'object' || s === null || !s.subjectName || !Array.isArray(s.questions) || s.questions.length === 0)) {
         
-        console.warn('generateTestPaperFlow: AI returned invalid or incomplete data. Input was:', JSON.stringify(input));
-        
-        const errorMsg = input.language === 'hi' 
-          ? 'क्षमा करें, AI मॉडल पेपर बनाने में असमर्थ था या अपूर्ण डेटा लौटाया। कृपया पुनः प्रयास करें।' 
-          : 'Sorry, the AI was unable to generate the model paper or returned incomplete data. Please try again.';
-        
-        const dummyQuestion: TestQuestion = { questionText: errorMsg, options: ['N/A', 'N/A', 'N/A', 'N/A'], correctAnswerIndex: 0, explanation: errorMsg };
-        return {
-            title: input.language === 'hi' ? 'त्रुटि: मॉडल पेपर उत्पन्न नहीं हो सका' : 'Error: Could Not Generate Model Paper',
-            subjects: [
-                { subjectName: input.subject || 'Error', questions: Array(10).fill(dummyQuestion) },
-            ]
-        };
+        console.warn('generateTestPaperFlow: AI returned invalid or incomplete data. Input was:', JSON.stringify(promptInput));
+        throw new Error('AI returned invalid or incomplete data.');
       }
+      
+      const generatedCount = output.subjects[0].questions.length;
+      if (Math.abs(generatedCount - numberOfQuestions) > 5 && numberOfQuestions > 10) { 
+          console.warn(`generateTestPaperFlow: AI generated ${generatedCount} questions, but ${numberOfQuestions} were requested.`);
+          throw new Error(`AI generated an incorrect number of questions. Expected around ${numberOfQuestions}, got ${generatedCount}.`);
+      }
+
       console.log('generateTestPaperFlow: Successfully generated test paper titled:', output.title);
       return output;
     } catch (error: any) {

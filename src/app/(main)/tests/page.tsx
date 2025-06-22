@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -17,76 +17,30 @@ import type { TestPaper, TestSubject, TestQuestion } from '@/ai/flows/generate-t
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { STUDENT_USERNAME_KEY } from '@/lib/constants';
+import { testConfigs, type SubjectConfig as SubjectConfigType, type TestType } from '@/lib/test-configs';
+
+const subjectIcons: Record<string, React.ElementType> = {
+  'Mathematics': BrainCircuit,
+  'General Knowledge': Languages,
+  'Language': FileText,
+  'Intelligence': BrainCircuit,
+  'English': FileText,
+  'General Science': Languages,
+  'Social Studies': ListChecks,
+  'Mental Ability': BrainCircuit,
+  'Arithmetic': BrainCircuit,
+  'Hindi': FileText,
+  'Reasoning': BrainCircuit,
+  'Paper-I English': FileText,
+  'Paper-II Hindi & Social Science': ListChecks,
+  'Paper-III Maths & Science': Languages,
+};
+
+interface SubjectConfig extends SubjectConfigType {
+  icon: React.ElementType;
+}
 
 type TestStage = "selection" | "details" | "subjectList" | "generating" | "inProgress" | "completed";
-type TestType = "sainik_school" | "rms" | "jnv" | "subject_wise";
-
-interface SubjectConfig {
-  key: string;
-  nameKey: keyof ReturnType<typeof useLanguage>['t'];
-  icon: React.ElementType;
-  questions: number;
-  marksPerQuestion?: number;
-  totalMarks: number;
-}
-
-interface TestConfig {
-  [className: string]: SubjectConfig[];
-}
-
-const testConfigs: Record<TestType, TestConfig> = {
-  sainik_school: {
-    'Class 6': [
-      { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit, questions: 50, marksPerQuestion: 3, totalMarks: 150 },
-      { key: 'General Knowledge', nameKey: 'subjectGeneralKnowledge', icon: Languages, questions: 25, marksPerQuestion: 2, totalMarks: 50 },
-      { key: 'Language', nameKey: 'subjectLanguage', icon: FileText, questions: 25, marksPerQuestion: 2, totalMarks: 50 },
-      { key: 'Intelligence', nameKey: 'subjectReasoning', icon: BrainCircuit, questions: 25, marksPerQuestion: 2, totalMarks: 50 },
-    ],
-    'Class 9': [
-      { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit, questions: 50, marksPerQuestion: 4, totalMarks: 200 },
-      { key: 'English', nameKey: 'subjectEnglish', icon: FileText, questions: 25, marksPerQuestion: 2, totalMarks: 50 },
-      { key: 'Intelligence', nameKey: 'subjectReasoning', icon: BrainCircuit, questions: 25, marksPerQuestion: 2, totalMarks: 50 },
-      { key: 'General Science', nameKey: 'subjectGeneralScience', icon: Languages, questions: 25, marksPerQuestion: 2, totalMarks: 50 },
-      { key: 'Social Studies', nameKey: 'subjectSocialStudies', icon: ListChecks, questions: 25, marksPerQuestion: 2, totalMarks: 50 },
-    ],
-  },
-   rms: {
-    'Class 6': [
-        { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit, questions: 50, totalMarks: 50 },
-        { key: 'English', nameKey: 'subjectEnglish', icon: FileText, questions: 50, totalMarks: 50 },
-        { key: 'Intelligence', nameKey: 'subjectReasoning', icon: BrainCircuit, questions: 50, totalMarks: 50 },
-        { key: 'General Knowledge', nameKey: 'subjectGeneralKnowledge', icon: Languages, questions: 50, totalMarks: 50 },
-    ],
-    'Class 9': [
-        { key: 'Paper-I English', nameKey: 'subjectEnglish', icon: FileText, questions: 100, totalMarks: 100 },
-        { key: 'Paper-II Hindi & Social Science', nameKey: 'subjectSocialStudies', icon: ListChecks, questions: 100, totalMarks: 100 },
-        { key: 'Paper-III Maths & Science', nameKey: 'subjectGeneralScience', icon: Languages, questions: 100, totalMarks: 100 },
-    ],
-  },
-  jnv: {
-    'Class 6': [
-      { key: 'Mental Ability', nameKey: 'subjectMentalAbility', icon: BrainCircuit, questions: 40, totalMarks: 50 },
-      { key: 'Arithmetic', nameKey: 'subjectArithmetic', icon: BrainCircuit, questions: 20, totalMarks: 25 },
-      { key: 'Language', nameKey: 'subjectLanguage', icon: FileText, questions: 20, totalMarks: 25 },
-    ],
-    'Class 9': [
-      { key: 'English', nameKey: 'subjectEnglish', icon: FileText, questions: 15, totalMarks: 15 },
-      { key: 'Hindi', nameKey: 'subjectHindi', icon: FileText, questions: 15, totalMarks: 15 },
-      { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit, questions: 35, totalMarks: 35 },
-      { key: 'Science', nameKey: 'subjectGeneralScience', icon: Languages, questions: 35, totalMarks: 35 },
-    ],
-  },
-  subject_wise: {
-      'All': [
-          { key: 'Mathematics', nameKey: 'subjectMathematics', icon: BrainCircuit, questions: 15, totalMarks: 30 },
-          { key: 'General Knowledge', nameKey: 'subjectGeneralKnowledge', icon: Languages, questions: 15, totalMarks: 30 },
-          { key: 'Reasoning', nameKey: 'subjectReasoning', icon: BrainCircuit, questions: 15, totalMarks: 30 },
-          { key: 'Hindi', nameKey: 'subjectHindi', icon: FileText, questions: 15, totalMarks: 30 },
-          { key: 'English', nameKey: 'subjectEnglish', icon: FileText, questions: 15, totalMarks: 30 },
-          { key: 'General Science', nameKey: 'subjectGeneralScience', icon: Languages, questions: 15, totalMarks: 30 },
-      ]
-  }
-};
 
 interface UserAnswer {
   questionIndex: number;
@@ -124,24 +78,59 @@ export default function TestSeriesPage() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   // Load student name and progress from localStorage
   useEffect(() => {
+    setIsClient(true);
     const storedName = localStorage.getItem(STUDENT_USERNAME_KEY);
     if(storedName) setStudentName(storedName);
+  }, []);
 
-    if (selectedTestType && selectedClass) {
-        const progressKey = `testProgress_${selectedTestType}_${selectedClass}`;
+  useEffect(() => {
+    if (!isClient || !selectedTestType || !selectedClass) return;
+    const progressKey = `testProgress_${selectedTestType}_${selectedClass}`;
+    try {
         const storedProgress = localStorage.getItem(progressKey);
         if (storedProgress) {
             setTestProgress(JSON.parse(storedProgress));
         } else {
             setTestProgress({});
         }
+    } catch(e) {
+        console.error("Failed to parse test progress from localStorage", e);
+        setTestProgress({});
     }
-  }, [selectedTestType, selectedClass]);
+  }, [selectedTestType, selectedClass, isClient]);
   
   // Timer effect
+  const handleFinishSubjectTest = useCallback(() => {
+    if (!activeTestPaper || !selectedSubject) return;
+    setTimerActive(false);
+
+    const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
+    const newProgress = {
+      ...testProgress,
+      [selectedSubject.key]: {
+        score: correctAnswers,
+        totalQuestions: activeTestPaper.subjects[0].questions.length,
+      }
+    };
+    setTestProgress(newProgress);
+    if (isClient && selectedTestType && selectedClass) {
+        const progressKey = `testProgress_${selectedTestType}_${selectedClass}`;
+        localStorage.setItem(progressKey, JSON.stringify(newProgress));
+    }
+
+    toast({ title: t('testSubmitted'), description: `${t('yourScoreIs')} ${correctAnswers}/${activeTestPaper.subjects[0].questions.length}`});
+    setActiveTestPaper(null);
+    setCurrentQuestionIndex(0);
+    setSelectedOption(null);
+    setUserAnswers([]);
+    setShowAnswer(false);
+    setStage("subjectList");
+  }, [activeTestPaper, userAnswers, testProgress, selectedSubject, toast, t, isClient, selectedTestType, selectedClass]);
+  
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (timerActive && timeLeft > 0) {
@@ -151,7 +140,7 @@ export default function TestSeriesPage() {
       toast({ title: t('timeUpTitle'), description: t('testAutoSubmitted') });
     }
     return () => { if (interval) clearInterval(interval); };
-  }, [timerActive, timeLeft, toast, t]);
+  }, [timerActive, timeLeft, toast, t, handleFinishSubjectTest]);
 
 
   const resetTestState = () => {
@@ -161,6 +150,7 @@ export default function TestSeriesPage() {
     setUserAnswers([]);
     setShowAnswer(false);
     setTimerActive(false);
+    setTimeLeft(0);
   };
   
   const handleStartSubjectTest = async (subjectConfig: SubjectConfig) => {
@@ -190,24 +180,6 @@ export default function TestSeriesPage() {
     }
   };
 
-  const handleFinishSubjectTest = () => {
-    const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
-    const newProgress = {
-      ...testProgress,
-      [selectedSubject!.key]: {
-        score: correctAnswers,
-        totalQuestions: activeTestPaper!.subjects[0].questions.length,
-      }
-    };
-    setTestProgress(newProgress);
-    const progressKey = `testProgress_${selectedTestType}_${selectedClass}`;
-    localStorage.setItem(progressKey, JSON.stringify(newProgress));
-
-    toast({ title: t('testSubmitted'), description: `${t('yourScoreIs')} ${correctAnswers}/${activeTestPaper!.subjects[0].questions.length}`});
-    resetTestState();
-    setStage("subjectList");
-  };
-
   const handleNextQuestion = () => {
     setShowAnswer(false);
     setSelectedOption(null);
@@ -228,6 +200,12 @@ export default function TestSeriesPage() {
   
   const currentSubjectData: TestSubject | undefined = activeTestPaper?.subjects[0];
   const currentQuestion: TestQuestion | undefined = currentSubjectData?.questions[currentQuestionIndex];
+
+  const subjectsForCurrentTest = useMemo(() => {
+    if (!selectedTestType || !selectedClass) return [];
+    const subjects = testConfigs[selectedTestType]?.[selectedClass] || testConfigs.subject_wise.All;
+    return subjects.map(s => ({...s, icon: subjectIcons[s.key] || BookCopy}));
+  }, [selectedTestType, selectedClass]);
   
   const renderSelectionScreen = () => (
     <Card className="max-w-4xl mx-auto shadow-xl bg-card border-none">
@@ -238,11 +216,11 @@ export default function TestSeriesPage() {
         <CardTitle className="text-3xl font-bold font-headline text-foreground">{t('testSeries')}</CardTitle>
         <CardDescription>{t('selectTestType')}</CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
         <Button onClick={() => { setSelectedTestType("sainik_school"); setStage('details'); }} className="h-20 text-lg flex items-center gap-3"><Shield className="h-6 w-6"/>{t('sainikSchoolMockTest')}</Button>
         <Button onClick={() => { setSelectedTestType("rms"); setStage('details'); }} className="h-20 text-lg flex items-center gap-3"><GraduationCap className="h-6 w-6"/>{t('rmsMockTest')}</Button>
         <Button onClick={() => { setSelectedTestType("jnv"); setStage('details'); }} className="h-20 text-lg flex items-center gap-3"><School className="h-6 w-6"/>{t('jnvMockTest')}</Button>
-        <Button onClick={() => { setSelectedTestType("subject_wise"); setStage('details'); }} className="h-20 text-lg md:col-span-2 lg:col-span-3 flex items-center gap-3"><BookCopy className="h-6 w-6"/>{t('subjectWiseTest')}</Button>
+        <Button onClick={() => { setSelectedTestType("subject_wise"); setStage('details'); }} className="h-20 text-lg flex items-center gap-3"><BookCopy className="h-6 w-6"/>{t('subjectWiseTest')}</Button>
       </CardContent>
     </Card>
   );
@@ -276,43 +254,53 @@ export default function TestSeriesPage() {
 
   const renderSubjectList = () => {
     if (!selectedTestType || !selectedClass) return null;
-    const subjects = testConfigs[selectedTestType]?.[selectedClass] || testConfigs.subject_wise.All;
-    const allSubjectsCompleted = subjects.every(s => testProgress[s.key]);
+    const allSubjectsCompleted = subjectsForCurrentTest.every(s => testProgress[s.key]);
 
     return (
       <div className="max-w-2xl mx-auto space-y-4">
         <Button variant="ghost" size="sm" onClick={() => { setStage('details'); setTestProgress({}); }} className="mb-4"><ArrowLeft className="mr-2 h-4 w-4"/> {t('backButton')}</Button>
-        {subjects.map(subject => {
-            const result = testProgress[subject.key];
-            return (
-                <Card key={subject.key} className="bg-card shadow-md">
-                    <CardHeader>
-                        <CardTitle>{t(subject.nameKey)}</CardTitle>
-                        <CardDescription>{subject.questions} {t('questions')} | {subject.totalMarks} {t('marksLabel')}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {result ? (
-                             <div className="font-semibold text-primary">{t('score')}: {result.score} / {result.totalQuestions}</div>
-                        ) : (
-                             <p className="text-muted-foreground">{t('testPendingStatus')}</p>
-                        )}
-                    </CardContent>
-                    <CardFooter>
-                       <Button onClick={()=> handleStartSubjectTest(subject)} className="w-full">
-                           {result ? t('retakeTestButton') : t('startTestButton')}
-                       </Button>
-                    </CardFooter>
-                </Card>
-            )
-        })}
+        <Card>
+            <CardHeader><CardTitle>{t('selectSubjectForTest')}</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+                {subjectsForCurrentTest.map(subject => {
+                    const result = testProgress[subject.key];
+                    return (
+                        <Card key={subject.key} className="bg-muted/50 flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 gap-4">
+                           <div className="flex items-center gap-3">
+                               <subject.icon className="h-8 w-8 text-primary" />
+                               <div>
+                                   <p className="font-semibold text-secondary-foreground">{t(subject.nameKey as any)}</p>
+                                   <p className="text-xs text-muted-foreground">{subject.questions} {t('questions')} | {subject.totalMarks} {t('marksLabel')}</p>
+                               </div>
+                           </div>
+                           <div className="flex flex-col items-stretch sm:items-end gap-2 w-full sm:w-auto">
+                             {result ? (
+                                <>
+                                  <div className="font-semibold text-primary text-center sm:text-right">{t('score')}: {result.score} / {result.totalQuestions}</div>
+                                  <Button size="sm" onClick={() => handleStartSubjectTest(subject)} variant="outline">{t('retakeTestButton')}</Button>
+                                </>
+                             ) : (
+                                <Button size="sm" onClick={() => handleStartSubjectTest(subject)}>{t('startTestButton')}</Button>
+                             )}
+                           </div>
+                        </Card>
+                    )
+                })}
+            </CardContent>
+        </Card>
         <Card className="bg-card shadow-md p-4 space-y-2">
             <Button className="w-full" disabled={!allSubjectsCompleted} onClick={() => setStage('completed')}>
               <Award className="mr-2 h-4 w-4" />{t('generateFinalCertificate')}
             </Button>
-             <p className="text-xs text-muted-foreground text-center">
-                {!allSubjectsCompleted && t('allSubjectsCompleteToCertify')}
-             </p>
-            <Button variant="destructive" className="w-full" onClick={() => {setTestProgress({}); localStorage.removeItem(`testProgress_${selectedTestType}_${selectedClass}`);}}>
+             {!allSubjectsCompleted && 
+                <p className="text-xs text-muted-foreground text-center">
+                    {t('allSubjectsCompleteToCertify')}
+                </p>
+             }
+            <Button variant="destructive" className="w-full" onClick={() => {
+                setTestProgress({}); 
+                if(isClient) localStorage.removeItem(`testProgress_${selectedTestType}_${selectedClass}`);
+            }}>
                 <RotateCcw className="mr-2 h-4 w-4" />{t('resetProgressButton')}
             </Button>
         </Card>
@@ -326,16 +314,18 @@ export default function TestSeriesPage() {
     const totalQuestions = currentSubjectData.questions.length;
     return (
       <Card className="max-w-3xl mx-auto shadow-lg bg-card">
-        <CardHeader><div className="flex justify-between items-center"><CardTitle className="text-xl md:text-2xl text-foreground">{currentSubjectData.subjectName} ({questionNumber}/{totalQuestions})</CardTitle><div className="flex items-center gap-2 text-lg font-semibold text-primary"><TimerIcon className="h-5 w-5"/>{new Date(timeLeft * 1000).toISOString().substr(14, 5)}</div></div></CardHeader>
+        <CardHeader><div className="flex justify-between items-center"><CardTitle className="text-xl md:text-2xl text-foreground">{currentSubjectData.subjectName} ({questionNumber}/{totalQuestions})</CardTitle>{timerActive && <div className="flex items-center gap-2 text-lg font-semibold text-primary"><TimerIcon className="h-5 w-5"/>{new Date(timeLeft * 1000).toISOString().substr(14, 5)}</div>}</div></CardHeader>
         <CardContent className="space-y-6">
           <p className="text-lg font-medium text-foreground/90 whitespace-pre-wrap">{currentQuestion.questionText}</p>
           {currentQuestion.figureImageUrl && <div className="flex justify-center"><Image src={currentQuestion.figureImageUrl} alt="Question Figure" width={150} height={100} className="rounded-md bg-white"/></div>}
-          <RadioGroup value={selectedOption ?? undefined} onValueChange={setSelectedOption} disabled={showAnswer}>
+          <RadioGroup value={selectedOption ?? undefined} onValueChange={setSelectedOption} disabled={showAnswer} className="space-y-3">
             {currentQuestion.options.map((option, index) => (
-              <div key={index} className={`flex items-center space-x-3 p-3 border rounded-md transition-colors ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'border-green-500 bg-green-500/10' : ''} ${showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'border-destructive bg-destructive/10' : ''} ${!showAnswer && selectedOption === index.toString() ? 'border-primary bg-primary/10' : 'border-border'}`}>
+              <Label key={index} htmlFor={`option-${index}`} className={cn("flex items-center space-x-3 p-3 border rounded-md transition-colors cursor-pointer", showAnswer && index === currentQuestion.correctAnswerIndex ? 'border-green-500 bg-green-500/10' : '', showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'border-destructive bg-destructive/10' : '', !showAnswer && selectedOption === index.toString() ? 'border-primary bg-primary/10' : 'border-border', !showAnswer ? 'hover:bg-muted/80' : '')}>
                 <RadioGroupItem value={index.toString()} id={`option-${index}`} />
-                <Label htmlFor={`option-${index}`} className={`font-normal text-base cursor-pointer flex-grow ${showAnswer && index === currentQuestion.correctAnswerIndex ? 'text-green-400' : ''} ${showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'text-red-400' : ''}`}>{option}{showAnswer && index === currentQuestion.correctAnswerIndex && <CheckCircle className="inline h-5 w-5 ml-2 text-green-500" />}{showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex && <XCircle className="inline h-5 w-5 ml-2 text-red-500" />}</Label>
-              </div>
+                <span className={cn("font-normal text-base flex-grow", showAnswer && index === currentQuestion.correctAnswerIndex ? 'text-green-600' : '', showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex ? 'text-red-600' : '')}>{option}</span>
+                {showAnswer && index === currentQuestion.correctAnswerIndex && <CheckCircle className="inline h-5 w-5 ml-2 text-green-500" />}
+                {showAnswer && selectedOption === index.toString() && index !== currentQuestion.correctAnswerIndex && <XCircle className="inline h-5 w-5 ml-2 text-red-500" />}
+              </Label>
             ))}
           </RadioGroup>
         </CardContent>
@@ -360,48 +350,45 @@ export default function TestSeriesPage() {
  const renderCompletionScreen = () => {
     if (!selectedTestType || !selectedClass) return null;
 
-    const subjects = testConfigs[selectedTestType]?.[selectedClass];
     let totalObtainedMarks = 0;
     let totalMarks = 0;
+    let totalCorrect = 0;
+    let totalQuestions = 0;
 
-    subjects.forEach(subject => {
+    subjectsForCurrentTest.forEach(subject => {
         const result = testProgress[subject.key];
         if(result) {
             totalObtainedMarks += result.score * (subject.marksPerQuestion || 1);
+            totalCorrect += result.score;
         }
         totalMarks += subject.totalMarks;
+        totalQuestions += subject.questions;
     });
 
     let statusKey = 'testResultFail';
     let statusColor = 'text-destructive';
+    let passed = false;
 
-    if (selectedTestType === 'sainik_school') {
-        if (selectedClass === 'Class 6') {
-            if (totalObtainedMarks > 250) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; }
-            else if (totalObtainedMarks >= 225) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
-        } else { // Class 9
-            if (totalObtainedMarks > 345) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; }
-            else if (totalObtainedMarks >= 320) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
-        }
-    } else if (selectedTestType === 'jnv') {
-        const totalQuestions = subjects.reduce((acc, s) => acc + s.questions, 0);
-        const correctAnswers = Object.values(testProgress).reduce((acc, r) => acc + r.score, 0);
-        if (selectedClass === 'Class 6') {
-            if (correctAnswers > 70) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; }
-            else if (correctAnswers >= 60) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
-        } else { // Class 9
-            if (correctAnswers > 80) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; }
-            else if (correctAnswers >= 70) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
-        }
+    if (selectedTestType === 'sainik_school' && selectedClass === 'Class 6') {
+        if (totalObtainedMarks > 250) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; passed = true; }
+        else if (totalObtainedMarks >= 225) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
+    } else if (selectedTestType === 'sainik_school' && selectedClass === 'Class 9') {
+        if (totalObtainedMarks > 345) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; passed = true; }
+        else if (totalObtainedMarks >= 320) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
+    } else if (selectedTestType === 'jnv' && selectedClass === 'Class 6') {
+        if (totalCorrect > 70) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; passed = true; }
+        else if (totalCorrect >= 60) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
+    } else if (selectedTestType === 'jnv' && selectedClass === 'Class 9') {
+        if (totalCorrect > 80) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; passed = true; }
+        else if (totalCorrect >= 70) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
     } else { // RMS or Subject-wise
-        if ((totalObtainedMarks / totalMarks) >= 0.7) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; }
+        if ((totalObtainedMarks / totalMarks) >= 0.7) { statusKey = 'testResultPass'; statusColor = 'text-green-500'; passed = true; }
         else if ((totalObtainedMarks / totalMarks) >= 0.5) { statusKey = 'testResultAverage'; statusColor = 'text-yellow-500'; }
     }
 
-
     return (
       <Card className="max-w-2xl mx-auto shadow-xl border-border/50 print:shadow-none print:border-none bg-card">
-          <div id="certificate" className="p-6 space-y-4">
+          <div id="certificate" className="p-6 space-y-4 bg-white text-black">
               <CardHeader className="text-center p-0">
                   <div className="flex justify-center items-center gap-4">
                       <Image src="/logo.png" alt="Academy Logo" width={80} height={80} className="print:block hidden" />
@@ -453,6 +440,5 @@ export default function TestSeriesPage() {
     }
   };
 
-  return <div className="max-w-4xl mx-auto space-y-8">{renderContent()}</div>;
+  return <div className="max-w-5xl mx-auto space-y-8">{renderContent()}</div>;
 }
-
