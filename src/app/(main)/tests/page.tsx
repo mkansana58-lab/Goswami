@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Award, BookCopy, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, FileText, BrainCircuit, Languages, ListChecks, ArrowLeft, GraduationCap, Shield, School, AlertTriangle, Trophy } from 'lucide-react';
+import { Loader2, Award, BookCopy, ChevronRight, CheckCircle, XCircle, RotateCcw, Timer as TimerIcon, Download, FileText, BrainCircuit, Languages, ListChecks, ArrowLeft, GraduationCap, Shield, School, AlertTriangle, Trophy, ClipboardCheck } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
 import { generateAIMockTest } from './actions';
@@ -209,19 +209,67 @@ export default function TestSeriesPage() {
   }, [selectedTestType, selectedClass]);
   
   const renderSelectionScreen = () => (
-    <Card className="max-w-4xl mx-auto shadow-xl bg-card border-none">
+    <Card className="max-w-xl mx-auto shadow-xl bg-card border-none">
       <CardHeader className="text-center">
         <div className="flex justify-center mb-2">
-            <Trophy className="h-12 w-12 text-primary" />
+            <ClipboardCheck className="h-12 w-12 text-primary" />
         </div>
         <CardTitle className="text-3xl font-bold font-headline text-foreground">{t('testSeries')}</CardTitle>
         <CardDescription>{t('selectTestType')}</CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-        <Button onClick={() => { setSelectedTestType("sainik_school"); setStage('details'); }} className="h-20 text-lg flex items-center gap-3"><Shield className="h-6 w-6"/>{t('sainikSchoolMockTest')}</Button>
-        <Button onClick={() => { setSelectedTestType("rms"); setStage('details'); }} className="h-20 text-lg flex items-center gap-3"><GraduationCap className="h-6 w-6"/>{t('rmsMockTest')}</Button>
-        <Button onClick={() => { setSelectedTestType("jnv"); setStage('details'); }} className="h-20 text-lg flex items-center gap-3"><School className="h-6 w-6"/>{t('jnvMockTest')}</Button>
-        <Button onClick={() => { setSelectedTestType("subject_wise"); setStage('details'); }} className="h-20 text-lg flex items-center gap-3"><BookCopy className="h-6 w-6"/>{t('subjectWiseTest')}</Button>
+      <CardContent className="space-y-6">
+        <Card className="bg-muted/50">
+          <CardHeader className="flex flex-row items-center gap-4 space-y-0 p-4">
+            <Shield className="h-10 w-10 text-primary flex-shrink-0" />
+            <div className="flex-grow">
+              <CardTitle className="text-xl">{t('sainikSchoolMockTest')}</CardTitle>
+              <CardDescription>{t('sainikSchoolMockTestDesc')}</CardDescription>
+            </div>
+          </CardHeader>
+          <CardFooter className="p-4 pt-0">
+             <Button onClick={() => { setSelectedTestType("sainik_school"); setStage('details'); }} className="w-full">{t('startButton')}</Button>
+          </CardFooter>
+        </Card>
+
+        <Card className="bg-muted/50">
+          <CardHeader className="flex flex-row items-center gap-4 space-y-0 p-4">
+            <GraduationCap className="h-10 w-10 text-primary flex-shrink-0" />
+            <div className="flex-grow">
+              <CardTitle className="text-xl">{t('rmsMockTest')}</CardTitle>
+              <CardDescription>{t('rmsMockTestDesc')}</CardDescription>
+            </div>
+          </CardHeader>
+          <CardFooter className="p-4 pt-0">
+            <Button onClick={() => { setSelectedTestType("rms"); setStage('details'); }} className="w-full">{t('startButton')}</Button>
+          </CardFooter>
+        </Card>
+
+        <Card className="bg-muted/50">
+          <CardHeader className="flex flex-row items-center gap-4 space-y-0 p-4">
+            <School className="h-10 w-10 text-primary flex-shrink-0" />
+            <div className="flex-grow">
+              <CardTitle className="text-xl">{t('jnvMockTest')}</CardTitle>
+              <CardDescription>{t('jnvMockTestDesc')}</CardDescription>
+            </div>
+          </CardHeader>
+          <CardFooter className="p-4 pt-0">
+             <Button onClick={() => { setSelectedTestType("jnv"); setStage('details'); }} className="w-full">{t('startButton')}</Button>
+          </CardFooter>
+        </Card>
+
+        <Card className="bg-muted/50">
+          <CardHeader className="flex flex-row items-center gap-4 space-y-0 p-4">
+            <BookCopy className="h-10 w-10 text-primary flex-shrink-0" />
+            <div className="flex-grow">
+              <CardTitle className="text-xl">{t('subjectWiseTest')}</CardTitle>
+              <CardDescription>{t('subjectWiseTestDesc')}</CardDescription>
+            </div>
+          </CardHeader>
+          <CardFooter className="p-4 pt-0">
+             <Button onClick={() => { setSelectedTestType("subject_wise"); setStage('details'); }} className="w-full">{t('startButton')}</Button>
+          </CardFooter>
+        </Card>
+
       </CardContent>
     </Card>
   );
@@ -441,7 +489,5 @@ export default function TestSeriesPage() {
     }
   };
 
-  return <div className="max-w-5xl mx-auto space-y-8">
-    {renderContent()}
-    </div>;
+  return <div className="max-w-5xl mx-auto space-y-8">{renderContent()}</div>;
 }

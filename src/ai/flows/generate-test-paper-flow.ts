@@ -81,7 +81,7 @@ const prompt = ai.definePrompt({
     4.  explanation: A brief, clear explanation for why the answer is correct, in the specified language.
     5.  figureImageUrl: (Optional) ONLY if the special instructions mention figure-based questions. Provide a placeholder URL like "https://placehold.co/150x100.png".
 
-    Ensure the difficulty is appropriate for the specified class. Your entire response must be a single JSON object that strictly adheres to the provided output schema.
+    Your entire response must be a single, valid JSON object that strictly adheres to the provided output schema. Do NOT include any other text, markdown, or explanations outside of the JSON structure.
   `,
 });
 
@@ -103,9 +103,9 @@ const generateTestPaperFlow = ai.defineFlow(
     const subjectConfig = classConfig?.find(s => s.key === input.subject);
 
     if (!subjectConfig) {
-      console.error(`Could not find config for testType: ${input.testType}, class: ${input.studentClass}, subject: ${input.subject}`);
-      numberOfQuestions = 15;
-      specialInstructions = `Generate 15 general questions for ${input.subject} suitable for a ${input.studentClass} student.`
+        console.error(`Could not find config for testType: ${input.testType}, class: ${input.studentClass}, subject: ${input.subject}`);
+        numberOfQuestions = 15;
+        specialInstructions = `Generate 15 general questions for ${input.subject} suitable for a ${input.studentClass} student.`
     } else {
         numberOfQuestions = subjectConfig.questions;
 
@@ -131,36 +131,34 @@ const generateTestPaperFlow = ai.defineFlow(
     try {
       const {output} = await prompt(promptInput);
       
-      if (!output || !output.title || !Array.isArray(output.subjects) || output.subjects.length === 0 || 
-          output.subjects.some(s => typeof s !== 'object' || s === null || !s.subjectName || !Array.isArray(s.questions) || s.questions.length === 0)) {
-        
-        console.warn('generateTestPaperFlow: AI returned invalid or incomplete data. Input was:', JSON.stringify(promptInput));
-        throw new Error('AI returned invalid or incomplete data.');
+      if (!output) {
+        console.warn('generateTestPaperFlow: AI returned null or invalid data that failed schema validation. Input was:', JSON.stringify(promptInput));
+        throw new Error(input.language === 'hi' ? 'AI मॉडल मान्य टेस्ट पेपर बनाने में विफल रहा।' : 'AI model failed to generate a valid test paper.');
       }
       
-      const generatedCount = output.subjects[0].questions.length;
-      if (Math.abs(generatedCount - numberOfQuestions) > 5 && numberOfQuestions > 10) { 
-          console.warn(`generateTestPaperFlow: AI generated ${generatedCount} questions, but ${numberOfQuestions} were requested.`);
-          throw new Error(`AI generated an incorrect number of questions. Expected around ${numberOfQuestions}, got ${generatedCount}.`);
+      const generatedCount = output.subjects[0]?.questions?.length || 0;
+      if (generatedCount === 0) { 
+          console.warn(`generateTestPaperFlow: AI generated 0 questions, but ${numberOfQuestions} were requested.`);
+          throw new Error(input.language === 'hi' ? 'AI मॉडल ने इस विषय के लिए कोई प्रश्न नहीं बनाया।' : 'AI model did not generate any questions for this subject.');
       }
 
       console.log('generateTestPaperFlow: Successfully generated test paper titled:', output.title);
       return output;
     } catch (error: any) {
         console.error('generateTestPaperFlow: Error during generation:', error);
-        const genericErrorMsg = input.language === 'hi' ? 'मॉडल पेपर बनाते समय एक अप्रत्याशित त्रुटि हुई।' : 'An unexpected error occurred while generating the model paper.';
-        const errorDetail = error.message ? String(error.message).substring(0, 100) : (input.language === 'hi' ? 'अज्ञात त्रुटि' : 'Unknown error');
+        const specificErrorMsg = error.message.includes('AI model') ? error.message : 
+                                 (input.language === 'hi' ? 'मॉडल पेपर बनाते समय एक अप्रत्याशित त्रुटि हुई।' : 'An unexpected error occurred while generating the model paper.');
         
         const dummyErrorQuestion: TestQuestion = {
-          questionText: genericErrorMsg,
+          questionText: specificErrorMsg,
           options: ['N/A', 'N/A', 'N/A', 'N/A'],
           correctAnswerIndex: 0,
-          explanation: errorDetail,
+          explanation: error.message || (input.language === 'hi' ? 'अज्ञात त्रुटि' : 'Unknown error'),
         };
         return {
             title: input.language === 'hi' ? 'त्रुटि: मॉडल पेपर उत्पन्न नहीं हो सका' : 'Error: Could Not Generate Model Paper',
             subjects: [
-                { subjectName: input.subject || 'Error', questions: Array(10).fill(dummyErrorQuestion) },
+                { subjectName: input.subject || 'Error', questions: [dummyErrorQuestion] },
             ]
         };
     }
