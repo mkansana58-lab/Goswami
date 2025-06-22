@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Phone, Home as HomeIcon, BookOpen, Edit3, Loader2, LogOut, Percent, ExternalLink } from 'lucide-react';
+import { User, Mail, Phone, Home as HomeIcon, BookOpen, Edit3, Loader2, LogOut, Percent, ExternalLink, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Progress } from '@/components/ui/progress';
@@ -179,6 +179,13 @@ export default function StudentProfilePage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
+       <div className="flex justify-end">
+         <Button asChild variant="ghost">
+           <Link href="/settings">
+             <Settings className="mr-2 h-5 w-5"/> {t('settings')}
+           </Link>
+         </Button>
+       </div>
       <Card className="shadow-xl border-primary/20">
         <CardHeader className="text-center pb-4">
           <div className="relative w-32 h-32 mx-auto mb-4 group">

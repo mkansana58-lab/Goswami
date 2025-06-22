@@ -5,52 +5,95 @@
 
 @layer base {
   :root {
-    /* New Dark Theme inspired by user image */
-    --background: 220 15% 10%; /* Very Dark Blue/Gray #1A1D23 */
-    --foreground: 220 15% 90%; /* Light Gray #E0E2E8 */
+    /* Light Theme (New Default) */
+    --background: 0 0% 98%; /* Almost white */
+    --foreground: 222.2 84% 4.9%; /* Dark Blueish Black */
 
-    --muted: 220 15% 20%; /* Darker Muted Blue/Gray #2D313A */
-    --muted-foreground: 220 10% 65%; /* Lighter Muted Gray #9AA0AE */
+    --muted: 210 40% 96.1%; /* Light Gray */
+    --muted-foreground: 215.4 16.3% 46.9%; /* Muted Gray */
 
-    --popover: 220 15% 8%; /* Even Darker for Popovers */
-    --popover-foreground: 220 15% 90%; 
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-    --card: 220 15% 15%; /* Slightly Lighter Dark Blue/Gray for cards #20242B */
-    --card-foreground: 220 15% 90%; 
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
-    --border: 220 15% 25%; /* #393E47 */
-    --input: 220 15% 20%; /* Same as muted */
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
 
-    /* Primary: Red from user image */
-    --primary: 357 80% 55%; /* #E71D26 - slightly brightened for better visibility on dark */
-    --primary-foreground: 0 0% 100%; /* White text on primary */
+    --primary: 357 80% 55%; /* #E71D26 */
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Kept for structure, but less prominent */
-    --secondary: 217 80% 55%; 
-    --secondary-foreground: 0 0% 100%;
-
-    /* Accent: Red from user image, same as primary */
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    
     --accent: 357 80% 55%;
     --accent-foreground: 0 0% 100%;
 
-    /* Destructive: Also Red, same as primary */
-    --destructive: 357 80% 55%; 
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --ring: 357 80% 65%; /* Lighter Red for focus rings */
+    --ring: 357 80% 65%;
 
-    --radius: 0.5rem; /* Standard rounded corners */
+    --radius: 0.5rem;
 
-    /* Chart colors based on new theme */
-    --chart-1: 357 80% 55%;   /* Red (Primary) */
-    --chart-2: 217 80% 55%;  /* Blue (Secondary) */
-    --chart-3: 150 70% 45%;   /* A contrasting Green */
-    --chart-4: 50 100% 50%;   /* A contrasting Yellow */
-    --chart-5: 280 80% 60%;   /* A contrasting Purple */
+    --chart-1: 357 80% 55%;
+    --chart-2: 217 80% 55%;
+    --chart-3: 150 70% 45%;
+    --chart-4: 50 100% 50%;
+    --chart-5: 280 80% 60%;
   }
 
   .dark {
-    /* The default theme is already dark */
+    /* Dark Theme */
+    --background: 220 15% 10%;
+    --foreground: 220 15% 90%;
+
+    --muted: 220 15% 20%;
+    --muted-foreground: 220 10% 65%;
+
+    --popover: 220 15% 8%;
+    --popover-foreground: 220 15% 90%; 
+
+    --card: 220 15% 15%;
+    --card-foreground: 220 15% 90%; 
+
+    --border: 220 15% 25%;
+    --input: 220 15% 20%;
+
+    --primary: 357 80% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 15% 25%;
+    --secondary-foreground: 220 15% 90%;
+
+    --accent: 357 80% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 357 80% 55%; 
+    --destructive-foreground: 0 0% 100%;
+
+    --ring: 357 80% 65%;
+  }
+
+  .eye-comfort {
+    --background: 39 33% 96%; /* Warm off-white */
+    --foreground: 25 20% 30%; /* Darker brown text */
+    --card: 0 0% 100%;
+    --card-foreground: 25 20% 30%;
+    --muted: 39 33% 92%;
+    --border: 39 20% 85%;
+    --input: 39 20% 88%;
+  }
+
+  .dark.eye-comfort {
+    --background: 220 10% 12%; /* Slightly warmer dark */
+    --foreground: 39 15% 80%; /* Warmer light text */
+    --card: 220 10% 16%;
+    --card-foreground: 39 15% 80%;
+    --muted: 220 10% 22%;
+    --border: 220 10% 27%;
+    --input: 220 10% 22%;
   }
 }
 

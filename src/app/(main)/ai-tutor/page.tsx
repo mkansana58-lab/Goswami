@@ -77,7 +77,7 @@ export default function AITutorPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg h-14" disabled={isLoading}>
+              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg h-12" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -133,9 +133,3 @@ export default function AITutorPage() {
     </div>
   );
 }
-
-// Add these keys to translations.ts
-// problemTextValidation: "Problem text must be at least 10 characters."
-// problemText: "Practice Problem"
-// aiAssessment: "AI Assessment"
-// solutionLabel: "Solution" (EN/HI)

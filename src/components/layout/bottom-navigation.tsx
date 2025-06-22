@@ -56,16 +56,16 @@ export function BottomNavigationBar() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 md:hidden bg-background border-t border-border shadow-top p-2 z-40 h-16 print:hidden">
+    <div className="fixed bottom-0 left-0 right-0 md:hidden bg-background border-t border-border shadow-top p-1 z-40 h-16 print:hidden">
       <div className="container mx-auto flex justify-around items-center h-full">
         {navLinks.map((link) => (
           <Link href={link.href} key={`${link.href}-bottom-nav-${link.labelKey}`} passHref>
             <div className={cn(
-              "flex flex-col items-center justify-center text-center cursor-pointer group p-1 rounded-md w-1/4 max-w-[calc(25%-0.5rem)]",
-              pathname === link.href ? "bg-muted text-primary" : "text-muted-foreground hover:bg-muted/50 hover:text-primary"
+              "flex flex-col items-center justify-center text-center cursor-pointer group rounded-md w-full h-full gap-0.5 transition-colors duration-200",
+              pathname === link.href ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted/50 hover:text-primary"
             )}>
-              <link.icon className={cn("h-6 w-6 mb-0.5 transition-colors", pathname === link.href ? "text-primary" : "text-muted-foreground group-hover:text-primary")} />
-              <span className="text-xs w-full">
+              <link.icon className="h-6 w-6" />
+              <span className="text-[10px] font-medium w-full truncate">
                 {t(link.labelKey as any)}
               </span>
             </div>

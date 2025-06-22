@@ -50,6 +50,7 @@ const adminConsoleNavLinks = [
 
 const studentNavLinks = [
     { href: '/student-profile', labelKey: 'studentProfileTitle', icon: UserCircle },
+    { href: '/settings', labelKey: 'settings', icon: Settings },
 ];
 
 
@@ -213,28 +214,28 @@ export function Header() {
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-foreground"><Menu className="h-6 w-6" /><span className="sr-only">Open menu</span></Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[280px] bg-sidebar p-0 flex flex-col border-r">
+              <SheetContent side="left" className="w-[280px] bg-card p-0 flex flex-col border-r">
                 <VisuallyHidden.Root><RadixSheetTitle>{t('mobileMenuTitle')}</RadixSheetTitle></VisuallyHidden.Root>
-                <div className="p-4 border-b border-sidebar-border">
+                <div className="p-4 border-b border-border">
                   <Link href={isClient && isStudentLoggedIn ? "/student-profile" : "/"} className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                     {isClient && isStudentLoggedIn && studentProfile?.photoDataUrl ? (<Image src={studentProfile.photoDataUrl} alt={studentProfile.name || t('profilePhotoAlt')} width={32} height={32} className="rounded-full h-8 w-8 object-cover" data-ai-hint={studentProfile.dataAiHint || "student avatar"} />)
-                     : isClient && isStudentLoggedIn ? (<UserCircle className="h-8 w-8 text-sidebar-primary" />)
-                     : (<ShieldCheck className="h-8 w-8 text-sidebar-primary" />)}
-                    <h2 className="text-lg font-headline font-bold text-sidebar-primary">{isClient && isStudentLoggedIn && studentProfile?.name ? studentProfile.name : t('appName')}</h2>
+                     : isClient && isStudentLoggedIn ? (<UserCircle className="h-8 w-8 text-primary" />)
+                     : (<ShieldCheck className="h-8 w-8 text-primary" />)}
+                    <h2 className="text-lg font-headline font-bold text-primary">{isClient && isStudentLoggedIn && studentProfile?.name ? studentProfile.name : t('appName')}</h2>
                   </Link>
                 </div>
                 <div className="flex-grow overflow-y-auto p-4 space-y-1">
                   {allMobileNavLinks.map((link) => (
                      <Link key={`mobile-${link.href}-${link.labelKey}`} href={link.href}
-                        className={cn("flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium transition-colors hover:bg-sidebar-accent/10", pathname === link.href ? "bg-sidebar-accent/20 text-sidebar-primary font-semibold" : "text-sidebar-foreground")}
+                        className={cn("flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium transition-colors hover:bg-muted/50", pathname === link.href ? "bg-primary/10 text-primary font-semibold" : "text-card-foreground")}
                         onClick={() => setIsMobileMenuOpen(false)}>
-                        <link.icon className="h-5 w-5 text-sidebar-primary" />{t(link.labelKey as any)}
+                        <link.icon className="h-5 w-5 text-primary/80" />{t(link.labelKey as any)}
                       </Link>
                   ))}
                 </div>
-                <div className="p-4 border-t border-sidebar-border space-y-2">
-                   {isClient && isStudentLoggedIn && (<Button variant="outline" className="w-full justify-start flex items-center gap-3 text-base font-medium border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground" onClick={handleStudentLogout}><LogOut className="h-5 w-5" /> {t('studentLogoutButton')}</Button>)}
-                   {isClient && isAdminLoggedIn && (<Button variant="outline" className="w-full justify-start flex items-center gap-3 text-base font-medium border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground" onClick={handleAdminLogout}><LogOut className="h-5 w-5" /> {t('adminLogout')}</Button>)}
+                <div className="p-4 border-t border-border space-y-2">
+                   {isClient && isStudentLoggedIn && (<Button variant="destructive" className="w-full justify-start flex items-center gap-3 text-base font-medium" onClick={handleStudentLogout}><LogOut className="h-5 w-5" /> {t('studentLogoutButton')}</Button>)}
+                   {isClient && isAdminLoggedIn && (<Button variant="destructive" className="w-full justify-start flex items-center gap-3 text-base font-medium" onClick={handleAdminLogout}><LogOut className="h-5 w-5" /> {t('adminLogout')}</Button>)}
                    {isClient && !isAdminLoggedIn && !isStudentLoggedIn && (<>
                       <Button variant="outline" className="w-full justify-start" asChild><Link href="/student-login" onClick={() => setIsMobileMenuOpen(false)}><UserCircle className="mr-2 h-5 w-5" /> {t('studentLoginTitle')}</Link></Button>
                       <Button variant="outline" className="w-full justify-start" asChild><Link href="/login" onClick={() => setIsMobileMenuOpen(false)}><ShieldCheck className="mr-2 h-5 w-5" /> {t('adminLoginNav')}</Link></Button>
@@ -292,4 +293,3 @@ export function Header() {
     </header>
   );
 }
-    

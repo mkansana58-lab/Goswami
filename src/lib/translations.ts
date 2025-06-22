@@ -52,7 +52,7 @@ export const translations = {
     aiTutorTitle: "Personalized Learning Assistant",
     aiTutorDesc: "Enter a practice problem below to get an assessment of its difficulty level, solution, and personalized feedback.",
     problemTextPlaceholder: "Enter your practice problem here...",
-    assessDifficulty: "Assess Difficulty & Get Solution",
+    assessDifficulty: "Assess & Solve",
     difficultyLevel: "Difficulty Level",
     feedback: "Feedback",
     inspiringQuote: "Inspiring a Generation of Defenders",
@@ -491,7 +491,11 @@ export const translations = {
     sainikSchoolMockTestDesc: "Give full pattern based mock tests for class 6 and 9.",
     jnvMockTestDesc: "Give mock tests for JNV entrance exam for class 6 and 9.",
     subjectWiseTestDesc: "Create your own test for your class and subject.",
-    startButton: "Start"
+    startButton: "Start",
+    settings: "Settings",
+    settingsDesc: "Adjust app appearance and behavior.",
+    darkMode: "Dark Mode",
+    eyeComfortMode: "Eye Comfort Mode"
   },
   hi: {
     appName: "गो स्वामी डिफेंस अकादमी",
@@ -543,7 +547,7 @@ export const translations = {
     aiTutorTitle: "व्यक्तिगत शिक्षण सहायक",
     aiTutorDesc: "कठिनाई स्तर का आकलन, समाधान और व्यक्तिगत प्रतिक्रिया प्राप्त करने के लिए नीचे अभ्यास प्रश्न दर्ज करें।",
     problemTextPlaceholder: "अपना अभ्यास प्रश्न यहाँ दर्ज करें...",
-    assessDifficulty: "कठिनाई का आकलन करें और समाधान पाएं",
+    assessDifficulty: "आकलन और समाधान करें",
     difficultyLevel: "कठिनाई स्तर",
     feedback: "प्रतिक्रिया",
     inspiringQuote: "रक्षकों की एक पीढ़ी को प्रेरित करना",
@@ -982,6 +986,10 @@ export const translations = {
     sainikSchoolMockTestDesc: "कक्षा 6 और 9 के लिए पूर्ण पैटर्न आधारित मॉक टेस्ट दें।",
     jnvMockTestDesc: "JNV प्रवेश परीक्षा के लिए कक्षा 6 और 9 का टेस्ट।",
     subjectWiseTestDesc: "कक्षा और विषय के लिए अपनी खुद की टेस्ट बनाएँ।",
-    startButton: "शुरू करें"
+    startButton: "शुरू करें",
+    settings: "सेटिंग्स",
+    settingsDesc: "ऐप की दिखावट और व्यवहार को समायोजित करें।",
+    darkMode: "डार्क मोड",
+    eyeComfortMode: "आई कम्फर्ट मोड"
   }
 };
