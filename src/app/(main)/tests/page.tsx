@@ -21,6 +21,7 @@ import { STUDENT_USERNAME_KEY } from '@/lib/constants';
 import { testConfigs, type SubjectConfig as SubjectConfigType, type TestType } from '@/lib/test-configs';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
+import { Progress } from '@/components/ui/progress';
 
 
 const subjectIcons: Record<string, React.ElementType> = {
@@ -573,11 +574,23 @@ export default function TestSeriesPage() {
   }
 
   const renderGeneratingScreen = () => (
-     <div className="flex flex-col items-center justify-center min-h-[50vh]">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="mt-4 text-lg text-muted-foreground">{t('generatingTest')}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{t('generatingTestDesc')}</p>
-      </div>
+    <div className="flex flex-col items-center justify-center min-h-[50vh]">
+      <Card className="w-full max-w-md p-8 text-center shadow-xl">
+        <CardHeader>
+          <div className="flex justify-center mb-4">
+            <Loader2 className="h-16 w-16 animate-spin text-primary" />
+          </div>
+          <CardTitle className="text-2xl font-bold text-primary">{t('generatingTest')}</CardTitle>
+          <CardDescription>{t('generatingTestDesc')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Progress value={undefined} className="animate-pulse" />
+          <p className="text-xs text-muted-foreground mt-2">
+            {t('aiTestGenerationNote') || "Please wait, the AI is crafting your personalized test questions..."}
+          </p>
+        </CardContent>
+      </Card>
+    </div>
   );
   
   const renderContent = () => {

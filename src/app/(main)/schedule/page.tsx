@@ -279,12 +279,12 @@ export default function SchedulePage() {
               <Form {...scheduleForm}>
                 <form onSubmit={scheduleForm.handleSubmit(onScheduleSubmit)} className="space-y-4">
                   <FormField control={scheduleForm.control} name="title" render={({ field }) => (
-                    <FormItem><FormLabel>{t('scheduleItemTitleLabel')}</FormLabel><FormControl><Input placeholder={t('scheduleItemTitlePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('scheduleItemTitleLabel')}</FormLabel><FormControl><Input placeholder={t('scheduleItemTitlePlaceholder')} {...field} className="h-11" /></FormControl><FormMessage /></FormItem>
                   )} />
                   <div className="grid md:grid-cols-3 gap-4">
-                    <FormField control={scheduleForm.control} name="time" render={({ field }) => ( <FormItem><FormLabel>{t('scheduleTimeLabel')}</FormLabel><FormControl><Input placeholder={t('scheduleTimePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                    <FormField control={scheduleForm.control} name="subject" render={({ field }) => (<FormItem><FormLabel>{t('scheduleSubjectLabel')}</FormLabel><FormControl><Input placeholder={t('scheduleSubjectPlaceholder')} {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                    <FormField control={scheduleForm.control} name="teacher" render={({ field }) => (<FormItem><FormLabel>{t('scheduleTeacherLabel')}</FormLabel><FormControl><Input placeholder={t('scheduleTeacherPlaceholder')} {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                    <FormField control={scheduleForm.control} name="time" render={({ field }) => ( <FormItem><FormLabel>{t('scheduleTimeLabel')}</FormLabel><FormControl><Input placeholder={t('scheduleTimePlaceholder')} {...field} className="h-11" /></FormControl><FormMessage /></FormItem> )}/>
+                    <FormField control={scheduleForm.control} name="subject" render={({ field }) => (<FormItem><FormLabel>{t('scheduleSubjectLabel')}</FormLabel><FormControl><Input placeholder={t('scheduleSubjectPlaceholder')} {...field} className="h-11" /></FormControl><FormMessage /></FormItem> )}/>
+                    <FormField control={scheduleForm.control} name="teacher" render={({ field }) => (<FormItem><FormLabel>{t('scheduleTeacherLabel')}</FormLabel><FormControl><Input placeholder={t('scheduleTeacherPlaceholder')} {...field} className="h-11" /></FormControl><FormMessage /></FormItem> )}/>
                   </div>
                   <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90" disabled={isSubmittingSchedule}>
                     {isSubmittingSchedule ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -302,8 +302,8 @@ export default function SchedulePage() {
               <Form {...homeworkForm}>
                 <form onSubmit={homeworkForm.handleSubmit(onHomeworkSubmit)} className="space-y-4">
                    <div className="grid md:grid-cols-2 gap-4">
-                    <FormField control={homeworkForm.control} name="subject" render={({ field }) => ( <FormItem><FormLabel>{t('homeworkSubjectLabel')}</FormLabel><FormControl><Input placeholder={t('homeworkSubjectPlaceholder')} {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                    <FormField control={homeworkForm.control} name="dueDate" render={({ field }) => ( <FormItem><FormLabel>{t('homeworkDueDateLabel')}</FormLabel><FormControl><Input placeholder={t('homeworkDueDatePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                    <FormField control={homeworkForm.control} name="subject" render={({ field }) => ( <FormItem><FormLabel>{t('homeworkSubjectLabel')}</FormLabel><FormControl><Input placeholder={t('homeworkSubjectPlaceholder')} {...field} className="h-11" /></FormControl><FormMessage /></FormItem> )}/>
+                    <FormField control={homeworkForm.control} name="dueDate" render={({ field }) => ( <FormItem><FormLabel>{t('homeworkDueDateLabel')}</FormLabel><FormControl><Input placeholder={t('homeworkDueDatePlaceholder')} {...field} className="h-11" /></FormControl><FormMessage /></FormItem> )}/>
                   </div>
                   <FormField control={homeworkForm.control} name="task" render={({ field }) => ( <FormItem><FormLabel>{t('homeworkTaskLabel')}</FormLabel><FormControl><Textarea placeholder={t('homeworkTaskPlaceholder')} {...field} rows={3} /></FormControl><FormMessage /></FormItem> )}/>
                   <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90" disabled={isSubmittingHomework}>
@@ -322,8 +322,8 @@ export default function SchedulePage() {
               <Form {...updateForm}>
                 <form onSubmit={updateForm.handleSubmit(onUpdateSubmit)} className="space-y-4">
                   <div className="grid md:grid-cols-2 gap-4">
-                    <FormField control={updateForm.control} name="title" render={({ field }) => ( <FormItem><FormLabel>{t('updateTitleLabel')}</FormLabel><FormControl><Input placeholder={t('updateTitlePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                     <FormField control={updateForm.control} name="date" render={({ field }) => ( <FormItem><FormLabel>{t('updateDateLabel')}</FormLabel><FormControl><Input placeholder={t('updateDatePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                    <FormField control={updateForm.control} name="title" render={({ field }) => ( <FormItem><FormLabel>{t('updateTitleLabel')}</FormLabel><FormControl><Input placeholder={t('updateTitlePlaceholder')} {...field} className="h-11" /></FormControl><FormMessage /></FormItem> )}/>
+                     <FormField control={updateForm.control} name="date" render={({ field }) => ( <FormItem><FormLabel>{t('updateDateLabel')}</FormLabel><FormControl><Input placeholder={t('updateDatePlaceholder')} {...field} className="h-11" /></FormControl><FormMessage /></FormItem> )}/>
                   </div>
                   <FormField control={updateForm.control} name="message" render={({ field }) => ( <FormItem><FormLabel>{t('updateMessageLabel')}</FormLabel><FormControl><Textarea placeholder={t('updateMessagePlaceholder')} {...field} rows={3}/></FormControl><FormMessage /></FormItem> )}/>
                   <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90" disabled={isSubmittingUpdate}>
