@@ -149,7 +149,6 @@ export default function ManualNotificationsPage() {
                         placeholder={t('notificationMessagePlaceholder')}
                         {...field}
                         rows={4}
-                        className="text-base md:text-sm"
                       />
                     </FormControl>
                     <FormMessage />
@@ -167,7 +166,6 @@ export default function ManualNotificationsPage() {
                         type="url"
                         placeholder={t('notificationLinkPlaceholder')}
                         {...field}
-                        className="text-base md:text-sm"
                       />
                     </FormControl>
                     <FormMessage />

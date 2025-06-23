@@ -62,7 +62,7 @@ export function BottomNavigationBar() {
           <Link href={link.href} key={`${link.href}-bottom-nav-${link.labelKey}`} passHref>
             <div className={cn(
               "flex flex-col items-center justify-center text-center cursor-pointer group rounded-md w-full h-full gap-0.5 transition-colors duration-200",
-              pathname === link.href ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted/50 hover:text-primary"
+              pathname === link.href ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-primary"
             )}>
               <link.icon className="h-6 w-6" />
               <span className="text-[10px] font-medium w-full truncate">

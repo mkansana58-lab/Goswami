@@ -81,11 +81,11 @@ export default function ScholarshipPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField control={form.control} name="studentName" render={({ field }) => (<FormItem><FormLabel>{t('studentName')}</FormLabel><FormControl><Input placeholder={t('studentName')} {...field} className="text-base md:text-sm h-12"/></FormControl><FormMessage /></FormItem>)}/>
-              <FormField control={form.control} name="emailAddress" render={({ field }) => (<FormItem><FormLabel>{t('emailAddress')}</FormLabel><FormControl><Input type="email" placeholder={t('emailAddress')} {...field} className="text-base md:text-sm h-12"/></FormControl><FormMessage /></FormItem>)}/>
-              <FormField control={form.control} name="phoneNumber" render={({ field }) => (<FormItem><FormLabel>{t('phoneNumber')}</FormLabel><FormControl><Input type="tel" placeholder={t('phoneNumber')} {...field} className="text-base md:text-sm h-12"/></FormControl><FormMessage /></FormItem>)}/>
-              <FormField control={form.control} name="currentClass" render={({ field }) => (<FormItem><FormLabel>{t('currentClass')}</FormLabel><FormControl><Input placeholder={t('currentClass')} {...field} className="text-base md:text-sm h-12"/></FormControl><FormMessage /></FormItem>)}/>
-              <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>{t('address')}</FormLabel><FormControl><Textarea placeholder={t('address')} {...field} className="text-base md:text-sm min-h-[100px]"/></FormControl><FormMessage /></FormItem>)}/>
+              <FormField control={form.control} name="studentName" render={({ field }) => (<FormItem><FormLabel>{t('studentName')}</FormLabel><FormControl><Input placeholder={t('studentName')} {...field} className="h-12"/></FormControl><FormMessage /></FormItem>)}/>
+              <FormField control={form.control} name="emailAddress" render={({ field }) => (<FormItem><FormLabel>{t('emailAddress')}</FormLabel><FormControl><Input type="email" placeholder={t('emailAddress')} {...field} className="h-12"/></FormControl><FormMessage /></FormItem>)}/>
+              <FormField control={form.control} name="phoneNumber" render={({ field }) => (<FormItem><FormLabel>{t('phoneNumber')}</FormLabel><FormControl><Input type="tel" placeholder={t('phoneNumber')} {...field} className="h-12"/></FormControl><FormMessage /></FormItem>)}/>
+              <FormField control={form.control} name="currentClass" render={({ field }) => (<FormItem><FormLabel>{t('currentClass')}</FormLabel><FormControl><Input placeholder={t('currentClass')} {...field} className="h-12"/></FormControl><FormMessage /></FormItem>)}/>
+              <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>{t('address')}</FormLabel><FormControl><Textarea placeholder={t('address')} {...field} className="min-h-[100px]"/></FormControl><FormMessage /></FormItem>)}/>
               <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg h-14" disabled={isSubmitting}>
                 {isSubmitting ? (<><Loader2 className="mr-2 h-5 w-5 animate-spin" />{t('loading')}</>) : t('submitRegistration')}
               </Button>
@@ -96,5 +96,3 @@ export default function ScholarshipPage() {
     </div>
   );
 }
-
-

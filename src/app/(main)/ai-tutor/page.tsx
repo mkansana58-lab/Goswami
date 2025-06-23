@@ -70,7 +70,6 @@ export default function AITutorPage() {
                         placeholder={t('problemTextPlaceholder')}
                         {...field}
                         rows={8}
-                        className="text-base md:text-sm"
                       />
                     </FormControl>
                     <FormMessage />

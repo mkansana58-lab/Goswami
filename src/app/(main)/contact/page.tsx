@@ -136,9 +136,9 @@ export default function ContactPage() {
         <CardContent>
           <Form {...emailForm}>
             <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4">
-              <FormField control={emailForm.control} name="senderEmail" render={({ field }) => (<FormItem><FormLabel>{t('yourEmailLabel')}</FormLabel><FormControl><Input type="email" placeholder={t('yourEmailPlaceholder')} {...field} className="text-base md:text-sm h-11" /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={emailForm.control} name="subject" render={({ field }) => (<FormItem><FormLabel>{t('subjectLabel')}</FormLabel><FormControl><Input placeholder={t('subjectPlaceholder')} {...field} className="text-base md:text-sm h-11" /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={emailForm.control} name="message" render={({ field }) => (<FormItem><FormLabel>{t('messageLabel')}</FormLabel><FormControl><Textarea rows={5} placeholder={t('messagePlaceholder')} {...field} className="text-base md:text-sm min-h-[100px]" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={emailForm.control} name="senderEmail" render={({ field }) => (<FormItem><FormLabel>{t('yourEmailLabel')}</FormLabel><FormControl><Input type="email" placeholder={t('yourEmailPlaceholder')} {...field} className="h-11" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={emailForm.control} name="subject" render={({ field }) => (<FormItem><FormLabel>{t('subjectLabel')}</FormLabel><FormControl><Input placeholder={t('subjectPlaceholder')} {...field} className="h-11" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={emailForm.control} name="message" render={({ field }) => (<FormItem><FormLabel>{t('messageLabel')}</FormLabel><FormControl><Textarea rows={5} placeholder={t('messagePlaceholder')} {...field} className="min-h-[100px]" /></FormControl><FormMessage /></FormItem>)} />
               <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12">
                 <Send className="mr-2 h-4 w-4" /> {t('sendEmailButton')}
               </Button>
@@ -157,9 +157,9 @@ export default function ContactPage() {
         <CardContent>
            <Form {...smsForm}>
             <form onSubmit={smsForm.handleSubmit(onSmsSubmit)} className="space-y-4">
-              <FormField control={smsForm.control} name="senderName" render={({ field }) => (<FormItem><FormLabel>{t('yourNameLabel')}</FormLabel><FormControl><Input placeholder={t('yourNamePlaceholder')} {...field} className="text-base md:text-sm h-11" /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={smsForm.control} name="senderMobile" render={({ field }) => (<FormItem><FormLabel>{t('yourMobileLabel')}</FormLabel><FormControl><Input type="tel" placeholder={t('yourMobilePlaceholder')} {...field} className="text-base md:text-sm h-11" /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={smsForm.control} name="smsMessage" render={({ field }) => (<FormItem><FormLabel>{t('messageLabelShort')}</FormLabel><FormControl><Textarea rows={3} placeholder={t('messagePlaceholderShort')} {...field} className="text-base md:text-sm min-h-[80px]" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={smsForm.control} name="senderName" render={({ field }) => (<FormItem><FormLabel>{t('yourNameLabel')}</FormLabel><FormControl><Input placeholder={t('yourNamePlaceholder')} {...field} className="h-11" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={smsForm.control} name="senderMobile" render={({ field }) => (<FormItem><FormLabel>{t('yourMobileLabel')}</FormLabel><FormControl><Input type="tel" placeholder={t('yourMobilePlaceholder')} {...field} className="h-11" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={smsForm.control} name="smsMessage" render={({ field }) => (<FormItem><FormLabel>{t('messageLabelShort')}</FormLabel><FormControl><Textarea rows={3} placeholder={t('messagePlaceholderShort')} {...field} className="min-h-[80px]" /></FormControl><FormMessage /></FormItem>)} />
               <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12">
                 <Send className="mr-2 h-4 w-4" /> {t('sendSmsButton')}
               </Button>

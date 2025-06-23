@@ -205,14 +205,14 @@ export default function StudentProfilePage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
-                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel><User className="inline h-4 w-4 mr-1"/>{t('studentName')}</FormLabel><FormControl><Input {...field} className="text-base md:text-sm h-11" /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel><Mail className="inline h-4 w-4 mr-1"/>{t('emailAddress')}</FormLabel><FormControl><Input type="email" {...field} className="text-base md:text-sm h-11"/></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel><User className="inline h-4 w-4 mr-1"/>{t('studentName')}</FormLabel><FormControl><Input {...field} className="h-11" /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel><Mail className="inline h-4 w-4 mr-1"/>{t('emailAddress')}</FormLabel><FormControl><Input type="email" {...field} className="h-11"/></FormControl><FormMessage /></FormItem>)} />
               </div>
               <div className="grid md:grid-cols-2 gap-6">
-                <FormField control={form.control} name="mobile" render={({ field }) => (<FormItem><FormLabel><Phone className="inline h-4 w-4 mr-1"/>{t('phoneNumber')}</FormLabel><FormControl><Input type="tel" {...field} className="text-base md:text-sm h-11"/></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="currentClass" render={({ field }) => (<FormItem><FormLabel><BookOpen className="inline h-4 w-4 mr-1"/>{t('currentClass')}</FormLabel><FormControl><Input {...field} className="text-base md:text-sm h-11"/></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="mobile" render={({ field }) => (<FormItem><FormLabel><Phone className="inline h-4 w-4 mr-1"/>{t('phoneNumber')}</FormLabel><FormControl><Input type="tel" {...field} className="h-11"/></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="currentClass" render={({ field }) => (<FormItem><FormLabel><BookOpen className="inline h-4 w-4 mr-1"/>{t('currentClass')}</FormLabel><FormControl><Input {...field} className="h-11"/></FormControl><FormMessage /></FormItem>)} />
               </div>
-              <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel><HomeIcon className="inline h-4 w-4 mr-1"/>{t('address')}</FormLabel><FormControl><Textarea {...field} rows={3} className="text-base md:text-sm min-h-[80px]"/></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel><HomeIcon className="inline h-4 w-4 mr-1"/>{t('address')}</FormLabel><FormControl><Textarea {...field} rows={3} className="min-h-[80px]"/></FormControl><FormMessage /></FormItem>)} />
               <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg h-12" disabled={isLoading}>
                 {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <User className="mr-2 h-5 w-5"/>}
                 {isLoading ? t('saving') : t('saveProfileButton')}
