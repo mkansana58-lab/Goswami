@@ -59,6 +59,14 @@ const prompt = ai.definePrompt({
   name: 'generateTestPaperPrompt',
   input: {schema: PromptInputSchema},
   output: {schema: TestPaperSchema},
+  config: {
+    safetySettings: [
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+    ]
+  },
   prompt: `
     You are an expert question paper setter for competitive entrance exams in India (Sainik School, RMS, JNV) and general subjects.
     Your task is to generate a SINGLE-SUBJECT test paper for a student named {{{studentName}}} of {{{studentClass}}}.

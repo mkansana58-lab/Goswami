@@ -40,6 +40,14 @@ const prompt = ai.definePrompt({
   name: 'generateCurrentAffairsPrompt',
   input: {schema: GenerateCurrentAffairsInputSchema},
   output: {schema: GenerateCurrentAffairsOutputSchema},
+  config: {
+    safetySettings: [
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+    ]
+  },
   prompt: `
     You are an expert news editor and current affairs curator specializing in content for competitive exam aspirants (like NDA, CDS, Sainik School Entrance).
     Your task is to generate a list of {{{count}}} relevant current affairs items.

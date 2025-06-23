@@ -31,6 +31,14 @@ const prompt = ai.definePrompt({
   name: 'suggestDifficultyLevelPrompt',
   input: {schema: SuggestDifficultyLevelInputSchema},
   output: {schema: SuggestDifficultyLevelOutputSchema},
+  config: {
+    safetySettings: [
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+    ]
+  },
   prompt: `You are an AI assistant that assesses the difficulty level of practice problems for students. You also provide the solution to the problem, feedback on the problem, and suggestions for similar problems.
 The problem text can be in English or Hindi. Please provide your assessment, solution, and feedback in the same language as the input problem text.
 
