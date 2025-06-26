@@ -21,7 +21,7 @@ const featureGridLinks = [
   { href: '/chat', labelKey: 'aiChat', icon: MessageCircle },
   { href: '/current-affairs', labelKey: 'currentAffairs', icon: Newspaper },
   { href: '/cutoff-checker', labelKey: 'cutOffChecker', icon: BarChart },
-  { href: '/tests', labelKey: 'toppers', icon: Trophy },
+  { href: '/toppers', labelKey: 'toppers', icon: Trophy },
   { href: '/contact', labelKey: 'contactUs', icon: Mail },
 ];
 
@@ -36,7 +36,7 @@ export default function HomePage() {
       <section>
         <div className="grid grid-cols-3 gap-3 md:gap-4">
           {featureGridLinks.map((link) => (
-            <Link href={link.href} key={link.href} passHref>
+            <Link href={link.href} key={link.href + link.labelKey} passHref>
               <Card className="bg-card hover:bg-muted/50 transition-all duration-300 cursor-pointer h-full flex flex-col items-center justify-center text-center p-2 md:p-3 shadow-md rounded-lg border border-border">
                 <CardHeader className="flex flex-col items-center justify-center p-1 md:p-2">
                   <link.icon className="h-8 w-8 md:h-10 md:w-10 text-primary mb-2" />
