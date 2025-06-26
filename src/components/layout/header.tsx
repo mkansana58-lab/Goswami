@@ -19,6 +19,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, orderBy, limit, getDocs, Timestamp, serverTimestamp, addDoc, onSnapshot } from 'firebase/firestore';
 import Image from 'next/image';
 import { STUDENT_LOGGED_IN_KEY, STUDENT_USERNAME_KEY, STUDENT_PROFILE_LOCALSTORAGE_KEY } from '@/lib/constants';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 
 const primaryNavLinks = [
@@ -205,11 +206,41 @@ export function Header() {
     }
   };
 
+  const ProfileMenu = () => (
+    <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="rounded-full">
+                 <Avatar className="h-8 w-8">
+                  <AvatarImage src={studentProfile?.photoDataUrl} alt={studentProfile?.name || t('profilePhotoAlt')} data-ai-hint={studentProfile?.dataAiHint || "student avatar"}/>
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {studentProfile?.name?.[0]?.toUpperCase() || 'S'}
+                  </AvatarFallback>
+                </Avatar>
+            </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="bg-popover border-border shadow-lg">
+            <DropdownMenuLabel>{studentProfile?.name || t('navAccount')}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild><Link href="/student-profile"><UserCircle className="mr-2 h-4 w-4"/> {t('studentProfileTitle')}</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link href="/settings"><Settings className="mr-2 h-4 w-4"/> {t('settings')}</Link></DropdownMenuItem>
+            {isAdminLoggedIn && (
+                <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild><Link href="/admin"><LayoutDashboard className="mr-2 h-4 w-4"/> {t('navAdminPanel')}</Link></DropdownMenuItem>
+                </>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleStudentLogout} className="text-destructive focus:text-destructive">
+                <LogOut className="mr-2 h-4 w-4"/> {t('studentLogoutButton')}
+            </DropdownMenuItem>
+        </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
     <header className="bg-background text-foreground sticky top-0 z-50 shadow-md border-b">
       <div className="container mx-auto flex items-center justify-between p-3 h-16">
         <div className="flex items-center gap-2">
-          <div className="md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-foreground"><Menu className="h-6 w-6" /><span className="sr-only">Open menu</span></Button>
@@ -235,35 +266,24 @@ export function Header() {
                 </div>
                 <div className="p-4 border-t border-border space-y-2">
                    {isClient && isStudentLoggedIn && (<Button variant="destructive" className="w-full justify-start flex items-center gap-3 text-base font-medium" onClick={handleStudentLogout}><LogOut className="h-5 w-5" /> {t('studentLogoutButton')}</Button>)}
-                   {isClient && isAdminLoggedIn && (<Button variant="destructive" className="w-full justify-start flex items-center gap-3 text-base font-medium" onClick={handleAdminLogout}><LogOut className="h-5 w-5" /> {t('adminLogout')}</Button>)}
-                   {isClient && !isAdminLoggedIn && !isStudentLoggedIn && (<>
+                   {isClient && isAdminLoggedIn && !isStudentLoggedIn && (<Button variant="destructive" className="w-full justify-start flex items-center gap-3 text-base font-medium" onClick={handleAdminLogout}><LogOut className="h-5 w-5" /> {t('adminLogout')}</Button>)}
+                   {isClient && !isStudentLoggedIn && (<>
                       <Button variant="outline" className="w-full justify-start" asChild><Link href="/student-login" onClick={() => setIsMobileMenuOpen(false)}><UserCircle className="mr-2 h-5 w-5" /> {t('studentLoginTitle')}</Link></Button>
                       <Button variant="outline" className="w-full justify-start" asChild><Link href="/login" onClick={() => setIsMobileMenuOpen(false)}><ShieldCheck className="mr-2 h-5 w-5" /> {t('adminLoginNav')}</Link></Button>
                    </>)}
                 </div>
               </SheetContent>
             </Sheet>
-          </div>
-          <Link href={isClient && isStudentLoggedIn ? "/student-profile" : "/"} className="flex items-center gap-2">
-             {isClient && isStudentLoggedIn && studentProfile?.photoDataUrl ? (<Image src={studentProfile.photoDataUrl} alt={studentProfile.name || t('profilePhotoAlt')} width={32} height={32} className="rounded-full h-8 w-8 object-cover" data-ai-hint={studentProfile.dataAiHint || "student avatar"} />)
-             : isClient && isStudentLoggedIn ? (<UserCircle className="h-8 w-8 text-primary" />)
-             : (<ShieldCheck className="h-8 w-8 text-primary" />)}
-            <h1 className="text-lg md:text-xl font-headline font-bold text-primary hidden sm:block">{isClient && isStudentLoggedIn && studentProfile?.name ? studentProfile.name : t('appName')}</h1>
+          <Link href={isClient && isStudentLoggedIn ? "/" : "/"} className="flex items-center gap-2 md:hidden">
+             <ShieldCheck className="h-8 w-8 text-primary" />
           </Link>
         </div>
 
-        <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
-          {primaryNavLinks.map((link) => (<Link key={`${link.href}-desktop-primary-${link.labelKey}`} href={link.href} className={cn("px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary", pathname === link.href ? "bg-muted text-primary font-semibold" : "text-foreground")}>{t(link.labelKey as any)}</Link>))}
-          {isClient && isAdminLoggedIn && adminConsoleNavLinks.map((link) => (<Link key={`${link.href}-desktop-admin-${link.labelKey}`} href={link.href} className={cn("px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary flex items-center gap-1", pathname === link.href ? "bg-muted text-primary font-semibold" : "text-foreground")}><link.icon className="h-4 w-4" /> {t(link.labelKey as any)}</Link>))}
-          {isClient && isStudentLoggedIn && studentNavLinks.map((link) => (<Link key={`${link.href}-desktop-student`} href={link.href} className={cn("px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-colors hover:bg-muted hover:text-primary flex items-center gap-1", pathname === link.href ? "bg-muted text-primary font-semibold" : "text-foreground")}><link.icon className="h-4 w-4" /> {t(link.labelKey as any)}</Link>))}
-          {uniqueSecondaryLinksForDesktop.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild><Button variant="ghost" className="px-2 py-1.5 lg:px-3 lg:py-2 rounded-md text-xs lg:text-sm font-medium hover:bg-muted hover:text-primary"><MoreHorizontal className="h-5 w-5" /><span className="sr-only">More</span></Button></DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="max-h-96 overflow-y-auto bg-popover border-border shadow-lg">
-                {uniqueSecondaryLinksForDesktop.map((link) => (<DropdownMenuItem key={`desktop-more-${link.href}-${link.labelKey}`} asChild className="focus:bg-muted focus:text-primary cursor-pointer"><Link href={link.href} className={cn(pathname === link.href ? "bg-muted text-primary" : "text-popover-foreground", "w-full justify-start flex items-center")}><link.icon className="mr-2 h-4 w-4 text-primary/80" />{t(link.labelKey as any)}</Link></DropdownMenuItem>))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+        <nav className="hidden md:flex items-center gap-4">
+            <Link href="/" className="flex items-center gap-2">
+                <ShieldCheck className="h-8 w-8 text-primary" />
+                <h1 className="text-xl font-headline font-bold text-primary">{t('appName')}</h1>
+            </Link>
         </nav>
 
         <div className="flex items-center gap-1 md:gap-2">
@@ -275,19 +295,22 @@ export function Header() {
                : (notifications.map(notif => (<DropdownMenuItem key={notif.id} asChild className="cursor-pointer focus:bg-muted p-2 hover:bg-muted/80"><Link href={notif.link || '#'} className="flex items-start gap-3 text-sm w-full">{getNotificationIcon(notif.type)}<div className="flex-1 space-y-0.5 overflow-hidden"><p className="font-medium text-popover-foreground line-clamp-3">{notif.message}</p><p className="text-xs text-muted-foreground">{notif.timestamp?.toDate().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})} - {notif.timestamp?.toDate().toLocaleDateString([], {day: '2-digit', month: 'short'})}</p></div></Link></DropdownMenuItem>)))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="text-foreground hover:bg-muted hover:text-primary"><Languages className="h-5 w-5" /><span className="sr-only">{t('language')}</span></Button></DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-popover border-border shadow-lg">
-              <DropdownMenuItem onClick={() => setLanguage('en')} disabled={language === 'en'} className="focus:bg-muted focus:text-primary cursor-pointer">{t('english')}</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setLanguage('hi')} disabled={language === 'hi'} className="focus:bg-muted focus:text-primary cursor-pointer">{t('hindi')}</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {isClient && isStudentLoggedIn && (<Button variant="outline" size="sm" onClick={handleStudentLogout} className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground hidden md:flex"><LogOut className="mr-2 h-4 w-4" /> {t('studentLogoutButton')}</Button>)}
-          {isClient && isAdminLoggedIn && !isStudentLoggedIn && (<Button variant="outline" size="sm" onClick={handleAdminLogout} className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground hidden md:flex"><LogOut className="mr-2 h-4 w-4" /> {t('adminLogout')}</Button>)}
-          {isClient && !isAdminLoggedIn && !isStudentLoggedIn && (<>
-            <Button variant="outline" size="sm" asChild className="hidden md:flex"><Link href="/student-login"><UserCircle className="mr-2 h-4 w-4" /> {t('studentLoginTitle')}</Link></Button>
-            <Button variant="outline" size="sm" asChild className="hidden md:flex"><Link href="/login"><ShieldCheck className="mr-2 h-4 w-4" /> {t('adminLoginNav')}</Link></Button>
-          </>)}
+          
+          {isClient && isStudentLoggedIn ? (
+            <ProfileMenu />
+          ) : (
+            isClient && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon"><UserCircle className="h-6 w-6"/></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild><Link href="/student-login"><UserCircle className="mr-2 h-4 w-4"/> {t('studentLoginTitle')}</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/login"><ShieldCheck className="mr-2 h-4 w-4"/> {t('adminLoginNav')}</Link></DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )
+          )}
         </div>
       </div>
     </header>

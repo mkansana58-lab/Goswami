@@ -35,6 +35,8 @@
 
     --ring: 346.8 77.2% 49.8%;
 
+    --radius: 0.5rem;
+
     --chart-1: 347 80% 55%;
     --chart-2: 150 70% 45%;
     --chart-3: 48 96% 53%;
@@ -72,8 +74,9 @@
     --destructive-foreground: 210 40% 98%;
 
     --ring: 24.6 95% 53.1%;
-  }
 
+    --radius: 0.5rem;
+  }
 }
 
 @layer base {
@@ -87,4 +90,27 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline;
   }
+
+  body.eye-comfort {
+    --background: 39 42% 88%;
+    --foreground: 39 22% 15%;
+    --card: 39 35% 92%;
+    --card-foreground: 39 22% 15%;
+    --popover: 39 42% 88%;
+    --popover-foreground: 39 22% 15%;
+    --primary: 15 75% 45%;
+    --primary-foreground: 39 42% 98%;
+    --secondary: 39 25% 75%;
+    --secondary-foreground: 15 75% 45%;
+    --muted: 39 30% 85%;
+    --muted-foreground: 39 20% 35%;
+    --accent: 30 80% 50%;
+    --accent-foreground: 39 42% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 39 42% 98%;
+    --border: 39 25% 78%;
+    --input: 39 25% 78%;
+    --ring: 15 75% 45%;
+  }
+
 }

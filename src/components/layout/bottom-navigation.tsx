@@ -57,7 +57,7 @@ export function BottomNavigationBar() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 md:hidden bg-card border-t border-border shadow-top p-1 z-40 h-16 print:hidden">
+    <div className="fixed bottom-0 left-0 right-0 md:hidden bg-card border-t border-border p-1 z-40 h-16 print:hidden">
       <div className="container mx-auto flex justify-around items-center h-full">
         {navLinks.map((link) => {
           const isActive = pathname === link.href;
