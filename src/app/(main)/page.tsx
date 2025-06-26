@@ -2,57 +2,65 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useLanguage } from '@/hooks/use-language';
 import {
-  FileSignature, BookUser, Library, Radio, PenSquare, ClipboardCheck, Cpu, MessageCircle, Newspaper, BarChart, Trophy, Mail
+  FileSignature,
+  Library,
+  MessageCircle,
+  Bot,
+  FlaskConical,
+  TrendingUp,
+  Star,
+  Users,
+  Mail,
+  Settings,
 } from 'lucide-react';
-import React from 'react';
 
 const featureGridLinks = [
   { href: '/scholarship', labelKey: 'scholarshipForm', icon: FileSignature },
-  { href: '/scholarship?tab=admit-card', labelKey: 'admitCard', icon: BookUser },
-  { href: '/learning-hub', labelKey: 'ourCourses', icon: Library },
-  { href: '/learning-hub?tab=live-classes', labelKey: 'liveClasses', icon: Radio },
-  { href: '/learning-hub?tab=daily-posts', labelKey: 'dailyPosts', icon: PenSquare },
-  { href: '/tests', labelKey: 'aiTest', icon: ClipboardCheck },
-  { href: '/ai-tutor', labelKey: 'aiTutor', icon: Cpu },
-  { href: '/chat', labelKey: 'aiChat', icon: MessageCircle },
-  { href: '/current-affairs', labelKey: 'currentAffairs', icon: Newspaper },
-  { href: '/cutoff-checker', labelKey: 'cutOffChecker', icon: BarChart },
-  { href: '/toppers', labelKey: 'toppers', icon: Trophy },
-  { href: '/contact', labelKey: 'contactUs', icon: Mail },
+  { href: '/learning-hub', labelKey: 'navLearningHub', icon: Library },
+  { href: '/ai-tutor', labelKey: 'navAITutor', icon: MessageCircle },
+  { href: '/chat', labelKey: 'aiChat', icon: Bot },
+  { href: '/tests', labelKey: 'aiTest', icon: FlaskConical },
+  { href: '/cutoff-checker', labelKey: 'navCutOffChecker', icon: TrendingUp },
+  { href: '/toppers', labelKey: 'toppers', icon: Star },
+  { href: '/our-teachers', labelKey: 'ourTeachers', icon: Users },
+  { href: '/contact', labelKey: 'navContact', icon: Mail },
+  { href: '/settings', labelKey: 'settings', icon: Settings },
 ];
 
 export default function HomePage() {
   const { t } = useLanguage();
 
   return (
-    <div className="space-y-6 md:space-y-8 bg-background">
-      
-      <Card className="w-full shadow-lg bg-card border-primary/20">
-          <CardContent className="p-4 flex items-center justify-center">
-             <p className="font-signature text-primary text-xl md:text-2xl text-center">
-                "{t('inspiringQuoteTitle')}"
-             </p>
-          </CardContent>
+    <div className="space-y-8">
+      <div className="flex items-center justify-start gap-4 text-white">
+        <Image src="/logo.png" alt="Goswami Defence Academy Logo" width={60} height={60} />
+        <h1 className="text-2xl md:text-3xl font-bold font-headline">{t('appName')}</h1>
+      </div>
+
+      <Card className="w-full shadow-lg bg-card text-card-foreground">
+        <CardContent className="p-6 text-center">
+          <p className="font-semibold text-xl md:text-2xl text-card-foreground">
+            "{t('inspiringQuoteTitle')}"
+          </p>
+        </CardContent>
       </Card>
 
       <section>
-        <div className="grid grid-cols-3 gap-3 md:gap-4">
+        <div className="grid grid-cols-4 gap-4">
           {featureGridLinks.map((link) => (
-            <Link href={link.href} key={`${link.href}-${link.labelKey}`} passHref>
-              <Card className="bg-card hover:bg-muted/50 transition-all duration-300 cursor-pointer h-full flex flex-col items-center justify-center text-center p-2 md:p-3 shadow-md rounded-lg border border-border">
-                <CardHeader className="flex flex-col items-center justify-center p-1 md:p-2">
-                  <link.icon className="h-8 w-8 md:h-10 md:w-10 text-primary mb-2" />
-                  <CardTitle className="text-xs md:text-sm font-medium text-foreground leading-tight">{t(link.labelKey as any)}</CardTitle>
-                </CardHeader>
+            <Link href={link.href} key={link.href} passHref>
+              <Card className="bg-card text-card-foreground hover:bg-muted/50 transition-all duration-300 cursor-pointer h-full flex flex-col items-center justify-center text-center p-3 shadow-md aspect-square">
+                <link.icon className="h-8 w-8 text-primary mb-2" />
+                <span className="text-xs md:text-sm font-medium leading-tight">{t(link.labelKey as any)}</span>
               </Card>
             </Link>
           ))}
         </div>
       </section>
-
     </div>
   );
 }

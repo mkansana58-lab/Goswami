@@ -2,7 +2,6 @@
 "use client";
 
 import type { ReactNode } from 'react';
-import { Header } from '@/components/layout/header';
 import { BottomNavigationBar } from '@/components/layout/bottom-navigation';
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -46,18 +45,11 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-grow container mx-auto px-4 pt-8 pb-24 md:pb-8">
+    <div className="flex flex-col min-h-screen bg-background">
+      <main className="flex-grow px-4 pt-8 pb-24 md:pb-8">
         {children}
       </main>
       <BottomNavigationBar />
-      <footer className="bg-primary text-primary-foreground text-center p-4">
-        <p>
-          &copy; {currentYear !== null ? currentYear : new Date().getFullYear()}{' '}
-          Go Swami Defence Academy. All rights reserved.
-        </p>
-      </footer>
     </div>
   );
 }
