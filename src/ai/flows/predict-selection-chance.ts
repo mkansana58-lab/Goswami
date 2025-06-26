@@ -1,83 +1,70 @@
 
 'use server';
 /**
- * @fileOverview Predicts a student's selection chance based on exam performance.
+ * @fileOverview A general purpose AI chatbot that can also analyze images.
  *
- * - predictSelectionChance - A function that handles the chance prediction.
- * - PredictSelectionChanceInput - The input type for the function.
- * - PredictSelectionChanceOutput - The return type for the function.
+ * - getChatResponse - Handles getting a response from the AI model.
+ * - ChatInput - The input type for the function.
+ * - ChatResponse - The return type for the function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const PredictSelectionChanceInputSchema = z.object({
-  examName: z.string().describe('The name of the examination taken by the student.'),
-  totalMarks: z.number().positive().describe('The total marks possible in the examination.'),
-  obtainedMarks: z.number().min(0).describe('The marks obtained by the student in the examination.'),
-  language: z.enum(['en', 'hi']).describe('The language for the output response (English or Hindi).')
+const ChatInputSchema = z.object({
+  prompt: z.string().describe('The user\'s text prompt or question.'),
+  photoDataUrl: z.string().optional().describe(
+    "An optional photo provided by the user, as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+  ),
 });
-export type PredictSelectionChanceInput = z.infer<typeof PredictSelectionChanceInputSchema>;
+export type ChatInput = z.infer<typeof ChatInputSchema>;
 
-const PredictSelectionChanceOutputSchema = z.object({
-  chanceAssessment: z.string().describe('A textual assessment of the student\'s selection chances.'),
-  advice: z.string().describe('Advice for the student based on their performance.'),
-  certificateText: z.string().describe('A short "chance certificate" summary text. Avoid markdown or complex formatting.')
+export type ChatMessage = {
+  role: 'user' | 'model';
+  content: string;
+}
+
+const ChatResponseSchema = z.object({
+  response: z.string().describe('The AI model\'s textual response to the user.'),
 });
-export type PredictSelectionChanceOutput = z.infer<typeof PredictSelectionChanceOutputSchema>;
+export type ChatResponse = z.infer<typeof ChatResponseSchema>;
 
-export async function predictSelectionChance(input: PredictSelectionChanceInput): Promise<PredictSelectionChanceOutput> {
-  if (input.obtainedMarks > input.totalMarks) {
-    const errorMsg = input.language === 'hi' ? 'प्राप्तांक कुल अंकों से अधिक नहीं हो सकते।' : 'Obtained marks cannot be greater than total marks.';
-    // This is a simple validation, more complex logic could be here or in the calling component.
-    // For a real application, throwing an error might be better.
-    return {
-        chanceAssessment: errorMsg,
-        advice: input.language === 'hi' ? 'कृपया सही अंक दर्ज करें।' : 'Please enter correct marks.',
-        certificateText: errorMsg,
-    };
-  }
-  return predictSelectionChanceFlow(input);
+export async function getChatResponse(input: ChatInput): Promise<ChatResponse> {
+  return getChatResponseFlow(input);
 }
 
 const prompt = ai.definePrompt({
-  name: 'predictSelectionChancePrompt',
-  input: {schema: PredictSelectionChanceInputSchema},
-  output: {schema: PredictSelectionChanceOutputSchema},
+  name: 'getChatResponsePrompt',
+  input: {schema: ChatInputSchema},
+  output: {schema: ChatResponseSchema},
   prompt: `
-    You are an expert career counselor for a defence academy.
-    A student has provided their exam performance and needs an assessment of their selection chances.
-    The response should be in {{language}}.
+    You are a helpful and friendly AI assistant for the Go Swami Defence Academy.
+    Your primary goal is to answer questions related to the academy, its courses, admission processes, and general queries about defence careers in India.
+    Be polite, informative, and encouraging.
+    If the user provides an image, analyze it in the context of their question. For example, if they ask "What is this document?", describe the document.
+    
+    User's Question: {{{prompt}}}
+    
+    {{#if photoDataUrl}}
+    User has provided an image to analyze.
+    Image: {{media url=photoDataUrl}}
+    {{/if}}
 
-    Exam Name: {{{examName}}}
-    Total Marks: {{{totalMarks}}}
-    Obtained Marks: {{{obtainedMarks}}}
-
-    Based on these details:
-    1.  Provide a realistic 'chanceAssessment' (e.g., Very High, High, Moderate, Low, Very Low). Consider a score above 80% as Very High, 70-80% as High, 60-70% as Moderate, 50-60% as Low, and below 50% as Very Low.
-    2.  Offer constructive 'advice' to the student. If chances are low, suggest areas for improvement. If high, suggest how to maintain or further improve.
-    3.  Generate a concise 'certificateText' (1-2 sentences) summarizing their potential, like a motivational statement for a certificate. For example: "With {{obtainedMarks}}/{{totalMarks}} in {{examName}}, your chances are looking {{chanceAssessment}}. Keep up the hard work!" or in Hindi: "{{{examName}}} में {{totalMarks}} में से {{obtainedMarks}} अंकों के साथ, आपके चयन की संभावनाएं {{chanceAssessment}} हैं। कड़ी मेहनत जारी रखें!"
-
-    Respond in {{language}}. For Hindi responses, use Devanagari script.
-    Example for 'chanceAssessment' in Hindi: बहुत उच्च, उच्च, मध्यम, निम्न, बहुत निम्न.
+    Your entire response should be within the 'response' field of the JSON output.
   `,
 });
 
-const predictSelectionChanceFlow = ai.defineFlow(
+const getChatResponseFlow = ai.defineFlow(
   {
-    name: 'predictSelectionChanceFlow',
-    inputSchema: PredictSelectionChanceInputSchema,
-    outputSchema: PredictSelectionChanceOutputSchema,
+    name: 'getChatResponseFlow',
+    inputSchema: ChatInputSchema,
+    outputSchema: ChatResponseSchema,
   },
   async (input) => {
     const {output} = await prompt(input);
     if (!output) {
-      // Fallback or error handling if output is null/undefined
-      const errorMsg = input.language === 'hi' ? 'क्षमा करें, अभी मूल्यांकन संभव नहीं है।' : 'Sorry, assessment is not possible at the moment.';
       return {
-        chanceAssessment: errorMsg,
-        advice: errorMsg,
-        certificateText: errorMsg,
+        response: 'Sorry, I could not process your request at the moment. Please try again.',
       };
     }
     return output;

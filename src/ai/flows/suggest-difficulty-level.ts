@@ -17,9 +17,9 @@ const SuggestDifficultyLevelInputSchema = z.object({
 export type SuggestDifficultyLevelInput = z.infer<typeof SuggestDifficultyLevelInputSchema>;
 
 const SuggestDifficultyLevelOutputSchema = z.object({
-  difficultyLevel: z.string().describe('The assessed difficulty level of the problem (e.g., Easy, Medium, Hard).'),
-  solution: z.string().optional().describe('The detailed solution or answer to the problemText. Respond in the language of the input problem text.'),
-  feedback: z.string().describe('Feedback on the problem and suggestions for similar problems. Respond in the language of the input problem text.'),
+  difficultyLevel: z.string().describe('The assessed difficulty level of the problem (e.g., Easy, Medium, Hard). This must be in Hindi.'),
+  solution: z.string().optional().describe('The detailed solution or answer to the problemText. This must be in Hindi.'),
+  feedback: z.string().describe('Feedback on the problem and suggestions for similar problems. This must be in Hindi.'),
 });
 export type SuggestDifficultyLevelOutput = z.infer<typeof SuggestDifficultyLevelOutputSchema>;
 
@@ -35,19 +35,17 @@ const prompt = ai.definePrompt({
     safetySettings: [
       { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
       { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
     ]
   },
-  prompt: `You are an AI assistant that assesses the difficulty level of practice problems for students. You also provide the solution to the problem, feedback on the problem, and suggestions for similar problems.
-The problem text can be in English or Hindi. Please provide your assessment, solution, and feedback in the same language as the input problem text.
+  prompt: `You are an AI assistant for Go Swami Defence Academy. Your task is to assess academic problems for students preparing for defence exams.
+You MUST provide your entire response (difficultyLevel, solution, feedback) in HINDI using Devanagari script.
 
 Problem: {{{problemText}}}
 
 Your response MUST include these fields:
-1. difficultyLevel: (Easy, Medium, Hard, or an equivalent in the input language)
-2. solution: (The detailed solution to the problemText. If the problem is subjective or does not have a single definitive answer, explain this and provide guidance. If it's a math problem, show steps.)
-3. feedback: (Feedback on the problem itself, its clarity, and suggestions for similar problems or areas to focus on.)
+1. difficultyLevel: Problem difficulty (जैसे: आसान, मध्यम, कठिन).
+2. solution: A detailed, step-by-step solution to the problem. If it's a math problem, show all steps.
+3. feedback: Provide constructive feedback on the problem and suggest related topics for the student to practice.
   `,
 });
 
@@ -61,11 +59,10 @@ const suggestDifficultyLevelFlow = ai.defineFlow(
     const {output} = await prompt(input);
     if (!output || !output.difficultyLevel || !output.feedback) {
       console.warn("AI Tutor flow did not return expected fields. Output:", output);
-      const isHindi = /[\u0900-\u097F]/.test(input.problemText);
       return {
-        difficultyLevel: isHindi ? "आकलन करने में असमर्थ" : "Unable to Assess",
-        solution: isHindi ? "समाधान उत्पन्न नहीं किया जा सका।" : "A solution could not be generated.",
-        feedback: isHindi ? "AI इस समय अनुरोध को संसाधित नहीं कर सका। कृपया अपनी समस्या को फिर से लिखने का प्रयास करें या बाद में पुनः प्रयास करें।" : "The AI could not process the request at this time. Please try rephrasing your problem or try again later.",
+        difficultyLevel: "आकलन करने में असमर्थ",
+        solution: "समाधान उत्पन्न नहीं किया जा सका।",
+        feedback: "AI इस समय अनुरोध को संसाधित नहीं कर सका। कृपया अपनी समस्या को फिर से लिखने का प्रयास करें या बाद में पुनः प्रयास करें।",
       };
     }
     return output;

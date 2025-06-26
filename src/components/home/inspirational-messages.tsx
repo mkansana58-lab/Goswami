@@ -4,27 +4,21 @@
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { cn } from '@/lib/utils';
+import { Card, CardContent } from '@/components/ui/card';
+
 
 const quotes = {
   en: [
-    "The best way to predict the future is to create it.",
-    "Believe you can and you're halfway there.",
-    "Success is not final, failure is not fatal: It is the courage to continue that counts.",
-    "Hardships often prepare ordinary people for an extraordinary destiny.",
-    "The only limit to our realization of tomorrow will be our doubts of today."
+    "Your struggle is the determinant of your success.",
   ],
   hi: [
-    "भविष्य की भविष्यवाणी करने का सबसे अच्छा तरीका इसे बनाना है।",
-    "विश्वास करो कि तुम कर सकते हो और तुम आधे रास्ते पर हो।",
-    "सफलता अंतिम नहीं है, असफलता घातक नहीं है: यह जारी रखने का साहस है जो मायने रखता है।",
-    "कठिनाइयाँ अक्सर साधारण लोगों को असाधारण भाग्य के लिए तैयार करती हैं।",
-    "कल की हमारी प्राप्ति की एकमात्र सीमा आज के हमारे संदेह होंगे।"
+    "आपके संघर्ष की ताकत ही आपकी उपलब्धि की सफलता को निर्धारित करती है।",
   ]
 };
 
 export function InspirationalMessages() {
   const { language } = useLanguage();
-  const [currentQuotes, setCurrentQuotes] = useState<string[]>(quotes[language]);
+  const [currentQuote, setCurrentQuote] = useState<string>(quotes[language][0]);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -32,29 +26,25 @@ export function InspirationalMessages() {
   }, []);
 
   useEffect(() => {
-    setCurrentQuotes(quotes[language]);
+    setCurrentQuote(quotes[language][0]);
   }, [language]);
   
   if (!isClient) {
-    return <div className="h-10 w-full bg-card rounded-md"></div>;
+    return <div className="h-24 w-full bg-card rounded-md shadow-lg"></div>;
   }
 
   return (
-    <div className="relative flex h-10 w-full overflow-x-hidden bg-card border border-border rounded-md">
-      <div className="animate-marquee whitespace-nowrap flex items-center">
-        {currentQuotes.map((quote, index) => (
-          <span key={`${language}-${index}`} className="mx-12 text-md text-foreground/80">
-            "{quote}"
-          </span>
-        ))}
-      </div>
-      <div className="absolute top-0 animate-marquee2 whitespace-nowrap flex items-center">
-         {currentQuotes.map((quote, index) => (
-          <span key={`${language}-${index}-2`} className="mx-12 text-md text-foreground/80">
-            "{quote}"
-          </span>
-        ))}
-      </div>
-    </div>
+    <Card className="w-full shadow-lg bg-card border-primary/20">
+        <CardContent className="p-4">
+             <div className="relative flex h-10 w-full overflow-x-hidden">
+                <p className="font-signature text-primary text-xl md:text-2xl animate-marquee whitespace-nowrap">
+                   "{currentQuote}"
+                </p>
+                <p className="absolute top-0 font-signature text-primary text-xl md:text-2xl animate-marquee2 whitespace-nowrap">
+                   "{currentQuote}"
+                </p>
+            </div>
+        </CardContent>
+    </Card>
   );
 }

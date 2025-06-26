@@ -7,7 +7,7 @@ import { SettingsProvider } from '@/context/settings-context';
 
 export const metadata: Metadata = {
   title: 'Go Swami Defence Academy',
-  description: 'Preparing future defenders',
+  description: 'राष्ट्र प्रथम, शिक्षा सर्वोपरि',
 };
 
 export default function RootLayout({
@@ -20,8 +20,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet" />
       </head>
       <body>
         <SettingsProvider>

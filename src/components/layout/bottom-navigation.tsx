@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/hooks/use-language';
 import { cn } from '@/lib/utils';
-import { Home as HomeIcon, UserCircle, Cpu, ClipboardCheck } from 'lucide-react';
+import { Home, Library, ClipboardCheck, PenSquare, UserCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { STUDENT_LOGGED_IN_KEY } from '@/lib/constants';
 
@@ -45,10 +45,11 @@ export function BottomNavigationBar() {
   }, [pathname, isClient, checkLoginStatus]);
 
   const navLinks = React.useMemo(() => [
-    { href: '/', labelKey: 'navHome', icon: HomeIcon },
+    { href: '/', labelKey: 'navHome', icon: Home },
+    { href: '/learning-hub', labelKey: 'ourCourses', icon: Library },
     { href: '/tests', labelKey: 'navTests', icon: ClipboardCheck },
-    { href: '/ai-tutor', labelKey: 'navAITutor', icon: Cpu },
-    { href: '/student-profile', labelKey: 'studentProfileTitle', icon: UserCircle },
+    { href: '/learning-hub?tab=daily-posts', labelKey: 'dailyPosts', icon: PenSquare },
+    { href: '/student-profile', labelKey: 'navAccount', icon: UserCircle },
   ], []);
 
   if (!isClient || !isStudentLoggedIn) {
@@ -56,21 +57,25 @@ export function BottomNavigationBar() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 md:hidden bg-background border-t border-border shadow-top p-1 z-40 h-16 print:hidden">
+    <div className="fixed bottom-0 left-0 right-0 md:hidden bg-card border-t border-border shadow-top p-1 z-40 h-16 print:hidden">
       <div className="container mx-auto flex justify-around items-center h-full">
-        {navLinks.map((link) => (
-          <Link href={link.href} key={`${link.href}-bottom-nav-${link.labelKey}`} passHref>
-            <div className={cn(
-              "flex flex-col items-center justify-center text-center cursor-pointer group rounded-md w-full h-full gap-0.5 transition-colors duration-200",
-              pathname === link.href ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-primary"
-            )}>
-              <link.icon className="h-6 w-6" />
-              <span className="text-[10px] font-medium w-full truncate">
-                {t(link.labelKey as any)}
-              </span>
-            </div>
-          </Link>
-        ))}
+        {navLinks.map((link) => {
+          const isActive = pathname === link.href;
+          return (
+            <Link href={link.href} key={link.href} passHref>
+              <div className={cn(
+                "flex flex-col items-center justify-center text-center cursor-pointer group rounded-md w-full h-full gap-0.5 transition-colors duration-200",
+                 isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
+              )}>
+                <link.icon className="h-6 w-6" />
+                <span className="text-[10px] font-medium w-full truncate">
+                  {t(link.labelKey as any)}
+                </span>
+                {isActive && <div className="h-1 w-6 rounded-full bg-primary mt-0.5"></div>}
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { getDifficultySuggestion } from './actions';
 import type { SuggestDifficultyLevelOutput } from '@/ai/flows/suggest-difficulty-level';
-import { Loader2, Lightbulb, CheckSquare } from 'lucide-react'; // Added icons
+import { Loader2, Lightbulb, CheckSquare, BrainCircuit } from 'lucide-react';
 
 const formSchemaDefinition = (t: (key: any) => string) => z.object({
   problemText: z.string().min(10, { message: t('problemTextValidation') || "Problem text must be at least 10 characters." }),
@@ -42,7 +42,7 @@ export default function AITutorPage() {
     const result = await getDifficultySuggestion({ problemText: data.problemText });
     if ('error' in result) {
       setAiError(result.error);
-      setAiResult(null); // Ensure no partial old result is shown
+      setAiResult(null); 
     } else {
       setAiResult(result);
     }
@@ -53,6 +53,7 @@ export default function AITutorPage() {
     <div className="max-w-3xl mx-auto space-y-8">
       <Card className="shadow-xl">
         <CardHeader className="text-center">
+          <BrainCircuit className="h-12 w-12 text-primary mx-auto mb-3" />
           <CardTitle className="text-3xl font-bold font-headline text-primary">{t('aiTutorTitle')}</CardTitle>
           <CardDescription>{t('aiTutorDesc')}</CardDescription>
         </CardHeader>
@@ -70,13 +71,14 @@ export default function AITutorPage() {
                         placeholder={t('problemTextPlaceholder')}
                         {...field}
                         rows={8}
+                        className="bg-card-foreground/5"
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg h-12" disabled={isLoading}>
+              <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-lg h-12" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -106,7 +108,7 @@ export default function AITutorPage() {
             {aiResult.solution && (
               <div>
                 <h3 className="text-lg font-semibold text-secondary-foreground flex items-center">
-                    <CheckSquare className="mr-2 h-5 w-5 text-green-600"/> {t('solutionLabel') || 'Solution'}:
+                    <CheckSquare className="mr-2 h-5 w-5 text-green-500"/> {t('solutionLabel') || 'Solution'}:
                 </h3>
                 <p className="text-foreground bg-green-500/10 p-3 rounded-md whitespace-pre-wrap border border-green-500/30">{aiResult.solution}</p>
               </div>
