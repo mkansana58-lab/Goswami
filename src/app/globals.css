@@ -43,21 +43,21 @@
   }
 
   .light {
-    /* Light Theme (Orange/Cream from prompt text) */
-    --background: 30 91.7% 97.8%; /* Light Cream/Orange */
+    /* Light Theme (Orange/Cream from prompt text) - Kept as a fallback */
+    --background: 40 50% 98%; /* Light Cream */
     --foreground: 24 9.8% 10%;
 
-    --muted: 30 91.7% 94.8%;
+    --muted: 40 50% 94%;
     --muted-foreground: 24 9.8% 40%;
 
-    --popover: 30 91.7% 97.8%;
+    --popover: 0 0% 100%;
     --popover-foreground: 24 9.8% 10%;
 
     --card: 0 0% 100%;
     --card-foreground: 24 9.8% 10%;
 
-    --border: 30 91.7% 90.8%;
-    --input: 30 91.7% 90.8%;
+    --border: 40 30% 90%;
+    --input: 40 30% 90%;
 
     --primary: 24.6 95% 53.1%; /* Saturated Orange */
     --primary-foreground: 210 20% 98%;

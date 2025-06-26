@@ -16,15 +16,19 @@ interface SettingsContextType {
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const [theme, setThemeState] = useState<Theme>('light');
+  // Default to dark theme as per new design
+  const [theme, setThemeState] = useState<Theme>('dark');
   const [eyeComfort, setEyeComfort] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
+    // User's preference overrides the default
     const storedTheme = localStorage.getItem('theme') as Theme | null;
     const storedComfort = localStorage.getItem('eyeComfort') === 'true';
-    setThemeState(storedTheme || 'light');
+    if (storedTheme) {
+        setThemeState(storedTheme);
+    }
     setEyeComfort(storedComfort);
   }, []);
 

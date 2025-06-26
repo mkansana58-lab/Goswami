@@ -65,13 +65,14 @@ export function BottomNavigationBar() {
             <Link href={link.href} key={link.href} passHref>
               <div className={cn(
                 "flex flex-col items-center justify-center text-center cursor-pointer group rounded-md w-full h-full gap-0.5 transition-colors duration-200",
-                 isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
+                 isActive 
+                   ? "bg-primary text-primary-foreground" 
+                   : "text-muted-foreground hover:bg-muted/50 hover:text-primary"
               )}>
                 <link.icon className="h-6 w-6" />
                 <span className="text-[10px] font-medium w-full truncate">
                   {t(link.labelKey as any)}
                 </span>
-                {isActive && <div className="h-1 w-6 rounded-full bg-primary mt-0.5"></div>}
               </div>
             </Link>
           );
