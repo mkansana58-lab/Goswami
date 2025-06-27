@@ -1,22 +1,15 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // WARNING: These rules are for development and are not secure.
-    // They allow anyone to read and write to the specified collections.
-    // For a production application, you must secure these rules by using
-    // Firebase Authentication and checking user roles.
-
-    // Allow anyone to read and write to the 'liveClasses' collection.
-    // In a real app, you would restrict write access to admins.
-    match /liveClasses/{classId} {
-      allow read, write: if true;
-    }
-
-    // Allow anyone to read and write to the 'notifications' collection.
-    // In a real app, you would restrict write access to admins.
-    match /notifications/{notificationId} {
+    // WARNING: These rules are insecure and are for development purposes only.
+    // They allow anyone to read and write to your entire database.
+    // Before deploying to production, you MUST secure your rules.
+    // Example for authenticated users only:
+    // match /{document=**} {
+    //   allow read, write: if request.auth != null;
+    // }
+    match /{document=**} {
       allow read, write: if true;
     }
   }
