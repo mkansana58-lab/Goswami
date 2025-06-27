@@ -10,10 +10,10 @@ import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/hooks/use-language';
 import { ShieldAlert, LogIn } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { ADMIN_LOGGED_IN_KEY } from '@/lib/constants';
 
-const ADMIN_LOGGED_IN_KEY = 'adminLoggedInGoSwami';
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'Mohit@123';
+const ADMIN_USERNAME = 'AcademyDirector77';
+const ADMIN_PASSWORD = 'Goswami@Admin#2024';
 
 export default function AdminLoginPage() {
   const { t } = useLanguage();
@@ -27,7 +27,7 @@ export default function AdminLoginPage() {
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
       if (typeof window !== 'undefined') {
         localStorage.setItem(ADMIN_LOGGED_IN_KEY, 'true');
-        toast({ title: t('loginSuccessTitle'), description: t('loginSuccessMessageStudent') });
+        toast({ title: t('loginSuccessTitle'), description: t('loginSuccessMessageAdmin') });
         router.push('/admin');
       }
     } else {
@@ -56,7 +56,7 @@ export default function AdminLoginPage() {
                 setUsername(e.target.value);
                 setError(''); 
               }}
-              className="h-12 bg-muted/50 border-border"
+              className="h-12"
             />
           </div>
           <div className="space-y-2">
@@ -70,19 +70,16 @@ export default function AdminLoginPage() {
                 setPassword(e.target.value);
                 setError(''); 
               }}
-              className="h-12 bg-muted/50 border-border"
+              className="h-12"
             />
           </div>
 
           {error && <p className="text-sm text-destructive text-center pt-2">{error}</p>}
           
-          <Button onClick={handleAdminLogin} className="w-full h-12 text-lg font-semibold">
+          <Button onClick={handleAdminLogin} className="w-full h-12 text-lg font-semibold bg-accent text-accent-foreground hover:bg-accent/90">
             <LogIn className="mr-2 h-5 w-5"/>
             {t('loginButton')}
           </Button>
-          <p className="text-xs text-center text-muted-foreground pt-4">
-            {t('adminLoginCredentialsNote') || 'Enter admin credentials to login.'}
-          </p>
         </CardContent>
       </Card>
     </div>

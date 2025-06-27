@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/hooks/use-language';
 import { cn } from '@/lib/utils';
-import { Home, Video, MessageCircle, PenSquare, User } from 'lucide-react';
+import { Home, Library, Bot, FileSignature, User } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { STUDENT_LOGGED_IN_KEY } from '@/lib/constants';
 
@@ -27,33 +27,23 @@ export function BottomNavigationBar() {
     checkLoginStatus();
 
     const handleAuthChange = () => checkLoginStatus();
-    window.addEventListener('studentProfileUpdated', handleAuthChange);
-    window.addEventListener('studentLoggedOut', handleAuthChange);
     window.addEventListener('storage', handleAuthChange);
 
     return () => {
-      window.removeEventListener('studentProfileUpdated', handleAuthChange);
-      window.removeEventListener('studentLoggedOut', handleAuthChange);
       window.removeEventListener('storage', handleAuthChange);
     };
   }, [checkLoginStatus]);
-
-  useEffect(() => {
-    if (isClient) {
-      checkLoginStatus();
-    }
-  }, [pathname, isClient, checkLoginStatus]);
-
+  
   const navLinks = React.useMemo(() => [
     { href: '/', labelKey: 'navHome', icon: Home },
-    { href: '/learning-hub', labelKey: 'learn', icon: Video },
-    { href: '/ai-tutor', labelKey: 'tutor', icon: MessageCircle },
-    { href: '/scholarship', labelKey: 'apply', icon: PenSquare },
+    { href: '/learning-hub', labelKey: 'learn', icon: Library },
+    { href: '/tests', labelKey: 'aiTest', icon: Bot },
+    { href: '/scholarship', labelKey: 'apply', icon: FileSignature },
     { href: '/student-profile', labelKey: 'navAccount', icon: User },
   ], []);
 
   if (!isClient || !isStudentLoggedIn) {
-    return null; // Don't render the bar if not logged in or on server
+    return null; // Don't render if not logged in or on server
   }
 
   return (
@@ -64,10 +54,10 @@ export function BottomNavigationBar() {
           return (
             <Link href={link.href} key={link.href} passHref>
               <div className={cn(
-                "flex flex-col items-center justify-center text-center cursor-pointer group w-full h-full gap-0.5 transition-colors duration-200",
+                "flex flex-col items-center justify-center text-center cursor-pointer group w-full h-full gap-0.5 transition-colors duration-200 rounded-md",
                  isActive 
-                   ? "text-primary" 
-                   : "text-muted-foreground hover:text-primary"
+                   ? "text-primary-foreground bg-primary" 
+                   : "text-muted-foreground hover:bg-muted/50 hover:text-primary"
               )}>
                 <link.icon className="h-6 w-6" />
                 <span className="text-[10px] font-medium w-full truncate">

@@ -3,6 +3,7 @@
 
 import type { ReactNode } from 'react';
 import { BottomNavigationBar } from '@/components/layout/bottom-navigation';
+import { Header } from '@/components/layout/header';
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { STUDENT_LOGGED_IN_KEY } from '@/lib/constants';
@@ -10,7 +11,6 @@ import { Loader2 } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
-  const [currentYear, setCurrentYear] = useState<number | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
@@ -18,14 +18,13 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   const { t } = useLanguage();
 
   useEffect(() => {
-    setCurrentYear(new Date().getFullYear());
     setIsClient(true);
   }, []);
 
   useEffect(() => {
     if (isClient) {
-      const publicPaths = ['/student-login', '/login'];
-      const pathIsPublic = publicPaths.includes(pathname);
+      const publicPaths = ['/student-login', '/admin-login', '/toppers']; // Toppers page is public
+      const pathIsPublic = publicPaths.some(p => pathname.startsWith(p));
       
       if (!localStorage.getItem(STUDENT_LOGGED_IN_KEY) && !pathIsPublic) {
         router.replace('/student-login');
@@ -46,7 +45,8 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <main className="flex-grow px-4 pt-8 pb-24 md:pb-8">
+      <Header />
+      <main className="flex-grow px-4 pt-4 pb-24 md:pb-8">
         {children}
       </main>
       <BottomNavigationBar />

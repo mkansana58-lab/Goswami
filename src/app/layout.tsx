@@ -4,6 +4,24 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { LanguageProvider } from '@/context/language-context';
 import { SettingsProvider } from '@/context/settings-context';
+import { Inter, Teko, Dancing_Script } from 'next/font/google';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+});
+
+const teko = Teko({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-teko',
+});
+
+const dancingScript = Dancing_Script({
+  subsets: ['latin'],
+  weight: '700',
+  variable: '--font-dancing-script',
+});
 
 export const metadata: Metadata = {
   title: 'Go Swami Defence Academy',
@@ -17,12 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet" />
-      </head>
-      <body>
+      <body className={`${inter.variable} ${teko.variable} ${dancingScript.variable}`}>
         <SettingsProvider>
           <LanguageProvider>
               {children}
