@@ -152,8 +152,11 @@ export function Header() {
                 <DropdownMenuLabel>Notifications</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {!isFirebaseConfigured ? (
-                    <DropdownMenuItem disabled className="justify-center text-destructive">
-                        Firebase not configured.
+                    <DropdownMenuItem disabled>
+                         <div className="flex flex-col text-destructive text-center p-2 text-xs">
+                           <p className="font-bold">Firebase Not Configured</p>
+                           <p className="whitespace-normal mt-1">Connect a Firebase project in the Studio UI to enable notifications.</p>
+                        </div>
                     </DropdownMenuItem>
                 ) : isLoadingNotifications ? (
                     <DropdownMenuItem disabled className="justify-center">

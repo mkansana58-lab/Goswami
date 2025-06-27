@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { getLiveClasses, type LiveClass } from '@/lib/firebase';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioTower, Calendar, Clock, ExternalLink, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -57,10 +57,14 @@ export default function LiveClassesPage() {
                  <Card className="border-destructive bg-destructive/10">
                     <CardHeader>
                         <CardTitle className="text-destructive">Firebase Not Configured</CardTitle>
-                        <CardDescription className="text-destructive/80">
-                            The application is missing Firebase configuration. This page cannot display live classes.
-                        </CardDescription>
                     </CardHeader>
+                    <CardContent className="text-destructive/90">
+                         <p className="font-bold">This is a required setup step.</p>
+                        <p className="mt-2">To make features like Live Classes and Notifications work, you need to connect this app to your own Firebase project.</p>
+                        <p className="mt-4 font-bold">How to Fix:</p>
+                        <p className="mt-1">In the Firebase Studio interface, look for a button or option to <strong>"Connect Firebase"</strong> or <strong>"Set up Firebase"</strong>. Click it and follow the instructions to link your project.</p>
+                        <p className="mt-2">Once connected, this page will show live classes.</p>
+                    </CardContent>
                 </Card>
             ) : isLoading ? (
                 <div className="flex flex-col items-center justify-center min-h-[300px]">

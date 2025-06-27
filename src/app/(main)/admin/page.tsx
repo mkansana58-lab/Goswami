@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -5,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useLanguage } from "@/hooks/use-language";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -96,10 +97,14 @@ export default function AdminPage() {
                 <Card className="border-destructive bg-destructive/10">
                     <CardHeader>
                         <CardTitle className="text-destructive">Firebase Not Configured</CardTitle>
-                        <CardDescription className="text-destructive/80">
-                            The application is missing Firebase configuration. Please set up your Firebase environment variables to enable admin features. The forms below are disabled.
-                        </CardDescription>
                     </CardHeader>
+                    <CardContent className="text-destructive/90">
+                        <p className="font-bold">This is a required setup step.</p>
+                        <p className="mt-2">To make features like Live Classes and Notifications work, you need to connect this app to your own Firebase project.</p>
+                        <p className="mt-4 font-bold">How to Fix:</p>
+                        <p className="mt-1">In the Firebase Studio interface, look for a button or option to <strong>"Connect Firebase"</strong> or <strong>"Set up Firebase"</strong>. Click it and follow the instructions to link your project.</p>
+                        <p className="mt-2">Once connected, this error will disappear automatically, and the forms below will be enabled.</p>
+                    </CardContent>
                 </Card>
             )}
 
