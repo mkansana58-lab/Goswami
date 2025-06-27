@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import {
     addLiveClass, deleteLiveClass, getLiveClasses,
     addNotification, deleteNotification, getNotifications,
@@ -24,13 +25,15 @@ import {
     addGalleryImage, deleteGalleryImage, getGalleryImages,
     getScholarshipApplications, getStudents, updateAppConfig, getAppConfig,
     getContactInquiries, addEBook, getEBooks, deleteEBook,
+    addCustomTest, getCustomTests, deleteCustomTest,
+    getTestSettings, updateTestSetting,
     type LiveClass, type Notification, type Post, type CurrentAffair,
     type VideoLecture, type Download, type Course, type AppConfig,
     type ScholarshipApplicationData, type StudentData, type Teacher, type GalleryImage,
-    type ContactInquiry, type EBook
+    type ContactInquiry, type EBook, type CustomTest, type TestSetting
 } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library } from 'lucide-react';
+import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -39,6 +42,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
+import { testsData } from '@/lib/tests-data';
 
 // Schemas
 const settingsSchema = z.object({
@@ -56,6 +60,21 @@ const eBookSchema = z.object({ title: z.string().min(3), pdfUrl: z.string().url(
 const courseSchema = z.object({ title: z.string().min(3), description: z.string().min(10), imageUrl: z.any().optional() });
 const teacherSchema = z.object({ name: z.string().min(3), description: z.string().min(10), imageUrl: z.any().optional() });
 const galleryImageSchema = z.object({ caption: z.string().min(3), imageUrl: z.any().refine(f => f?.length === 1, "Image is required.") });
+const customTestSchema = z.object({
+  title: z.string().min(3),
+  description: z.string().min(10),
+  timeLimit: z.coerce.number().min(1),
+  medium: z.string().min(1),
+  languageForAI: z.string().min(1).describe("This is for the AI certificate generation, e.g., 'Hindi' or 'English'"),
+  questionsJson: z.string().refine((val) => {
+    try {
+        const parsed = JSON.parse(val);
+        return Array.isArray(parsed) && parsed.length > 0;
+    } catch {
+        return false;
+    }
+  }, { message: "Must be a valid, non-empty JSON array of questions." })
+});
 
 
 // Helper to format timestamp for datetime-local input
@@ -81,7 +100,7 @@ export default function AdminPage() {
         currentAffairs: [] as CurrentAffair[], videoLectures: [] as VideoLecture[], downloads: [] as Download[],
         courses: [] as Course[], scholarshipApps: [] as ScholarshipApplicationData[], students: [] as StudentData[],
         teachers: [] as Teacher[], galleryImages: [] as GalleryImage[], contactInquiries: [] as ContactInquiry[],
-        ebooks: [] as EBook[],
+        ebooks: [] as EBook[], customTests: [] as CustomTest[], testSettings: {} as Record<string, TestSetting>,
     });
     const [isLoading, setIsLoading] = useState(true);
 
@@ -93,12 +112,12 @@ export default function AdminPage() {
             const [
                 config, liveClasses, notifications, posts, currentAffairs, videoLectures,
                 downloads, courses, scholarshipApps, students, teachers, galleryImages,
-                contactInquiries, ebooks
+                contactInquiries, ebooks, customTests, testSettings
             ] = await Promise.all([
                 getAppConfig(), getLiveClasses(), getNotifications(), getPosts(),
                 getCurrentAffairs(), getVideoLectures(), getDownloads(), getCourses(),
                 getScholarshipApplications(), getStudents(), getTeachers(), getGalleryImages(),
-                getContactInquiries(), getEBooks()
+                getContactInquiries(), getEBooks(), getCustomTests(), getTestSettings(),
             ]);
             settingsForm.reset({
                 scholarshipDeadline: toInputDateTimeFormat(config.scholarshipDeadline),
@@ -108,7 +127,7 @@ export default function AdminPage() {
             setData({
                 liveClasses, notifications, posts, currentAffairs, videoLectures,
                 downloads, courses, scholarshipApps, students, teachers, galleryImages,
-                contactInquiries, ebooks
+                contactInquiries, ebooks, customTests, testSettings
             });
         } catch (error) {
             toast({ variant: "destructive", title: "Error", description: "Failed to fetch data from server." });
@@ -149,6 +168,22 @@ export default function AdminPage() {
                              <div><Label>{t('admitCardStartDate')}</Label><Input type="datetime-local" {...settingsForm.register('admitCardDownloadStartDate')} /></div>
                              <Button type="submit">{t('saveSettings')}</Button>
                         </form>
+                    </AdminSection>
+
+                    <AdminSection title="Test Availability" icon={ToggleRight}>
+                        <TestSettingsManager initialSettings={data.testSettings} customTests={data.customTests} />
+                    </AdminSection>
+                    
+                    <AdminSection title="Manage Custom Tests" icon={FilePlus2}>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            Add custom tests manually. Paste the questions in a JSON array format in the 'Questions JSON' field.
+                            Each question object must have: `id` (number), `question` (string), `options` (array of 4 strings), and `answer` (string, must exactly match one of the options).
+                        </p>
+                        <CrudForm schema={customTestSchema} onSubmit={addCustomTest} onRefresh={fetchData} fields={{
+                            title: 'text', description: 'textarea', timeLimit: 'number',
+                            medium: 'text', languageForAI: 'text', questionsJson: 'textarea',
+                        }} />
+                        <DataTable data={data.customTests} columns={['title', 'description']} onDelete={deleteCustomTest} onRefresh={fetchData} />
                     </AdminSection>
 
                     <AdminSection title={t('manageLiveClasses')} icon={Tv}>
@@ -245,7 +280,7 @@ const AdminSection = ({ icon: Icon, title, children }: { icon: React.ElementType
     </AccordionItem></Card>
 );
 
-const CrudForm = ({ schema, onSubmit, onRefresh, fields }: { schema: z.ZodObject<any>, onSubmit: (data: any) => Promise<any>, onRefresh: () => void, fields: Record<string, 'text' | 'url' | 'textarea' | 'datetime-local' | 'file'> }) => {
+const CrudForm = ({ schema, onSubmit, onRefresh, fields }: { schema: z.ZodObject<any>, onSubmit: (data: any) => Promise<any>, onRefresh: () => void, fields: Record<string, 'text' | 'url' | 'textarea' | 'datetime-local' | 'file' | 'number'> }) => {
     const { t } = useLanguage();
     const form = useForm({ resolver: zodResolver(schema) });
     const { toast } = useToast();
@@ -267,7 +302,6 @@ const CrudForm = ({ schema, onSubmit, onRefresh, fields }: { schema: z.ZodObject
                     });
                     dataToSubmit[fieldName] = dataUrl;
                 } else if (fields[fieldName] === 'file') {
-                    // If file is optional and not provided, remove it from submission
                     delete dataToSubmit[fieldName];
                 }
             }
@@ -355,3 +389,43 @@ const ImagePreview = ({ url, triggerText }: { url?: string; triggerText: React.R
         </Dialog>
     );
 };
+
+const TestSettingsManager = ({ initialSettings, customTests }: { initialSettings: Record<string, TestSetting>, customTests: CustomTest[] }) => {
+    const { t } = useLanguage();
+    const { toast } = useToast();
+    const allStaticTests = Object.values(testsData);
+    const allTests = [...allStaticTests, ...customTests];
+    const [settings, setSettings] = useState(initialSettings);
+
+    const handleToggle = async (testId: string, isEnabled: boolean) => {
+        const originalState = settings[testId]?.isEnabled ?? true;
+        setSettings(prev => ({ ...prev, [testId]: { ...prev[testId], isEnabled } }));
+        try {
+            await updateTestSetting(testId, isEnabled);
+            toast({ title: "Setting Updated" });
+        } catch (e) {
+            toast({ variant: "destructive", title: "Update Failed" });
+            setSettings(prev => ({ ...prev, [testId]: { ...prev[testId], isEnabled: originalState } }));
+        }
+    };
+
+    return (
+        <div className="space-y-2">
+            {allTests.map(test => {
+                const isEnabled = settings[test.id]?.isEnabled ?? true; // Default to enabled
+                return (
+                    <div key={test.id} className="flex items-center justify-between p-2 border rounded-md">
+                        <span>{t(test.title as any) || test.title}</span>
+                        <div className="flex items-center gap-2">
+                            <span className={`text-xs font-medium ${isEnabled ? 'text-green-600' : 'text-muted-foreground'}`}>{isEnabled ? 'Enabled' : 'Disabled'}</span>
+                            <Switch
+                                checked={isEnabled}
+                                onCheckedChange={(checked) => handleToggle(test.id, checked)}
+                            />
+                        </div>
+                    </div>
+                )
+            })}
+        </div>
+    )
+}

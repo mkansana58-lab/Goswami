@@ -14,6 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Clock, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getCustomTest, type CustomTest } from '@/lib/firebase';
 
 type Answers = { [key: number]: string };
 
@@ -24,7 +25,7 @@ export default function TestPlayerPage() {
   const { toast } = useToast();
   const testId = Array.isArray(params.testId) ? params.testId[0] : params.testId;
 
-  const [testDetails, setTestDetails] = useState<TestDetails | null>(null);
+  const [testDetails, setTestDetails] = useState<TestDetails | CustomTest | null>(null);
   const [allQuestions, setAllQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
@@ -33,55 +34,66 @@ export default function TestPlayerPage() {
   
   useEffect(() => {
     const loadTest = async () => {
-      if (testId && testsData[testId]) {
-        const data = testsData[testId];
-        setTestDetails(data);
+      if (!testId) return;
 
-        const savedProgress = sessionStorage.getItem(`test-progress-${testId}`);
-        if (savedProgress) {
-          const { savedQuestions, savedAnswers, savedIndex, savedTimeLeft } = JSON.parse(savedProgress);
-          setAllQuestions(savedQuestions);
-          setAnswers(savedAnswers);
-          setCurrentQuestionIndex(savedIndex);
-          setTimeLeft(savedTimeLeft);
-          setIsGenerating(false);
-        } else {
-          try {
-            setIsGenerating(true);
-            let generatedQuestions: Question[] = [];
-            let questionIdCounter = 0;
+      setIsGenerating(true);
+      let data: TestDetails | CustomTest | null = null;
+      let isStaticTestWithGeneration = false;
 
-            for (const subject of data.subjects) {
-              const result = await generateTestQuestions({
-                className: data.classForAI,
-                subject: t(subject.name as any),
-                questionCount: subject.questionCount,
-                language: data.languageForAI,
-              });
-              
-              const questionsWithGlobalIds = result.questions.map(q => ({
-                ...q,
-                id: questionIdCounter + q.id,
-              }));
+      if (testsData[testId]) {
+          data = testsData[testId];
+          isStaticTestWithGeneration = true;
+      } else {
+          data = await getCustomTest(testId);
+      }
 
-              generatedQuestions = [...generatedQuestions, ...questionsWithGlobalIds];
-              questionIdCounter += subject.questionCount;
-            }
+      if (!data) {
+        toast({ variant: "destructive", title: "Test not found" });
+        router.back();
+        return;
+      }
 
-            setAllQuestions(generatedQuestions);
-            setTimeLeft(data.timeLimit * 60);
-          } catch (error) {
-            console.error("Error generating test:", error);
-            toast({
-              variant: "destructive",
-              title: "Error",
-              description: "Failed to generate the test. Please try again.",
+      setTestDetails(data);
+      const savedProgress = sessionStorage.getItem(`test-progress-${testId}`);
+
+      if (savedProgress) {
+        const { savedQuestions, savedAnswers, savedIndex, savedTimeLeft } = JSON.parse(savedProgress);
+        setAllQuestions(savedQuestions);
+        setAnswers(savedAnswers);
+        setCurrentQuestionIndex(savedIndex);
+        setTimeLeft(savedTimeLeft);
+        setIsGenerating(false);
+      } else if (isStaticTestWithGeneration) {
+        try {
+          const staticData = data as TestDetails;
+          let generatedQuestions: Question[] = [];
+          let questionIdCounter = 0;
+
+          for (const subject of staticData.subjects) {
+            const result = await generateTestQuestions({
+              className: staticData.classForAI,
+              subject: t(subject.name as any),
+              questionCount: subject.questionCount,
+              language: staticData.languageForAI,
             });
-            router.back();
-          } finally {
-            setIsGenerating(false);
+            const questionsWithGlobalIds = result.questions.map(q => ({ ...q, id: questionIdCounter + q.id }));
+            generatedQuestions = [...generatedQuestions, ...questionsWithGlobalIds];
+            questionIdCounter += subject.questionCount;
           }
+          setAllQuestions(generatedQuestions);
+          setTimeLeft(staticData.timeLimit * 60);
+        } catch (error) {
+          console.error("Error generating test:", error);
+          toast({ variant: "destructive", title: "Error", description: "Failed to generate the test. Please try again." });
+          router.back();
+        } finally {
+          setIsGenerating(false);
         }
+      } else { // Is a custom test
+        const customData = data as CustomTest;
+        setAllQuestions(customData.questions);
+        setTimeLeft(customData.timeLimit * 60);
+        setIsGenerating(false);
       }
     };
     loadTest();
@@ -159,7 +171,7 @@ export default function TestPlayerPage() {
       <Card>
         <CardHeader className="border-b">
           <div className="flex justify-between items-center">
-             <CardTitle>{t('testInProgress')}: {t(testDetails.title)}</CardTitle>
+             <CardTitle>{t('testInProgress')}: {t(testDetails.title as any) || testDetails.title}</CardTitle>
              <div className="flex items-center gap-2 font-mono text-lg bg-primary text-primary-foreground px-3 py-1 rounded-md">
                 <Clock className="h-5 w-5" />
                 <span>{formatTime(timeLeft)}</span>

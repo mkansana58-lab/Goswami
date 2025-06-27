@@ -13,15 +13,15 @@ export interface Subject {
 
 export interface TestDetails {
   id: string;
-  title: keyof typeof import('./translations').translations.en;
-  description: keyof typeof import('./translations').translations.en;
+  title: keyof typeof import('./translations').translations.en | string;
+  description: keyof typeof import('./translations').translations.en | string;
   medium: string;
-  languageForAI: 'Hindi' | 'English';
+  languageForAI: 'Hindi' | 'English' | string;
   classForAI: string;
   timeLimit: number; // in minutes
   subjects: Subject[];
   totalQuestions: number;
-  testType: 'mock' | 'practice';
+  testType: 'mock' | 'practice' | 'custom';
 }
 
 export const testsData: Record<string, TestDetails> = {

@@ -179,6 +179,30 @@ export interface ChatMessage {
     createdAt: Timestamp;
 }
 
+export interface CustomTest {
+    id: string;
+    title: string;
+    description: string;
+    medium: string;
+    languageForAI: string;
+    timeLimit: number;
+    totalQuestions: number;
+    testType: 'custom';
+    questions: Array<{
+        id: number;
+        question: string;
+        options: string[];
+        answer: string;
+    }>;
+    createdAt: Timestamp;
+}
+
+export interface TestSetting {
+    id?: string; // testId
+    isEnabled: boolean;
+}
+
+
 // --- Constants ---
 export const CLASS_UNIQUE_IDS: Record<string, string> = {
     "5": "8824",
@@ -373,6 +397,53 @@ export const getContactInquiries = async (): Promise<ContactInquiry[]> => getAll
 export const addChatMessage = async (data: Omit<ChatMessage, 'id' | 'createdAt'>) => {
     if (!db) throw new Error("Firestore DB not initialized.");
     await addDoc(collection(db, "chatMessages"), { ...data, createdAt: Timestamp.now() });
+};
+
+// --- Custom Tests ---
+export const addCustomTest = async (data: any) => {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    const questions = JSON.parse(data.questionsJson);
+    const testData = {
+        title: data.title,
+        description: data.description,
+        medium: data.medium,
+        languageForAI: data.languageForAI,
+        timeLimit: Number(data.timeLimit),
+        totalQuestions: questions.length,
+        testType: 'custom',
+        questions: questions,
+        createdAt: Timestamp.now()
+    };
+    await addDoc(collection(db, "customTests"), testData);
+};
+export const getCustomTests = async (): Promise<CustomTest[]> => getAll<CustomTest>("customTests");
+export const getCustomTest = async (id: string): Promise<CustomTest | null> => {
+    if (!db) return null;
+    const testRef = doc(db, "customTests", id);
+    const docSnap = await getDoc(testRef);
+    if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as CustomTest;
+    }
+    return null;
+}
+export const deleteCustomTest = (id: string) => deleteDocument("customTests", id);
+
+
+// --- Test Settings ---
+export const getTestSettings = async (): Promise<Record<string, TestSetting>> => {
+    if (!db) return {};
+    const settings: Record<string, TestSetting> = {};
+    const querySnapshot = await getDocs(collection(db, "testSettings"));
+    querySnapshot.forEach((doc) => {
+        settings[doc.id] = { id: doc.id, ...doc.data() } as TestSetting;
+    });
+    return settings;
+};
+
+export const updateTestSetting = async (testId: string, isEnabled: boolean) => {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    const settingRef = doc(db, "testSettings", testId);
+    await setDoc(settingRef, { isEnabled: isEnabled }, { merge: true });
 };
 
 

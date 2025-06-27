@@ -29,12 +29,12 @@ export default function SchoolListPage() {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            applicationNo: "251810200584",
-            candidateName: "MR. MOHIT",
-            fatherName: "RAM AKHETYAR",
-            category: "OBC-NCL (Central List)",
-            gender: "Male",
-            domicile: "RAJASTHAN"
+            applicationNo: "",
+            candidateName: "",
+            fatherName: "",
+            category: "",
+            gender: "",
+            domicile: ""
         }
     });
 

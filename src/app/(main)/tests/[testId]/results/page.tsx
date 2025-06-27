@@ -5,9 +5,9 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useLanguage } from '@/hooks/use-language';
 import { useAuth } from '@/hooks/use-auth';
-import { testsData, type Question } from '@/lib/tests-data';
-import { addTestResult } from '@/lib/firebase';
-import { ResultCertificate, type ResultData } from '@/components/test/result-certificate';
+import { testsData, type Question, type TestDetails, type Subject } from '@/lib/tests-data';
+import { addTestResult, getCustomTest, type CustomTest } from '@/lib/firebase';
+import { ResultCertificate, type ResultData, type SubjectAnalysis } from '@/components/test/result-certificate';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, XCircle } from 'lucide-react';
@@ -25,71 +25,89 @@ export default function TestResultPage() {
 
     useEffect(() => {
         setIsClient(true);
-        if (testId && testsData[testId] && student) {
-            const savedResult = sessionStorage.getItem(`test-result-${testId}`);
-            if (savedResult) {
-                const { answers, timeLeft, questions } = JSON.parse(savedResult);
-                const testDetails = testsData[testId];
-                
-                setAllQuestions(questions);
-                setUserAnswers(answers);
-                
-                let totalCorrect = 0;
-                let questionCursor = 0;
-                
-                const subjectAnalyses = testDetails.subjects.map(subject => {
-                    let subjectCorrect = 0;
-                    const subjectQuestions = questions.slice(questionCursor, questionCursor + subject.questionCount);
+        const calculateResults = async () => {
+            if (!testId || !student) return;
+
+            let testDetails: TestDetails | CustomTest | null = null;
+            if (testsData[testId]) {
+                testDetails = testsData[testId];
+            } else {
+                testDetails = await getCustomTest(testId);
+            }
+            
+            if (testDetails) {
+                const savedResult = sessionStorage.getItem(`test-result-${testId}`);
+                if (savedResult) {
+                    const { answers, timeLeft, questions } = JSON.parse(savedResult);
                     
-                    subjectQuestions.forEach((q: Question, index: number) => {
-                        const overallIndex = questionCursor + index;
-                        if (answers[overallIndex] === q.answer) {
-                            subjectCorrect++;
+                    setAllQuestions(questions);
+                    setUserAnswers(answers);
+                    
+                    let totalCorrect = 0;
+                    questions.forEach((q: Question, index: number) => {
+                        if (answers[index] === q.answer) {
+                            totalCorrect++;
                         }
                     });
-                    
-                    totalCorrect += subjectCorrect;
-                    questionCursor += subject.questionCount;
 
-                    return {
-                        name: t(subject.name as any),
-                        score: subjectCorrect,
-                        total: subject.questionCount
+                    let subjectAnalyses: SubjectAnalysis[] = [];
+                    if (testDetails.testType !== 'custom' && 'subjects' in testDetails) {
+                        let questionCursor = 0;
+                        subjectAnalyses = testDetails.subjects.map((subject: Subject) => {
+                            let subjectCorrect = 0;
+                            const subjectQuestions = questions.slice(questionCursor, questionCursor + subject.questionCount);
+                            
+                            subjectQuestions.forEach((q: Question, index: number) => {
+                                const overallIndex = questionCursor + index;
+                                if (answers[overallIndex] === q.answer) {
+                                    subjectCorrect++;
+                                }
+                            });
+                            
+                            questionCursor += subject.questionCount;
+
+                            return {
+                                name: t(subject.name as any),
+                                score: subjectCorrect,
+                                total: subject.questionCount
+                            };
+                        });
+                    } else {
+                        subjectAnalyses.push({ name: 'Overall Score', score: totalCorrect, total: testDetails.totalQuestions });
+                    }
+
+
+                    const timeTaken = (testDetails.timeLimit * 60) - timeLeft;
+                    const status = (totalCorrect / testDetails.totalQuestions) >= 0.4 ? 'Pass' : 'Fail';
+                    const percentage = (totalCorrect / testDetails.totalQuestions) * 100;
+
+                    const finalResultData: ResultData = {
+                        studentName: student.name,
+                        testName: t(testDetails.title as any) || testDetails.title,
+                        totalQuestions: testDetails.totalQuestions,
+                        correctAnswers: totalCorrect,
+                        timeTaken: timeTaken,
+                        status: status,
+                        subjects: subjectAnalyses
                     };
-                });
+                    setResultData(finalResultData);
 
-
-                const timeTaken = (testDetails.timeLimit * 60) - timeLeft;
-                const status = (totalCorrect / testDetails.totalQuestions) >= 0.4 ? 'Pass' : 'Fail';
-                const percentage = (totalCorrect / testDetails.totalQuestions) * 100;
-
-                const finalResultData: ResultData = {
-                    studentName: student.name,
-                    testName: t(testDetails.title),
-                    totalQuestions: testDetails.totalQuestions,
-                    correctAnswers: totalCorrect,
-                    timeTaken: timeTaken,
-                    status: status,
-                    subjects: subjectAnalyses
-                };
-                setResultData(finalResultData);
-
-                // Save result to firestore
-                const firestoreResultData = {
-                    studentName: student.name,
-                    testId: testId,
-                    testName: t(testDetails.title),
-                    score: totalCorrect,
-                    totalQuestions: testDetails.totalQuestions,
-                    percentage: percentage,
-                };
-            
-                addTestResult(firestoreResultData).catch(error => {
-                    console.error("Failed to save test result:", error);
-                });
-
+                    const firestoreResultData = {
+                        studentName: student.name,
+                        testId: testId,
+                        testName: t(testDetails.title as any) || testDetails.title,
+                        score: totalCorrect,
+                        totalQuestions: testDetails.totalQuestions,
+                        percentage: percentage,
+                    };
+                
+                    addTestResult(firestoreResultData).catch(error => {
+                        console.error("Failed to save test result:", error);
+                    });
+                }
             }
         }
+        calculateResults();
     }, [testId, t, student]);
 
     if (!isClient) {
