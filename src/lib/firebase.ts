@@ -1,6 +1,6 @@
 // firebase.ts
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getFirestore, collection, getDocs, type Firestore, query, orderBy, Timestamp, addDoc, where, limit, doc, setDoc, getDoc } from "firebase/firestore";
+import { getFirestore, collection, getDocs, type Firestore, query, orderBy, Timestamp, addDoc, where, limit, doc, setDoc, getDoc, deleteDoc } from "firebase/firestore";
 
 // Firebase configuration from environment variables
 export const firebaseConfig = {
@@ -103,6 +103,43 @@ export interface AppConfig {
     admitCardDownloadStartDate?: Timestamp;
 }
 
+export interface Post {
+    id: string;
+    title: string;
+    content: string;
+    imageUrl?: string;
+    createdAt: Timestamp;
+}
+
+export interface CurrentAffair {
+    id: string;
+    title: string;
+    content: string;
+    createdAt: Timestamp;
+}
+
+export interface VideoLecture {
+    id: string;
+    title: string;
+    videoUrl: string;
+    createdAt: Timestamp;
+}
+
+export interface Download {
+    id: string;
+    title: string;
+    pdfUrl: string;
+    createdAt: Timestamp;
+}
+
+export interface Course {
+    id: string;
+    title: string;
+    description: string;
+    imageUrl?: string;
+    createdAt: Timestamp;
+}
+
 
 // --- Constants ---
 export const CLASS_UNIQUE_IDS: Record<string, string> = {
@@ -115,6 +152,12 @@ export const CLASS_UNIQUE_IDS: Record<string, string> = {
 
 // --- Functions ---
 
+// Generic delete function
+async function deleteDocument(collectionName: string, id: string): Promise<void> {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    await deleteDoc(doc(db, collectionName, id));
+}
+
 export async function getAppConfig(): Promise<AppConfig> {
     if (!db) return {};
     const configRef = doc(db, "appConfig", "settings");
@@ -125,7 +168,7 @@ export async function getAppConfig(): Promise<AppConfig> {
     return {};
 }
 
-export async function updateAppConfig(data: AppConfig): Promise<void> {
+export async function updateAppConfig(data: Partial<AppConfig>): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
     const configRef = doc(db, "appConfig", "settings");
     await setDoc(configRef, data, { merge: true });
@@ -139,6 +182,8 @@ export async function addLiveClass({ title, link, scheduledAt }: NewLiveClassDat
         scheduledAt: Timestamp.fromDate(new Date(scheduledAt)),
     });
 }
+export const deleteLiveClass = (id: string) => deleteDocument("liveClasses", id);
+
 
 export async function addNotification({ title, content }: NewNotificationData): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
@@ -148,6 +193,7 @@ export async function addNotification({ title, content }: NewNotificationData): 
         createdAt: Timestamp.now(),
     });
 }
+export const deleteNotification = (id: string) => deleteDocument("notifications", id);
 
 export async function addScholarshipApplication(data: Omit<ScholarshipApplicationData, 'createdAt' | 'id'>): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
@@ -240,5 +286,31 @@ export async function getNotifications(): Promise<Notification[]> {
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Notification[];
 }
+
+// --- Daily Posts ---
+export const addPost = async (data: Omit<Post, 'id' | 'createdAt'>) => addDoc(collection(db, "posts"), { ...data, createdAt: Timestamp.now() });
+export const getPosts = async (): Promise<Post[]> => (await getDocs(query(collection(db, "posts"), orderBy("createdAt", "desc")))).docs.map(d => ({ id: d.id, ...d.data() } as Post));
+export const deletePost = (id: string) => deleteDocument("posts", id);
+
+// --- Current Affairs ---
+export const addCurrentAffair = async (data: Omit<CurrentAffair, 'id' | 'createdAt'>) => addDoc(collection(db, "currentAffairs"), { ...data, createdAt: Timestamp.now() });
+export const getCurrentAffairs = async (): Promise<CurrentAffair[]> => (await getDocs(query(collection(db, "currentAffairs"), orderBy("createdAt", "desc")))).docs.map(d => ({ id: d.id, ...d.data() } as CurrentAffair));
+export const deleteCurrentAffair = (id: string) => deleteDocument("currentAffairs", id);
+
+// --- Video Lectures ---
+export const addVideoLecture = async (data: Omit<VideoLecture, 'id' | 'createdAt'>) => addDoc(collection(db, "videoLectures"), { ...data, createdAt: Timestamp.now() });
+export const getVideoLectures = async (): Promise<VideoLecture[]> => (await getDocs(query(collection(db, "videoLectures"), orderBy("createdAt", "desc")))).docs.map(d => ({ id: d.id, ...d.data() } as VideoLecture));
+export const deleteVideoLecture = (id: string) => deleteDocument("videoLectures", id);
+
+// --- Downloads ---
+export const addDownload = async (data: Omit<Download, 'id' | 'createdAt'>) => addDoc(collection(db, "downloads"), { ...data, createdAt: Timestamp.now() });
+export const getDownloads = async (): Promise<Download[]> => (await getDocs(query(collection(db, "downloads"), orderBy("createdAt", "desc")))).docs.map(d => ({ id: d.id, ...d.data() } as Download));
+export const deleteDownload = (id: string) => deleteDocument("downloads", id);
+
+// --- Courses ---
+export const addCourse = async (data: Omit<Course, 'id' | 'createdAt'>) => addDoc(collection(db, "courses"), { ...data, createdAt: Timestamp.now() });
+export const getCourses = async (): Promise<Course[]> => (await getDocs(query(collection(db, "courses"), orderBy("createdAt", "desc")))).docs.map(d => ({ id: d.id, ...d.data() } as Course));
+export const deleteCourse = (id: string) => deleteDocument("courses", id);
+
 
 export { app, db };

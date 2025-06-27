@@ -1,48 +1,64 @@
+
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useState, useEffect, useCallback } from 'react';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useLanguage } from "@/hooks/use-language";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { addLiveClass, addNotification, getScholarshipApplications, getStudents, updateAppConfig, getAppConfig, type AppConfig, type ScholarshipApplicationData, type StudentData } from '@/lib/firebase';
+import {
+    addLiveClass, deleteLiveClass, getLiveClasses,
+    addNotification, deleteNotification, getNotifications,
+    addPost, deletePost, getPosts,
+    addCurrentAffair, deleteCurrentAffair, getCurrentAffairs,
+    addVideoLecture, deleteVideoLecture, getVideoLectures,
+    addDownload, deleteDownload, getDownloads,
+    addCourse, deleteCourse, getCourses,
+    getScholarshipApplications, getStudents, updateAppConfig, getAppConfig,
+    type LiveClass, type Notification, type Post, type CurrentAffair,
+    type VideoLecture, type Download, type Course, type AppConfig,
+    type ScholarshipApplicationData, type StudentData
+} from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, AlertTriangle, Settings, Tv, Bell, GraduationCap, Users, ExternalLink } from 'lucide-react';
+import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import Image from 'next/image';
-import { format, toDate } from 'date-fns';
+import { format } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
 
-
 // Schemas
-const liveClassSchema = z.object({ title: z.string().min(5), link: z.string().url(), scheduledAt: z.string().min(1) });
-const notificationSchema = z.object({ title: z.string().min(5), content: z.string().min(10) });
 const settingsSchema = z.object({
     scholarshipDeadline: z.string().optional(),
     examDate: z.string().optional(),
     admitCardDownloadStartDate: z.string().optional(),
 });
-
-type LiveClassForm = z.infer<typeof liveClassSchema>;
-type NotificationForm = z.infer<typeof notificationSchema>;
-type SettingsForm = z.infer<typeof settingsSchema>;
+const liveClassSchema = z.object({ title: z.string().min(3), link: z.string().url(), scheduledAt: z.string().min(1) });
+const notificationSchema = z.object({ title: z.string().min(3), content: z.string().min(10) });
+const postSchema = z.object({ title: z.string().min(3), content: z.string().min(10), imageUrl: z.string().url().optional().or(z.literal('')) });
+const currentAffairSchema = z.object({ title: z.string().min(3), content: z.string().min(10) });
+const videoLectureSchema = z.object({ title: z.string().min(3), videoUrl: z.string().url() });
+const downloadSchema = z.object({ title: z.string().min(3), pdfUrl: z.string().url() });
+const courseSchema = z.object({ title: z.string().min(3), description: z.string().min(10), imageUrl: z.string().url().optional().or(z.literal('')) });
 
 // Helper to format timestamp for datetime-local input
 const toInputDateTimeFormat = (timestamp: Timestamp | undefined) => {
     if (!timestamp) return "";
-    const date = toDate(timestamp);
-    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-    return date.toISOString().slice(0, 16);
+    try {
+        const date = timestamp.toDate();
+        date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+        return date.toISOString().slice(0, 16);
+    } catch (e) {
+        return "";
+    }
 };
 
 export default function AdminPage() {
@@ -51,58 +67,63 @@ export default function AdminPage() {
     const { admin, isLoading: isAuthLoading } = useAuth();
     const router = useRouter();
 
-    const [isLoading, setIsLoading] = useState({ class: false, notification: false, settings: false, apps: false, students: false });
-    const [scholarshipApps, setScholarshipApps] = useState<ScholarshipApplicationData[]>([]);
-    const [students, setStudents] = useState<StudentData[]>([]);
+    const [data, setData] = useState({
+        liveClasses: [] as LiveClass[], notifications: [] as Notification[], posts: [] as Post[],
+        currentAffairs: [] as CurrentAffair[], videoLectures: [] as VideoLecture[], downloads: [] as Download[],
+        courses: [] as Course[], scholarshipApps: [] as ScholarshipApplicationData[], students: [] as StudentData[],
+    });
+    const [isLoading, setIsLoading] = useState(true);
 
-    const classForm = useForm<LiveClassForm>({ resolver: zodResolver(liveClassSchema) });
-    const notificationForm = useForm<NotificationForm>({ resolver: zodResolver(notificationSchema) });
-    const settingsForm = useForm<SettingsForm>({ resolver: zodResolver(settingsSchema) });
+    const settingsForm = useForm<z.infer<typeof settingsSchema>>({ resolver: zodResolver(settingsSchema) });
 
-    useEffect(() => {
-        setIsLoading(prev => ({ ...prev, settings: true }));
-        getAppConfig().then(config => {
+    const fetchData = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const [
+                config, liveClasses, notifications, posts, currentAffairs, videoLectures,
+                downloads, courses, scholarshipApps, students
+            ] = await Promise.all([
+                getAppConfig(), getLiveClasses(), getNotifications(), getPosts(),
+                getCurrentAffairs(), getVideoLectures(), getDownloads(), getCourses(),
+                getScholarshipApplications(), getStudents()
+            ]);
             settingsForm.reset({
                 scholarshipDeadline: toInputDateTimeFormat(config.scholarshipDeadline),
                 examDate: toInputDateTimeFormat(config.examDate),
                 admitCardDownloadStartDate: toInputDateTimeFormat(config.admitCardDownloadStartDate),
             });
-        }).finally(() => setIsLoading(prev => ({ ...prev, settings: false })));
-    }, [settingsForm]);
-
-    const handleTabChange = async (value: string) => {
-        if (value === 'scholarship-apps' && scholarshipApps.length === 0) {
-            setIsLoading(prev => ({ ...prev, apps: true }));
-            getScholarshipApplications().then(setScholarshipApps).finally(() => setIsLoading(prev => ({ ...prev, apps: false })));
-        } else if (value === 'students' && students.length === 0) {
-            setIsLoading(prev => ({ ...prev, students: true }));
-            getStudents().then(setStudents).finally(() => setIsLoading(prev => ({ ...prev, students: false })));
-        }
-    };
-    
-    const handleAction = async (action: () => Promise<void>, type: 'class' | 'notification' | 'settings', form: any) => {
-        setIsLoading(prev => ({ ...prev, [type]: true }));
-        try {
-            await action();
-            toast({ title: "Success", description: "Action completed successfully." });
-            if (type !== 'settings') form.reset();
+            setData({
+                liveClasses, notifications, posts, currentAffairs, videoLectures,
+                downloads, courses, scholarshipApps, students
+            });
         } catch (error) {
-            const err = error as Error;
-            toast({ variant: "destructive", title: "Error", description: err.message });
-            console.error(err);
+            toast({ variant: "destructive", title: "Error", description: "Failed to fetch data from server." });
         } finally {
-            setIsLoading(prev => ({ ...prev, [type]: false }));
+            setIsLoading(false);
         }
-    };
+    }, [settingsForm, toast]);
 
-    const handleSaveSettings = (values: SettingsForm) => {
-        const configData: AppConfig = {
+    useEffect(() => {
+        if (admin) {
+            fetchData();
+        }
+    }, [admin, fetchData]);
+
+    const handleSaveSettings = async (values: z.infer<typeof settingsSchema>) => {
+        const configData: Partial<AppConfig> = {
             ...(values.scholarshipDeadline && { scholarshipDeadline: Timestamp.fromDate(new Date(values.scholarshipDeadline)) }),
             ...(values.examDate && { examDate: Timestamp.fromDate(new Date(values.examDate)) }),
             ...(values.admitCardDownloadStartDate && { admitCardDownloadStartDate: Timestamp.fromDate(new Date(values.admitCardDownloadStartDate)) }),
         };
-        handleAction(() => updateAppConfig(configData), 'settings', settingsForm);
+        await updateAppConfig(configData);
+        toast({ title: "Settings Saved" });
     };
+
+    async function handleDelete(action: () => Promise<void>) {
+        await action();
+        toast({ title: "Item Deleted" });
+        fetchData();
+    }
 
     if (isAuthLoading) return <div className="flex justify-center items-center h-64"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
     if (!admin) { router.replace('/admin-login'); return null; }
@@ -110,100 +131,172 @@ export default function AdminPage() {
     return (
         <div className="space-y-6">
             <h1 className="text-3xl font-bold text-primary">{t('adminPanel')}</h1>
-            
-            <Tabs defaultValue="scholarship-apps" className="w-full" onValueChange={handleTabChange}>
-                <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
-                    <TabsTrigger value="scholarship-apps"><GraduationCap className="w-4 h-4 mr-2" />Apps</TabsTrigger>
-                    <TabsTrigger value="students"><Users className="w-4 h-4 mr-2" />Students</TabsTrigger>
-                    <TabsTrigger value="live-class"><Tv className="w-4 h-4 mr-2" />Classes</TabsTrigger>
-                    <TabsTrigger value="notification"><Bell className="w-4 h-4 mr-2" />Notifications</TabsTrigger>
-                    <TabsTrigger value="settings"><Settings className="w-4 h-4 mr-2" />Settings</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="scholarship-apps"><Card><CardHeader><CardTitle>Scholarship Applications</CardTitle></CardHeader><CardContent>
-                    {isLoading.apps ? <Loader2 className="mx-auto h-8 w-8 animate-spin" /> :
+            {isLoading ? <div className="flex justify-center p-10"><Loader2 className="h-10 w-10 animate-spin" /></div> : (
+                <Accordion type="multiple" collapsible className="w-full space-y-4">
+                    
+                    <AdminSection title={t('academySettings')} icon={Settings}>
+                        <form onSubmit={settingsForm.handleSubmit(handleSaveSettings)} className="space-y-4">
+                             <div><Label>{t('scholarshipDeadline')}</Label><Input type="datetime-local" {...settingsForm.register('scholarshipDeadline')} /></div>
+                             <div><Label>{t('examDate')}</Label><Input type="datetime-local" {...settingsForm.register('examDate')} /></div>
+                             <div><Label>{t('admitCardStartDate')}</Label><Input type="datetime-local" {...settingsForm.register('admitCardDownloadStartDate')} /></div>
+                             <Button type="submit">{t('saveSettings')}</Button>
+                        </form>
+                    </AdminSection>
+
+                    <AdminSection title={t('manageLiveClasses')} icon={Tv}>
+                        <CrudForm schema={liveClassSchema} onSubmit={addLiveClass} onRefresh={fetchData} fields={{title: 'text', link: 'url', scheduledAt: 'datetime-local'}} />
+                        <DataTable data={data.liveClasses} columns={['title', 'link']} onDelete={deleteLiveClass} onRefresh={fetchData} />
+                    </AdminSection>
+
+                    <AdminSection title={t('manageNotifications')} icon={Bell}>
+                         <CrudForm schema={notificationSchema} onSubmit={addNotification} onRefresh={fetchData} fields={{title: 'text', content: 'textarea'}} />
+                         <DataTable data={data.notifications} columns={['title', 'content']} onDelete={deleteNotification} onRefresh={fetchData} />
+                    </AdminSection>
+                    
+                    <AdminSection title={t('manageDailyPosts')} icon={Newspaper}>
+                        <CrudForm schema={postSchema} onSubmit={addPost} onRefresh={fetchData} fields={{title: 'text', content: 'textarea', imageUrl: 'url'}} />
+                        <DataTable data={data.posts} columns={['title', 'content']} onDelete={deletePost} onRefresh={fetchData} />
+                    </AdminSection>
+
+                    <AdminSection title={t('manageCurrentAffairs')} icon={ScrollText}>
+                        <CrudForm schema={currentAffairSchema} onSubmit={addCurrentAffair} onRefresh={fetchData} fields={{title: 'text', content: 'textarea'}} />
+                        <DataTable data={data.currentAffairs} columns={['title', 'content']} onDelete={deleteCurrentAffair} onRefresh={fetchData} />
+                    </AdminSection>
+                    
+                    <AdminSection title={t('manageVideoLectures')} icon={Video}>
+                        <CrudForm schema={videoLectureSchema} onSubmit={addVideoLecture} onRefresh={fetchData} fields={{title: 'text', videoUrl: 'url'}} />
+                        <DataTable data={data.videoLectures} columns={['title', 'videoUrl']} onDelete={deleteVideoLecture} onRefresh={fetchData} />
+                    </AdminSection>
+                    
+                    <AdminSection title={t('manageDownloads')} icon={FileDown}>
+                        <CrudForm schema={downloadSchema} onSubmit={addDownload} onRefresh={fetchData} fields={{title: 'text', pdfUrl: 'url'}} />
+                        <DataTable data={data.downloads} columns={['title', 'pdfUrl']} onDelete={deleteDownload} onRefresh={fetchData} />
+                    </AdminSection>
+
+                    <AdminSection title={t('manageCourses')} icon={BookCopy}>
+                        <CrudForm schema={courseSchema} onSubmit={addCourse} onRefresh={fetchData} fields={{title: 'text', description: 'textarea', imageUrl: 'url'}} />
+                        <DataTable data={data.courses} columns={['title', 'description']} onDelete={deleteCourse} onRefresh={fetchData} />
+                    </AdminSection>
+
+                    <AdminSection title="Scholarship Applications" icon={GraduationCap}>
                         <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Class</TableHead><TableHead>Details</TableHead><TableHead>Docs</TableHead><TableHead>Applied On</TableHead></TableRow></TableHeader>
                             <TableBody>
-                                {scholarshipApps.map(app => (
-                                    <TableRow key={app.id}>
-                                        <TableCell>{app.fullName}<br/><span className="text-muted-foreground text-xs">{app.fatherName}</span></TableCell>
-                                        <TableCell>{app.class}</TableCell>
-                                        <TableCell>UID: <span className="font-mono">{app.uniqueId}</span><br/>Mob: {app.mobile}</TableCell>
-                                        <TableCell className="flex gap-2">
-                                            <ImagePreview url={app.photoUrl} triggerText="Photo" />
-                                            <ImagePreview url={app.signatureUrl} triggerText="Sign" />
-                                        </TableCell>
-                                        <TableCell>{format(app.createdAt.toDate(), 'PPP')}</TableCell>
-                                    </TableRow>
+                                {data.scholarshipApps.map(app => (
+                                    <TableRow key={app.id}><TableCell>{app.fullName}<br/><span className="text-muted-foreground text-xs">{app.fatherName}</span></TableCell><TableCell>{app.class}</TableCell><TableCell>UID: <span className="font-mono">{app.uniqueId}</span><br/>Mob: {app.mobile}</TableCell><TableCell className="flex gap-2"><ImagePreview url={app.photoUrl} triggerText="Photo" /><ImagePreview url={app.signatureUrl} triggerText="Sign" /></TableCell><TableCell>{format(app.createdAt.toDate(), 'PPP')}</TableCell></TableRow>
                                 ))}
                             </TableBody>
-                        </Table>}
-                </CardContent></Card></TabsContent>
-                
-                <TabsContent value="students"><Card><CardHeader><CardTitle>Registered Students</CardTitle></CardHeader><CardContent>
-                    {isLoading.students ? <Loader2 className="mx-auto h-8 w-8 animate-spin" /> :
-                        <Table><TableHeader><TableRow><TableHead>Photo</TableHead><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Registered On</TableHead></TableRow></TableHeader>
-                            <TableBody>
-                                {students.map(s => (
-                                    <TableRow key={s.id}>
-                                        <TableCell><ImagePreview url={s.photoUrl} triggerText={<Image src={s.photoUrl || ''} alt="" width={40} height={40} className="rounded-full w-10 h-10 object-cover" data-ai-hint="student photo"/>} /></TableCell>
-                                        <TableCell>{s.name}<br/><span className="text-muted-foreground text-xs">{s.fatherName}</span></TableCell>
-                                        <TableCell>Class: {s.class}<br/>School: {s.school}</TableCell>
-                                        <TableCell>{format(s.createdAt.toDate(), 'PPP')}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>}
-                </CardContent></Card></TabsContent>
-                
-                <TabsContent value="live-class"><Card><CardHeader><CardTitle>Add New Live Class</CardTitle></CardHeader>
-                    <form onSubmit={classForm.handleSubmit(v => handleAction(() => addLiveClass(v), 'class', classForm))}>
-                        <CardContent className="space-y-4">
-                            <div><Label>Title</Label><Input {...classForm.register('title')} disabled={isLoading.class} /><p className="text-destructive text-sm">{classForm.formState.errors.title?.message}</p></div>
-                            <div><Label>Link</Label><Input type="url" {...classForm.register('link')} disabled={isLoading.class} /><p className="text-destructive text-sm">{classForm.formState.errors.link?.message}</p></div>
-                            <div><Label>Date & Time</Label><Input type="datetime-local" {...classForm.register('scheduledAt')} disabled={isLoading.class} /><p className="text-destructive text-sm">{classForm.formState.errors.scheduledAt?.message}</p></div>
-                        </CardContent>
-                        <CardFooter><Button type="submit" disabled={isLoading.class}>{isLoading.class && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Add Class</Button></CardFooter>
-                    </form>
-                </Card></TabsContent>
-                
-                <TabsContent value="notification"><Card><CardHeader><CardTitle>Post a New Notification</CardTitle></CardHeader>
-                    <form onSubmit={notificationForm.handleSubmit(v => handleAction(() => addNotification(v), 'notification', notificationForm))}>
-                        <CardContent className="space-y-4">
-                            <div><Label>Title</Label><Input {...notificationForm.register('title')} disabled={isLoading.notification} /><p className="text-destructive text-sm">{notificationForm.formState.errors.title?.message}</p></div>
-                            <div><Label>Content</Label><Textarea {...notificationForm.register('content')} disabled={isLoading.notification} /><p className="text-destructive text-sm">{notificationForm.formState.errors.content?.message}</p></div>
-                        </CardContent>
-                        <CardFooter><Button type="submit" disabled={isLoading.notification}>{isLoading.notification && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Post</Button></CardFooter>
-                    </form>
-                </Card></TabsContent>
-                
-                <TabsContent value="settings"><Card><CardHeader><CardTitle>Academy Settings</CardTitle><CardDescription>Manage important dates and deadlines for the academy.</CardDescription></CardHeader>
-                    <form onSubmit={settingsForm.handleSubmit(handleSaveSettings)}>
-                        <CardContent className="space-y-4">
-                            <div><Label>{t('scholarshipDeadline')}</Label><Input type="datetime-local" {...settingsForm.register('scholarshipDeadline')} disabled={isLoading.settings} /></div>
-                            <div><Label>{t('examDate')}</Label><Input type="datetime-local" {...settingsForm.register('examDate')} disabled={isLoading.settings} /></div>
-                            <div><Label>{t('admitCardStartDate')}</Label><Input type="datetime-local" {...settingsForm.register('admitCardDownloadStartDate')} disabled={isLoading.settings} /></div>
-                        </CardContent>
-                        <CardFooter><Button type="submit" disabled={isLoading.settings}>{isLoading.settings && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t('saveSettings')}</Button></CardFooter>
-                    </form>
-                </Card></TabsContent>
-            </Tabs>
+                        </Table>
+                    </AdminSection>
+
+                    <AdminSection title="Registered Students" icon={Users}>
+                       <Table><TableHeader><TableRow><TableHead>Photo</TableHead><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Registered On</TableHead></TableRow></TableHeader>
+                           <TableBody>
+                               {data.students.map(s => (
+                                   <TableRow key={s.id}><TableCell><ImagePreview url={s.photoUrl} triggerText={<Image src={s.photoUrl || ''} alt="" width={40} height={40} className="rounded-full w-10 h-10 object-cover" data-ai-hint="student photo"/>} /></TableCell><TableCell>{s.name}<br/><span className="text-muted-foreground text-xs">{s.fatherName}</span></TableCell><TableCell>Class: {s.class}<br/>School: {s.school}</TableCell><TableCell>{format(s.createdAt.toDate(), 'PPP')}</TableCell></TableRow>
+                               ))}
+                           </TableBody>
+                       </Table>
+                    </AdminSection>
+
+                </Accordion>
+            )}
         </div>
     );
 }
+
+// Reusable Components for Admin Page
+const AdminSection = ({ icon: Icon, title, children }: { icon: React.ElementType, title: string, children: React.ReactNode }) => (
+    <Card><AccordionItem value={title} className="border-b-0">
+        <AccordionTrigger className="p-6"><div className="flex items-center gap-3"><Icon className="h-6 w-6 text-primary" /><CardTitle>{title}</CardTitle></div></AccordionTrigger>
+        <AccordionContent className="p-6 pt-0">{children}</AccordionContent>
+    </AccordionItem></Card>
+);
+
+const CrudForm = ({ schema, onSubmit, onRefresh, fields }: { schema: z.ZodObject<any>, onSubmit: (data: any) => Promise<any>, onRefresh: () => void, fields: Record<string, 'text' | 'url' | 'textarea' | 'datetime-local'> }) => {
+    const { t } = useLanguage();
+    const form = useForm({ resolver: zodResolver(schema) });
+    const { toast } = useToast();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleFormSubmit = async (values: any) => {
+        setIsSubmitting(true);
+        try {
+            await onSubmit(values);
+            toast({ title: "Success", description: "Item added successfully." });
+            form.reset();
+            onRefresh();
+        } catch (error) {
+            toast({ variant: "destructive", title: "Error", description: (error as Error).message });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 mb-6 p-4 border rounded-lg">
+            {Object.entries(fields).map(([fieldName, fieldType]) => (
+                <div key={fieldName}>
+                    <Label className="capitalize">{t(fieldName as any) || fieldName.replace(/([A-Z])/g, ' $1')}</Label>
+                    {fieldType === 'textarea' ?
+                        <Textarea {...form.register(fieldName)} disabled={isSubmitting} /> :
+                        <Input type={fieldType} {...form.register(fieldName)} disabled={isSubmitting} />
+                    }
+                    <p className="text-destructive text-sm mt-1">{form.formState.errors[fieldName]?.message as string}</p>
+                </div>
+            ))}
+            <Button type="submit" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t('add')}</Button>
+        </form>
+    );
+};
+
+const DataTable = ({ data, columns, onDelete, onRefresh }: { data: any[], columns: string[], onDelete: (id: string) => Promise<void>, onRefresh: () => void }) => {
+    const { t } = useLanguage();
+    const { toast } = useToast();
+
+    const handleDelete = async (id: string) => {
+        try {
+            await onDelete(id);
+            toast({ title: "Item Deleted" });
+            onRefresh();
+        } catch (error) {
+            toast({ variant: "destructive", title: "Error", description: (error as Error).message });
+        }
+    };
+    
+    if (data.length === 0) return <p className="text-muted-foreground text-center p-4">{t('noData')}</p>;
+
+    return (
+        <Table><TableHeader><TableRow>
+            {columns.map(col => <TableHead key={col} className="capitalize">{t(col as any) || col}</TableHead>)}
+            <TableHead>{t('action')}</TableHead>
+        </TableRow></TableHeader>
+        <TableBody>
+            {data.map(item => (
+                <TableRow key={item.id}>
+                    {columns.map(col => <TableCell key={col} className="truncate max-w-xs">{item[col]}</TableCell>)}
+                    <TableCell>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild><Button variant="destructive" size="icon"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader><AlertDialogTitle>{t('confirmDelete')}</AlertDialogTitle><AlertDialogDescription>{t('confirmDeleteDesc')}</AlertDialogDescription></AlertDialogHeader>
+                                <AlertDialogFooter><AlertDialogCancel>{t('cancel')}</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(item.id)}>{t('delete')}</AlertDialogAction></AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </TableCell>
+                </TableRow>
+            ))}
+        </TableBody></Table>
+    );
+};
+
 
 const ImagePreview = ({ url, triggerText }: { url?: string; triggerText: React.ReactNode }) => {
     if (!url) return <span className="text-xs text-muted-foreground">N/A</span>;
     return (
         <AlertDialog>
-            <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-auto p-1">{triggerText}</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-                <AlertDialogHeader><AlertDialogTitle>Image Preview</AlertDialogTitle></AlertDialogHeader>
-                <div className="flex justify-center p-4">
-                    <Image src={url} alt="Preview" width={400} height={400} className="max-w-full h-auto rounded-md" />
-                </div>
+            <AlertDialogTrigger asChild><Button variant="ghost" size="sm" className="h-auto p-1">{triggerText}</Button></AlertDialogTrigger>
+            <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Image Preview</AlertDialogTitle></AlertDialogHeader>
+                <div className="flex justify-center p-4"><Image src={url} alt="Preview" width={400} height={400} className="max-w-full h-auto rounded-md" /></div>
             </AlertDialogContent>
         </AlertDialog>
     );

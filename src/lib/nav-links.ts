@@ -19,7 +19,8 @@ import {
     Users,
     List,
     Phone,
-    Cog
+    Cog,
+    BookCopy
   } from 'lucide-react';
   
   export const featureGridLinks = [
@@ -30,9 +31,7 @@ import {
       { href: "/daily-posts", icon: Newspaper, textKey: "dailyPosts" },
       { href: "/tests", icon: CheckSquare, textKey: "aiTest" },
       { href: "/ai-tutor", icon: GraduationCap, textKey: "aiTutor" },
-      { href: "/ai-chat", icon: MessageSquare, textKey: "aiChat" },
       { href: "/current-affairs", icon: ScrollText, textKey: "currentAffairs" },
-      { href: "/cutoff-checker", icon: Scissors, textKey: "cutoffChecker" },
       { href: "/toppers", icon: Trophy, textKey: "toppers" },
       { href: "/contact", icon: CircleDot, textKey: "contactUs" },
   ];
@@ -47,9 +46,7 @@ import {
     { href: "/downloads", icon: Download, textKey: "downloads" },
     { href: "/tests", icon: CheckSquare, textKey: "aiTest" },
     { href: "/ai-tutor", icon: GraduationCap, textKey: "aiTutor" },
-    { href: "/ai-chat", icon: MessageSquare, textKey: "aiChat" },
     { href: "/current-affairs", icon: ScrollText, textKey: "currentAffairs" },
-    { href: "/cutoff-checker", icon: Scissors, textKey: "cutoffChecker" },
     { href: "/toppers", icon: Trophy, textKey: "toppers" },
     { href: "/teachers", icon: Users, textKey: "teachers" },
     { href: "/school-list", icon: List, textKey: "schoolList" },
