@@ -86,7 +86,7 @@ export const translations = {
     applicationNumber: "Application Number",
     downloadCertificate: "Download & Print Certificate",
     saveApplicationNumberNoteTitle: "Important: Save Your Application Number",
-    saveApplicationNumberNoteContent: "Please save your Application Number shown above. You will need it to download your admit card after completing the payment.",
+    saveApplicationNumberNoteContent: "Please save your Application Number shown above. You will need it to download your admit card.",
 
     
     // Admit Card
@@ -94,6 +94,22 @@ export const translations = {
     admitCardDescription: "Enter your Application Number and the Unique ID provided after payment to download your admit card.",
     uniqueId: "Unique ID",
     admitCardDownloadBtn: "Download Admit Card",
+
+    // AI Tutor
+    aiTutorTitle: "AI Tutor",
+    aiTutorDescription: "Ask any academic question and get a detailed answer, subject, difficulty, and related questions for practice.",
+    askYourQuestion: "Ask your Question",
+    aiTutorPlaceholder: "For example: What is the formula for the area of a circle? Explain it.",
+    submitQuestion: "Get Answer",
+    aiIsThinking: "Getting your answer...",
+    answer: "Answer",
+    subject: "Subject",
+    difficulty: "Difficulty",
+    relatedQuestions: "Related Questions for Practice",
+
+    // Generic
+    comingSoon: "Coming Soon...",
+    loading: "Loading...",
 
   },
   hi: {
@@ -108,7 +124,7 @@ export const translations = {
     aiChat: "AI चैट",
     currentAffairs: "करेंट अफेयर्स",
     cutoffChecker: "कट-ऑफ देखें",
-    toppers: "टॉपर्स",
+    topers: "टॉपर्स",
     contactUs: "संपर्क करें",
     navHome: "होम",
     navCourses: "कोर्स",
@@ -180,7 +196,7 @@ export const translations = {
     applicationNumber: "आवेदन संख्या",
     downloadCertificate: "प्रमाणपत्र डाउनलोड और प्रिंट करें",
     saveApplicationNumberNoteTitle: "महत्वपूर्ण: अपना आवेदन क्रमांक सहेजें",
-    saveApplicationNumberNoteContent: "कृपया ऊपर दिखाया गया अपना आवेदन क्रमांक सहेज कर रखें। भुगतान पूरा करने के बाद आपको अपना एडमिट कार्ड डाउनलोड करने के लिए इसकी आवश्यकता होगी।",
+    saveApplicationNumberNoteContent: "कृपया ऊपर दिखाया गया अपना आवेदन क्रमांक सहेज कर रखें। आपको अपना एडमिट कार्ड डाउनलोड करने के लिए इसकी आवश्यकता होगी।",
 
 
     // Admit Card
@@ -189,5 +205,20 @@ export const translations = {
     uniqueId: "यूनिक आईडी",
     admitCardDownloadBtn: "एडमिट कार्ड डाउनलोड करें",
     
+    // AI Tutor
+    aiTutorTitle: "AI ट्यूटर",
+    aiTutorDescription: "कोई भी अकादमिक प्रश्न पूछें और विस्तृत उत्तर, विषय, कठिनाई स्तर और अभ्यास के लिए संबंधित प्रश्न प्राप्त करें।",
+    askYourQuestion: "अपना प्रश्न पूछें",
+    aiTutorPlaceholder: "उदाहरण के लिए: वृत्त के क्षेत्रफल का सूत्र क्या है? इसे समझाइए।",
+    submitQuestion: "उत्तर प्राप्त करें",
+    aiIsThinking: "आपका उत्तर तैयार हो रहा है...",
+    answer: "उत्तर",
+    subject: "विषय",
+    difficulty: "कठिनाई",
+    relatedQuestions: "अभ्यास के लिए संबंधित प्रश्न",
+
+    // Generic
+    comingSoon: "जल्द आ रहा है...",
+    loading: "लोड हो रहा है...",
   }
 };
