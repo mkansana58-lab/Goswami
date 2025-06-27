@@ -21,9 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const liveClassSchema = z.object({
     title: z.string().min(5, "Title must be at least 5 characters long."),
     link: z.string().url("Must be a valid URL."),
-    scheduledAt: z.string().refine((val) => !isNaN(Date.parse(val)), {
-        message: "A valid date and time must be selected.",
-    }),
+    scheduledAt: z.string().min(1, { message: "A valid date and time must be selected." }),
 });
 
 const notificationSchema = z.object({
