@@ -1,23 +1,33 @@
 
 "use client";
 
+import { useState, useEffect } from 'react';
 import { useLanguage } from "@/hooks/use-language";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Trophy } from "lucide-react";
-
-// Placeholder data for toppers
-const toppersData = [
-  { rank: 1, name: "Rohan Sharma", score: "195/200", avatar: "https://placehold.co/40x40.png?text=RS", test: "RMS Mock Test - Class 9" },
-  { rank: 2, name: "Priya Singh", score: "170/175", avatar: "https://placehold.co/40x40.png?text=PS", test: "RMS Mock Test - Class 6" },
-  { rank: 3, name: "Amit Kumar", score: "75/80", avatar: "https://placehold.co/40x40.png?text=AK", test: "JNV Mock Test - Class 6" },
-  { rank: 4, name: "Sneha Patel", score: "188/200", avatar: "https://placehold.co/40x40.png?text=SP", test: "RMS Mock Test - Class 9" },
-  { rank: 5, name: "Vikram Rathore", score: "165/175", avatar: "https://placehold.co/40x40.png?text=VR", test: "RMS Mock Test - Class 6" },
-];
+import { Trophy, Loader2 } from "lucide-react";
+import { getTestResults, type TestResultData } from '@/lib/firebase';
 
 export default function ToppersPage() {
     const { t } = useLanguage();
+    const [toppers, setToppers] = useState<TestResultData[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchToppers = async () => {
+            setIsLoading(true);
+            try {
+                const results = await getTestResults();
+                setToppers(results);
+            } catch (error) {
+                console.error("Failed to fetch toppers:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchToppers();
+    }, []);
 
     return (
         <div className="space-y-6">
@@ -31,34 +41,42 @@ export default function ToppersPage() {
                     <CardTitle>{t('toppersList')}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[50px]">{t('rank')}</TableHead>
-                                <TableHead>{t('studentName')}</TableHead>
-                                <TableHead>{t('testName')}</TableHead>
-                                <TableHead className="text-right">{t('score')}</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {toppersData.map((topper) => (
-                                <TableRow key={topper.rank}>
-                                    <TableCell className="font-bold text-lg text-primary">{topper.rank}</TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <Avatar className="h-9 w-9">
-                                                <AvatarImage src={topper.avatar} alt={topper.name} />
-                                                <AvatarFallback>{topper.name.substring(0, 2)}</AvatarFallback>
-                                            </Avatar>
-                                            <span className="font-medium">{topper.name}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-muted-foreground">{topper.test}</TableCell>
-                                    <TableCell className="text-right font-semibold">{topper.score}</TableCell>
+                    {isLoading ? (
+                        <div className="flex justify-center items-center h-40">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        </div>
+                    ) : toppers.length === 0 ? (
+                        <p className="text-center text-muted-foreground">No topper data available yet.</p>
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[50px]">{t('rank')}</TableHead>
+                                    <TableHead>{t('studentName')}</TableHead>
+                                    <TableHead>{t('testName')}</TableHead>
+                                    <TableHead className="text-right">{t('score')}</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {toppers.map((topper, index) => (
+                                    <TableRow key={topper.id}>
+                                        <TableCell className="font-bold text-lg text-primary">{index + 1}</TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="h-9 w-9">
+                                                    <AvatarImage src={`https://placehold.co/40x40.png?text=${topper.studentName.substring(0,2)}`} alt={topper.studentName} />
+                                                    <AvatarFallback>{topper.studentName.substring(0, 2)}</AvatarFallback>
+                                                </Avatar>
+                                                <span className="font-medium">{topper.studentName}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-muted-foreground">{topper.testName}</TableCell>
+                                        <TableCell className="text-right font-semibold">{topper.score}/{topper.totalQuestions} ({topper.percentage.toFixed(2)}%)</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
                 </CardContent>
             </Card>
         </div>

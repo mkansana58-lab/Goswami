@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useLanguage } from "@/hooks/use-language";
@@ -25,9 +25,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { Info, User, BookOpen, MapPin, Upload } from "lucide-react";
+import { Info, User, BookOpen, MapPin, Upload, Loader2 } from "lucide-react";
 import { ConfirmationCertificate } from "@/components/scholarship/confirmation-certificate";
 import type { FormDataType } from "@/components/scholarship/confirmation-certificate";
+import { addScholarshipApplication } from "@/lib/firebase";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
     fullName: z.string().min(3, "Full name is required"),
@@ -52,7 +54,9 @@ const steps = [
 
 export default function ScholarshipPage() {
     const { t } = useLanguage();
+    const { toast } = useToast();
     const [currentStep, setCurrentStep] = useState(0);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [formData, setFormData] = useState<FormDataType | null>(null);
     const [applicationNumber, setApplicationNumber] = useState("");
@@ -75,27 +79,32 @@ export default function ScholarshipPage() {
 
     type FieldName = keyof z.infer<typeof formSchema>;
 
-    const processForm = (data: z.infer<typeof formSchema>) => {
-        console.log("Form submitted successfully:", data);
+    const processForm = async (data: z.infer<typeof formSchema>) => {
+        setIsSubmitting(true);
         const appNum = `GSA${new Date().getFullYear()}${Math.floor(10000 + Math.random() * 90000)}`;
-        setApplicationNumber(appNum);
         
-        // We need to get data URIs for images to display them.
         const readerPhoto = new FileReader();
         readerPhoto.onload = (ePhoto) => {
             const photoDataUrl = ePhoto.target?.result as string;
             
             const readerSignature = new FileReader();
-            readerSignature.onload = (eSignature) => {
+            readerSignature.onload = async (eSignature) => {
                 const signatureDataUrl = eSignature.target?.result as string;
 
-                const finalData = {
-                    ...data,
-                    photoUrl: photoDataUrl,
-                    signatureUrl: signatureDataUrl,
-                };
-                setFormData(finalData);
-                setIsSubmitted(true);
+                const finalData = { ...data, photoUrl: photoDataUrl, signatureUrl: signatureDataUrl };
+                
+                try {
+                    await addScholarshipApplication({ ...data, applicationNumber: appNum, photoUrl: photoDataUrl, signatureUrl: signatureDataUrl });
+                    setApplicationNumber(appNum);
+                    setFormData(finalData);
+                    setIsSubmitted(true);
+                    toast({ title: "Success", description: "Application submitted successfully." });
+                } catch (error) {
+                    console.error("Failed to save scholarship application:", error);
+                    toast({ variant: "destructive", title: "Submission Failed", description: "Could not save your application. Please try again." });
+                } finally {
+                    setIsSubmitting(false);
+                }
             };
             readerSignature.readAsDataURL(data.signature[0]);
         };
@@ -103,7 +112,6 @@ export default function ScholarshipPage() {
     };
 
     const next = async () => {
-        // For the first step (instructions), just go to the next step without validation.
         if (currentStep === 0) {
             setCurrentStep(step => step + 1);
             return;
@@ -114,11 +122,9 @@ export default function ScholarshipPage() {
         
         if (!output) return;
 
-        // If it's the last step, handle form submission.
         if (currentStep === steps.length - 1) {
             await form.handleSubmit(processForm)();
         } else {
-            // Otherwise, just go to the next step.
             setCurrentStep(step => step + 1);
         }
     };
@@ -163,79 +169,44 @@ export default function ScholarshipPage() {
                             </div>
                         )}
                         {currentStep === 1 && (
-                            <div className="space-y-4">
-                                <Label>{t('fullName')}</Label>
-                                <Input {...form.register('fullName')} />
-                                {form.formState.errors.fullName && <p className="text-destructive text-xs">{form.formState.errors.fullName.message}</p>}
-                                
-                                <Label>{t('fathersName')}</Label>
-                                <Input {...form.register('fatherName')} />
-                                {form.formState.errors.fatherName && <p className="text-destructive text-xs">{form.formState.errors.fatherName.message}</p>}
-
-                                <Label>{t('mobileNumber')}</Label>
-                                <Input {...form.register('mobile')} type="tel" />
-                                {form.formState.errors.mobile && <p className="text-destructive text-xs">{form.formState.errors.mobile.message}</p>}
-
-                                <Label>{t('emailAddress')}</Label>
-                                <Input {...form.register('email')} type="email" />
-                                {form.formState.errors.email && <p className="text-destructive text-xs">{form.formState.errors.email.message}</p>}
+                             <div className="space-y-4">
+                                <Label>{t('fullName')}</Label><Input {...form.register('fullName')} disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.fullName?.message}</p>
+                                <Label>{t('fathersName')}</Label><Input {...form.register('fatherName')} disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.fatherName?.message}</p>
+                                <Label>{t('mobileNumber')}</Label><Input {...form.register('mobile')} type="tel" disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.mobile?.message}</p>
+                                <Label>{t('emailAddress')}</Label><Input {...form.register('email')} type="email" disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.email?.message}</p>
                             </div>
                         )}
                          {currentStep === 2 && (
                             <div className="space-y-4">
-                                <Label>{t('age')}</Label>
-                                <Input {...form.register('age')} type="number" />
-                                {form.formState.errors.age && <p className="text-destructive text-xs">{form.formState.errors.age.message}</p>}
-                                
+                                <Label>{t('age')}</Label><Input {...form.register('age')} type="number" disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.age?.message}</p>
                                 <Label>{t('selectClass')}</Label>
-                                 <Select onValueChange={(value) => form.setValue('class', value as "5"|"6"|"7"|"8"|"9")} defaultValue={form.getValues('class')}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder={t('selectClass')} />
-                                    </SelectTrigger>
+                                 <Select onValueChange={(value) => form.setValue('class', value as "5"|"6"|"7"|"8"|"9")} defaultValue={form.getValues('class')} disabled={isSubmitting}>
+                                    <SelectTrigger><SelectValue placeholder={t('selectClass')} /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="5">Class 5</SelectItem>
-                                        <SelectItem value="6">Class 6</SelectItem>
-                                        <SelectItem value="7">Class 7</SelectItem>
-                                        <SelectItem value="8">Class 8</SelectItem>
-                                        <SelectItem value="9">Class 9</SelectItem>
+                                        <SelectItem value="5">Class 5</SelectItem><SelectItem value="6">Class 6</SelectItem><SelectItem value="7">Class 7</SelectItem><SelectItem value="8">Class 8</SelectItem><SelectItem value="9">Class 9</SelectItem>
                                     </SelectContent>
-                                </Select>
-                                {form.formState.errors.class && <p className="text-destructive text-xs">{form.formState.errors.class.message}</p>}
-                                
-                                <Label>{t('schoolName')}</Label>
-                                <Input {...form.register('school')} />
-                                {form.formState.errors.school && <p className="text-destructive text-xs">{form.formState.errors.school.message}</p>}
+                                </Select><p className="text-destructive text-xs">{form.formState.errors.class?.message}</p>
+                                <Label>{t('schoolName')}</Label><Input {...form.register('school')} disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.school?.message}</p>
                             </div>
                         )}
                         {currentStep === 3 && (
                             <div className="space-y-4">
-                                <Label>{t('fullAddress')}</Label>
-                                <Input {...form.register('address')} placeholder={t('fullAddressPlaceholder')}/>
-                                {form.formState.errors.address && <p className="text-destructive text-xs">{form.formState.errors.address.message}</p>}
+                                <Label>{t('fullAddress')}</Label><Input {...form.register('address')} placeholder={t('fullAddressPlaceholder')} disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.address?.message}</p>
                             </div>
                         )}
                         {currentStep === 4 && (
                             <div className="space-y-4">
-                               <div className="space-y-2">
-                                    <Label htmlFor="photo">{t('uploadPhoto')}</Label>
-                                    <Input id="photo" type="file" accept="image/*" {...form.register('photo')} />
-                                    {form.formState.errors.photo && <p className="text-destructive text-xs">{form.formState.errors.photo.message as string}</p>}
-                               </div>
-                               <div className="space-y-2">
-                                    <Label htmlFor="signature">{t('uploadSignature')}</Label>
-                                    <Input id="signature" type="file" accept="image/*" {...form.register('signature')} />
-                                    {form.formState.errors.signature && <p className="text-destructive text-xs">{form.formState.errors.signature.message as string}</p>}
-                               </div>
+                               <div><Label htmlFor="photo">{t('uploadPhoto')}</Label><Input id="photo" type="file" accept="image/*" {...form.register('photo')} disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.photo?.message as string}</p></div>
+                               <div><Label htmlFor="signature">{t('uploadSignature')}</Label><Input id="signature" type="file" accept="image/*" {...form.register('signature')} disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.signature?.message as string}</p></div>
                             </div>
                         )}
                     </form>
                 </CardContent>
                 <CardFooter>
                     <div className="w-full flex justify-between">
-                         <Button variant="outline" onClick={prev} disabled={currentStep === 0}>
-                            {t('previousStep')}
-                        </Button>
-                        <Button onClick={next}>
+                         <Button variant="outline" onClick={prev} disabled={currentStep === 0 || isSubmitting}>{t('previousStep')}</Button>
+                        <Button onClick={next} disabled={isSubmitting}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {currentStep === 0 ? t('startApplication') : (currentStep === steps.length - 1 ? t('submitApplication') : t('nextStep'))}
                         </Button>
                     </div>

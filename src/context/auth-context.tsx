@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { addStudent } from '@/lib/firebase';
 
 interface Student {
   name: string;
@@ -57,6 +57,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const studentData = { name };
     localStorage.setItem('student', JSON.stringify(studentData));
     setStudent(studentData);
+    try {
+        await addStudent(name);
+    } catch (error) {
+        console.error("Failed to add student to Firestore", error);
+    }
     return true;
   }, []);
 

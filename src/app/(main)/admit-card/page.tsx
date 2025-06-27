@@ -8,29 +8,44 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { getScholarshipApplicationByNumber, type ScholarshipApplicationData } from '@/lib/firebase';
+import { Loader2 } from 'lucide-react';
+import { AdmitCardDisplay } from '@/components/scholarship/admit-card-display';
 
 export default function AdmitCardPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [applicationNumber, setApplicationNumber] = useState('');
   const [uniqueId, setUniqueId] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [admitCardData, setAdmitCardData] = useState<ScholarshipApplicationData | null>(null);
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!applicationNumber || !uniqueId) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please enter both Application Number and Unique ID.",
+        description: "Please enter both Application Number and Unique ID (your mobile number).",
       });
       return;
     }
-    // In a real app, you would fetch and generate the admit card PDF here.
-    // For now, this is a demo.
-    console.log(`Attempting to download admit card for App No: ${applicationNumber} with Unique ID: ${uniqueId}`);
-    toast({
-      title: "Success",
-      description: `Downloading admit card for Application No: ${applicationNumber}. (This is a demo)`,
-    });
+    
+    setIsLoading(true);
+    setAdmitCardData(null);
+    try {
+        const data = await getScholarshipApplicationByNumber(applicationNumber, uniqueId);
+        if (data) {
+            setAdmitCardData(data);
+            toast({ title: "Admit Card Found", description: "Your admit card is displayed below." });
+        } else {
+            toast({ variant: "destructive", title: "Not Found", description: "Application number or unique ID is incorrect." });
+        }
+    } catch (error) {
+        console.error("Error fetching admit card:", error);
+        toast({ variant: "destructive", title: "Error", description: "An error occurred while fetching your admit card." });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -49,22 +64,33 @@ export default function AdmitCardPage() {
               placeholder="GSA2024..." 
               value={applicationNumber}
               onChange={(e) => setApplicationNumber(e.target.value)}
+              disabled={isLoading}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="uniqueId">{t('uniqueId')}</Label>
+            <Label htmlFor="uniqueId">{t('mobileNumber')}</Label>
             <Input 
               id="uniqueId" 
-              placeholder="Enter your Unique ID" 
+              placeholder="Enter your 10-digit mobile number" 
               value={uniqueId}
               onChange={(e) => setUniqueId(e.target.value)}
+              disabled={isLoading}
             />
           </div>
         </CardContent>
         <CardFooter>
-          <Button className="w-full" onClick={handleDownload}>{t('admitCardDownloadBtn')}</Button>
+          <Button className="w-full" onClick={handleDownload} disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {t('admitCardDownloadBtn')}
+          </Button>
         </CardFooter>
       </Card>
+
+      {admitCardData && (
+        <div className="mt-8">
+            <AdmitCardDisplay data={admitCardData} />
+        </div>
+      )}
     </div>
   );
 }
