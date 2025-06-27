@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { getLiveClasses, type LiveClass } from '@/lib/firebase';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioTower, Calendar, Clock, ExternalLink, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -13,9 +13,14 @@ export default function LiveClassesPage() {
     const { t } = useLanguage();
     const [classes, setClasses] = useState<LiveClass[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const isFirebaseConfigured = !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
     useEffect(() => {
         async function fetchClasses() {
+            if (!isFirebaseConfigured) {
+                setIsLoading(false);
+                return;
+            }
             setIsLoading(true);
             try {
                 const fetchedClasses = await getLiveClasses();
@@ -27,7 +32,7 @@ export default function LiveClassesPage() {
             }
         }
         fetchClasses();
-    }, []);
+    }, [isFirebaseConfigured]);
 
     const formatScheduledAt = (timestamp: any) => {
         if (!timestamp || typeof timestamp.toDate !== 'function') {
@@ -48,7 +53,16 @@ export default function LiveClassesPage() {
                 <p className="text-muted-foreground">Join our live interactive sessions.</p>
             </div>
             
-            {isLoading ? (
+            {!isFirebaseConfigured ? (
+                 <Card className="border-destructive bg-destructive/10">
+                    <CardHeader>
+                        <CardTitle className="text-destructive">Firebase Not Configured</CardTitle>
+                        <CardDescription className="text-destructive/80">
+                            The application is missing Firebase configuration. This page cannot display live classes.
+                        </CardDescription>
+                    </CardHeader>
+                </Card>
+            ) : isLoading ? (
                 <div className="flex flex-col items-center justify-center min-h-[300px]">
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
                     <p className="mt-4 text-muted-foreground">Loading classes...</p>

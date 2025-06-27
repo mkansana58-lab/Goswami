@@ -32,11 +32,16 @@ import { formatDistanceToNow } from 'date-fns';
 export function Header() {
   const { t } = useLanguage();
   const router = useRouter();
-  const { admin, logout } = useAuth();
+  const { admin, student, logout } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
+  const isFirebaseConfigured = !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   const fetchNotifications = async () => {
+    if (!isFirebaseConfigured) {
+        setIsLoadingNotifications(false);
+        return;
+    }
     setIsLoadingNotifications(true);
     try {
         const fetched = await getNotifications();
@@ -146,7 +151,11 @@ export function Header() {
             <DropdownMenuContent align="end" className="w-80 md:w-96">
                 <DropdownMenuLabel>Notifications</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {isLoadingNotifications ? (
+                {!isFirebaseConfigured ? (
+                    <DropdownMenuItem disabled className="justify-center text-destructive">
+                        Firebase not configured.
+                    </DropdownMenuItem>
+                ) : isLoadingNotifications ? (
                     <DropdownMenuItem disabled className="justify-center">
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Loading...
@@ -170,12 +179,15 @@ export function Header() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full text-primary">
-                <User className="h-6 w-6" />
+                 <Avatar className="h-8 w-8">
+                    <AvatarImage src={`https://placehold.co/40x40.png?text=${(student?.name || 'G')[0]}`} data-ai-hint="user avatar" />
+                    <AvatarFallback>{(student?.name || 'G')[0]}</AvatarFallback>
+                </Avatar>
                 <span className="sr-only">Profile</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>{t('myAccount')}</DropdownMenuLabel>
+              <DropdownMenuLabel>{student?.name || t('myAccount')}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => router.push('/account')}>
                 {t('profile')}

@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useLanguage } from "@/hooks/use-language";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -38,6 +38,7 @@ export default function AdminPage() {
     const [isNotificationLoading, setIsNotificationLoading] = useState(false);
     const { admin, isLoading: isAuthLoading } = useAuth();
     const router = useRouter();
+    const isFirebaseConfigured = !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
     const classForm = useForm<z.infer<typeof liveClassSchema>>({
         resolver: zodResolver(liveClassSchema),
@@ -93,6 +94,17 @@ export default function AdminPage() {
     return (
         <div className="space-y-6">
             <h1 className="text-3xl font-bold text-primary">{t('adminPanel')}</h1>
+            
+            {!isFirebaseConfigured && (
+                <Card className="border-destructive bg-destructive/10">
+                    <CardHeader>
+                        <CardTitle className="text-destructive">Firebase Not Configured</CardTitle>
+                        <CardDescription className="text-destructive/80">
+                            The application is missing Firebase configuration. Please set up your Firebase environment variables to enable admin features. The forms below are disabled.
+                        </CardDescription>
+                    </CardHeader>
+                </Card>
+            )}
 
             <Tabs defaultValue="live-class" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
@@ -109,22 +121,22 @@ export default function AdminPage() {
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="class-title">Class Title</Label>
-                                    <Input id="class-title" {...classForm.register('title')} disabled={isClassLoading} />
+                                    <Input id="class-title" {...classForm.register('title')} disabled={isClassLoading || !isFirebaseConfigured} />
                                     {classForm.formState.errors.title && <p className="text-destructive text-sm">{classForm.formState.errors.title.message}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="link">Meeting Link</Label>
-                                    <Input id="link" type="url" {...classForm.register('link')} disabled={isClassLoading} />
+                                    <Input id="link" type="url" {...classForm.register('link')} disabled={isClassLoading || !isFirebaseConfigured} />
                                     {classForm.formState.errors.link && <p className="text-destructive text-sm">{classForm.formState.errors.link.message}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="scheduledAt">Date and Time</Label>
-                                    <Input id="scheduledAt" type="datetime-local" {...classForm.register('scheduledAt')} disabled={isClassLoading} />
+                                    <Input id="scheduledAt" type="datetime-local" {...classForm.register('scheduledAt')} disabled={isClassLoading || !isFirebaseConfigured} />
                                     {classForm.formState.errors.scheduledAt && <p className="text-destructive text-sm">{classForm.formState.errors.scheduledAt.message}</p>}
                                 </div>
                             </CardContent>
                             <CardFooter>
-                                <Button type="submit" disabled={isClassLoading}>
+                                <Button type="submit" disabled={isClassLoading || !isFirebaseConfigured}>
                                     {isClassLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     Add Class
                                 </Button>
@@ -142,17 +154,17 @@ export default function AdminPage() {
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="notification-title">Title</Label>
-                                    <Input id="notification-title" {...notificationForm.register('title')} disabled={isNotificationLoading} />
+                                    <Input id="notification-title" {...notificationForm.register('title')} disabled={isNotificationLoading || !isFirebaseConfigured} />
                                     {notificationForm.formState.errors.title && <p className="text-destructive text-sm">{notificationForm.formState.errors.title.message}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="content">Content</Label>
-                                    <Textarea id="content" {...notificationForm.register('content')} disabled={isNotificationLoading} rows={5} />
+                                    <Textarea id="content" {...notificationForm.register('content')} disabled={isNotificationLoading || !isFirebaseConfigured} rows={5} />
                                     {notificationForm.formState.errors.content && <p className="text-destructive text-sm">{notificationForm.formState.errors.content.message}</p>}
                                 </div>
                             </CardContent>
                             <CardFooter>
-                                <Button type="submit" disabled={isNotificationLoading}>
+                                <Button type="submit" disabled={isNotificationLoading || !isFirebaseConfigured}>
                                     {isNotificationLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     Post Notification
                                 </Button>
