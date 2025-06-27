@@ -1,29 +1,30 @@
-
 // firebase.ts
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getFirestore, collection, getDocs, type Firestore, query, orderBy, Timestamp, addDoc } from "firebase/firestore";
 
 // Firebase configuration from environment variables
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+export const firebaseConfig = {
+  apiKey: "AIzaSyCVyBoofvGBEpI-HM5Z7iIXVwstOTKnHzQ",
+  authDomain: "studio-6ppyt.firebaseapp.com",
+  projectId: "studio-6ppyt",
+  storageBucket: "studio-6ppyt.firebasestorage.app",
+  messagingSenderId: "783387760146",
+  appId: "1:783387760146:web:ef987dfc8af6a19354eacb",
+  measurementId: "G-HL4DFRFFHV"
 };
 
 let app: FirebaseApp;
 let db: Firestore;
 
 function initializeFirebase() {
-    if (getApps().length) {
-        app = getApps()[0];
-    } else {
-        app = initializeApp(firebaseConfig);
+    if (firebaseConfig.projectId) {
+        if (getApps().length) {
+            app = getApps()[0];
+        } else {
+            app = initializeApp(firebaseConfig);
+        }
+        db = getFirestore(app);
     }
-    db = getFirestore(app);
 }
 
 // Ensure Firebase is initialized

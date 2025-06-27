@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/hooks/use-language';
-import { getLiveClasses, type LiveClass } from '@/lib/firebase';
+import { getLiveClasses, type LiveClass, firebaseConfig } from '@/lib/firebase';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioTower, Calendar, Clock, ExternalLink, Loader2 } from 'lucide-react';
@@ -13,7 +13,7 @@ export default function LiveClassesPage() {
     const { t } = useLanguage();
     const [classes, setClasses] = useState<LiveClass[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const isFirebaseConfigured = !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    const isFirebaseConfigured = !!firebaseConfig.projectId;
 
     useEffect(() => {
         async function fetchClasses() {

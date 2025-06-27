@@ -25,7 +25,7 @@ import { sidebarLinks } from '@/lib/nav-links';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { useAuth } from '@/hooks/use-auth';
-import { getNotifications, type Notification } from '@/lib/firebase';
+import { getNotifications, type Notification, firebaseConfig } from '@/lib/firebase';
 import { formatDistanceToNow } from 'date-fns';
 
 
@@ -35,7 +35,7 @@ export function Header() {
   const { admin, student, logout } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
-  const isFirebaseConfigured = !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const isFirebaseConfigured = !!firebaseConfig.projectId;
 
   const fetchNotifications = async () => {
     if (!isFirebaseConfigured) {

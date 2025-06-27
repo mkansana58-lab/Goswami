@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { addLiveClass, addNotification } from '@/lib/firebase';
+import { addLiveClass, addNotification, firebaseConfig } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
@@ -36,7 +36,7 @@ export default function AdminPage() {
     const [isNotificationLoading, setIsNotificationLoading] = useState(false);
     const { admin, isLoading: isAuthLoading } = useAuth();
     const router = useRouter();
-    const isFirebaseConfigured = !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    const isFirebaseConfigured = !!firebaseConfig.projectId;
 
     const classForm = useForm<z.infer<typeof liveClassSchema>>({
         resolver: zodResolver(liveClassSchema),
