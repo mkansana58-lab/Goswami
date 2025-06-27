@@ -83,6 +83,8 @@ export default function ScholarshipPage() {
         setIsSubmitting(true);
         const appNum = `GSA${new Date().getFullYear()}${Math.floor(10000 + Math.random() * 90000)}`;
         
+        const { photo, signature, ...restOfData } = data;
+
         const readerPhoto = new FileReader();
         readerPhoto.onload = (ePhoto) => {
             const photoDataUrl = ePhoto.target?.result as string;
@@ -91,12 +93,18 @@ export default function ScholarshipPage() {
             readerSignature.onload = async (eSignature) => {
                 const signatureDataUrl = eSignature.target?.result as string;
 
-                const finalData = { ...data, photoUrl: photoDataUrl, signatureUrl: signatureDataUrl };
+                const finalDataForUI = { ...data, photoUrl: photoDataUrl, signatureUrl: signatureDataUrl };
+                const dataForFirestore = {
+                    ...restOfData,
+                    applicationNumber: appNum,
+                    photoUrl: photoDataUrl,
+                    signatureUrl: signatureDataUrl,
+                };
                 
                 try {
-                    await addScholarshipApplication({ ...data, applicationNumber: appNum, photoUrl: photoDataUrl, signatureUrl: signatureDataUrl });
+                    await addScholarshipApplication(dataForFirestore);
                     setApplicationNumber(appNum);
-                    setFormData(finalData);
+                    setFormData(finalDataForUI);
                     setIsSubmitted(true);
                     toast({ title: "Success", description: "Application submitted successfully." });
                 } catch (error) {
@@ -106,9 +114,9 @@ export default function ScholarshipPage() {
                     setIsSubmitting(false);
                 }
             };
-            readerSignature.readAsDataURL(data.signature[0]);
+            readerSignature.readAsDataURL(signature[0]);
         };
-        readerPhoto.readAsDataURL(data.photo[0]);
+        readerPhoto.readAsDataURL(photo[0]);
     };
 
     const next = async () => {
