@@ -13,10 +13,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { addLiveClass, addNotification, firebaseConfig } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const liveClassSchema = z.object({
     title: z.string().min(5, "Title must be at least 5 characters long."),
@@ -36,6 +37,7 @@ export default function AdminPage() {
     const [isNotificationLoading, setIsNotificationLoading] = useState(false);
     const { admin, isLoading: isAuthLoading } = useAuth();
     const router = useRouter();
+    const isFirebaseConfigured = !!firebaseConfig.projectId;
 
     const classForm = useForm<z.infer<typeof liveClassSchema>>({
         resolver: zodResolver(liveClassSchema),
@@ -49,17 +51,20 @@ export default function AdminPage() {
 
     const handleAddClass = async (values: z.infer<typeof liveClassSchema>) => {
         setIsClassLoading(true);
+        toast({ title: "Submitting...", description: "Adding live class to the database." });
         try {
             await addLiveClass(values);
             toast({ title: "Success", description: "Live class has been added successfully." });
             classForm.reset();
         } catch (error) {
-            console.error("Error adding live class:", error);
+            console.error("FULL ERROR object adding live class:", error);
             const errorMessage = (error as Error).message;
+            const errorCode = (error as any).code;
             toast({ 
                 variant: "destructive", 
-                title: "Error adding live class", 
-                description: `Failed: ${errorMessage}. Please check Firebase security rules.` 
+                title: `Error: ${errorCode || 'Unknown Code'}`,
+                description: `Failed: ${errorMessage}. Please check browser console.`,
+                duration: 9000,
             });
         } finally {
             setIsClassLoading(false);
@@ -68,17 +73,20 @@ export default function AdminPage() {
 
     const handleAddNotification = async (values: z.infer<typeof notificationSchema>) => {
         setIsNotificationLoading(true);
+        toast({ title: "Submitting...", description: "Adding notification to the database." });
         try {
             await addNotification(values);
             toast({ title: "Success", description: "Notification has been posted." });
             notificationForm.reset();
         } catch (error) {
-            console.error("Error adding notification:", error);
+            console.error("FULL ERROR object adding notification:", error);
             const errorMessage = (error as Error).message;
+            const errorCode = (error as any).code;
             toast({ 
                 variant: "destructive", 
-                title: "Error adding notification", 
-                description: `Failed: ${errorMessage}. Please check Firebase security rules.`
+                title: `Error: ${errorCode || 'Unknown Code'}`, 
+                description: `Failed: ${errorMessage}. Please check browser console.`,
+                duration: 9000,
             });
         } finally {
             setIsNotificationLoading(false);
@@ -97,15 +105,26 @@ export default function AdminPage() {
         router.replace('/admin-login');
         return null;
     }
+    
+    const isFormDisabled = !isFirebaseConfigured || isClassLoading || isNotificationLoading;
 
     return (
         <div className="space-y-6">
             <h1 className="text-3xl font-bold text-primary">{t('adminPanel')}</h1>
+
+            {!isFirebaseConfigured && (
+                 <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                        Firebase is not connected. Features for adding classes and notifications are disabled. Please connect a Firebase project in the Studio UI.
+                    </AlertDescription>
+                </Alert>
+            )}
             
             <Tabs defaultValue="live-class" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="live-class">Add Live Class</TabsTrigger>
-                    <TabsTrigger value="notification">Add Notification</TabsTrigger>
+                    <TabsTrigger value="live-class" disabled={!isFirebaseConfigured}>Add Live Class</TabsTrigger>
+                    <TabsTrigger value="notification" disabled={!isFirebaseConfigured}>Add Notification</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="live-class">
@@ -117,22 +136,22 @@ export default function AdminPage() {
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="class-title">Class Title</Label>
-                                    <Input id="class-title" {...classForm.register('title')} disabled={isClassLoading} />
+                                    <Input id="class-title" {...classForm.register('title')} disabled={isFormDisabled} />
                                     {classForm.formState.errors.title && <p className="text-destructive text-sm">{classForm.formState.errors.title.message}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="link">Meeting Link</Label>
-                                    <Input id="link" type="url" {...classForm.register('link')} disabled={isClassLoading} />
+                                    <Input id="link" type="url" {...classForm.register('link')} disabled={isFormDisabled} />
                                     {classForm.formState.errors.link && <p className="text-destructive text-sm">{classForm.formState.errors.link.message}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="scheduledAt">Date and Time</Label>
-                                    <Input id="scheduledAt" type="datetime-local" {...classForm.register('scheduledAt')} disabled={isClassLoading} />
+                                    <Input id="scheduledAt" type="datetime-local" {...classForm.register('scheduledAt')} disabled={isFormDisabled} />
                                     {classForm.formState.errors.scheduledAt && <p className="text-destructive text-sm">{classForm.formState.errors.scheduledAt.message}</p>}
                                 </div>
                             </CardContent>
                             <CardFooter>
-                                <Button type="submit" disabled={isClassLoading}>
+                                <Button type="submit" disabled={isFormDisabled}>
                                     {isClassLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     Add Class
                                 </Button>
@@ -150,17 +169,17 @@ export default function AdminPage() {
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="notification-title">Title</Label>
-                                    <Input id="notification-title" {...notificationForm.register('title')} disabled={isNotificationLoading} />
+                                    <Input id="notification-title" {...notificationForm.register('title')} disabled={isFormDisabled} />
                                     {notificationForm.formState.errors.title && <p className="text-destructive text-sm">{notificationForm.formState.errors.title.message}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="content">Content</Label>
-                                    <Textarea id="content" {...notificationForm.register('content')} disabled={isNotificationLoading} rows={5} />
+                                    <Textarea id="content" {...notificationForm.register('content')} disabled={isFormDisabled} rows={5} />
                                     {notificationForm.formState.errors.content && <p className="text-destructive text-sm">{notificationForm.formState.errors.content.message}</p>}
                                 </div>
                             </CardContent>
                             <CardFooter>
-                                <Button type="submit" disabled={isNotificationLoading}>
+                                <Button type="submit" disabled={isFormDisabled}>
                                     {isNotificationLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     Post Notification
                                 </Button>
