@@ -25,6 +25,8 @@ export default function AdmitCardPage() {
       return;
     }
     // In a real app, you would fetch and generate the admit card PDF here.
+    // For now, this is a demo.
+    console.log(`Attempting to download admit card for App No: ${applicationNumber} with Unique ID: ${uniqueId}`);
     toast({
       title: "Success",
       description: `Downloading admit card for Application No: ${applicationNumber}. (This is a demo)`,

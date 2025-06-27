@@ -25,17 +25,8 @@ interface Props {
   applicationNumber: string;
 }
 
-const uniqueIds: { [key: string]: string } = {
-  "5": "8437",
-  "6": "89*49",
-  "7": "7519",
-  "8": "8058496",
-  "9": "5-23*586"
-};
-
 export function ConfirmationCertificate({ formData, applicationNumber }: Props) {
   const { t } = useLanguage();
-  const uniqueId = uniqueIds[formData.class] || "N/A";
 
   const handlePrint = () => {
     window.print();
@@ -115,13 +106,12 @@ export function ConfirmationCertificate({ formData, applicationNumber }: Props) 
                 </div>
             </div>
 
-            <Card className="mt-6 bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800/50">
+            <Card className="mt-6 bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50">
                 <CardHeader>
-                    <CardTitle className="text-yellow-800 dark:text-yellow-300 text-lg">{t('importantNote')}</CardTitle>
+                    <CardTitle className="text-blue-800 dark:text-blue-300 text-lg">{t('saveApplicationNumberNoteTitle')}</CardTitle>
                 </CardHeader>
-                <CardContent className="text-yellow-700 dark:text-yellow-400 text-sm space-y-2">
-                    <p>{t('uniqueIdNote')}</p>
-                    <p className="font-bold">{t('yourUniqueIdIs')}: <span className="font-mono bg-yellow-200 dark:bg-yellow-800/80 text-yellow-900 dark:text-yellow-100 px-2 py-1 rounded">{uniqueId}</span></p>
+                <CardContent className="text-blue-700 dark:text-blue-400 text-sm">
+                    <p>{t('saveApplicationNumberNoteContent')}</p>
                 </CardContent>
             </Card>
 

@@ -43,7 +43,7 @@ const formSchema = z.object({
 });
 
 const steps = [
-    { id: 'instructions', title: 'scholarshipInstructionsTitle', icon: Info },
+    { id: 'instructions', title: 'scholarshipInstructionsTitle', icon: Info, fields: [] },
     { id: 'personal', title: 'step1Title', icon: User, fields: ['fullName', 'fatherName', 'mobile', 'email'] },
     { id: 'academic', title: 'step2Title', icon: BookOpen, fields: ['age', 'class', 'school'] },
     { id: 'address', title: 'step3Title', icon: MapPin, fields: ['address'] },
@@ -103,17 +103,23 @@ export default function ScholarshipPage() {
     };
 
     const next = async () => {
+        // For the first step (instructions), just go to the next step without validation.
+        if (currentStep === 0) {
+            setCurrentStep(step => step + 1);
+            return;
+        }
+
         const fields = steps[currentStep].fields as FieldName[];
         const output = await form.trigger(fields, { shouldFocus: true });
         
         if (!output) return;
 
-        if (currentStep < steps.length) {
-            if (currentStep === steps.length - 1) {
-                await form.handleSubmit(processForm)();
-            } else {
-                setCurrentStep(step => step + 1);
-            }
+        // If it's the last step, handle form submission.
+        if (currentStep === steps.length - 1) {
+            await form.handleSubmit(processForm)();
+        } else {
+            // Otherwise, just go to the next step.
+            setCurrentStep(step => step + 1);
         }
     };
 

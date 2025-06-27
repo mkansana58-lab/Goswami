@@ -85,15 +85,15 @@ export const translations = {
     applicationConfirmation: "Application Confirmation",
     applicationNumber: "Application Number",
     downloadCertificate: "Download & Print Certificate",
+    saveApplicationNumberNoteTitle: "Important: Save Your Application Number",
+    saveApplicationNumberNoteContent: "Please save your Application Number shown above. You will need it to download your admit card after completing the payment.",
+
     
     // Admit Card
     admitCardTitle: "Download Admit Card",
-    admitCardDescription: "Enter your details to download your admit card for the exam.",
+    admitCardDescription: "Enter your Application Number and the Unique ID provided after payment to download your admit card.",
     uniqueId: "Unique ID",
     admitCardDownloadBtn: "Download Admit Card",
-    importantNote: "Important Note",
-    uniqueIdNote: "Please complete the payment to receive your Unique ID. After payment, use this ID and your Application Number to download the admit card.",
-    yourUniqueIdIs: "Your Unique ID (post-payment simulation)"
 
   },
   hi: {
@@ -179,14 +179,15 @@ export const translations = {
     applicationConfirmation: "आवेदन की पुष्टि",
     applicationNumber: "आवेदन संख्या",
     downloadCertificate: "प्रमाणपत्र डाउनलोड और प्रिंट करें",
+    saveApplicationNumberNoteTitle: "महत्वपूर्ण: अपना आवेदन क्रमांक सहेजें",
+    saveApplicationNumberNoteContent: "कृपया ऊपर दिखाया गया अपना आवेदन क्रमांक सहेज कर रखें। भुगतान पूरा करने के बाद आपको अपना एडमिट कार्ड डाउनलोड करने के लिए इसकी आवश्यकता होगी।",
+
 
     // Admit Card
     admitCardTitle: "एडमिट कार्ड डाउनलोड करें",
-    admitCardDescription: "परीक्षा के लिए अपना एडमिट कार्ड डाउनलोड करने के लिए अपना विवरण दर्ज करें।",
+    admitCardDescription: "एडमिट कार्ड डाउनलोड करने के लिए कृपया अपना आवेदन क्रमांक और भुगतान के बाद प्रदान की गई यूनिक आईडी दर्ज करें।",
     uniqueId: "यूनिक आईडी",
     admitCardDownloadBtn: "एडमिट कार्ड डाउनलोड करें",
-    importantNote: "महत्वपूर्ण लेख",
-    uniqueIdNote: "अपनी यूनिक आईडी प्राप्त करने के लिए कृपया भुगतान पूरा करें। भुगतान के बाद, एडमिट कार्ड डाउनलोड करने के लिए इस आईडी और अपनी आवेदन संख्या का उपयोग करें।",
-    yourUniqueIdIs: "आपकी यूनिक आईडी (भुगतान के बाद का सिमुलेशन)"
+    
   }
 };
