@@ -7,6 +7,7 @@ import { useLanguage } from '@/hooks/use-language';
 import { testsData } from '@/lib/tests-data';
 import { ResultCertificate, type ResultData } from '@/components/test/result-certificate';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 
 export default function TestResultPage() {
     const { t } = useLanguage();
