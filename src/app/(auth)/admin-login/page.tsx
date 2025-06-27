@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -7,21 +6,18 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useAuth } from '@/hooks/use-auth';
-import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ShieldCheck, Loader2 } from 'lucide-react';
+import { ShieldCheck, Loader2, KeyRound } from 'lucide-react';
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Invalid email address." }),
-  password: z.string().min(1, { message: "Password is required." }),
+  accessKey: z.string().min(1, { message: "Access Key is required." }),
 });
 
 export default function AdminLoginPage() {
-  const { t } = useLanguage();
   const router = useRouter();
   const { loginAdmin } = useAuth();
   const { toast } = useToast();
@@ -30,14 +26,13 @@ export default function AdminLoginPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      accessKey: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    const success = await loginAdmin(values.email, values.password);
+    const success = await loginAdmin(values.accessKey);
     if (success) {
       toast({ title: "Admin login successful!" });
       router.push('/admin');
@@ -45,7 +40,7 @@ export default function AdminLoginPage() {
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: "Invalid credentials. Please try again.",
+        description: "Invalid Access Key. Please try again.",
       });
     }
     setIsLoading(false);
@@ -56,37 +51,26 @@ export default function AdminLoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <ShieldCheck className="mx-auto h-12 w-12 text-primary" />
-          <CardTitle className="mt-2 text-2xl font-bold text-primary">{t('adminPanel')}</CardTitle>
+          <CardTitle className="mt-2 text-2xl font-bold text-primary">Admin Panel</CardTitle>
           <CardDescription>Login to access the admin dashboard.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">{t('emailAddress')}</Label>
+              <Label htmlFor="accessKey" className="flex items-center gap-2">
+                <KeyRound className="h-4 w-4" />
+                Access Key
+              </Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="admin@example.com"
-                {...form.register('email')}
-                disabled={isLoading}
-              />
-              {form.formState.errors.email && (
-                <p className="text-sm font-medium text-destructive">
-                  {form.formState.errors.email.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
+                id="accessKey"
                 type="password"
-                {...form.register('password')}
+                placeholder="Enter your secure access key"
+                {...form.register('accessKey')}
                 disabled={isLoading}
               />
-               {form.formState.errors.password && (
+              {form.formState.errors.accessKey && (
                 <p className="text-sm font-medium text-destructive">
-                  {form.formState.errors.password.message}
+                  {form.formState.errors.accessKey.message}
                 </p>
               )}
             </div>

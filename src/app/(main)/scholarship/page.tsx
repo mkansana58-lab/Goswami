@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -12,12 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { Info, User, BookOpen, MapPin, Upload, Loader2, AlertTriangle } from "lucide-react";
+import { Info, User, BookOpen, MapPin, Upload, Loader2, AlertTriangle, Phone } from "lucide-react";
 import { ConfirmationCertificate } from "@/components/scholarship/confirmation-certificate";
 import type { FormDataType } from "@/components/scholarship/confirmation-certificate";
 import { addScholarshipApplication, getAppConfig, type AppConfig, CLASS_UNIQUE_IDS } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import React from 'react';
 
 const formSchema = z.object({
@@ -140,6 +139,15 @@ export default function ScholarshipPage() {
     return (
         <div className="space-y-6">
             <h1 className="text-3xl font-bold text-primary">{t('scholarshipForm')}</h1>
+            
+            <Alert variant="destructive">
+                <Phone className="h-4 w-4" />
+                <AlertTitle>Unique ID प्राप्त करने के लिए निर्देश</AlertTitle>
+                <AlertDescription>
+                    यूनिक आईडी पाने के लिए कृपया 9694251069 पर ₹50 का पेमेंट करें। पेमेंट का स्क्रीनशॉट और अपना रजिस्ट्रेशन नंबर हमें इसी WhatsApp नंबर पर भेजें। इसके बाद हम आपको नोटिफिकेशन में आपकी यूनिक आईडी भेज देंगे।
+                </AlertDescription>
+            </Alert>
+
             <Card className="max-w-2xl mx-auto">
                 <CardHeader>
                    <Progress value={((currentStep) / (steps.length - 1)) * 100} className="w-full mb-4" />

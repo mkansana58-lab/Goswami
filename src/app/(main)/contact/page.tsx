@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -10,13 +9,14 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, Mail } from 'lucide-react';
+import { Loader2, Mail, ImagePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { addContactInquiry } from '@/lib/firebase';
 
 const contactSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
   mobile: z.string().regex(/^\d{10}$/, "Please enter a valid 10-digit mobile number."),
+  image: z.any().optional(),
 });
 
 type ContactFormValues = z.infer<typeof contactSchema>;
@@ -28,13 +28,25 @@ export default function ContactPage() {
 
     const form = useForm<ContactFormValues>({
         resolver: zodResolver(contactSchema),
-        defaultValues: { email: "", mobile: "" },
+        defaultValues: { email: "", mobile: "", image: undefined },
     });
 
     const onSubmit = async (values: ContactFormValues) => {
         setIsSubmitting(true);
         try {
-            await addContactInquiry(values);
+            const { image, ...dataToSave } = values;
+            let imageUrl: string | undefined = undefined;
+            const imageFile = image?.[0];
+
+            if (imageFile) {
+                imageUrl = await new Promise<string>((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target?.result as string);
+                    reader.readAsDataURL(imageFile);
+                });
+            }
+
+            await addContactInquiry({ ...dataToSave, imageUrl });
             toast({
                 title: "Inquiry Sent",
                 description: "Thank you for contacting us. We will get back to you soon.",
@@ -74,6 +86,11 @@ export default function ContactPage() {
                             <Label htmlFor="mobile">{t('mobileNumber')}</Label>
                             <Input id="mobile" type="tel" {...form.register('mobile')} disabled={isSubmitting} />
                             <p className="text-destructive text-sm mt-1">{form.formState.errors.mobile?.message}</p>
+                        </div>
+                        <div>
+                            <Label htmlFor="image" className='flex items-center gap-2'><ImagePlus className='h-4 w-4'/> Attach an Image (Optional)</Label>
+                            <Input id="image" type="file" accept="image/*" {...form.register('image')} disabled={isSubmitting} />
+                             <p className="text-destructive text-sm mt-1">{form.formState.errors.image?.message as string}</p>
                         </div>
                         <Button type="submit" className="w-full" disabled={isSubmitting}>
                             {isSubmitting ? (

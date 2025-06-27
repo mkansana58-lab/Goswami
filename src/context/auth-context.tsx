@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { ReactNode } from 'react';
@@ -12,7 +11,6 @@ interface Student {
 
 interface Admin {
   name: string;
-  email: string;
 }
 
 interface AuthContextType {
@@ -20,15 +18,15 @@ interface AuthContextType {
   admin: Admin | null;
   isLoading: boolean;
   loginStudent: (name: string) => Promise<boolean>;
-  loginAdmin: (email: string, pass: string) => Promise<boolean>;
+  loginAdmin: (accessKey: string) => Promise<boolean>;
   logout: () => void;
   refreshStudentData: (name: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const ADMIN_EMAIL = 'director@goswami.edu';
-const ADMIN_PASS = 'G0swam!Def_2024';
+// More secure, less guessable credentials
+const ADMIN_ACCESS_KEY = 'G$DA_Director_Panel_#2024!_SecureAccessKey';
 const ADMIN_NAME = 'GSDA Director';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -85,9 +83,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return true;
   }, []);
 
-  const loginAdmin = useCallback(async (email: string, pass: string): Promise<boolean> => {
-    if (email === ADMIN_EMAIL && pass === ADMIN_PASS) {
-      const adminData = { name: ADMIN_NAME, email: ADMIN_EMAIL };
+  const loginAdmin = useCallback(async (accessKey: string): Promise<boolean> => {
+    if (accessKey === ADMIN_ACCESS_KEY) {
+      const adminData = { name: ADMIN_NAME };
       setAdmin(adminData);
       localStorage.setItem('admin', JSON.stringify(adminData));
       return true;

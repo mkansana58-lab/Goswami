@@ -167,6 +167,7 @@ export interface ContactInquiry {
     id: string;
     email: string;
     mobile: string;
+    imageUrl?: string; // Added field
     createdAt: Timestamp;
 }
 
@@ -220,10 +221,25 @@ export const CLASS_UNIQUE_IDS: Record<string, string> = {
 
 // --- Functions ---
 
+// Notification helper
+async function sendNotification(title: string, content: string): Promise<void> {
+    if (!db) return;
+    try {
+        await addDoc(collection(db, "notifications"), {
+            title,
+            content,
+            createdAt: Timestamp.now(),
+        });
+    } catch (error) {
+        console.error("Failed to send notification:", error);
+    }
+}
+
 // Generic delete function
 async function deleteDocument(collectionName: string, id: string): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
     await deleteDoc(doc(db, collectionName, id));
+    await sendNotification(`Content Deleted`, `An item was removed from ${collectionName}.`);
 }
 
 // Generic get all function
@@ -248,6 +264,7 @@ export async function updateAppConfig(data: Partial<AppConfig>): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
     const configRef = doc(db, "appConfig", "settings");
     await setDoc(configRef, data, { merge: true });
+    await sendNotification('Academy Settings Updated', 'Key dates like deadlines or exam dates have been changed.');
 }
 
 export async function addLiveClass({ title, link, scheduledAt }: NewLiveClassData): Promise<void> {
@@ -258,17 +275,13 @@ export async function addLiveClass({ title, link, scheduledAt }: NewLiveClassDat
         scheduledAt: Timestamp.fromDate(new Date(scheduledAt)),
         createdAt: Timestamp.now(),
     });
+    await sendNotification('New Live Class', `A new live class "${title}" has been scheduled.`);
 }
 export const deleteLiveClass = (id: string) => deleteDocument("liveClasses", id);
 
 
 export async function addNotification({ title, content }: NewNotificationData): Promise<void> {
-    if (!db) throw new Error("Firestore DB not initialized.");
-    await addDoc(collection(db, "notifications"), {
-        title,
-        content,
-        createdAt: Timestamp.now(),
-    });
+    await sendNotification(title, content);
 }
 export const deleteNotification = (id: string) => deleteDocument("notifications", id);
 
@@ -278,6 +291,7 @@ export async function addScholarshipApplication(data: Omit<ScholarshipApplicatio
         ...data,
         createdAt: Timestamp.now(),
     });
+    await sendNotification('New Scholarship Application', `${data.fullName} has applied for the scholarship. Application No: ${data.applicationNumber}`);
 }
 
 export async function getScholarshipApplications(): Promise<ScholarshipApplicationData[]> {
@@ -335,6 +349,7 @@ export async function addTestResult(data: Omit<TestResultData, 'submittedAt' | '
         ...data,
         submittedAt: Timestamp.now(),
     });
+    await sendNotification(`Test Result: ${data.studentName}`, `${data.studentName} scored ${data.score}/${data.totalQuestions} in the test "${data.testName}".`);
 }
 
 export async function getTestResults(): Promise<TestResultData[]> {
@@ -356,47 +371,83 @@ export async function getNotifications(): Promise<Notification[]> {
 }
 
 // --- Daily Posts ---
-export const addPost = async (data: Omit<Post, 'id' | 'createdAt'>) => addDoc(collection(db, "posts"), { ...data, createdAt: Timestamp.now() });
+export const addPost = async (data: Omit<Post, 'id' | 'createdAt'>) => {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    await addDoc(collection(db, "posts"), { ...data, createdAt: Timestamp.now() });
+    await sendNotification('New Daily Post', `A new post titled "${data.title}" has been published.`);
+};
 export const getPosts = async (): Promise<Post[]> => getAll<Post>("posts");
 export const deletePost = (id: string) => deleteDocument("posts", id);
 
 // --- Current Affairs ---
-export const addCurrentAffair = async (data: Omit<CurrentAffair, 'id' | 'createdAt'>) => addDoc(collection(db, "currentAffairs"), { ...data, createdAt: Timestamp.now() });
+export const addCurrentAffair = async (data: Omit<CurrentAffair, 'id' | 'createdAt'>) => {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    await addDoc(collection(db, "currentAffairs"), { ...data, createdAt: Timestamp.now() });
+    await sendNotification('New Current Affair', `An update on "${data.title}" has been added.`);
+};
 export const getCurrentAffairs = async (): Promise<CurrentAffair[]> => getAll<CurrentAffair>("currentAffairs");
 export const deleteCurrentAffair = (id: string) => deleteDocument("currentAffairs", id);
 
 // --- Video Lectures ---
-export const addVideoLecture = async (data: Omit<VideoLecture, 'id' | 'createdAt'>) => addDoc(collection(db, "videoLectures"), { ...data, createdAt: Timestamp.now() });
+export const addVideoLecture = async (data: Omit<VideoLecture, 'id' | 'createdAt'>) => {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    await addDoc(collection(db, "videoLectures"), { ...data, createdAt: Timestamp.now() });
+    await sendNotification('New Video Lecture', `A new video lecture "${data.title}" is now available.`);
+};
 export const getVideoLectures = async (): Promise<VideoLecture[]> => getAll<VideoLecture>("videoLectures");
 export const deleteVideoLecture = (id: string) => deleteDocument("videoLectures", id);
 
 // --- Downloads ---
-export const addDownload = async (data: Omit<Download, 'id' | 'createdAt'>) => addDoc(collection(db, "downloads"), { ...data, createdAt: Timestamp.now() });
+export const addDownload = async (data: Omit<Download, 'id' | 'createdAt'>) => {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    await addDoc(collection(db, "downloads"), { ...data, createdAt: Timestamp.now() });
+    await sendNotification('New Download Available', `"${data.title}" has been added to the downloads section.`);
+};
 export const getDownloads = async (): Promise<Download[]> => getAll<Download>("downloads");
 export const deleteDownload = (id: string) => deleteDocument("downloads", id);
 
 // --- E-Books ---
-export const addEBook = async (data: Omit<EBook, 'id' | 'createdAt'>) => addDoc(collection(db, "ebooks"), { ...data, createdAt: Timestamp.now() });
+export const addEBook = async (data: Omit<EBook, 'id' | 'createdAt'>) => {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    await addDoc(collection(db, "ebooks"), { ...data, createdAt: Timestamp.now() });
+    await sendNotification('New E-Book Added', `The e-book "${data.title}" is now available to read.`);
+};
 export const getEBooks = async (): Promise<EBook[]> => getAll<EBook>("ebooks");
 export const deleteEBook = (id: string) => deleteDocument("ebooks", id);
 
 // --- Courses ---
-export const addCourse = async (data: Omit<Course, 'id' | 'createdAt'>) => addDoc(collection(db, "courses"), { ...data, createdAt: Timestamp.now() });
+export const addCourse = async (data: Omit<Course, 'id' | 'createdAt'>) => {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    await addDoc(collection(db, "courses"), { ...data, createdAt: Timestamp.now() });
+    await sendNotification('New Course Available', `"${data.title}" course has been added.`);
+};
 export const getCourses = async (): Promise<Course[]> => getAll<Course>("courses");
 export const deleteCourse = (id: string) => deleteDocument("courses", id);
 
 // --- Teachers ---
-export const addTeacher = async (data: Omit<Teacher, 'id' | 'createdAt'>) => addDoc(collection(db, "teachers"), { ...data, createdAt: Timestamp.now() });
+export const addTeacher = async (data: Omit<Teacher, 'id' | 'createdAt'>) => {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    await addDoc(collection(db, "teachers"), { ...data, createdAt: Timestamp.now() });
+    await sendNotification('New Teacher Profile', `Added ${data.name} to the faculty list.`);
+};
 export const getTeachers = async (): Promise<Teacher[]> => getAll<Teacher>("teachers");
 export const deleteTeacher = (id: string) => deleteDocument("teachers", id);
 
 // --- Gallery Images ---
-export const addGalleryImage = async (data: Omit<GalleryImage, 'id' | 'createdAt'>) => addDoc(collection(db, "galleryImages"), { ...data, createdAt: Timestamp.now() });
+export const addGalleryImage = async (data: Omit<GalleryImage, 'id' | 'createdAt'>) => {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    await addDoc(collection(db, "galleryImages"), { ...data, createdAt: Timestamp.now() });
+    await sendNotification('New Gallery Image', `A new image with caption "${data.caption}" was added.`);
+};
 export const getGalleryImages = async (): Promise<GalleryImage[]> => getAll<GalleryImage>("galleryImages");
 export const deleteGalleryImage = (id: string) => deleteDocument("galleryImages", id);
 
 // --- Contact Inquiries ---
-export const addContactInquiry = async (data: Omit<ContactInquiry, 'id' | 'createdAt'>) => addDoc(collection(db, "contactInquiries"), { ...data, createdAt: Timestamp.now() });
+export const addContactInquiry = async (data: Omit<ContactInquiry, 'id' | 'createdAt'>) => {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    await addDoc(collection(db, "contactInquiries"), { ...data, createdAt: Timestamp.now() });
+    await sendNotification('New Contact Inquiry', `You have a new message from ${data.email}.`);
+};
 export const getContactInquiries = async (): Promise<ContactInquiry[]> => getAll<ContactInquiry>("contactInquiries");
 
 // --- Chat Messages ---
@@ -420,7 +471,9 @@ export const addCustomTest = async (data: any) => {
         questions: questions,
         createdAt: Timestamp.now()
     };
-    await addDoc(collection(db, "customTests"), testData);
+    const newTest = await addDoc(collection(db, "customTests"), testData);
+    await sendNotification('New Custom Test', `A new test "${data.title}" has been created.`);
+    return newTest;
 };
 export const getCustomTests = async (): Promise<CustomTest[]> => getAll<CustomTest>("customTests");
 export const getCustomTest = async (id: string): Promise<CustomTest | null> => {
@@ -465,6 +518,7 @@ export const addTestEnrollment = async (studentName: string, testId: string, tes
             testName,
             enrolledAt: Timestamp.now(),
         });
+        await sendNotification('Test Enrollment', `${studentName} has enrolled in the test "${testName}".`);
     }
 };
 

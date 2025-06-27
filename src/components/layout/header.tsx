@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -29,6 +28,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { getNotifications, type Notification, firebaseConfig } from '@/lib/firebase';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '../ui/scroll-area';
 
 
 export function Header() {
@@ -102,16 +102,18 @@ export function Header() {
                         <ShieldCheck className="h-10 w-10 text-primary" /><h2 className="text-lg font-bold text-primary">{t('appName')}</h2>
                     </div>
                 </div>
-              <nav className="mt-4 flex-grow px-2"><ul className="space-y-1">
-                {sidebarLinks.map((link) => {
-                    const isActive = pathname === link.href;
-                    return (
-                        link.textKey === 'adminPanel' ? 
-                        <li key={link.href}><button onClick={handleAdminClick} className={cn("flex items-center gap-3 rounded-md p-2 text-base font-medium text-primary hover:bg-accent w-full text-left", isActive && "bg-accent")}><link.icon className="h-5 w-5" />{t(link.textKey as any)}</button></li> :
-                        <li key={link.href}><Link href={link.href} onClick={() => setIsSheetOpen(false)} className={cn("flex items-center gap-3 rounded-md p-2 text-base font-medium text-primary hover:bg-accent", isActive && "bg-accent")}><link.icon className="h-5 w-5" />{t(link.textKey as any)}</Link></li>
-                    )
-                })}</ul></nav>
-              {admin && <div className="p-4 border-t border-border/20 mt-auto"><div className="flex items-center gap-3"><Avatar><AvatarImage src="https://placehold.co/40x40.png" data-ai-hint="user avatar"/><AvatarFallback>A</AvatarFallback></Avatar><div><p className="text-sm font-semibold text-primary">{admin.name}</p><p className="text-xs text-muted-foreground">{admin.email}</p></div></div></div>}
+              <ScrollArea className="flex-grow">
+                <nav className="mt-4 flex-grow px-2"><ul className="space-y-1">
+                  {sidebarLinks.map((link) => {
+                      const isActive = pathname === link.href;
+                      return (
+                          link.textKey === 'adminPanel' ? 
+                          <li key={link.href}><button onClick={handleAdminClick} className={cn("flex items-center gap-3 rounded-md p-2 text-base font-medium text-primary hover:bg-accent w-full text-left", isActive && "bg-accent")}><link.icon className="h-5 w-5" />{t(link.textKey as any)}</button></li> :
+                          <li key={link.href}><Link href={link.href} onClick={() => setIsSheetOpen(false)} className={cn("flex items-center gap-3 rounded-md p-2 text-base font-medium text-primary hover:bg-accent", isActive && "bg-accent")}><link.icon className="h-5 w-5" />{t(link.textKey as any)}</Link></li>
+                      )
+                  })}</ul></nav>
+              </ScrollArea>
+              {admin && <div className="p-4 border-t border-border/20 mt-auto"><div className="flex items-center gap-3"><Avatar><AvatarImage src="https://placehold.co/40x40.png" data-ai-hint="user avatar"/><AvatarFallback>A</AvatarFallback></Avatar><div><p className="text-sm font-semibold text-primary">{admin.name}</p></div></div></div>}
             </SheetContent>
           </Sheet>
         </div>
@@ -124,11 +126,12 @@ export function Header() {
                         <span className="sr-only">Notifications</span>
                     </Button>
                 </SheetTrigger>
-                <SheetContent>
+                <SheetContent className="flex flex-col">
                     <SheetHeader>
                         <SheetTitle>Notifications</SheetTitle>
                     </SheetHeader>
-                    <div className="mt-4 space-y-4">
+                    <ScrollArea className="flex-grow mt-4 -mx-6">
+                      <div className="px-6 space-y-4">
                         {!isFirebaseConfigured ? (
                              <div className="flex flex-col text-destructive text-center p-2 text-sm"><p className="font-bold">Firebase Not Configured</p><p className="whitespace-normal mt-1">Connect a Firebase project to enable.</p></div>
                         ) : isLoadingNotifications ? (
@@ -137,7 +140,7 @@ export function Header() {
                             notifications.map(n => (
                                 <div key={n.id} className="p-3 rounded-lg border bg-card">
                                    <p className="font-semibold">{n.title}</p>
-                                   <p className="text-sm text-muted-foreground mt-1">{n.content}</p>
+                                   <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{n.content}</p>
                                    <p className="text-xs text-muted-foreground text-right mt-2">
                                        {n.createdAt ? formatDistanceToNow(n.createdAt.toDate(), { addSuffix: true }) : ''}
                                    </p>
@@ -146,7 +149,8 @@ export function Header() {
                         ) : (
                             <div className="text-center text-muted-foreground p-4">No new notifications</div>
                         )}
-                    </div>
+                      </div>
+                    </ScrollArea>
                 </SheetContent>
             </Sheet>
 
