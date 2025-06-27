@@ -11,7 +11,7 @@ export const translations = {
     dailyPosts: "Daily Posts",
     aiTest: "AI Test",
     aiTutor: "AI Tutor",
-    aiChat: "AI Chat",
+    groupChat: "Group Chat",
     currentAffairs: "Current Affairs",
     cutoffChecker: "Cut-off Checker",
     toppers: "Toppers",
@@ -206,6 +206,12 @@ export const translations = {
     link: "Link",
     add: "Add",
 
+    // Group Chat
+    groupChatTitle: "Group Chat",
+    groupChatDescription: "Chat with other students and teachers.",
+    chatPlaceholder: "Type your message...",
+    sendMessage: "Send",
+
 
     // Generic
     comingSoon: "Coming Soon...",
@@ -221,7 +227,7 @@ export const translations = {
     dailyPosts: "डेली पोस्ट्स",
     aiTest: "AI टेस्ट",
     aiTutor: "AI ट्यूटर",
-    aiChat: "AI चैट",
+    groupChat: "समूह चैट",
     currentAffairs: "करेंट अफेयर्स",
     cutoffChecker: "कट-ऑफ चेकर",
     toppers: "टॉपर्स",
@@ -418,6 +424,12 @@ export const translations = {
     content: "सामग्री",
     link: "लिंक",
     add: "जोड़ें",
+
+    // Group Chat
+    groupChatTitle: "समूह चैट",
+    groupChatDescription: "अन्य छात्रों और शिक्षकों के साथ चैट करें।",
+    chatPlaceholder: "अपना संदेश टाइप करें...",
+    sendMessage: "भेजें",
 
     // Generic
     comingSoon: "जल्द आ रहा है...",

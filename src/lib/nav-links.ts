@@ -22,7 +22,8 @@ import {
     Phone,
     Cog,
     BookCopy,
-    Library
+    Library,
+    MessagesSquare
   } from 'lucide-react';
   
   export const featureGridLinks = [
@@ -34,7 +35,7 @@ import {
       { href: "/tests", icon: CheckSquare, textKey: "aiTest" },
       { href: "/ai-tutor", icon: GraduationCap, textKey: "aiTutor" },
       { href: "/cutoff-checker", icon: Scissors, textKey: "cutoffChecker" },
-      { href: "/e-books", icon: Library, textKey: "ebooks" },
+      { href: "/group-chat", icon: MessagesSquare, textKey: "groupChat" },
   ];
   
   export const sidebarLinks = [
@@ -48,6 +49,7 @@ import {
     { href: "/e-books", icon: Library, textKey: "ebooks" },
     { href: "/tests", icon: CheckSquare, textKey: "aiTest" },
     { href: "/ai-tutor", icon: GraduationCap, textKey: "aiTutor" },
+    { href: "/group-chat", icon: MessagesSquare, textKey: "groupChat" },
     { href: "/current-affairs", icon: ScrollText, textKey: "currentAffairs" },
     { href: "/cutoff-checker", icon: Scissors, textKey: "cutoffChecker" },
     { href: "/toppers", icon: Trophy, textKey: "toppers" },

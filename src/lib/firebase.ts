@@ -171,6 +171,13 @@ export interface ContactInquiry {
     createdAt: Timestamp;
 }
 
+export interface ChatMessage {
+    id: string;
+    text: string;
+    userName: string;
+    userPhotoUrl?: string;
+    createdAt: Timestamp;
+}
 
 // --- Constants ---
 export const CLASS_UNIQUE_IDS: Record<string, string> = {
@@ -219,6 +226,7 @@ export async function addLiveClass({ title, link, scheduledAt }: NewLiveClassDat
         title,
         link,
         scheduledAt: Timestamp.fromDate(new Date(scheduledAt)),
+        createdAt: Timestamp.now(),
     });
 }
 export const deleteLiveClass = (id: string) => deleteDocument("liveClasses", id);
@@ -360,5 +368,12 @@ export const deleteGalleryImage = (id: string) => deleteDocument("galleryImages"
 // --- Contact Inquiries ---
 export const addContactInquiry = async (data: Omit<ContactInquiry, 'id' | 'createdAt'>) => addDoc(collection(db, "contactInquiries"), { ...data, createdAt: Timestamp.now() });
 export const getContactInquiries = async (): Promise<ContactInquiry[]> => getAll<ContactInquiry>("contactInquiries");
+
+// --- Chat Messages ---
+export const addChatMessage = async (data: Omit<ChatMessage, 'id' | 'createdAt'>) => {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    await addDoc(collection(db, "chatMessages"), { ...data, createdAt: Timestamp.now() });
+};
+
 
 export { app, db };

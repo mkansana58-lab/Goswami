@@ -30,7 +30,7 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function AccountPage() {
     const { t } = useLanguage();
-    const { student } = useAuth();
+    const { student, refreshStudentData, isLoading: isAuthLoading } = useAuth();
     const { toast } = useToast();
     const [studentData, setStudentData] = useState<StudentData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -57,8 +57,6 @@ export default function AccountPage() {
                         setIsEditing(true);
                     }
                 } else {
-                    // New user with no existing profile data.
-                    // Set minimal data for display and force edit mode.
                     setStudentData({ name: student.name, createdAt: Timestamp.now() });
                     setIsEditing(true);
                 }
@@ -83,21 +81,25 @@ export default function AccountPage() {
             });
         }
         
-        const dataToUpdate: Partial<Omit<StudentData, 'id' | 'createdAt'>> = { ...values, photoUrl, name: student.name };
+        // Exclude the 'photo' file input from the data being sent to Firestore
+        const { photo, ...dataToSave } = values;
+        const dataToUpdate: Partial<Omit<StudentData, 'id' | 'createdAt'>> = { ...dataToSave, photoUrl, name: student.name };
 
         try {
             await updateStudent(student.name, dataToUpdate);
+            await refreshStudentData(student.name); // Refresh context
             setStudentData(prev => ({ ...prev, ...dataToUpdate } as StudentData));
             setIsEditing(false);
             toast({ title: "Profile Updated", description: "Your information has been saved." });
         } catch (error) {
+            console.error(error);
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to update profile.' });
         } finally {
             setIsSaving(false);
         }
     };
     
-    if (isLoading) {
+    if (isLoading || isAuthLoading) {
         return <div className="flex justify-center items-center h-64"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
     }
 
@@ -128,7 +130,7 @@ export default function AccountPage() {
                     <CardContent className="space-y-4">
                         <div className="flex items-center space-x-4">
                             <Avatar className="h-24 w-24">
-                                <AvatarImage src={studentData?.photoUrl || `https://placehold.co/100x100.png?text=${student?.name?.[0]}`} alt="User profile" data-ai-hint="user avatar" />
+                                <AvatarImage src={student?.photoUrl || `https://placehold.co/100x100.png?text=${student?.name?.[0]}`} alt="User profile" data-ai-hint="user avatar" />
                                 <AvatarFallback>{student?.name?.[0]}</AvatarFallback>
                             </Avatar>
                             <div>
@@ -162,7 +164,7 @@ export default function AccountPage() {
                     </CardContent>
                     {isEditing && (
                         <CardFooter className="flex justify-end gap-2">
-                            <Button variant="ghost" onClick={() => setIsEditing(false)} disabled={isSaving}>{t('cancel')}</Button>
+                            <Button type="button" variant="ghost" onClick={() => setIsEditing(false)} disabled={isSaving}>{t('cancel')}</Button>
                             <Button type="submit" disabled={isSaving}>
                                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 {t('updateProfile')}

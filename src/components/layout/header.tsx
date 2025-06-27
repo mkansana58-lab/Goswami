@@ -64,8 +64,19 @@ export function Header() {
       router.push('/admin-login');
     }
   };
+  
+  const handleAccountClick = () => {
+    setIsSheetOpen(false);
+    router.push('/account');
+  };
+
+  const handleSettingsClick = () => {
+    setIsSheetOpen(false);
+    router.push('/settings');
+  };
 
   const handleLogout = () => {
+    setIsSheetOpen(false);
     logout();
     router.push('/student-login');
   };
@@ -137,15 +148,15 @@ export function Header() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full text-primary">
-                 <Avatar className="h-8 w-8"><AvatarImage src={`https://placehold.co/40x40.png?text=${(student?.name || 'G')[0]}`} data-ai-hint="user avatar" /><AvatarFallback>{(student?.name || 'G')[0]}</AvatarFallback></Avatar>
+                 <Avatar className="h-8 w-8"><AvatarImage src={student?.photoUrl || `https://placehold.co/40x40.png?text=${(student?.name || 'G')[0]}`} data-ai-hint="user avatar" /><AvatarFallback>{(student?.name || 'G')[0]}</AvatarFallback></Avatar>
                 <span className="sr-only">Profile</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>{student?.name || t('myAccount')}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push('/account')}>{t('profile')}</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/settings')}>{t('settings')}</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleAccountClick}>{t('profile')}</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSettingsClick}>{t('settings')}</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleAdminClick}>{t('adminPanel')}</DropdownMenuItem>
               <DropdownMenuSeparator />
