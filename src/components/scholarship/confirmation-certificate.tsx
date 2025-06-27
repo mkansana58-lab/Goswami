@@ -1,0 +1,138 @@
+
+"use client";
+
+import { useLanguage } from '@/hooks/use-language';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ShieldCheck, Download } from 'lucide-react';
+import Image from 'next/image';
+
+export interface FormDataType {
+  fullName: string;
+  fatherName: string;
+  mobile: string;
+  email: string;
+  age: number;
+  class: string;
+  school: string;
+  address: string;
+  photoUrl: string;
+  signatureUrl: string;
+}
+
+interface Props {
+  formData: FormDataType;
+  applicationNumber: string;
+}
+
+const uniqueIds: { [key: string]: string } = {
+  "5": "8437",
+  "6": "89*49",
+  "7": "7519",
+  "8": "8058496",
+  "9": "5-23*586"
+};
+
+export function ConfirmationCertificate({ formData, applicationNumber }: Props) {
+  const { t } = useLanguage();
+  const uniqueId = uniqueIds[formData.class] || "N/A";
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto my-8 printable-area">
+       <style jsx global>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .printable-area, .printable-area * {
+            visibility: visible;
+          }
+          .printable-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+          .no-print {
+            display: none;
+          }
+        }
+      `}</style>
+      <Card className="border-2 border-primary">
+        <CardHeader className="text-center bg-muted/20 p-4">
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <ShieldCheck className="h-12 w-12 text-primary" />
+            <div>
+              <CardTitle className="text-2xl font-bold text-primary">{t('appName')}</CardTitle>
+              <CardDescription className="text-sm">{t('scholarshipForm')}</CardDescription>
+            </div>
+          </div>
+           <h2 className="text-xl font-semibold text-foreground">{t('applicationConfirmation')}</h2>
+        </CardHeader>
+        <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-2 space-y-4">
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                        <p className="font-semibold">{t('applicationNumber')}:</p>
+                        <p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{applicationNumber}</p>
+                        
+                        <p className="font-semibold">{t('fullName')}:</p>
+                        <p>{formData.fullName}</p>
+                        
+                        <p className="font-semibold">{t('fathersName')}:</p>
+                        <p>{formData.fatherName}</p>
+
+                        <p className="font-semibold">{t('selectClass')}:</p>
+                        <p>{formData.class}</p>
+
+                        <p className="font-semibold">{t('age')}:</p>
+                        <p>{formData.age}</p>
+
+                        <p className="font-semibold">{t('schoolName')}:</p>
+                        <p>{formData.school}</p>
+
+                        <p className="font-semibold">{t('mobileNumber')}:</p>
+                        <p>{formData.mobile}</p>
+                        
+                        <p className="font-semibold">{t('emailAddress')}:</p>
+                        <p>{formData.email}</p>
+
+                        <p className="font-semibold">{t('fullAddress')}:</p>
+                        <p className="col-span-2">{formData.address}</p>
+                    </div>
+                </div>
+                <div className="space-y-4 flex flex-col items-center">
+                    <div className="w-32 h-40 border-2 border-dashed flex items-center justify-center bg-muted/50">
+                       <Image src={formData.photoUrl} alt="Student Photo" width={128} height={160} className="object-cover w-full h-full" data-ai-hint="student photo" />
+                    </div>
+                    <div className="w-32 h-16 border-2 border-dashed flex items-center justify-center bg-muted/50">
+                        <Image src={formData.signatureUrl} alt="Student Signature" width={128} height={64} className="object-contain w-full h-full" data-ai-hint="student signature"/>
+                    </div>
+                </div>
+            </div>
+
+            <Card className="mt-6 bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800/50">
+                <CardHeader>
+                    <CardTitle className="text-yellow-800 dark:text-yellow-300 text-lg">{t('importantNote')}</CardTitle>
+                </CardHeader>
+                <CardContent className="text-yellow-700 dark:text-yellow-400 text-sm space-y-2">
+                    <p>{t('uniqueIdNote')}</p>
+                    <p className="font-bold">{t('yourUniqueIdIs')}: <span className="font-mono bg-yellow-200 dark:bg-yellow-800/80 text-yellow-900 dark:text-yellow-100 px-2 py-1 rounded">{uniqueId}</span></p>
+                </CardContent>
+            </Card>
+
+        </CardContent>
+        <CardFooter className="justify-center p-4 no-print">
+            <Button onClick={handlePrint}>
+                <Download className="mr-2 h-4 w-4" />
+                {t('downloadCertificate')}
+            </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+}

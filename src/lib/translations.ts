@@ -1,3 +1,4 @@
+
 export type Language = 'en' | 'hi';
 
 export const translations = {
@@ -46,6 +47,54 @@ export const translations = {
     teachers: "Teachers",
     schoolList: "School List",
     contact: "Contact",
+
+    // Scholarship Form Translations
+    scholarshipTitle: "Scholarship Application Form 2024",
+    scholarshipInstructionsTitle: "Instructions",
+    scholarshipInstructionsP1: "Welcome to the Go Swami Defence Academy scholarship application. Please read the instructions carefully before proceeding.",
+    scholarshipInstructionsP2: "The application fee is ₹50. Students who perform well in the scholarship test will receive one month of free tuition and coaching.",
+    scholarshipInstructionsL1: "Fill all details accurately.",
+    scholarshipInstructionsL2: "Upload a recent passport-sized photograph and a clear signature.",
+    scholarshipInstructionsL3: "After submission, you will receive an Application Number. Keep it safe for future reference.",
+    scholarshipInstructionsP3: "Click 'Start Application' to begin.",
+    startApplication: "Start Application",
+    
+    step1Title: "Personal Details",
+    fullName: "Full Name",
+    fathersName: "Father's Name",
+    mobileNumber: "Mobile Number",
+    emailAddress: "Email Address",
+
+    step2Title: "Academic Details",
+    age: "Age",
+    selectClass: "Class",
+    schoolName: "School Name",
+    
+    step3Title: "Address Details",
+    fullAddress: "Full Address",
+    fullAddressPlaceholder: "Village/City, District, Pincode, State",
+
+    step4Title: "Document Upload",
+    uploadPhoto: "Upload Passport Size Photo",
+    uploadSignature: "Upload Signature",
+    
+    nextStep: "Next Step",
+    previousStep: "Previous Step",
+    submitApplication: "Submit Application",
+
+    applicationConfirmation: "Application Confirmation",
+    applicationNumber: "Application Number",
+    downloadCertificate: "Download & Print Certificate",
+    
+    // Admit Card
+    admitCardTitle: "Download Admit Card",
+    admitCardDescription: "Enter your details to download your admit card for the exam.",
+    uniqueId: "Unique ID",
+    admitCardDownloadBtn: "Download Admit Card",
+    importantNote: "Important Note",
+    uniqueIdNote: "Please complete the payment to receive your Unique ID. After payment, use this ID and your Application Number to download the admit card.",
+    yourUniqueIdIs: "Your Unique ID (post-payment simulation)"
+
   },
   hi: {
     appName: "गो स्वामी डिफेंस एकेडमी",
@@ -61,11 +110,11 @@ export const translations = {
     cutoffChecker: "कट-ऑफ देखें",
     toppers: "टॉपर्स",
     contactUs: "संपर्क करें",
-    navHome: "Home",
-    navCourses: "Courses",
-    navTest: "Test",
-    navPosts: "Posts",
-    navAccount: "Account",
+    navHome: "होम",
+    navCourses: "कोर्स",
+    navTest: "टेस्ट",
+    navPosts: "पोस्ट्स",
+    navAccount: "अकाउंट",
     quote: "आपके संघर्ष की ताकत ही आपकी उपलब्धि की सफलता को निर्धारित करती है।",
     learningHub: "लर्निंग हब",
     applyNow: "आवेदन करें",
@@ -92,5 +141,52 @@ export const translations = {
     teachers: "शिक्षक",
     schoolList: "स्कूल सूची",
     contact: "संपर्क",
+
+    // Scholarship Form Translations
+    scholarshipTitle: "छात्रवृत्ति आवेदन पत्र 2024",
+    scholarshipInstructionsTitle: "निर्देश",
+    scholarshipInstructionsP1: "गो स्वामी डिफेंस एकेडमी छात्रवृत्ति आवेदन में आपका स्वागत है। कृपया आगे बढ़ने से पहले निर्देशों को ध्यान से पढ़ें।",
+    scholarshipInstructionsP2: "आवेदन शुल्क ₹50 है। छात्रवृत्ति परीक्षा में अच्छा प्रदर्शन करने वाले छात्रों को एक महीने की मुफ्त ट्यूशन और कोचिंग मिलेगी।",
+    scholarshipInstructionsL1: "सभी विवरण सही-सही भरें।",
+    scholarshipInstructionsL2: "हाल की पासपोर्ट आकार की तस्वीर और एक स्पष्ट हस्ताक्षर अपलोड करें।",
+    scholarshipInstructionsL3: "सबमिट करने के बाद, आपको एक आवेदन संख्या प्राप्त होगी। इसे भविष्य के संदर्भ के लिए सुरक्षित रखें।",
+    scholarshipInstructionsP3: "शुरू करने के लिए 'आवेदन शुरू करें' पर क्लिक करें।",
+    startApplication: "आवेदन शुरू करें",
+    
+    step1Title: "व्यक्तिगत विवरण",
+    fullName: "पूरा नाम",
+    fathersName: "पिता का नाम",
+    mobileNumber: "मोबाइल नंबर",
+    emailAddress: "ईमेल पता",
+
+    step2Title: "शैक्षणिक विवरण",
+    age: "आयु",
+    selectClass: "कक्षा",
+    schoolName: "स्कूल का नाम",
+    
+    step3Title: "पते का विवरण",
+    fullAddress: "पूरा पता",
+    fullAddressPlaceholder: "गाँव/शहर, जिला, पिनकोड, राज्य",
+
+    step4Title: "दस्तावेज़ अपलोड",
+    uploadPhoto: "पासपोर्ट साइज फोटो अपलोड करें",
+    uploadSignature: "हस्ताक्षर अपलोड करें",
+    
+    nextStep: "अगला चरण",
+    previousStep: "पिछला चरण",
+    submitApplication: "आवेदन जमा करें",
+
+    applicationConfirmation: "आवेदन की पुष्टि",
+    applicationNumber: "आवेदन संख्या",
+    downloadCertificate: "प्रमाणपत्र डाउनलोड और प्रिंट करें",
+
+    // Admit Card
+    admitCardTitle: "एडमिट कार्ड डाउनलोड करें",
+    admitCardDescription: "परीक्षा के लिए अपना एडमिट कार्ड डाउनलोड करने के लिए अपना विवरण दर्ज करें।",
+    uniqueId: "यूनिक आईडी",
+    admitCardDownloadBtn: "एडमिट कार्ड डाउनलोड करें",
+    importantNote: "महत्वपूर्ण लेख",
+    uniqueIdNote: "अपनी यूनिक आईडी प्राप्त करने के लिए कृपया भुगतान पूरा करें। भुगतान के बाद, एडमिट कार्ड डाउनलोड करने के लिए इस आईडी और अपनी आवेदन संख्या का उपयोग करें।",
+    yourUniqueIdIs: "आपकी यूनिक आईडी (भुगतान के बाद का सिमुलेशन)"
   }
 };
