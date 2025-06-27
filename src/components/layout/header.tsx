@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+// This component is not currently used in the main layout but is kept for potential future use.
 export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
