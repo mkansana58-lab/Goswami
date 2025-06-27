@@ -91,13 +91,13 @@ export default function TeachersPage() {
                 ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
                         {galleryImages.map(image => (
-                            <div key={image.id} className="group relative overflow-hidden rounded-lg shadow-lg">
+                            <div key={image.id} className="group relative aspect-square overflow-hidden rounded-lg shadow-lg">
                                 <Image
                                     src={image.imageUrl}
                                     alt={image.caption}
                                     width={400}
                                     height={400}
-                                    className="w-full h-auto object-contain bg-muted transition-transform duration-300 group-hover:scale-105"
+                                    className="w-full h-full object-cover bg-muted transition-transform duration-300 group-hover:scale-105"
                                     data-ai-hint="coaching students"
                                 />
                                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-4">

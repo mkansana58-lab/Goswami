@@ -44,13 +44,13 @@ export default function DailyPostsPage() {
                     {posts.map(post => (
                         <Card key={post.id} className="flex flex-col">
                             {post.imageUrl && (
-                                <div className="w-full overflow-hidden rounded-t-lg bg-muted">
+                                <div className="w-full aspect-video overflow-hidden rounded-t-lg bg-muted">
                                     <Image
                                         src={post.imageUrl}
                                         alt={post.title}
                                         width={400}
                                         height={225}
-                                        className="w-full h-auto object-contain"
+                                        className="w-full h-full object-cover"
                                         data-ai-hint="post"
                                     />
                                 </div>

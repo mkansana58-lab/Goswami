@@ -41,7 +41,7 @@ export default function StudentLoginPage() {
     const success = await loginStudent(values.username); 
     if (success) {
       toast({ title: "Login successful!" });
-      router.push('/');
+      router.push('/home');
     } else {
       toast({
         variant: "destructive",

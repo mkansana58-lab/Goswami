@@ -39,7 +39,7 @@ import {
   ];
   
   export const sidebarLinks = [
-    { href: "/", icon: Home, textKey: "dashboard" },
+    { href: "/home", icon: Home, textKey: "dashboard" },
     { href: "/courses", icon: BookOpenCheck, textKey: "ourCourses" },
     { href: "/scholarship", icon: ClipboardPen, textKey: "scholarshipForm" },
     { href: "/admit-card", icon: Ticket, textKey: "admitCard" },
@@ -60,7 +60,7 @@ import {
   ];
 
   export const bottomNavLinks = [
-      { textKey: 'navHome', href: '/', icon: Home },
+      { textKey: 'navHome', href: '/home', icon: Home },
       { textKey: 'navCourses', href: '/courses', icon: BookOpenCheck },
       { textKey: 'navTest', href: '/tests', icon: CheckSquare },
       { textKey: 'navPosts', href: '/daily-posts', icon: Newspaper },

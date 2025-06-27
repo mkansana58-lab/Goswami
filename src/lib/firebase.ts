@@ -101,6 +101,7 @@ export interface AppConfig {
     scholarshipDeadline?: Timestamp;
     examDate?: Timestamp;
     admitCardDownloadStartDate?: Timestamp;
+    splashImageUrl?: string;
 }
 
 export interface Post {

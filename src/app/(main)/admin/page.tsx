@@ -49,6 +49,7 @@ const settingsSchema = z.object({
     scholarshipDeadline: z.string().optional(),
     examDate: z.string().optional(),
     admitCardDownloadStartDate: z.string().optional(),
+    splashImage: z.any().optional(),
 });
 const liveClassSchema = z.object({ title: z.string().min(3), link: z.string().url(), scheduledAt: z.string().min(1) });
 const notificationSchema = z.object({ title: z.string().min(3), content: z.string().min(10) });
@@ -159,11 +160,25 @@ export default function AdminPage() {
     }, [admin, fetchData]);
 
     const handleSaveSettings = async (values: z.infer<typeof settingsSchema>) => {
+        const { splashImage, ...dateValues } = values;
+
         const configData: Partial<AppConfig> = {
-            ...(values.scholarshipDeadline && { scholarshipDeadline: Timestamp.fromDate(new Date(values.scholarshipDeadline)) }),
-            ...(values.examDate && { examDate: Timestamp.fromDate(new Date(values.examDate)) }),
-            ...(values.admitCardDownloadStartDate && { admitCardDownloadStartDate: Timestamp.fromDate(new Date(values.admitCardDownloadStartDate)) }),
+            ...(dateValues.scholarshipDeadline && { scholarshipDeadline: Timestamp.fromDate(new Date(dateValues.scholarshipDeadline)) }),
+            ...(dateValues.examDate && { examDate: Timestamp.fromDate(new Date(dateValues.examDate)) }),
+            ...(dateValues.admitCardDownloadStartDate && { admitCardDownloadStartDate: Timestamp.fromDate(new Date(dateValues.admitCardDownloadStartDate)) }),
         };
+
+        if (splashImage?.[0]) {
+            const file = splashImage[0];
+            const dataUrl = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target?.result as string);
+                reader.onerror = (error) => reject(error);
+                reader.readAsDataURL(file);
+            });
+            configData.splashImageUrl = dataUrl;
+        }
+
         await updateAppConfig(configData);
         toast({ title: "Settings Saved" });
     };
@@ -187,6 +202,7 @@ export default function AdminPage() {
                                      <div><Label>{t('scholarshipDeadline')}</Label><Input type="datetime-local" {...settingsForm.register('scholarshipDeadline')} /></div>
                                      <div><Label>{t('examDate')}</Label><Input type="datetime-local" {...settingsForm.register('examDate')} /></div>
                                      <div><Label>{t('admitCardStartDate')}</Label><Input type="datetime-local" {...settingsForm.register('admitCardDownloadStartDate')} /></div>
+                                     <div><Label>Splash Screen Image (for App Start)</Label><Input type="file" accept="image/*" {...settingsForm.register('splashImage')} /></div>
                                      <Button type="submit">{t('saveSettings')}</Button>
                                 </form>
                             </AdminSection>

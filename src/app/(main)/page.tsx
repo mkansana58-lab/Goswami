@@ -1,40 +1,20 @@
-
 "use client";
 
-import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
-import { ShieldCheck } from 'lucide-react';
-import Link from 'next/link';
-import { useLanguage } from '@/hooks/use-language';
-import { featureGridLinks } from '@/lib/nav-links';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
-export default function HomePage() {
-  const { t } = useLanguage();
+// This page now acts as a redirect to the new /home page to handle old bookmarks gracefully.
+export default function OldHomePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/home');
+  }, [router]);
 
   return (
-    <div className="flex flex-col items-center text-center">
-      <div className="flex items-center gap-3 mb-6">
-        <ShieldCheck className="h-10 w-10 text-primary" />
-        <h1 className="text-2xl font-bold text-primary">{t('appName')}</h1>
-      </div>
-
-      <Card className="w-full max-w-2xl mb-8 bg-card border-primary/20 shadow-lg rounded-xl">
-        <CardContent className="p-4">
-          <p className="text-lg font-signature text-primary">
-            "{t('quote')}"
-          </p>
-        </CardContent>
-      </Card>
-      
-      <div className="grid grid-cols-3 gap-3 md:gap-4 w-full max-w-2xl">
-        {featureGridLinks.map((link) => (
-          <Link href={link.href} key={link.href} passHref>
-            <Card className="bg-card hover:bg-accent transition-colors duration-300 cursor-pointer h-full flex flex-col items-center justify-center text-center p-2 md:p-3 aspect-square shadow-md rounded-xl border border-border/10">
-              <link.icon className="h-7 w-7 md:h-8 md:w-8 text-primary mb-2" />
-              <p className="text-xs md:text-sm font-medium text-primary">{t(link.textKey as any)}</p>
-            </Card>
-          </Link>
-        ))}
-      </div>
+    <div className="flex h-screen w-full items-center justify-center bg-background">
+      <Loader2 className="h-12 w-12 animate-spin text-primary" />
     </div>
   );
 }
