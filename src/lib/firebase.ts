@@ -133,6 +133,14 @@ export interface Download {
     createdAt: Timestamp;
 }
 
+export interface EBook {
+    id: string;
+    title: string;
+    pdfUrl: string;
+    imageUrl?: string;
+    createdAt: Timestamp;
+}
+
 export interface Course {
     id: string;
     title: string;
@@ -156,6 +164,13 @@ export interface GalleryImage {
     createdAt: Timestamp;
 }
 
+export interface ContactInquiry {
+    id: string;
+    email: string;
+    mobile: string;
+    createdAt: Timestamp;
+}
+
 
 // --- Constants ---
 export const CLASS_UNIQUE_IDS: Record<string, string> = {
@@ -172,6 +187,14 @@ export const CLASS_UNIQUE_IDS: Record<string, string> = {
 async function deleteDocument(collectionName: string, id: string): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
     await deleteDoc(doc(db, collectionName, id));
+}
+
+// Generic get all function
+async function getAll<T>(collectionName: string): Promise<T[]> {
+    if (!db) return [];
+    const q = query(collection(db, collectionName), orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as T);
 }
 
 export async function getAppConfig(): Promise<AppConfig> {
@@ -220,10 +243,7 @@ export async function addScholarshipApplication(data: Omit<ScholarshipApplicatio
 }
 
 export async function getScholarshipApplications(): Promise<ScholarshipApplicationData[]> {
-    if (!db) return [];
-    const q = query(collection(db, "scholarshipApplications"), orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScholarshipApplicationData));
+    return getAll<ScholarshipApplicationData>("scholarshipApplications");
 }
 
 export async function getScholarshipApplicationByNumber(appNumber: string, uniqueId: string): Promise<ScholarshipApplicationData | null> {
@@ -268,10 +288,7 @@ export async function updateStudent(name: string, data: Partial<Omit<StudentData
 }
 
 export async function getStudents(): Promise<StudentData[]> {
-    if (!db) return [];
-    const q = query(collection(db, "students"), orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as StudentData);
+    return getAll<StudentData>("students");
 }
 
 export async function addTestResult(data: Omit<TestResultData, 'submittedAt' | 'id'>): Promise<void> {
@@ -297,46 +314,51 @@ export async function getLiveClasses(): Promise<LiveClass[]> {
 }
 
 export async function getNotifications(): Promise<Notification[]> {
-    if (!db) return [];
-    const q = query(collection(db, "notifications"), orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Notification[];
+    return getAll<Notification>("notifications");
 }
 
 // --- Daily Posts ---
 export const addPost = async (data: Omit<Post, 'id' | 'createdAt'>) => addDoc(collection(db, "posts"), { ...data, createdAt: Timestamp.now() });
-export const getPosts = async (): Promise<Post[]> => (await getDocs(query(collection(db, "posts"), orderBy("createdAt", "desc")))).docs.map(d => ({ id: d.id, ...d.data() } as Post));
+export const getPosts = async (): Promise<Post[]> => getAll<Post>("posts");
 export const deletePost = (id: string) => deleteDocument("posts", id);
 
 // --- Current Affairs ---
 export const addCurrentAffair = async (data: Omit<CurrentAffair, 'id' | 'createdAt'>) => addDoc(collection(db, "currentAffairs"), { ...data, createdAt: Timestamp.now() });
-export const getCurrentAffairs = async (): Promise<CurrentAffair[]> => (await getDocs(query(collection(db, "currentAffairs"), orderBy("createdAt", "desc")))).docs.map(d => ({ id: d.id, ...d.data() } as CurrentAffair));
+export const getCurrentAffairs = async (): Promise<CurrentAffair[]> => getAll<CurrentAffair>("currentAffairs");
 export const deleteCurrentAffair = (id: string) => deleteDocument("currentAffairs", id);
 
 // --- Video Lectures ---
 export const addVideoLecture = async (data: Omit<VideoLecture, 'id' | 'createdAt'>) => addDoc(collection(db, "videoLectures"), { ...data, createdAt: Timestamp.now() });
-export const getVideoLectures = async (): Promise<VideoLecture[]> => (await getDocs(query(collection(db, "videoLectures"), orderBy("createdAt", "desc")))).docs.map(d => ({ id: d.id, ...d.data() } as VideoLecture));
+export const getVideoLectures = async (): Promise<VideoLecture[]> => getAll<VideoLecture>("videoLectures");
 export const deleteVideoLecture = (id: string) => deleteDocument("videoLectures", id);
 
 // --- Downloads ---
 export const addDownload = async (data: Omit<Download, 'id' | 'createdAt'>) => addDoc(collection(db, "downloads"), { ...data, createdAt: Timestamp.now() });
-export const getDownloads = async (): Promise<Download[]> => (await getDocs(query(collection(db, "downloads"), orderBy("createdAt", "desc")))).docs.map(d => ({ id: d.id, ...d.data() } as Download));
+export const getDownloads = async (): Promise<Download[]> => getAll<Download>("downloads");
 export const deleteDownload = (id: string) => deleteDocument("downloads", id);
+
+// --- E-Books ---
+export const addEBook = async (data: Omit<EBook, 'id' | 'createdAt'>) => addDoc(collection(db, "ebooks"), { ...data, createdAt: Timestamp.now() });
+export const getEBooks = async (): Promise<EBook[]> => getAll<EBook>("ebooks");
+export const deleteEBook = (id: string) => deleteDocument("ebooks", id);
 
 // --- Courses ---
 export const addCourse = async (data: Omit<Course, 'id' | 'createdAt'>) => addDoc(collection(db, "courses"), { ...data, createdAt: Timestamp.now() });
-export const getCourses = async (): Promise<Course[]> => (await getDocs(query(collection(db, "courses"), orderBy("createdAt", "desc")))).docs.map(d => ({ id: d.id, ...d.data() } as Course));
+export const getCourses = async (): Promise<Course[]> => getAll<Course>("courses");
 export const deleteCourse = (id: string) => deleteDocument("courses", id);
 
 // --- Teachers ---
 export const addTeacher = async (data: Omit<Teacher, 'id' | 'createdAt'>) => addDoc(collection(db, "teachers"), { ...data, createdAt: Timestamp.now() });
-export const getTeachers = async (): Promise<Teacher[]> => (await getDocs(query(collection(db, "teachers"), orderBy("createdAt", "desc")))).docs.map(d => ({ id: d.id, ...d.data() } as Teacher));
+export const getTeachers = async (): Promise<Teacher[]> => getAll<Teacher>("teachers");
 export const deleteTeacher = (id: string) => deleteDocument("teachers", id);
 
 // --- Gallery Images ---
 export const addGalleryImage = async (data: Omit<GalleryImage, 'id' | 'createdAt'>) => addDoc(collection(db, "galleryImages"), { ...data, createdAt: Timestamp.now() });
-export const getGalleryImages = async (): Promise<GalleryImage[]> => (await getDocs(query(collection(db, "galleryImages"), orderBy("createdAt", "desc")))).docs.map(d => ({ id: d.id, ...d.data() } as GalleryImage));
+export const getGalleryImages = async (): Promise<GalleryImage[]> => getAll<GalleryImage>("galleryImages");
 export const deleteGalleryImage = (id: string) => deleteDocument("galleryImages", id);
 
+// --- Contact Inquiries ---
+export const addContactInquiry = async (data: Omit<ContactInquiry, 'id' | 'createdAt'>) => addDoc(collection(db, "contactInquiries"), { ...data, createdAt: Timestamp.now() });
+export const getContactInquiries = async (): Promise<ContactInquiry[]> => getAll<ContactInquiry>("contactInquiries");
 
 export { app, db };

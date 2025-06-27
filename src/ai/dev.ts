@@ -6,3 +6,4 @@ config();
 // import '@/ai/flows/example-flow.ts';
 import '@/ai/flows/tutor-flow.ts';
 import '@/ai/flows/test-generator-flow.ts';
+import '@/ai/flows/cutoff-checker-flow.ts';

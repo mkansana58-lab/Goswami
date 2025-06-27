@@ -1,9 +1,10 @@
+
 "use client";
 
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, Download, Calendar, Clock } from 'lucide-react';
+import { ShieldCheck, Download, Calendar, Clock, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import type { ScholarshipApplicationData } from '@/lib/firebase';
 import { format } from 'date-fns';
@@ -54,8 +55,8 @@ export function AdmitCardDisplay({ data, examDate }: Props) {
                         <p className="font-semibold col-span-2 mt-4 text-primary">Exam Details:</p>
                         <p className="font-semibold flex items-center gap-2"><Calendar className="h-4 w-4"/>Exam Date:</p><p>{examDate ? format(examDate, 'PPP') : 'To be announced'}</p>
                         <p className="font-semibold flex items-center gap-2"><Clock className="h-4 w-4"/>Exam Time:</p><p>{examDate ? format(examDate, 'p') : 'To be announced'}</p>
-                        <p className="font-semibold col-span-2 mt-2">Exam Center:</p>
-                        <p className="col-span-2">Go Swami Defence Academy, Main Branch</p>
+                        <p className="font-semibold col-span-2 flex items-start gap-2"><MapPin className="h-4 w-4 mt-0.5"/>Exam Center:</p>
+                        <p className="col-span-2 -mt-2">Go Swami Defence Academy, Khargpur, Dholpur, Rajasthan - 328023</p>
                     </div>
                 </div>
                 <div className="space-y-4 flex flex-col items-center">

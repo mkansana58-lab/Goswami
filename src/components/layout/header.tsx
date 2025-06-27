@@ -36,6 +36,7 @@ export function Header() {
   const { admin, student, logout } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const isFirebaseConfigured = !!firebaseConfig.projectId;
 
   const fetchNotifications = async () => {
@@ -56,6 +57,7 @@ export function Header() {
   };
 
   const handleAdminClick = () => {
+    setIsSheetOpen(false);
     if (admin) {
       router.push('/admin');
     } else {
@@ -73,7 +75,7 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between px-4">
         
         <div className="flex items-center gap-2">
-          <Sheet>
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden text-primary">
                 <Menu className="h-6 w-6" />
@@ -91,7 +93,7 @@ export function Header() {
                 {sidebarLinks.map((link) => (
                     link.textKey === 'adminPanel' ? 
                     <li key={link.href}><button onClick={handleAdminClick} className="flex items-center gap-3 rounded-md p-2 text-base font-medium text-primary hover:bg-accent w-full text-left"><link.icon className="h-5 w-5" />{t(link.textKey as any)}</button></li> :
-                    <li key={link.href}><Link href={link.href} className="flex items-center gap-3 rounded-md p-2 text-base font-medium text-primary hover:bg-accent"><link.icon className="h-5 w-5" />{t(link.textKey as any)}</Link></li>
+                    <li key={link.href}><Link href={link.href} onClick={() => setIsSheetOpen(false)} className="flex items-center gap-3 rounded-md p-2 text-base font-medium text-primary hover:bg-accent"><link.icon className="h-5 w-5" />{t(link.textKey as any)}</Link></li>
                 ))}</ul></nav>
               {admin && <div className="p-4 border-t border-border/20 mt-auto"><div className="flex items-center gap-3"><Avatar><AvatarImage src="https://placehold.co/40x40.png" data-ai-hint="user avatar"/><AvatarFallback>A</AvatarFallback></Avatar><div><p className="text-sm font-semibold text-primary">{admin.name}</p><p className="text-xs text-muted-foreground">{admin.email}</p></div></div></div>}
             </SheetContent>

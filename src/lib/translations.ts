@@ -1,3 +1,4 @@
+
 export type Language = 'en' | 'hi';
 
 export const translations = {
@@ -43,6 +44,7 @@ export const translations = {
     dashboard: "Dashboard",
     videoLectures: "Video Lectures",
     downloads: "Downloads",
+    ebooks: "E-Books",
     teachers: "Teachers",
     schoolList: "School List",
     contact: "Contact",
@@ -190,7 +192,7 @@ export const translations = {
     manageVideoLectures: "Manage Video Lectures",
     manageDownloads: "Manage Downloads",
     manageCourses: "Manage Courses",
-    imageUrl: "Image URL (Optional)",
+    imageUrl: "Image (Optional)",
     videoUrl: "Video URL",
     pdfUrl: "PDF URL",
     delete: "Delete",
@@ -221,7 +223,7 @@ export const translations = {
     aiTutor: "AI ट्यूटर",
     aiChat: "AI चैट",
     currentAffairs: "करेंट अफेयर्स",
-    cutoffChecker: "कट-ऑफ देखें",
+    cutoffChecker: "कट-ऑफ चेकर",
     toppers: "टॉपर्स",
     contactUs: "संपर्क करें",
     navHome: "होम",
@@ -252,6 +254,7 @@ export const translations = {
     dashboard: "डैशबोर्ड",
     videoLectures: "वीडियो लेक्चर",
     downloads: "डाउनलोड्स",
+    ebooks: "ई-बुक्स",
     teachers: "शिक्षक",
     schoolList: "स्कूल सूची",
     contact: "संपर्क",
@@ -402,7 +405,7 @@ export const translations = {
     manageVideoLectures: "वीडियो लेक्चर प्रबंधित करें",
     manageDownloads: "डाउनलोड प्रबंधित करें",
     manageCourses: "कोर्स प्रबंधित करें",
-    imageUrl: "इमेज URL (वैकल्पिक)",
+    imageUrl: "इमेज (वैकल्पिक)",
     videoUrl: "वीडियो URL",
     pdfUrl: "PDF URL",
     delete: "हटाएं",

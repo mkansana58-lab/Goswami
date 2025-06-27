@@ -97,7 +97,7 @@ export default function TeachersPage() {
                                     alt={image.caption}
                                     width={400}
                                     height={400}
-                                    className="object-cover w-full h-full aspect-square transition-transform duration-300 group-hover:scale-110"
+                                    className="w-full h-auto object-contain bg-muted transition-transform duration-300 group-hover:scale-105"
                                     data-ai-hint="coaching students"
                                 />
                                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-4">

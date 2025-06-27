@@ -23,12 +23,14 @@ import {
     addTeacher, deleteTeacher, getTeachers,
     addGalleryImage, deleteGalleryImage, getGalleryImages,
     getScholarshipApplications, getStudents, updateAppConfig, getAppConfig,
+    getContactInquiries, addEBook, getEBooks, deleteEBook,
     type LiveClass, type Notification, type Post, type CurrentAffair,
     type VideoLecture, type Download, type Course, type AppConfig,
-    type ScholarshipApplicationData, type StudentData, type Teacher, type GalleryImage
+    type ScholarshipApplicationData, type StudentData, type Teacher, type GalleryImage,
+    type ContactInquiry, type EBook
 } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare } from 'lucide-react';
+import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -50,6 +52,7 @@ const postSchema = z.object({ title: z.string().min(3), content: z.string().min(
 const currentAffairSchema = z.object({ title: z.string().min(3), content: z.string().min(10) });
 const videoLectureSchema = z.object({ title: z.string().min(3), videoUrl: z.string().url() });
 const downloadSchema = z.object({ title: z.string().min(3), pdfUrl: z.string().url() });
+const eBookSchema = z.object({ title: z.string().min(3), pdfUrl: z.string().url(), imageUrl: z.any().optional() });
 const courseSchema = z.object({ title: z.string().min(3), description: z.string().min(10), imageUrl: z.any().optional() });
 const teacherSchema = z.object({ name: z.string().min(3), description: z.string().min(10), imageUrl: z.any().optional() });
 const galleryImageSchema = z.object({ caption: z.string().min(3), imageUrl: z.any().refine(f => f?.length === 1, "Image is required.") });
@@ -77,7 +80,8 @@ export default function AdminPage() {
         liveClasses: [] as LiveClass[], notifications: [] as Notification[], posts: [] as Post[],
         currentAffairs: [] as CurrentAffair[], videoLectures: [] as VideoLecture[], downloads: [] as Download[],
         courses: [] as Course[], scholarshipApps: [] as ScholarshipApplicationData[], students: [] as StudentData[],
-        teachers: [] as Teacher[], galleryImages: [] as GalleryImage[],
+        teachers: [] as Teacher[], galleryImages: [] as GalleryImage[], contactInquiries: [] as ContactInquiry[],
+        ebooks: [] as EBook[],
     });
     const [isLoading, setIsLoading] = useState(true);
 
@@ -88,11 +92,13 @@ export default function AdminPage() {
         try {
             const [
                 config, liveClasses, notifications, posts, currentAffairs, videoLectures,
-                downloads, courses, scholarshipApps, students, teachers, galleryImages
+                downloads, courses, scholarshipApps, students, teachers, galleryImages,
+                contactInquiries, ebooks
             ] = await Promise.all([
                 getAppConfig(), getLiveClasses(), getNotifications(), getPosts(),
                 getCurrentAffairs(), getVideoLectures(), getDownloads(), getCourses(),
-                getScholarshipApplications(), getStudents(), getTeachers(), getGalleryImages()
+                getScholarshipApplications(), getStudents(), getTeachers(), getGalleryImages(),
+                getContactInquiries(), getEBooks()
             ]);
             settingsForm.reset({
                 scholarshipDeadline: toInputDateTimeFormat(config.scholarshipDeadline),
@@ -101,7 +107,8 @@ export default function AdminPage() {
             });
             setData({
                 liveClasses, notifications, posts, currentAffairs, videoLectures,
-                downloads, courses, scholarshipApps, students, teachers, galleryImages
+                downloads, courses, scholarshipApps, students, teachers, galleryImages,
+                contactInquiries, ebooks
             });
         } catch (error) {
             toast({ variant: "destructive", title: "Error", description: "Failed to fetch data from server." });
@@ -174,6 +181,11 @@ export default function AdminPage() {
                         <DataTable data={data.downloads} columns={['title', 'pdfUrl']} onDelete={deleteDownload} onRefresh={fetchData} />
                     </AdminSection>
 
+                    <AdminSection title="Manage E-Books" icon={Library}>
+                        <CrudForm schema={eBookSchema} onSubmit={addEBook} onRefresh={fetchData} fields={{title: 'text', pdfUrl: 'url', imageUrl: 'file'}} />
+                        <DataTable data={data.ebooks} columns={['title', 'pdfUrl']} onDelete={deleteEBook} onRefresh={fetchData} />
+                    </AdminSection>
+
                     <AdminSection title={t('manageCourses')} icon={BookCopy}>
                         <CrudForm schema={courseSchema} onSubmit={addCourse} onRefresh={fetchData} fields={{title: 'text', description: 'textarea', imageUrl: 'file'}} />
                         <DataTable data={data.courses} columns={['title', 'description']} onDelete={deleteCourse} onRefresh={fetchData} />
@@ -187,6 +199,16 @@ export default function AdminPage() {
                     <AdminSection title="Manage Coaching Gallery" icon={Camera}>
                         <CrudForm schema={galleryImageSchema} onSubmit={addGalleryImage} onRefresh={fetchData} fields={{caption: 'text', imageUrl: 'file'}} />
                         <DataTable data={data.galleryImages} columns={['caption']} onDelete={deleteGalleryImage} onRefresh={fetchData} />
+                    </AdminSection>
+
+                    <AdminSection title="Contact Inquiries" icon={Mail}>
+                        <Table><TableHeader><TableRow><TableHead>Email</TableHead><TableHead>Mobile</TableHead><TableHead>Submitted On</TableHead></TableRow></TableHeader>
+                            <TableBody>
+                                {data.contactInquiries.map(inquiry => (
+                                    <TableRow key={inquiry.id}><TableCell>{inquiry.email}</TableCell><TableCell>{inquiry.mobile}</TableCell><TableCell>{format(inquiry.createdAt.toDate(), 'PPP p')}</TableCell></TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     </AdminSection>
 
                     <AdminSection title="Scholarship Applications" icon={GraduationCap}>
@@ -269,7 +291,7 @@ const CrudForm = ({ schema, onSubmit, onRefresh, fields }: { schema: z.ZodObject
                     {fieldType === 'textarea' ?
                         <Textarea {...form.register(fieldName)} disabled={isSubmitting} /> :
                     fieldType === 'file' ?
-                        <Input type="file" accept="image/*" {...form.register(fieldName)} disabled={isSubmitting}/> :
+                        <Input type="file" accept="image/*, .pdf" {...form.register(fieldName)} disabled={isSubmitting}/> :
                         <Input type={fieldType} {...form.register(fieldName)} disabled={isSubmitting} />
                     }
                     <p className="text-destructive text-sm mt-1">{form.formState.errors[fieldName]?.message as string}</p>
@@ -326,7 +348,7 @@ const ImagePreview = ({ url, triggerText }: { url?: string; triggerText: React.R
     return (
         <Dialog>
             <DialogTrigger asChild><Button variant="ghost" size="sm" className="h-auto p-1">{triggerText}</Button></DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-md">
                 <DialogHeader><DialogTitle>Image Preview</DialogTitle></DialogHeader>
                 <div className="flex justify-center p-4"><Image src={url} alt="Preview" width={400} height={400} className="max-w-full h-auto rounded-md" /></div>
             </DialogContent>
