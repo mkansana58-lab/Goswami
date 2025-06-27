@@ -53,7 +53,13 @@ export default function AdminPage() {
         setIsClassLoading(true);
         toast({ title: "Submitting...", description: "Adding live class to the database." });
         try {
-            await addLiveClass(values);
+            // Explicitly create a plain object to ensure no proxy/special object issues.
+            const plainData = {
+                title: values.title,
+                link: values.link,
+                scheduledAt: values.scheduledAt,
+            };
+            await addLiveClass(plainData);
             toast({ title: "Success", description: "Live class has been added successfully." });
             classForm.reset();
         } catch (error) {
@@ -75,7 +81,12 @@ export default function AdminPage() {
         setIsNotificationLoading(true);
         toast({ title: "Submitting...", description: "Adding notification to the database." });
         try {
-            await addNotification(values);
+             // Explicitly create a plain object to ensure no proxy/special object issues.
+            const plainData = {
+                title: values.title,
+                content: values.content,
+            };
+            await addNotification(plainData);
             toast({ title: "Success", description: "Notification has been posted." });
             notificationForm.reset();
         } catch (error) {
