@@ -1,6 +1,6 @@
 // firebase.ts
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getFirestore, collection, getDocs, type Firestore, query, orderBy, Timestamp, addDoc, where, limit } from "firebase/firestore";
+import { getFirestore, collection, getDocs, type Firestore, query, orderBy, Timestamp, addDoc, where, limit, doc, setDoc, getDoc } from "firebase/firestore";
 
 // Firebase configuration from environment variables
 export const firebaseConfig = {
@@ -30,7 +30,8 @@ function initializeFirebase() {
 // Ensure Firebase is initialized
 initializeFirebase();
 
-// Live Class types
+// --- Interfaces ---
+
 export interface LiveClass {
   id: string;
   title: string;
@@ -38,13 +39,12 @@ export interface LiveClass {
   link: string;
 }
 
-interface NewLiveClassData {
+export interface NewLiveClassData {
     title: string;
     link: string;
     scheduledAt: string; // ISO string from datetime-local input
 }
 
-// Notification types
 export interface Notification {
     id: string;
     title: string;
@@ -52,15 +52,15 @@ export interface Notification {
     createdAt: Timestamp;
 }
 
-interface NewNotificationData {
+export interface NewNotificationData {
     title: string;
     content: string;
 }
 
-// Scholarship Application interfaces
 export interface ScholarshipApplicationData {
     id?: string;
     applicationNumber: string;
+    uniqueId: string;
     fullName: string;
     fatherName: string;
     mobile: string;
@@ -74,14 +74,18 @@ export interface ScholarshipApplicationData {
     createdAt: Timestamp;
 }
 
-// Student interface
 export interface StudentData {
     id?: string;
     name: string;
+    fatherName?: string;
+    class?: string;
+    age?: number;
+    address?: string;
+    school?: string;
+    photoUrl?: string; // as data URI
     createdAt: Timestamp;
 }
 
-// Test Result interface
 export interface TestResultData {
     id?: string;
     studentName: string;
@@ -93,98 +97,117 @@ export interface TestResultData {
     submittedAt: Timestamp;
 }
 
-// Function to add a new live class to Firestore
-export async function addLiveClass({ title, link, scheduledAt }: NewLiveClassData): Promise<void> {
-    if (!db) {
-        throw new Error("Firestore DB not initialized.");
-    }
-    try {
-        await addDoc(collection(db, "liveClasses"), {
-            title,
-            link,
-            scheduledAt: Timestamp.fromDate(new Date(scheduledAt)),
-        });
-    } catch (error) {
-        console.error("Error adding live class to Firestore:", error);
-        throw error;
-    }
+export interface AppConfig {
+    scholarshipDeadline?: Timestamp;
+    examDate?: Timestamp;
+    admitCardDownloadStartDate?: Timestamp;
 }
 
-// Function to add a new notification to Firestore
+
+// --- Constants ---
+export const CLASS_UNIQUE_IDS: Record<string, string> = {
+    "5": "8824",
+    "6": "7456",
+    "7": "80235",
+    "8": "0080",
+    "9": "4734",
+};
+
+// --- Functions ---
+
+export async function getAppConfig(): Promise<AppConfig> {
+    if (!db) return {};
+    const configRef = doc(db, "appConfig", "settings");
+    const docSnap = await getDoc(configRef);
+    if (docSnap.exists()) {
+        return docSnap.data() as AppConfig;
+    }
+    return {};
+}
+
+export async function updateAppConfig(data: AppConfig): Promise<void> {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    const configRef = doc(db, "appConfig", "settings");
+    await setDoc(configRef, data, { merge: true });
+}
+
+export async function addLiveClass({ title, link, scheduledAt }: NewLiveClassData): Promise<void> {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    await addDoc(collection(db, "liveClasses"), {
+        title,
+        link,
+        scheduledAt: Timestamp.fromDate(new Date(scheduledAt)),
+    });
+}
+
 export async function addNotification({ title, content }: NewNotificationData): Promise<void> {
-    if (!db) {
-        throw new Error("Firestore DB not initialized.");
-    }
-    try {
-        await addDoc(collection(db, "notifications"), {
-            title,
-            content,
-            createdAt: Timestamp.now(),
-        });
-    } catch (error) {
-        console.error("Error adding notification to Firestore:", error);
-        throw error;
-    }
+    if (!db) throw new Error("Firestore DB not initialized.");
+    await addDoc(collection(db, "notifications"), {
+        title,
+        content,
+        createdAt: Timestamp.now(),
+    });
 }
 
 export async function addScholarshipApplication(data: Omit<ScholarshipApplicationData, 'createdAt' | 'id'>): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
-    try {
-        await addDoc(collection(db, "scholarshipApplications"), {
-            ...data,
-            createdAt: Timestamp.now(),
-        });
-    } catch (error) {
-        console.error("Error adding scholarship application:", error);
-        throw error;
-    }
+    await addDoc(collection(db, "scholarshipApplications"), {
+        ...data,
+        createdAt: Timestamp.now(),
+    });
 }
 
 export async function getScholarshipApplications(): Promise<ScholarshipApplicationData[]> {
     if (!db) return [];
-    const applicationsCollection = collection(db, "scholarshipApplications");
-    const q = query(applicationsCollection, orderBy("createdAt", "desc"));
+    const q = query(collection(db, "scholarshipApplications"), orderBy("createdAt", "desc"));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScholarshipApplicationData));
 }
 
 export async function getScholarshipApplicationByNumber(appNumber: string, uniqueId: string): Promise<ScholarshipApplicationData | null> {
     if (!db) return null;
-    const applicationsCollection = collection(db, "scholarshipApplications");
     const q = query(
-        applicationsCollection, 
+        collection(db, "scholarshipApplications"), 
         where("applicationNumber", "==", appNumber),
-        where("mobile", "==", uniqueId), // Using mobile as uniqueId for verification
+        where("uniqueId", "==", uniqueId),
         limit(1)
     );
     const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) {
-        return null;
-    }
-    const docData = querySnapshot.docs[0].data();
-    return {
-        id: querySnapshot.docs[0].id,
-        ...docData
-    } as ScholarshipApplicationData;
+    if (querySnapshot.empty) return null;
+    return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as ScholarshipApplicationData;
 }
-
 
 export async function addStudent(name: string): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
-    const studentQuery = query(collection(db, "students"), where("name", "==", name), limit(1));
-    const querySnapshot = await getDocs(studentQuery);
-    if (querySnapshot.empty) {
-        await addDoc(collection(db, "students"), {
+    const studentRef = doc(db, "students", name); // Use name as document ID
+    const docSnap = await getDoc(studentRef);
+    if (!docSnap.exists()) {
+        await setDoc(studentRef, {
             name: name,
             createdAt: Timestamp.now(),
         });
     }
 }
 
+export async function getStudent(name: string): Promise<StudentData | null> {
+    if (!db) return null;
+    const studentRef = doc(db, "students", name);
+    const docSnap = await getDoc(studentRef);
+    if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as StudentData;
+    }
+    return null;
+}
+
+export async function updateStudent(name: string, data: Partial<StudentData>): Promise<void> {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    const studentRef = doc(db, "students", name);
+    await setDoc(studentRef, data, { merge: true });
+}
+
 export async function getStudents(): Promise<StudentData[]> {
     if (!db) return [];
-    const studentsCollection = collection(db, "students");
-    const q = query(studentsCollection, orderBy("createdAt", "desc"));
+    const q = query(collection(db, "students"), orderBy("createdAt", "desc"));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as StudentData);
 }
@@ -199,53 +222,23 @@ export async function addTestResult(data: Omit<TestResultData, 'submittedAt' | '
 
 export async function getTestResults(): Promise<TestResultData[]> {
     if (!db) return [];
-    const resultsCollection = collection(db, "testResults");
-    const q = query(resultsCollection, orderBy("percentage", "desc"), limit(20)); // Get top 20
+    const q = query(collection(db, "testResults"), orderBy("percentage", "desc"), limit(20));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as TestResultData);
 }
 
-// Function to fetch live classes from Firestore
 export async function getLiveClasses(): Promise<LiveClass[]> {
-  if (!db) {
-    console.error("Firestore DB not initialized. Cannot fetch live classes.");
-    return [];
-  }
-  try {
-    const liveClassesCollection = collection(db, "liveClasses");
-    const q = query(liveClassesCollection, orderBy("scheduledAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    const classes = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as LiveClass[];
-    return classes;
-  } catch (error) {
-    console.error("Error fetching live classes from Firestore:", error);
-    return [];
-  }
+  if (!db) return [];
+  const q = query(collection(db, "liveClasses"), orderBy("scheduledAt", "desc"));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as LiveClass[];
 }
 
-// Function to fetch notifications from Firestore
 export async function getNotifications(): Promise<Notification[]> {
-    if (!db) {
-      console.error("Firestore DB not initialized. Cannot fetch notifications.");
-      return [];
-    }
-    try {
-      const notificationsCollection = collection(db, "notifications");
-      const q = query(notificationsCollection, orderBy("createdAt", "desc"));
-      const querySnapshot = await getDocs(q);
-      const notifications = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Notification[];
-      return notifications;
-    } catch (error) {
-      console.error("Error fetching notifications from Firestore:", error);
-      return [];
-    }
+    if (!db) return [];
+    const q = query(collection(db, "notifications"), orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Notification[];
 }
-
 
 export { app, db };

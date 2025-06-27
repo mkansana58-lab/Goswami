@@ -1,19 +1,19 @@
-
 "use client";
 
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, Download } from 'lucide-react';
+import { ShieldCheck, Download, Calendar, Clock } from 'lucide-react';
 import Image from 'next/image';
 import type { ScholarshipApplicationData } from '@/lib/firebase';
 import { format } from 'date-fns';
 
 interface Props {
   data: ScholarshipApplicationData;
+  examDate?: Date;
 }
 
-export function AdmitCardDisplay({ data }: Props) {
+export function AdmitCardDisplay({ data, examDate }: Props) {
   const { t } = useLanguage();
 
   const handlePrint = () => {
@@ -24,21 +24,10 @@ export function AdmitCardDisplay({ data }: Props) {
     <div className="max-w-4xl mx-auto my-8 printable-area">
        <style jsx global>{`
         @media print {
-          body * {
-            visibility: hidden;
-          }
-          .printable-area, .printable-area * {
-            visibility: visible;
-          }
-          .printable-area {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-          .no-print {
-            display: none;
-          }
+          body * { visibility: hidden; }
+          .printable-area, .printable-area * { visibility: visible; }
+          .printable-area { position: absolute; left: 0; top: 0; width: 100%; }
+          .no-print { display: none; }
         }
       `}</style>
       <Card className="border-2 border-primary">
@@ -55,20 +44,18 @@ export function AdmitCardDisplay({ data }: Props) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-2 space-y-4">
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                        <p className="font-semibold">{t('applicationNumber')}:</p>
-                        <p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{data.applicationNumber}</p>
-                        
+                        <p className="font-semibold">{t('applicationNumber')}:</p><p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{data.applicationNumber}</p>
+                        <p className="font-semibold">{t('uniqueId')}:</p><p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{data.uniqueId}</p>
                         <p className="font-semibold">{t('fullName')}:</p><p>{data.fullName}</p>
                         <p className="font-semibold">{t('fathersName')}:</p><p>{data.fatherName}</p>
                         <p className="font-semibold">{t('selectClass')}:</p><p>{data.class}</p>
                         <p className="font-semibold">{t('schoolName')}:</p><p>{data.school}</p>
-                        <p className="font-semibold">{t('mobileNumber')}:</p><p>{data.mobile}</p>
                         
-                        <p className="font-semibold col-span-2 mt-4">Exam Center:</p>
+                        <p className="font-semibold col-span-2 mt-4 text-primary">Exam Details:</p>
+                        <p className="font-semibold flex items-center gap-2"><Calendar className="h-4 w-4"/>Exam Date:</p><p>{examDate ? format(examDate, 'PPP') : 'To be announced'}</p>
+                        <p className="font-semibold flex items-center gap-2"><Clock className="h-4 w-4"/>Exam Time:</p><p>{examDate ? format(examDate, 'p') : 'To be announced'}</p>
+                        <p className="font-semibold col-span-2 mt-2">Exam Center:</p>
                         <p className="col-span-2">Go Swami Defence Academy, Main Branch</p>
-                        
-                        <p className="font-semibold col-span-2 mt-2">Exam Date & Time:</p>
-                        <p className="col-span-2">To be announced. Please check website.</p>
                     </div>
                 </div>
                 <div className="space-y-4 flex flex-col items-center">

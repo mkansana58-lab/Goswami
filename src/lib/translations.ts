@@ -1,4 +1,3 @@
-
 export type Language = 'en' | 'hi';
 
 export const translations = {
@@ -88,12 +87,13 @@ export const translations = {
     saveApplicationNumberNoteTitle: "Important: Save Your Application Number",
     saveApplicationNumberNoteContent: "Please save your Application Number shown above. You will need it to download your admit card.",
 
-    
     // Admit Card
     admitCardTitle: "Download Admit Card",
-    admitCardDescription: "Enter your Application Number and your registered Mobile Number to download your admit card.",
+    admitCardDescription: "Enter your Application Number and Unique ID to download your admit card.",
     uniqueId: "Unique ID",
     admitCardDownloadBtn: "Download Admit Card",
+    admitCardNotAvailable: "Admit card downloads have not started yet.",
+    admitCardNotAvailableDesc: "Downloads will begin on",
 
     // AI Tutor
     aiTutorTitle: "AI Tutor",
@@ -168,6 +168,20 @@ export const translations = {
     noLiveClassesTitle: "No Live Classes Scheduled",
     noLiveClassesDesc: "Please check back later for updates on upcoming live sessions.",
 
+    // Admin & Profile
+    academySettings: "Academy Settings",
+    scholarshipDeadline: "Scholarship Deadline",
+    examDate: "Exam Date & Time",
+    admitCardStartDate: "Admit Card Download Start Date",
+    saveSettings: "Save Settings",
+    settingsSaved: "Settings saved successfully!",
+    settingsSaveError: "Failed to save settings.",
+    registrationsClosed: "Scholarship registrations are currently closed.",
+    registrationsClosedDesc: "Please check back later for future opportunities.",
+    completeYourProfile: "Complete Your Profile",
+    completeProfileDesc: "Please fill in your details to continue.",
+    updateProfile: "Update Profile",
+    profilePhoto: "Profile Photo",
 
     // Generic
     comingSoon: "Coming Soon...",
@@ -263,10 +277,12 @@ export const translations = {
 
     // Admit Card
     admitCardTitle: "एडमिट कार्ड डाउनलोड करें",
-    admitCardDescription: "एडमिट कार्ड डाउनलोड करने के लिए अपना आवेदन क्रमांक और पंजीकृत मोबाइल नंबर दर्ज करें।",
+    admitCardDescription: "एडमिट कार्ड डाउनलोड करने के लिए अपना आवेदन क्रमांक और यूनिक आईडी दर्ज करें।",
     uniqueId: "यूनिक आईडी",
     admitCardDownloadBtn: "एडमिट कार्ड डाउनलोड करें",
-    
+    admitCardNotAvailable: "एडमिट कार्ड डाउनलोड अभी शुरू नहीं हुए हैं।",
+    admitCardNotAvailableDesc: "डाउनलोड शुरू होंगे",
+
     // AI Tutor
     aiTutorTitle: "AI ट्यूटर",
     aiTutorDescription: "कोई भी अकादमिक प्रश्न पूछें और विस्तृत उत्तर, विषय, कठिनाई स्तर और अभ्यास के लिए संबंधित प्रश्न प्राप्त करें।",
@@ -342,6 +358,20 @@ export const translations = {
     noLiveClassesTitle: "कोई लाइव कक्षा निर्धारित नहीं है",
     noLiveClassesDesc: "आगामी लाइव सत्रों पर अपडेट के लिए कृपया बाद में देखें।",
 
+    // Admin & Profile
+    academySettings: "अकादमी सेटिंग्स",
+    scholarshipDeadline: "छात्रवृत्ति की अंतिम तिथि",
+    examDate: "परीक्षा की तारीख और समय",
+    admitCardStartDate: "एडमिट कार्ड डाउनलोड प्रारंभ तिथि",
+    saveSettings: "सेटिंग्स सहेजें",
+    settingsSaved: "सेटिंग्स सफलतापूर्वक सहेजी गईं!",
+    settingsSaveError: "सेटिंग्स सहेजने में विफल।",
+    registrationsClosed: "छात्रवृत्ति पंजीकरण फिलहाल बंद हैं।",
+    registrationsClosedDesc: "भविष्य के अवसरों के लिए कृपया बाद में देखें।",
+    completeYourProfile: "अपनी प्रोफ़ाइल पूरी करें",
+    completeProfileDesc: "जारी रखने के लिए कृपया अपना विवरण भरें।",
+    updateProfile: "प्रोफ़ाइल अपडेट करें",
+    profilePhoto: "प्रोफ़ाइल फ़ोटो",
 
     // Generic
     comingSoon: "जल्द आ रहा है...",
