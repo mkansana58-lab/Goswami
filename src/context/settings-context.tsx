@@ -9,53 +9,35 @@ type Theme = 'light' | 'dark';
 interface SettingsContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
-  eyeComfort: boolean;
-  toggleEyeComfort: () => void;
 }
 
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  // Default to dark theme as per new design
-  const [theme, setThemeState] = useState<Theme>('dark');
-  const [eyeComfort, setEyeComfort] = useState(false);
+  const [theme, setThemeState] = useState<Theme>('light');
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    // User's preference overrides the default
     const storedTheme = localStorage.getItem('theme') as Theme | null;
-    const storedComfort = localStorage.getItem('eyeComfort') === 'true';
     if (storedTheme) {
         setThemeState(storedTheme);
     }
-    setEyeComfort(storedComfort);
   }, []);
 
   useEffect(() => {
     if (isClient) {
-      document.body.classList.remove('light', 'dark', 'eye-comfort');
+      document.body.classList.remove('light', 'dark');
       document.body.classList.add(theme);
-      if (eyeComfort) {
-        document.body.classList.add('eye-comfort');
-      }
     }
-  }, [theme, eyeComfort, isClient]);
+  }, [theme, isClient]);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     localStorage.setItem('theme', newTheme);
   };
 
-  const toggleEyeComfort = () => {
-    setEyeComfort(prev => {
-      const newComfortState = !prev;
-      localStorage.setItem('eyeComfort', String(newComfortState));
-      return newComfortState;
-    });
-  };
-
-  const value = { theme, setTheme, eyeComfort, toggleEyeComfort };
+  const value = { theme, setTheme };
 
   return (
     <SettingsContext.Provider value={value}>
