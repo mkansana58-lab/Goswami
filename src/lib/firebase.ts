@@ -77,6 +77,7 @@ export interface ScholarshipApplicationData {
 export interface StudentData {
     id?: string;
     name: string;
+    password?: string; // Not stored, just for schema type
     fatherName?: string;
     class?: string;
     age?: number;
@@ -177,6 +178,7 @@ export interface ChatMessage {
     text: string;
     userName: string;
     userPhotoUrl?: string;
+    imageUrl?: string;
     createdAt: Timestamp;
 }
 
@@ -312,16 +314,19 @@ export async function getScholarshipApplicationByNumber(appNumber: string, uniqu
     return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as ScholarshipApplicationData;
 }
 
-export async function addStudent(name: string): Promise<void> {
+export async function registerStudent(data: Omit<StudentData, 'id' | 'createdAt'>): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
-    const studentRef = doc(db, "students", name);
+    const studentRef = doc(db, "students", data.name);
     const docSnap = await getDoc(studentRef);
-    if (!docSnap.exists()) {
-        await setDoc(studentRef, {
-            name: name,
-            createdAt: Timestamp.now(),
-        });
+    if (docSnap.exists()) {
+        throw new Error("Student with this name already exists.");
     }
+    // Don't store password in DB
+    const { password, ...dataToSave } = data;
+    await setDoc(studentRef, {
+        ...dataToSave,
+        createdAt: Timestamp.now(),
+    });
 }
 
 export async function getStudent(name: string): Promise<StudentData | null> {

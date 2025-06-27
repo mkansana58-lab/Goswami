@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useLanguage } from "@/hooks/use-language";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,7 @@ const formSchema = z.object({
     fatherName: z.string().min(3, "Father's name is required"),
     mobile: z.string().regex(/^\d{10}$/, "Must be a valid 10-digit number"),
     email: z.string().email("Invalid email address"),
-    age: z.coerce.number().min(8, "Age must be at least 8").max(16, "Age must be at most 16"),
+    age: z.coerce.number().min(8, "Age must be at most 8").max(16, "Age must be at most 16"),
     class: z.enum(["5", "6", "7", "8", "9"]),
     school: z.string().min(3, "School name is required"),
     address: z.string().min(10, "Full address is required"),
@@ -44,6 +45,7 @@ const steps = [
 
 export default function ScholarshipPage() {
     const { t } = useLanguage();
+    const { student } = useAuth(); // Get student data from context
     const { toast } = useToast();
     const [currentStep, setCurrentStep] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,8 +61,24 @@ export default function ScholarshipPage() {
 
     const form = useForm<ScholarshipFormValues>({
         resolver: zodResolver(formSchema),
-        defaultValues: { fullName: "", fatherName: "", mobile: "", email: "", age: 10, class: "6", school: "", address: "", photo: undefined, signature: undefined },
+        defaultValues: { fullName: "", fatherName: "", mobile: "", email: "", age: undefined, class: undefined, school: "", address: "", photo: undefined, signature: undefined },
     });
+
+    useEffect(() => {
+        // Pre-fill form with student data from context
+        if (student) {
+            form.reset({
+                fullName: student.name || "",
+                fatherName: student.fatherName || "",
+                // Mobile and email are not in the main student data, so they are not pre-filled.
+                // This encourages users to enter contact info specific to the application.
+                age: student.age || undefined,
+                class: student.class as any || undefined,
+                school: student.school || "",
+                address: student.address || "",
+            });
+        }
+    }, [student, form]);
 
     const processForm = async (data: ScholarshipFormValues) => {
         setIsSubmitting(true);

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -10,17 +9,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, Send, MessagesSquare } from 'lucide-react';
+import { Loader2, Send, MessagesSquare, ImagePlus, X } from 'lucide-react';
 import { format } from 'date-fns';
+import Image from 'next/image';
 
 export default function GroupChatPage() {
     const { student } = useAuth();
     const { t } = useLanguage();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [newMessage, setNewMessage] = useState('');
+    const [imageToSend, setImageToSend] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSending, setIsSending] = useState(false);
     const messagesEndRef = useRef<null | HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const q = query(collection(db, "chatMessages"), orderBy("createdAt", "asc"));
@@ -43,20 +45,39 @@ export default function GroupChatPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (loadEvent) => {
+                setImageToSend(loadEvent.target?.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (newMessage.trim() === '' || !student) return;
+        if ((newMessage.trim() === '' && !imageToSend) || !student) return;
 
         setIsSending(true);
-        const messageData = {
+        const messageData: Omit<ChatMessage, 'id' | 'createdAt'> = {
             text: newMessage.trim(),
             userName: student.name,
             userPhotoUrl: student.photoUrl || '',
         };
 
+        if (imageToSend) {
+            messageData.imageUrl = imageToSend;
+        }
+
         try {
             await addChatMessage(messageData);
             setNewMessage('');
+            setImageToSend(null);
+            if(fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
         } catch (error) {
             console.error("Error sending message:", error);
         } finally {
@@ -90,8 +111,13 @@ export default function GroupChatPage() {
                                     )}
                                     <div className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'}`}>
                                         {!isCurrentUser && <p className="text-xs text-muted-foreground px-1">{msg.userName}</p>}
-                                        <div className={`max-w-xs md:max-w-md rounded-2xl px-4 py-2 ${isCurrentUser ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none'}`}>
-                                            <p className="text-sm">{msg.text}</p>
+                                        <div className={`max-w-xs md:max-w-md rounded-2xl p-2 ${isCurrentUser ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none'}`}>
+                                            {msg.imageUrl && (
+                                                <div className="relative aspect-video w-48 rounded-lg overflow-hidden mb-2">
+                                                    <Image src={msg.imageUrl} alt="Chat image" layout="fill" objectFit="cover" data-ai-hint="chat message"/>
+                                                </div>
+                                            )}
+                                            {msg.text && <p className="text-sm px-2">{msg.text}</p>}
                                         </div>
                                          <p className="text-xs text-muted-foreground px-1 mt-1">{msg.createdAt ? format(msg.createdAt.toDate(), 'p') : ''}</p>
                                     </div>
@@ -108,20 +134,51 @@ export default function GroupChatPage() {
                     <div ref={messagesEndRef} />
                 </CardContent>
                 <CardFooter className="p-2 border-t">
-                    <form onSubmit={handleSendMessage} className="w-full flex items-center gap-2">
-                        <Input
-                            type="text"
-                            placeholder={t('chatPlaceholder')}
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            disabled={isSending}
-                            autoComplete="off"
-                        />
-                        <Button type="submit" disabled={isSending || newMessage.trim() === ''}>
-                            {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                            <span className="sr-only">{t('sendMessage')}</span>
-                        </Button>
-                    </form>
+                    <div className="w-full space-y-2">
+                        {imageToSend && (
+                            <div className="p-2 border-t">
+                                <div className="relative w-24 h-24 p-2 border rounded-md bg-muted">
+                                    <Image src={imageToSend} alt="Preview" layout="fill" objectFit="contain" className="rounded-md" />
+                                    <Button
+                                        variant="destructive"
+                                        size="icon"
+                                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                                        onClick={() => {
+                                            setImageToSend(null);
+                                            if (fileInputRef.current) fileInputRef.current.value = "";
+                                        }}
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                        <form onSubmit={handleSendMessage} className="w-full flex items-center gap-2">
+                            <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isSending}>
+                                <ImagePlus className="h-5 w-5" />
+                                <span className="sr-only">Add image</span>
+                            </Button>
+                            <Input
+                                type="file"
+                                accept="image/*"
+                                ref={fileInputRef}
+                                onChange={handleImageSelect}
+                                className="hidden"
+                            />
+                            <Input
+                                type="text"
+                                placeholder={t('chatPlaceholder')}
+                                value={newMessage}
+                                onChange={(e) => setNewMessage(e.target.value)}
+                                disabled={isSending}
+                                autoComplete="off"
+                            />
+                            <Button type="submit" disabled={isSending || (newMessage.trim() === '' && !imageToSend)}>
+                                {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                <span className="sr-only">{t('sendMessage')}</span>
+                            </Button>
+                        </form>
+                    </div>
                 </CardFooter>
             </Card>
         </div>
