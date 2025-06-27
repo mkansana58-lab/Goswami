@@ -2,7 +2,8 @@
 "use client";
 
 import Link from 'next/link';
-import { Menu, Bell, User, ShieldCheck } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Menu, Bell, User, ShieldCheck, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -24,11 +25,29 @@ import { sidebarLinks } from '@/lib/nav-links';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { useAuth } from '@/hooks/use-auth';
+import { getNotifications, type Notification } from '@/lib/firebase';
+import { formatDistanceToNow } from 'date-fns';
+
 
 export function Header() {
   const { t } = useLanguage();
   const router = useRouter();
   const { admin, logout } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
+
+  const fetchNotifications = async () => {
+    setIsLoadingNotifications(true);
+    try {
+        const fetched = await getNotifications();
+        setNotifications(fetched);
+    } catch (e) {
+        console.error(e);
+        setNotifications([]);
+    } finally {
+        setIsLoadingNotifications(false);
+    }
+  };
 
   const handleAdminClick = () => {
     if (admin) {
@@ -117,10 +136,36 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="text-primary">
-            <Bell className="h-6 w-6" />
-            <span className="sr-only">Notifications</span>
-          </Button>
+          <DropdownMenu onOpenChange={(open) => open && fetchNotifications()}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-primary">
+                <Bell className="h-6 w-6" />
+                <span className="sr-only">Notifications</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 md:w-96">
+                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {isLoadingNotifications ? (
+                    <DropdownMenuItem disabled className="justify-center">
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Loading...
+                    </DropdownMenuItem>
+                ) : notifications.length > 0 ? (
+                    notifications.slice(0, 5).map(n => (
+                        <DropdownMenuItem key={n.id} className="flex flex-col items-start gap-1 whitespace-normal">
+                           <p className="font-semibold">{n.title}</p>
+                           <p className="text-xs text-muted-foreground line-clamp-2">{n.content}</p>
+                           <p className="text-xs text-muted-foreground self-end pt-1">
+                               {n.createdAt ? formatDistanceToNow(n.createdAt.toDate(), { addSuffix: true }) : ''}
+                           </p>
+                        </DropdownMenuItem>
+                    ))
+                ) : (
+                    <DropdownMenuItem disabled className="justify-center">No new notifications</DropdownMenuItem>
+                )}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

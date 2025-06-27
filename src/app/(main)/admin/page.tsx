@@ -57,7 +57,7 @@ export default function AdminPage() {
             classForm.reset();
         } catch (error) {
             console.error("Error adding live class:", error);
-            toast({ variant: "destructive", title: "Error", description: "Failed to add live class." });
+            toast({ variant: "destructive", title: "Error", description: `Failed to add live class: ${(error as Error).message}` });
         } finally {
             setIsClassLoading(false);
         }
@@ -71,7 +71,7 @@ export default function AdminPage() {
             notificationForm.reset();
         } catch (error) {
             console.error("Error adding notification:", error);
-            toast({ variant: "destructive", title: "Error", description: "Failed to post notification." });
+            toast({ variant: "destructive", title: "Error", description: `Failed to post notification: ${(error as Error).message}` });
         } finally {
             setIsNotificationLoading(false);
         }

@@ -1,12 +1,12 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { getLiveClasses, type LiveClass } from '@/lib/firebase';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { RadioTower, Calendar, Clock, ExternalLink } from 'lucide-react';
+import { RadioTower, Calendar, Clock, ExternalLink, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function LiveClassesPage() {
@@ -40,30 +40,6 @@ export default function LiveClassesPage() {
         };
     };
 
-    if (isLoading) {
-        return (
-            <div className="space-y-6">
-                 <h1 className="text-3xl font-bold text-primary">{t('liveClasses')}</h1>
-                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[...Array(3)].map((_, i) => (
-                        <Card key={i}>
-                            <CardHeader>
-                                <Skeleton className="h-6 w-3/4" />
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                <Skeleton className="h-4 w-1/2" />
-                                <Skeleton className="h-4 w-1/3" />
-                            </CardContent>
-                            <CardFooter>
-                                <Skeleton className="h-10 w-full" />
-                            </CardFooter>
-                        </Card>
-                    ))}
-                </div>
-            </div>
-        );
-    }
-    
     return (
         <div className="space-y-6">
             <div className="flex flex-col items-center text-center">
@@ -72,7 +48,12 @@ export default function LiveClassesPage() {
                 <p className="text-muted-foreground">Join our live interactive sessions.</p>
             </div>
             
-            {classes.length > 0 ? (
+            {isLoading ? (
+                <div className="flex flex-col items-center justify-center min-h-[300px]">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                    <p className="mt-4 text-muted-foreground">Loading classes...</p>
+                </div>
+            ) : classes.length > 0 ? (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {classes.map((cls) => {
                         const { date, time } = formatScheduledAt(cls.scheduledAt);
@@ -104,12 +85,11 @@ export default function LiveClassesPage() {
                     })}
                 </div>
             ) : (
-                <Card className="text-center p-10">
-                    <CardHeader>
-                      <CardTitle>{t('noLiveClassesTitle')}</CardTitle>
-                      <CardDescription className="mt-2">{t('noLiveClassesDesc')}</CardDescription>
-                    </CardHeader>
-                </Card>
+                <div className="flex flex-col items-center justify-center min-h-[300px] text-center bg-card p-10 rounded-lg">
+                    <RadioTower className="h-16 w-16 text-muted-foreground/50" />
+                    <h2 className="mt-4 text-xl font-semibold">{t('noLiveClassesTitle')}</h2>
+                    <p className="mt-2 text-muted-foreground">{t('noLiveClassesDesc')}</p>
+              </div>
             )}
         </div>
     );
