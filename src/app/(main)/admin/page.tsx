@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     addLiveClass, deleteLiveClass, getLiveClasses,
     addNotification, deleteNotification, getNotifications,
@@ -26,14 +27,14 @@ import {
     getScholarshipApplications, getStudents, updateAppConfig, getAppConfig,
     getContactInquiries, addEBook, getEBooks, deleteEBook,
     addCustomTest, getCustomTests, deleteCustomTest,
-    getTestSettings, updateTestSetting,
+    getTestSettings, updateTestSetting, getTestEnrollments,
     type LiveClass, type Notification, type Post, type CurrentAffair,
     type VideoLecture, type Download, type Course, type AppConfig,
     type ScholarshipApplicationData, type StudentData, type Teacher, type GalleryImage,
-    type ContactInquiry, type EBook, type CustomTest, type TestSetting
+    type ContactInquiry, type EBook, type CustomTest, type TestSetting, type TestEnrollment
 } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight } from 'lucide-react';
+import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -89,6 +90,21 @@ const toInputDateTimeFormat = (timestamp: Timestamp | undefined) => {
     }
 };
 
+const customTestJsonExample = `[
+  {
+    "id": 1,
+    "question": "What is the capital of India?",
+    "options": ["Mumbai", "New Delhi", "Kolkata", "Chennai"],
+    "answer": "New Delhi"
+  },
+  {
+    "id": 2,
+    "question": "2 + 2 = ?",
+    "options": ["3", "4", "5", "6"],
+    "answer": "4"
+  }
+]`;
+
 export default function AdminPage() {
     const { t } = useLanguage();
     const { toast } = useToast();
@@ -101,6 +117,7 @@ export default function AdminPage() {
         courses: [] as Course[], scholarshipApps: [] as ScholarshipApplicationData[], students: [] as StudentData[],
         teachers: [] as Teacher[], galleryImages: [] as GalleryImage[], contactInquiries: [] as ContactInquiry[],
         ebooks: [] as EBook[], customTests: [] as CustomTest[], testSettings: {} as Record<string, TestSetting>,
+        testEnrollments: [] as TestEnrollment[],
     });
     const [isLoading, setIsLoading] = useState(true);
 
@@ -112,12 +129,12 @@ export default function AdminPage() {
             const [
                 config, liveClasses, notifications, posts, currentAffairs, videoLectures,
                 downloads, courses, scholarshipApps, students, teachers, galleryImages,
-                contactInquiries, ebooks, customTests, testSettings
+                contactInquiries, ebooks, customTests, testSettings, testEnrollments
             ] = await Promise.all([
                 getAppConfig(), getLiveClasses(), getNotifications(), getPosts(),
                 getCurrentAffairs(), getVideoLectures(), getDownloads(), getCourses(),
                 getScholarshipApplications(), getStudents(), getTeachers(), getGalleryImages(),
-                getContactInquiries(), getEBooks(), getCustomTests(), getTestSettings(),
+                getContactInquiries(), getEBooks(), getCustomTests(), getTestSettings(), getTestEnrollments(),
             ]);
             settingsForm.reset({
                 scholarshipDeadline: toInputDateTimeFormat(config.scholarshipDeadline),
@@ -127,7 +144,7 @@ export default function AdminPage() {
             setData({
                 liveClasses, notifications, posts, currentAffairs, videoLectures,
                 downloads, courses, scholarshipApps, students, teachers, galleryImages,
-                contactInquiries, ebooks, customTests, testSettings
+                contactInquiries, ebooks, customTests, testSettings, testEnrollments
             });
         } catch (error) {
             toast({ variant: "destructive", title: "Error", description: "Failed to fetch data from server." });
@@ -159,114 +176,133 @@ export default function AdminPage() {
         <div className="space-y-6">
             <h1 className="text-3xl font-bold text-primary">{t('adminPanel')}</h1>
             {isLoading ? <div className="flex justify-center p-10"><Loader2 className="h-10 w-10 animate-spin" /></div> : (
-                <Accordion type="multiple" className="w-full space-y-4">
-                    
-                    <AdminSection title={t('academySettings')} icon={Settings}>
-                        <form onSubmit={settingsForm.handleSubmit(handleSaveSettings)} className="space-y-4">
-                             <div><Label>{t('scholarshipDeadline')}</Label><Input type="datetime-local" {...settingsForm.register('scholarshipDeadline')} /></div>
-                             <div><Label>{t('examDate')}</Label><Input type="datetime-local" {...settingsForm.register('examDate')} /></div>
-                             <div><Label>{t('admitCardStartDate')}</Label><Input type="datetime-local" {...settingsForm.register('admitCardDownloadStartDate')} /></div>
-                             <Button type="submit">{t('saveSettings')}</Button>
-                        </form>
-                    </AdminSection>
+                 <Tabs defaultValue="management" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="management"><ListCollapse className="mr-2 h-4 w-4" /> {t('manageContent')}</TabsTrigger>
+                        <TabsTrigger value="view"><BarChart2 className="mr-2 h-4 w-4" /> {t('viewData')}</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="management" className="mt-4">
+                        <Accordion type="multiple" className="w-full space-y-4">
+                            <AdminSection title={t('academySettings')} icon={Settings}>
+                                <form onSubmit={settingsForm.handleSubmit(handleSaveSettings)} className="space-y-4">
+                                     <div><Label>{t('scholarshipDeadline')}</Label><Input type="datetime-local" {...settingsForm.register('scholarshipDeadline')} /></div>
+                                     <div><Label>{t('examDate')}</Label><Input type="datetime-local" {...settingsForm.register('examDate')} /></div>
+                                     <div><Label>{t('admitCardStartDate')}</Label><Input type="datetime-local" {...settingsForm.register('admitCardDownloadStartDate')} /></div>
+                                     <Button type="submit">{t('saveSettings')}</Button>
+                                </form>
+                            </AdminSection>
 
-                    <AdminSection title="Test Availability" icon={ToggleRight}>
-                        <TestSettingsManager initialSettings={data.testSettings} customTests={data.customTests} />
-                    </AdminSection>
-                    
-                    <AdminSection title="Manage Custom Tests" icon={FilePlus2}>
-                        <p className="text-sm text-muted-foreground mb-4">
-                            Add custom tests manually. Paste the questions in a JSON array format in the 'Questions JSON' field.
-                            Each question object must have: `id` (number), `question` (string), `options` (array of 4 strings), and `answer` (string, must exactly match one of the options).
-                        </p>
-                        <CrudForm schema={customTestSchema} onSubmit={addCustomTest} onRefresh={fetchData} fields={{
-                            title: 'text', description: 'textarea', timeLimit: 'number',
-                            medium: 'text', languageForAI: 'text', questionsJson: 'textarea',
-                        }} />
-                        <DataTable data={data.customTests} columns={['title', 'description']} onDelete={deleteCustomTest} onRefresh={fetchData} />
-                    </AdminSection>
+                            <AdminSection title="Test Availability" icon={ToggleRight}>
+                                <TestSettingsManager initialSettings={data.testSettings} customTests={data.customTests} />
+                            </AdminSection>
+                            
+                            <AdminSection title="Manage Custom Tests" icon={FilePlus2}>
+                                <p className="text-sm text-muted-foreground mb-2">
+                                    Add custom tests manually. Use the sample JSON format below for the 'Questions JSON' field.
+                                </p>
+                                <pre className="p-2 bg-muted rounded-md text-xs overflow-x-auto mb-4"><code>{customTestJsonExample}</code></pre>
+                                <CrudForm schema={customTestSchema} onSubmit={addCustomTest} onRefresh={fetchData} fields={{
+                                    title: 'text', description: 'textarea', timeLimit: 'number',
+                                    medium: 'text', languageForAI: 'text', questionsJson: 'textarea',
+                                }} />
+                                <DataTable data={data.customTests} columns={['title', 'description']} onDelete={deleteCustomTest} onRefresh={fetchData} />
+                            </AdminSection>
 
-                    <AdminSection title={t('manageLiveClasses')} icon={Tv}>
-                        <CrudForm schema={liveClassSchema} onSubmit={addLiveClass} onRefresh={fetchData} fields={{title: 'text', link: 'url', scheduledAt: 'datetime-local'}} />
-                        <DataTable data={data.liveClasses} columns={['title', 'link']} onDelete={deleteLiveClass} onRefresh={fetchData} />
-                    </AdminSection>
+                            <AdminSection title={t('manageLiveClasses')} icon={Tv}>
+                                <CrudForm schema={liveClassSchema} onSubmit={addLiveClass} onRefresh={fetchData} fields={{title: 'text', link: 'url', scheduledAt: 'datetime-local'}} />
+                                <DataTable data={data.liveClasses} columns={['title', 'link']} onDelete={deleteLiveClass} onRefresh={fetchData} />
+                            </AdminSection>
 
-                    <AdminSection title={t('manageNotifications')} icon={Bell}>
-                         <CrudForm schema={notificationSchema} onSubmit={addNotification} onRefresh={fetchData} fields={{title: 'text', content: 'textarea'}} />
-                         <DataTable data={data.notifications} columns={['title', 'content']} onDelete={deleteNotification} onRefresh={fetchData} />
-                    </AdminSection>
-                    
-                    <AdminSection title={t('manageDailyPosts')} icon={Newspaper}>
-                        <CrudForm schema={postSchema} onSubmit={addPost} onRefresh={fetchData} fields={{title: 'text', content: 'textarea', imageUrl: 'file'}} />
-                        <DataTable data={data.posts} columns={['title', 'content']} onDelete={deletePost} onRefresh={fetchData} />
-                    </AdminSection>
+                            <AdminSection title={t('manageNotifications')} icon={Bell}>
+                                <CrudForm schema={notificationSchema} onSubmit={addNotification} onRefresh={fetchData} fields={{title: 'text', content: 'textarea'}} />
+                                <DataTable data={data.notifications} columns={['title', 'content']} onDelete={deleteNotification} onRefresh={fetchData} />
+                            </AdminSection>
+                            
+                            <AdminSection title={t('manageDailyPosts')} icon={Newspaper}>
+                                <CrudForm schema={postSchema} onSubmit={addPost} onRefresh={fetchData} fields={{title: 'text', content: 'textarea', imageUrl: 'file'}} />
+                                <DataTable data={data.posts} columns={['title', 'content']} onDelete={deletePost} onRefresh={fetchData} />
+                            </AdminSection>
 
-                    <AdminSection title={t('manageCurrentAffairs')} icon={ScrollText}>
-                        <CrudForm schema={currentAffairSchema} onSubmit={addCurrentAffair} onRefresh={fetchData} fields={{title: 'text', content: 'textarea'}} />
-                        <DataTable data={data.currentAffairs} columns={['title', 'content']} onDelete={deleteCurrentAffair} onRefresh={fetchData} />
-                    </AdminSection>
-                    
-                    <AdminSection title={t('manageVideoLectures')} icon={Video}>
-                        <CrudForm schema={videoLectureSchema} onSubmit={addVideoLecture} onRefresh={fetchData} fields={{title: 'text', videoUrl: 'url'}} />
-                        <DataTable data={data.videoLectures} columns={['title', 'videoUrl']} onDelete={deleteVideoLecture} onRefresh={fetchData} />
-                    </AdminSection>
-                    
-                    <AdminSection title={t('manageDownloads')} icon={FileDown}>
-                        <CrudForm schema={downloadSchema} onSubmit={addDownload} onRefresh={fetchData} fields={{title: 'text', pdfUrl: 'url'}} />
-                        <DataTable data={data.downloads} columns={['title', 'pdfUrl']} onDelete={deleteDownload} onRefresh={fetchData} />
-                    </AdminSection>
+                            <AdminSection title={t('manageCurrentAffairs')} icon={ScrollText}>
+                                <CrudForm schema={currentAffairSchema} onSubmit={addCurrentAffair} onRefresh={fetchData} fields={{title: 'text', content: 'textarea'}} />
+                                <DataTable data={data.currentAffairs} columns={['title', 'content']} onDelete={deleteCurrentAffair} onRefresh={fetchData} />
+                            </AdminSection>
+                            
+                            <AdminSection title={t('manageVideoLectures')} icon={Video}>
+                                <CrudForm schema={videoLectureSchema} onSubmit={addVideoLecture} onRefresh={fetchData} fields={{title: 'text', videoUrl: 'url'}} />
+                                <DataTable data={data.videoLectures} columns={['title', 'videoUrl']} onDelete={deleteVideoLecture} onRefresh={fetchData} />
+                            </AdminSection>
+                            
+                            <AdminSection title={t('manageDownloads')} icon={FileDown}>
+                                <CrudForm schema={downloadSchema} onSubmit={addDownload} onRefresh={fetchData} fields={{title: 'text', pdfUrl: 'url'}} />
+                                <DataTable data={data.downloads} columns={['title', 'pdfUrl']} onDelete={deleteDownload} onRefresh={fetchData} />
+                            </AdminSection>
 
-                    <AdminSection title="Manage E-Books" icon={Library}>
-                        <CrudForm schema={eBookSchema} onSubmit={addEBook} onRefresh={fetchData} fields={{title: 'text', pdfUrl: 'url', imageUrl: 'file'}} />
-                        <DataTable data={data.ebooks} columns={['title', 'pdfUrl']} onDelete={deleteEBook} onRefresh={fetchData} />
-                    </AdminSection>
+                            <AdminSection title="Manage E-Books" icon={Library}>
+                                <CrudForm schema={eBookSchema} onSubmit={addEBook} onRefresh={fetchData} fields={{title: 'text', pdfUrl: 'url', imageUrl: 'file'}} />
+                                <DataTable data={data.ebooks} columns={['title', 'pdfUrl']} onDelete={deleteEBook} onRefresh={fetchData} />
+                            </AdminSection>
 
-                    <AdminSection title={t('manageCourses')} icon={BookCopy}>
-                        <CrudForm schema={courseSchema} onSubmit={addCourse} onRefresh={fetchData} fields={{title: 'text', description: 'textarea', imageUrl: 'file'}} />
-                        <DataTable data={data.courses} columns={['title', 'description']} onDelete={deleteCourse} onRefresh={fetchData} />
-                    </AdminSection>
+                            <AdminSection title={t('manageCourses')} icon={BookCopy}>
+                                <CrudForm schema={courseSchema} onSubmit={addCourse} onRefresh={fetchData} fields={{title: 'text', description: 'textarea', imageUrl: 'file'}} />
+                                <DataTable data={data.courses} columns={['title', 'description']} onDelete={deleteCourse} onRefresh={fetchData} />
+                            </AdminSection>
 
-                    <AdminSection title="Manage Teachers" icon={UserSquare}>
-                        <CrudForm schema={teacherSchema} onSubmit={addTeacher} onRefresh={fetchData} fields={{name: 'text', description: 'textarea', imageUrl: 'file'}} />
-                        <DataTable data={data.teachers} columns={['name', 'description']} onDelete={deleteTeacher} onRefresh={fetchData} />
-                    </AdminSection>
+                            <AdminSection title="Manage Teachers" icon={UserSquare}>
+                                <CrudForm schema={teacherSchema} onSubmit={addTeacher} onRefresh={fetchData} fields={{name: 'text', description: 'textarea', imageUrl: 'file'}} />
+                                <DataTable data={data.teachers} columns={['name', 'description']} onDelete={deleteTeacher} onRefresh={fetchData} />
+                            </AdminSection>
 
-                    <AdminSection title="Manage Coaching Gallery" icon={Camera}>
-                        <CrudForm schema={galleryImageSchema} onSubmit={addGalleryImage} onRefresh={fetchData} fields={{caption: 'text', imageUrl: 'file'}} />
-                        <DataTable data={data.galleryImages} columns={['caption']} onDelete={deleteGalleryImage} onRefresh={fetchData} />
-                    </AdminSection>
+                            <AdminSection title="Manage Coaching Gallery" icon={Camera}>
+                                <CrudForm schema={galleryImageSchema} onSubmit={addGalleryImage} onRefresh={fetchData} fields={{caption: 'text', imageUrl: 'file'}} />
+                                <DataTable data={data.galleryImages} columns={['caption']} onDelete={deleteGalleryImage} onRefresh={fetchData} />
+                            </AdminSection>
+                        </Accordion>
+                    </TabsContent>
+                    <TabsContent value="view" className="mt-4">
+                         <Accordion type="multiple" className="w-full space-y-4">
+                            <AdminSection title="Scholarship Applications" icon={GraduationCap}>
+                                <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Class</TableHead><TableHead>Details</TableHead><TableHead>Docs</TableHead><TableHead>Applied On</TableHead></TableRow></TableHeader>
+                                    <TableBody>
+                                        {data.scholarshipApps.map(app => (
+                                            <TableRow key={app.id}><TableCell>{app.fullName}<br/><span className="text-muted-foreground text-xs">{app.fatherName}</span></TableCell><TableCell>{app.class}</TableCell><TableCell>UID: <span className="font-mono">{app.uniqueId}</span><br/>Mob: {app.mobile}</TableCell><TableCell className="flex gap-2"><ImagePreview url={app.photoUrl} triggerText="Photo" /><ImagePreview url={app.signatureUrl} triggerText="Sign" /></TableCell><TableCell>{format(app.createdAt.toDate(), 'PPP')}</TableCell></TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </AdminSection>
 
-                    <AdminSection title="Contact Inquiries" icon={Mail}>
-                        <Table><TableHeader><TableRow><TableHead>Email</TableHead><TableHead>Mobile</TableHead><TableHead>Submitted On</TableHead></TableRow></TableHeader>
-                            <TableBody>
-                                {data.contactInquiries.map(inquiry => (
-                                    <TableRow key={inquiry.id}><TableCell>{inquiry.email}</TableCell><TableCell>{inquiry.mobile}</TableCell><TableCell>{format(inquiry.createdAt.toDate(), 'PPP p')}</TableCell></TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </AdminSection>
+                            <AdminSection title="Registered Students" icon={Users}>
+                               <Table><TableHeader><TableRow><TableHead>Photo</TableHead><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Registered On</TableHead></TableRow></TableHeader>
+                                   <TableBody>
+                                       {data.students.map(s => (
+                                           <TableRow key={s.id}><TableCell><ImagePreview url={s.photoUrl} triggerText={<Image src={s.photoUrl || `https://placehold.co/40x40.png?text=${s.name[0]}`} alt="" width={40} height={40} className="rounded-full w-10 h-10 object-cover" data-ai-hint="student photo"/>} /></TableCell><TableCell>{s.name}<br/><span className="text-muted-foreground text-xs">{s.fatherName}</span></TableCell><TableCell>Class: {s.class}<br/>School: {s.school}</TableCell><TableCell>{format(s.createdAt.toDate(), 'PPP')}</TableCell></TableRow>
+                                       ))}
+                                   </TableBody>
+                               </Table>
+                            </AdminSection>
 
-                    <AdminSection title="Scholarship Applications" icon={GraduationCap}>
-                        <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Class</TableHead><TableHead>Details</TableHead><TableHead>Docs</TableHead><TableHead>Applied On</TableHead></TableRow></TableHeader>
-                            <TableBody>
-                                {data.scholarshipApps.map(app => (
-                                    <TableRow key={app.id}><TableCell>{app.fullName}<br/><span className="text-muted-foreground text-xs">{app.fatherName}</span></TableCell><TableCell>{app.class}</TableCell><TableCell>UID: <span className="font-mono">{app.uniqueId}</span><br/>Mob: {app.mobile}</TableCell><TableCell className="flex gap-2"><ImagePreview url={app.photoUrl} triggerText="Photo" /><ImagePreview url={app.signatureUrl} triggerText="Sign" /></TableCell><TableCell>{format(app.createdAt.toDate(), 'PPP')}</TableCell></TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </AdminSection>
+                            <AdminSection title={t('testEnrollments')} icon={Star}>
+                                <Table><TableHeader><TableRow><TableHead>{t('enrolledStudent')}</TableHead><TableHead>{t('test')}</TableHead><TableHead>{t('enrolledAt')}</TableHead></TableRow></TableHeader>
+                                    <TableBody>
+                                        {data.testEnrollments.map(e => (
+                                            <TableRow key={e.id}><TableCell>{e.studentName}</TableCell><TableCell>{e.testName}</TableCell><TableCell>{format(e.enrolledAt.toDate(), 'PPP p')}</TableCell></TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </AdminSection>
 
-                    <AdminSection title="Registered Students" icon={Users}>
-                       <Table><TableHeader><TableRow><TableHead>Photo</TableHead><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Registered On</TableHead></TableRow></TableHeader>
-                           <TableBody>
-                               {data.students.map(s => (
-                                   <TableRow key={s.id}><TableCell><ImagePreview url={s.photoUrl} triggerText={<Image src={s.photoUrl || `https://placehold.co/40x40.png?text=${s.name[0]}`} alt="" width={40} height={40} className="rounded-full w-10 h-10 object-cover" data-ai-hint="student photo"/>} /></TableCell><TableCell>{s.name}<br/><span className="text-muted-foreground text-xs">{s.fatherName}</span></TableCell><TableCell>Class: {s.class}<br/>School: {s.school}</TableCell><TableCell>{format(s.createdAt.toDate(), 'PPP')}</TableCell></TableRow>
-                               ))}
-                           </TableBody>
-                       </Table>
-                    </AdminSection>
-
-                </Accordion>
+                            <AdminSection title="Contact Inquiries" icon={Mail}>
+                                <Table><TableHeader><TableRow><TableHead>Email</TableHead><TableHead>Mobile</TableHead><TableHead>Submitted On</TableHead></TableRow></TableHeader>
+                                    <TableBody>
+                                        {data.contactInquiries.map(inquiry => (
+                                            <TableRow key={inquiry.id}><TableCell>{inquiry.email}</TableCell><TableCell>{inquiry.mobile}</TableCell><TableCell>{format(inquiry.createdAt.toDate(), 'PPP p')}</TableCell></TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </AdminSection>
+                         </Accordion>
+                    </TabsContent>
+                </Tabs>
             )}
         </div>
     );

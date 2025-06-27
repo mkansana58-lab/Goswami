@@ -21,18 +21,20 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useLanguage } from '@/hooks/use-language';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { sidebarLinks } from '@/lib/nav-links';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { useAuth } from '@/hooks/use-auth';
 import { getNotifications, type Notification, firebaseConfig } from '@/lib/firebase';
 import { formatDistanceToNow } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 
 export function Header() {
   const { t } = useLanguage();
   const router = useRouter();
+  const pathname = usePathname();
   const { admin, student, logout } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
@@ -101,11 +103,14 @@ export function Header() {
                     </div>
                 </div>
               <nav className="mt-4 flex-grow px-2"><ul className="space-y-1">
-                {sidebarLinks.map((link) => (
-                    link.textKey === 'adminPanel' ? 
-                    <li key={link.href}><button onClick={handleAdminClick} className="flex items-center gap-3 rounded-md p-2 text-base font-medium text-primary hover:bg-accent w-full text-left"><link.icon className="h-5 w-5" />{t(link.textKey as any)}</button></li> :
-                    <li key={link.href}><Link href={link.href} onClick={() => setIsSheetOpen(false)} className="flex items-center gap-3 rounded-md p-2 text-base font-medium text-primary hover:bg-accent"><link.icon className="h-5 w-5" />{t(link.textKey as any)}</Link></li>
-                ))}</ul></nav>
+                {sidebarLinks.map((link) => {
+                    const isActive = pathname === link.href;
+                    return (
+                        link.textKey === 'adminPanel' ? 
+                        <li key={link.href}><button onClick={handleAdminClick} className={cn("flex items-center gap-3 rounded-md p-2 text-base font-medium text-primary hover:bg-accent w-full text-left", isActive && "bg-accent")}><link.icon className="h-5 w-5" />{t(link.textKey as any)}</button></li> :
+                        <li key={link.href}><Link href={link.href} onClick={() => setIsSheetOpen(false)} className={cn("flex items-center gap-3 rounded-md p-2 text-base font-medium text-primary hover:bg-accent", isActive && "bg-accent")}><link.icon className="h-5 w-5" />{t(link.textKey as any)}</Link></li>
+                    )
+                })}</ul></nav>
               {admin && <div className="p-4 border-t border-border/20 mt-auto"><div className="flex items-center gap-3"><Avatar><AvatarImage src="https://placehold.co/40x40.png" data-ai-hint="user avatar"/><AvatarFallback>A</AvatarFallback></Avatar><div><p className="text-sm font-semibold text-primary">{admin.name}</p><p className="text-xs text-muted-foreground">{admin.email}</p></div></div></div>}
             </SheetContent>
           </Sheet>

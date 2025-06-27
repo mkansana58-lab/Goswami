@@ -7,31 +7,54 @@ import { useLanguage } from '@/hooks/use-language';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { testsData, type TestDetails } from '@/lib/tests-data';
-import { Clock, BookOpen, FileQuestion, Languages, Lock, Loader2 } from 'lucide-react';
-import { getCustomTests, getTestSettings, type CustomTest, type TestSetting } from '@/lib/firebase';
+import { Clock, FileQuestion, Languages, Lock, Loader2, Star } from 'lucide-react';
+import { getCustomTests, getTestSettings, type CustomTest, type TestSetting, addTestEnrollment, getEnrollmentsForStudent } from '@/lib/firebase';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AiTestPage() {
   const { t } = useLanguage();
+  const { student } = useAuth();
+  const { toast } = useToast();
   const [allTests, setAllTests] = useState<(TestDetails | CustomTest)[]>([]);
   const [testSettings, setTestSettings] = useState<Record<string, TestSetting>>({});
+  const [enrolledTests, setEnrolledTests] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchTests = async () => {
+    const fetchPageData = async () => {
         setIsLoading(true);
         try {
             const [customTests, settings] = await Promise.all([getCustomTests(), getTestSettings()]);
             const staticTests = Object.values(testsData);
             setAllTests([...staticTests, ...customTests]);
             setTestSettings(settings);
+
+            if (student) {
+                const enrollments = await getEnrollmentsForStudent(student.name);
+                setEnrolledTests(enrollments);
+            }
         } catch (error) {
             console.error("Failed to fetch tests data:", error);
         } finally {
             setIsLoading(false);
         }
     };
-    fetchTests();
-  }, []);
+    fetchPageData();
+  }, [student]);
+
+  const handleEnroll = async (test: TestDetails | CustomTest) => {
+    if (!student) return;
+    try {
+        const testName = t(test.title as any) || test.title;
+        await addTestEnrollment(student.name, test.id, testName);
+        setEnrolledTests(prev => [...prev, test.id]);
+        toast({ title: t('enrollSuccess') });
+    } catch (e) {
+        toast({ variant: 'destructive', title: t('enrollError') });
+    }
+  };
+
 
   if (isLoading) {
     return (
@@ -47,6 +70,15 @@ export default function AiTestPage() {
 
   const TestCard = ({ test }: { test: TestDetails | CustomTest }) => {
     const isEnabled = testSettings[test.id]?.isEnabled ?? true;
+    const isEnrolled = enrolledTests.includes(test.id);
+    const [isEnrolling, setIsEnrolling] = useState(false);
+
+    const onEnrollClick = async () => {
+        setIsEnrolling(true);
+        await handleEnroll(test);
+        setIsEnrolling(false);
+    }
+
     return (
       <Card key={test.id} className="flex flex-col">
         <CardHeader>
@@ -80,16 +112,23 @@ export default function AiTestPage() {
           )}
         </CardContent>
         <CardFooter>
-          <Button asChild className="w-full" disabled={!isEnabled}>
-            {isEnabled ? (
-              <Link href={`/tests/${test.id}`}>{t('startTest')}</Link>
+            {isEnrolled ? (
+                <Button asChild className="w-full" disabled={!isEnabled}>
+                    {isEnabled ? (
+                    <Link href={`/tests/${test.id}`}>{t('startTest')}</Link>
+                    ) : (
+                    <div className="flex items-center justify-center cursor-not-allowed">
+                        <Lock className="mr-2 h-4 w-4" />
+                        Locked
+                    </div>
+                    )}
+                </Button>
             ) : (
-              <div className="flex items-center justify-center cursor-not-allowed">
-                <Lock className="mr-2 h-4 w-4" />
-                Locked
-              </div>
+                <Button className="w-full" disabled={!isEnabled || isEnrolling} onClick={onEnrollClick}>
+                    {isEnrolling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Star className="mr-2 h-4 w-4" />}
+                    {t('enroll')}
+                </Button>
             )}
-          </Button>
         </CardFooter>
       </Card>
     );

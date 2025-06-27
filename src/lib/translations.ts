@@ -1,4 +1,3 @@
-
 export type Language = 'en' | 'hi';
 
 export const translations = {
@@ -170,6 +169,18 @@ export const translations = {
     joinClass: "Join Class",
     noLiveClassesTitle: "No Live Classes Scheduled",
     noLiveClassesDesc: "Please check back later for updates on upcoming live sessions.",
+
+    // Admin Panel
+    manageContent: "Manage Content",
+    viewData: "View Data",
+    testEnrollments: "Test Enrollments",
+    enrolledStudent: "Enrolled Student",
+    test: "Test",
+    enrolledAt: "Enrolled At",
+    enroll: "Enroll",
+    enrolled: "Enrolled",
+    enrollSuccess: "Enrolled successfully!",
+    enrollError: "Failed to enroll. Please try again.",
 
     // Admin & Profile
     academySettings: "Academy Settings",
@@ -389,6 +400,18 @@ export const translations = {
     joinClass: "कक्षा में शामिल हों",
     noLiveClassesTitle: "कोई लाइव कक्षा निर्धारित नहीं है",
     noLiveClassesDesc: "आगामी लाइव सत्रों पर अपडेट के लिए कृपया बाद में देखें।",
+
+    // Admin Panel
+    manageContent: "सामग्री प्रबंधित करें",
+    viewData: "डेटा देखें",
+    testEnrollments: "टेस्ट नामांकन",
+    enrolledStudent: "नामांकित छात्र",
+    test: "टेस्ट",
+    enrolledAt: "नामांकन तिथि",
+    enroll: "नामांकन करें",
+    enrolled: "नामांकित",
+    enrollSuccess: "सफलतापूर्वक नामांकित!",
+    enrollError: "नामांकन करने में विफल। कृपया पुन: प्रयास करें।",
 
     // Admin & Profile
     academySettings: "अकादमी सेटिंग्स",

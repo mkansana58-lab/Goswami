@@ -1,4 +1,3 @@
-
 // firebase.ts
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getFirestore, collection, getDocs, type Firestore, query, orderBy, Timestamp, addDoc, where, limit, doc, setDoc, getDoc, deleteDoc, updateDoc } from "firebase/firestore";
@@ -202,6 +201,13 @@ export interface TestSetting {
     isEnabled: boolean;
 }
 
+export interface TestEnrollment {
+    id: string;
+    studentName: string;
+    testId: string;
+    testName: string;
+    enrolledAt: Timestamp;
+}
 
 // --- Constants ---
 export const CLASS_UNIQUE_IDS: Record<string, string> = {
@@ -444,6 +450,33 @@ export const updateTestSetting = async (testId: string, isEnabled: boolean) => {
     if (!db) throw new Error("Firestore DB not initialized.");
     const settingRef = doc(db, "testSettings", testId);
     await setDoc(settingRef, { isEnabled: isEnabled }, { merge: true });
+};
+
+// --- Test Enrollments ---
+export const addTestEnrollment = async (studentName: string, testId: string, testName: string): Promise<void> => {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    // Check if already enrolled to prevent duplicates
+    const q = query(collection(db, "testEnrollments"), where("studentName", "==", studentName), where("testId", "==", testId));
+    const existing = await getDocs(q);
+    if (existing.empty) {
+        await addDoc(collection(db, "testEnrollments"), {
+            studentName,
+            testId,
+            testName,
+            enrolledAt: Timestamp.now(),
+        });
+    }
+};
+
+export const getEnrollmentsForStudent = async (studentName: string): Promise<string[]> => {
+    if (!db) return [];
+    const q = query(collection(db, "testEnrollments"), where("studentName", "==", studentName));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => doc.data().testId as string);
+};
+
+export const getTestEnrollments = async (): Promise<TestEnrollment[]> => {
+    return getAll<TestEnrollment>("testEnrollments");
 };
 
 
