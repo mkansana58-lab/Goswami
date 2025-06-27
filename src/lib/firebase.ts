@@ -1,8 +1,6 @@
 // firebase.ts
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getFirestore, collection, getDocs, type Firestore, query, orderBy, Timestamp } from "firebase/firestore";
-import { getAuth, type Auth } from "firebase/auth";
-import { getAnalytics, type Analytics, isSupported } from "firebase/analytics";
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -17,8 +15,6 @@ const firebaseConfig = {
 
 let app: FirebaseApp;
 let db: Firestore;
-let auth: Auth;
-let analytics: Analytics | undefined;
 
 function initializeFirebase() {
     if (getApps().length) {
@@ -29,14 +25,6 @@ function initializeFirebase() {
         app = initializeApp(firebaseConfig);
     }
     db = getFirestore(app);
-    auth = getAuth(app);
-    if (typeof window !== "undefined") {
-      isSupported().then(supported => {
-        if (supported) {
-          analytics = getAnalytics(app);
-        }
-      });
-    }
 }
 
 // Ensure Firebase is initialized
@@ -71,4 +59,4 @@ export async function getLiveClasses(): Promise<LiveClass[]> {
   }
 }
 
-export { app, db, auth, analytics };
+export { app, db };
