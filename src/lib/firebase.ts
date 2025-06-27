@@ -1,6 +1,7 @@
+
 // firebase.ts
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getFirestore, collection, getDocs, type Firestore, query, orderBy, Timestamp } from "firebase/firestore";
+import { getFirestore, collection, getDocs, type Firestore, query, orderBy, Timestamp, addDoc } from "firebase/firestore";
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -18,10 +19,8 @@ let db: Firestore;
 
 function initializeFirebase() {
     if (getApps().length) {
-        console.log("Firebase using existing app instance.");
         app = getApps()[0];
     } else {
-        console.log("Initializing new Firebase app instance.");
         app = initializeApp(firebaseConfig);
     }
     db = getFirestore(app);
@@ -37,6 +36,31 @@ export interface LiveClass {
   scheduledAt: Timestamp;
   link: string;
 }
+
+interface NewLiveClassData {
+    title: string;
+    link: string;
+    scheduledAt: string; // ISO string from datetime-local input
+}
+
+// Function to add a new live class to Firestore
+export async function addLiveClass(classData: NewLiveClassData): Promise<void> {
+    if (!db) {
+        throw new Error("Firestore DB not initialized.");
+    }
+    try {
+        const liveClassesCollection = collection(db, "liveClasses");
+        await addDoc(liveClassesCollection, {
+            title: classData.title,
+            link: classData.link,
+            scheduledAt: Timestamp.fromDate(new Date(classData.scheduledAt)),
+        });
+    } catch (error) {
+        console.error("Error adding live class to Firestore:", error);
+        throw error;
+    }
+}
+
 
 // Function to fetch live classes from Firestore
 export async function getLiveClasses(): Promise<LiveClass[]> {

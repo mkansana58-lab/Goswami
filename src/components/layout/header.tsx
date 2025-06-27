@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -22,13 +23,25 @@ import { useRouter } from 'next/navigation';
 import { sidebarLinks } from '@/lib/nav-links';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { useAuth } from '@/hooks/use-auth';
 
 export function Header() {
   const { t } = useLanguage();
   const router = useRouter();
+  const { admin, logout } = useAuth();
 
-  // A placeholder for admin check
-  const isAdmin = true; // In a real app, this would come from auth context
+  const handleAdminClick = () => {
+    if (admin) {
+      router.push('/admin');
+    } else {
+      router.push('/admin-login');
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    router.push('/student-login');
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-sm">
@@ -57,31 +70,48 @@ export function Header() {
                 </div>
               <nav className="mt-4 flex-grow px-2">
                 <ul className="space-y-1">
-                {sidebarLinks.map((link) => (
-                  <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="flex items-center gap-3 rounded-md p-2 text-base font-medium text-primary hover:bg-accent"
-                  >
-                    <link.icon className="h-5 w-5" />
-                    {t(link.textKey as any)}
-                  </Link>
-                  </li>
-                ))}
+                {sidebarLinks.map((link) => {
+                  if (link.textKey === 'adminPanel') {
+                    return (
+                      <li key={link.href}>
+                        <button
+                          onClick={handleAdminClick}
+                          className="flex items-center gap-3 rounded-md p-2 text-base font-medium text-primary hover:bg-accent w-full text-left"
+                        >
+                          <link.icon className="h-5 w-5" />
+                          {t(link.textKey as any)}
+                        </button>
+                      </li>
+                    )
+                  }
+                  return (
+                    <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="flex items-center gap-3 rounded-md p-2 text-base font-medium text-primary hover:bg-accent"
+                    >
+                      <link.icon className="h-5 w-5" />
+                      {t(link.textKey as any)}
+                    </Link>
+                    </li>
+                  )
+                })}
                 </ul>
               </nav>
-              <div className="p-4 border-t border-border/20 mt-auto">
-                    <div className="flex items-center gap-3">
-                        <Avatar>
-                            <AvatarImage src="https://placehold.co/40x40.png" data-ai-hint="user avatar"/>
-                            <AvatarFallback>A</AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <p className="text-sm font-semibold text-primary">AcademyDirector77</p>
-                            <p className="text-xs text-muted-foreground">admin@goswami.com</p>
-                        </div>
-                    </div>
-              </div>
+              {admin && (
+                <div className="p-4 border-t border-border/20 mt-auto">
+                      <div className="flex items-center gap-3">
+                          <Avatar>
+                              <AvatarImage src="https://placehold.co/40x40.png" data-ai-hint="user avatar"/>
+                              <AvatarFallback>A</AvatarFallback>
+                          </Avatar>
+                          <div>
+                              <p className="text-sm font-semibold text-primary">{admin.name}</p>
+                              <p className="text-xs text-muted-foreground">{admin.email}</p>
+                          </div>
+                      </div>
+                </div>
+              )}
             </SheetContent>
           </Sheet>
         </div>
@@ -108,16 +138,14 @@ export function Header() {
               <DropdownMenuItem onClick={() => router.push('/settings')}>
                 {t('settings')}
               </DropdownMenuItem>
-              {isAdmin && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push('/admin')}>
-                    {t('adminPanel')}
-                  </DropdownMenuItem>
-                </>
-              )}
+              
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleAdminClick}>
+                {t('adminPanel')}
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
                 {t('logout')}
               </DropdownMenuItem>
             </DropdownMenuContent>

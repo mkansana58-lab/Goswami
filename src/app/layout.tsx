@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { LanguageProvider } from '@/context/language-context';
 import { SettingsProvider } from '@/context/settings-context';
+import { AuthProvider } from '@/context/auth-context';
 import { Inter, Teko, Dancing_Script } from 'next/font/google';
 
 const inter = Inter({
@@ -38,8 +39,10 @@ export default function RootLayout({
       <body className={`${inter.variable} ${teko.variable} ${dancingScript.variable} font-body`}>
         <SettingsProvider>
           <LanguageProvider>
+            <AuthProvider>
               {children}
               <Toaster />
+            </AuthProvider>
           </LanguageProvider>
         </SettingsProvider>
       </body>
