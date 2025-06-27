@@ -5,15 +5,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useLanguage } from '@/hooks/use-language';
 import { testsData, type Question, type TestDetails } from '@/lib/tests-data';
+import { generateTestQuestions } from '@/ai/flows/test-generator-flow';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
-import { Clock } from 'lucide-react';
+import { Clock, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Skeleton } from '@/components/ui/skeleton';
 
 type Answers = { [key: number]: string };
 
@@ -29,44 +29,81 @@ export default function TestPlayerPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
   const [timeLeft, setTimeLeft] = useState(0);
-  const [isClient, setIsClient] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(true);
   
   useEffect(() => {
-    setIsClient(true);
-    if (testId && testsData[testId]) {
-      const data = testsData[testId];
-      setTestDetails(data);
-      const questions = data.subjects.flatMap(s => s.questions);
-      setAllQuestions(questions);
+    const loadTest = async () => {
+      if (testId && testsData[testId]) {
+        const data = testsData[testId];
+        setTestDetails(data);
 
-      const savedProgress = localStorage.getItem(`test-progress-${testId}`);
-      if (savedProgress) {
-        const { savedAnswers, savedIndex, savedTimeLeft } = JSON.parse(savedProgress);
-        setAnswers(savedAnswers);
-        setCurrentQuestionIndex(savedIndex);
-        setTimeLeft(savedTimeLeft);
-      } else {
-        setTimeLeft(data.timeLimit * 60);
+        const savedProgress = sessionStorage.getItem(`test-progress-${testId}`);
+        if (savedProgress) {
+          const { savedQuestions, savedAnswers, savedIndex, savedTimeLeft } = JSON.parse(savedProgress);
+          setAllQuestions(savedQuestions);
+          setAnswers(savedAnswers);
+          setCurrentQuestionIndex(savedIndex);
+          setTimeLeft(savedTimeLeft);
+          setIsGenerating(false);
+        } else {
+          try {
+            setIsGenerating(true);
+            let generatedQuestions: Question[] = [];
+            let questionIdCounter = 0;
+
+            for (const subject of data.subjects) {
+              const result = await generateTestQuestions({
+                className: data.classForAI,
+                subject: t(subject.name as any),
+                questionCount: subject.questionCount,
+                language: data.languageForAI,
+              });
+              
+              const questionsWithGlobalIds = result.questions.map(q => ({
+                ...q,
+                id: questionIdCounter + q.id,
+              }));
+
+              generatedQuestions = [...generatedQuestions, ...questionsWithGlobalIds];
+              questionIdCounter += subject.questionCount;
+            }
+
+            setAllQuestions(generatedQuestions);
+            setTimeLeft(data.timeLimit * 60);
+          } catch (error) {
+            console.error("Error generating test:", error);
+            toast({
+              variant: "destructive",
+              title: "Error",
+              description: "Failed to generate the test. Please try again.",
+            });
+            router.back();
+          } finally {
+            setIsGenerating(false);
+          }
+        }
       }
-    }
-  }, [testId]);
+    };
+    loadTest();
+  }, [testId, t, router, toast]);
 
   const handleSubmit = useCallback(() => {
-    localStorage.setItem(`test-result-${testId}`, JSON.stringify({ answers, timeLeft }));
-    localStorage.removeItem(`test-progress-${testId}`);
+    sessionStorage.setItem(`test-result-${testId}`, JSON.stringify({ answers, timeLeft, questions: allQuestions }));
+    sessionStorage.removeItem(`test-progress-${testId}`);
     toast({ title: t('testSubmitted') });
     router.push(`/tests/${testId}/results`);
-  }, [answers, timeLeft, testId, router, t, toast]);
+  }, [answers, timeLeft, allQuestions, testId, router, t, toast]);
 
   useEffect(() => {
-    if (!isClient || !testDetails) return;
+    if (isGenerating || !testDetails) return;
     if (timeLeft <= 0) {
       handleSubmit();
       return;
     }
 
     const saveInterval = setInterval(() => {
-      localStorage.setItem(`test-progress-${testId}`, JSON.stringify({
+      sessionStorage.setItem(`test-progress-${testId}`, JSON.stringify({
+        savedQuestions: allQuestions,
         savedAnswers: answers,
         savedIndex: currentQuestionIndex,
         savedTimeLeft: timeLeft,
@@ -81,8 +118,7 @@ export default function TestPlayerPage() {
       clearInterval(timer);
       clearInterval(saveInterval);
     };
-  }, [isClient, timeLeft, testDetails, answers, currentQuestionIndex, testId, handleSubmit]);
-
+  }, [isGenerating, timeLeft, testDetails, allQuestions, answers, currentQuestionIndex, testId, handleSubmit]);
 
   const handleAnswerSelect = (answer: string) => {
     setAnswers(prev => ({ ...prev, [currentQuestionIndex]: answer }));
@@ -100,25 +136,11 @@ export default function TestPlayerPage() {
     }
   };
 
-  if (!isClient || !testDetails) {
+  if (isGenerating || !testDetails) {
     return (
-        <div className="max-w-4xl mx-auto space-y-6">
-            <Card>
-                <CardHeader>
-                    <Skeleton className="h-8 w-3/4" />
-                </CardHeader>
-                <CardContent className="space-y-4 pt-6">
-                    <Skeleton className="h-6 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                    <Skeleton className="h-10 w-24" />
-                    <Skeleton className="h-10 w-24" />
-                </CardFooter>
-            </Card>
+        <div className="flex flex-col items-center justify-center h-64">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="mt-4 text-lg text-muted-foreground">{t('generatingTest')}</p>
         </div>
     );
   }

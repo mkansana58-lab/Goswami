@@ -8,7 +8,6 @@ export interface Question {
 
 export interface Subject {
   name: string;
-  questions: Question[];
   questionCount: number;
 }
 
@@ -17,58 +16,78 @@ export interface TestDetails {
   title: keyof typeof import('./translations').translations.en;
   description: keyof typeof import('./translations').translations.en;
   medium: string;
+  languageForAI: 'Hindi' | 'English';
+  classForAI: string;
   timeLimit: number; // in minutes
   subjects: Subject[];
   totalQuestions: number;
+  testType: 'mock' | 'practice';
 }
 
-const generatePlaceholderQuestions = (subject: string, count: number, test: string): Question[] => {
-  const questions: Question[] = [];
-  for (let i = 1; i <= count; i++) {
-    const options = [
-        `विकल्प A प्रश्न ${i}`, 
-        `विकल्प B प्रश्न ${i}`, 
-        `विकल्प C प्रश्न ${i}`, 
-        `विकल्प D प्रश्न ${i}`
-    ];
-    questions.push({
-      id: i,
-      question: `${test} के लिए ${subject} का प्रश्न ${i}। सही विकल्प क्या है?`,
-      options: options,
-      answer: options[0], // For simplicity, answer is always A
-    });
-  }
-  return questions;
-};
-
 export const testsData: Record<string, TestDetails> = {
-  'class-6': {
-    id: 'class-6',
+  'rms-class-6': {
+    id: 'rms-class-6',
     title: 'rmsMockTestClass6',
     description: 'rmsMockTestClass6Desc',
     medium: 'Hindi',
+    languageForAI: 'Hindi',
+    classForAI: 'Class 6',
     timeLimit: 120,
     subjects: [
-      { name: 'math', questionCount: 50, questions: generatePlaceholderQuestions('गणित', 50, 'कक्षा 6') },
-      { name: 'reasoning', questionCount: 50, questions: generatePlaceholderQuestions('रीजनिंग', 50, 'कक्षा 6') },
-      { name: 'gk', questionCount: 50, questions: generatePlaceholderQuestions('सामान्य ज्ञान', 50, 'कक्षा 6') },
-      { name: 'english', questionCount: 50, questions: generatePlaceholderQuestions('अंग्रेजी', 50, 'कक्षा 6') },
+      { name: 'math', questionCount: 50 },
+      { name: 'reasoning', questionCount: 50 },
+      { name: 'gk', questionCount: 50 },
+      { name: 'english', questionCount: 25 }, // As per user "qulifly hai 25 प्रश्न"
     ],
-    totalQuestions: 200,
+    totalQuestions: 175,
+    testType: 'mock',
   },
-  'class-9': {
-    id: 'class-9',
+  'rms-class-9': {
+    id: 'rms-class-9',
     title: 'rmsMockTestClass9',
     description: 'rmsMockTestClass9Desc',
     medium: 'English',
+    languageForAI: 'English',
+    classForAI: 'Class 9',
     timeLimit: 150,
     subjects: [
-      { name: 'english', questionCount: 50, questions: generatePlaceholderQuestions('English', 50, 'Class 9') },
-      { name: 'math', questionCount: 50, questions: generatePlaceholderQuestions('Math', 50, 'Class 9') },
-      { name: 'science', questionCount: 50, questions: generatePlaceholderQuestions('Science', 50, 'Class 9') },
-      { name: 'socialStudies', questionCount: 30, questions: generatePlaceholderQuestions('Social Studies', 30, 'Class 9') },
-      { name: 'hindi', questionCount: 20, questions: generatePlaceholderQuestions('Hindi', 20, 'Class 9') },
+      { name: 'english', questionCount: 50 },
+      { name: 'math', questionCount: 50 },
+      { name: 'science', questionCount: 50 },
+      { name: 'socialStudies', questionCount: 30 },
+      { name: 'hindi', questionCount: 20 },
     ],
     totalQuestions: 200,
+    testType: 'mock',
   },
+  'jnv-class-6': {
+    id: 'jnv-class-6',
+    title: 'jnvMockTestClass6',
+    description: 'jnvMockTestClass6Desc',
+    medium: 'Hindi',
+    languageForAI: 'Hindi',
+    classForAI: 'Class 6',
+    timeLimit: 120,
+    subjects: [
+        { name: 'mentalAbility', questionCount: 40 },
+        { name: 'arithmetic', questionCount: 20 },
+        { name: 'languageTest', questionCount: 20 },
+    ],
+    totalQuestions: 80,
+    testType: 'mock',
+  },
+  'math-olympiad-class-6': {
+    id: 'math-olympiad-class-6',
+    title: 'mathOlympiadClass6',
+    description: 'mathOlympiadClass6Desc',
+    medium: 'English',
+    languageForAI: 'English',
+    classForAI: 'Class 6',
+    timeLimit: 60,
+    subjects: [
+        { name: 'math', questionCount: 25 },
+    ],
+    totalQuestions: 25,
+    testType: 'practice',
+  }
 };

@@ -4,10 +4,11 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useLanguage } from '@/hooks/use-language';
-import { testsData } from '@/lib/tests-data';
+import { testsData, type Question } from '@/lib/tests-data';
 import { ResultCertificate, type ResultData } from '@/components/test/result-certificate';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { CheckCircle, XCircle } from 'lucide-react';
 
 export default function TestResultPage() {
     const { t } = useLanguage();
@@ -15,28 +16,47 @@ export default function TestResultPage() {
     const testId = Array.isArray(params.testId) ? params.testId[0] : params.testId;
 
     const [resultData, setResultData] = useState<ResultData | null>(null);
+    const [allQuestions, setAllQuestions] = useState<Question[]>([]);
+    const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
         setIsClient(true);
         if (testId && testsData[testId]) {
-            const savedResult = localStorage.getItem(`test-result-${testId}`);
+            const savedResult = sessionStorage.getItem(`test-result-${testId}`);
             if (savedResult) {
-                const { answers: userAnswers, timeLeft } = JSON.parse(savedResult);
+                const { answers, timeLeft, questions } = JSON.parse(savedResult);
                 const testDetails = testsData[testId];
                 
-                const allQuestions = testDetails.subjects.flatMap(s => s.questions);
+                setAllQuestions(questions);
+                setUserAnswers(answers);
                 
                 let totalCorrect = 0;
-                allQuestions.forEach((q, index) => {
-                    if (userAnswers[index] === q.answer) {
-                        totalCorrect++;
-                    }
+                let questionCursor = 0;
+                
+                const subjectAnalyses = testDetails.subjects.map(subject => {
+                    let subjectCorrect = 0;
+                    const subjectQuestions = questions.slice(questionCursor, questionCursor + subject.questionCount);
+                    
+                    subjectQuestions.forEach((q: Question, index: number) => {
+                        const overallIndex = questionCursor + index;
+                        if (answers[overallIndex] === q.answer) {
+                            subjectCorrect++;
+                        }
+                    });
+                    
+                    totalCorrect += subjectCorrect;
+                    questionCursor += subject.questionCount;
+
+                    return {
+                        name: t(subject.name as any),
+                        score: subjectCorrect,
+                        total: subject.questionCount
+                    };
                 });
 
-                const timeTaken = (testDetails.timeLimit * 60) - timeLeft;
 
-                // Pass if score is 40% or more
+                const timeTaken = (testDetails.timeLimit * 60) - timeLeft;
                 const status = (totalCorrect / testDetails.totalQuestions) >= 0.4 ? 'Pass' : 'Fail';
 
                 setResultData({
@@ -46,6 +66,7 @@ export default function TestResultPage() {
                     correctAnswers: totalCorrect,
                     timeTaken: timeTaken,
                     status: status,
+                    subjects: subjectAnalyses
                 });
             }
         }
@@ -81,8 +102,48 @@ export default function TestResultPage() {
     if (!resultData) return <div className="text-center p-10">{t('calculatingResult')}</div>;
 
     return (
-        <div>
+        <div className="space-y-8">
             <ResultCertificate resultData={resultData} />
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t('reviewAnswers')}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    {allQuestions.map((question, index) => {
+                        const userAnswer = userAnswers[index];
+                        const isCorrect = userAnswer === question.answer;
+                        return (
+                            <div key={index} className="p-4 border rounded-lg">
+                                <p className="font-semibold">Q{index + 1}: {question.question}</p>
+                                <div className="mt-3 space-y-2 text-sm">
+                                    <p className="flex items-start">
+                                        <span className="font-medium w-32 shrink-0">{t('yourAnswer')}:</span>
+                                        <span className={`${isCorrect ? 'text-green-600' : 'text-destructive'}`}>
+                                            {userAnswer || 'Not Answered'}
+                                        </span>
+                                    </p>
+                                    <p className="flex items-start">
+                                        <span className="font-medium w-32 shrink-0">{t('correctAnswer')}:</span>
+                                        <span className="text-green-600">{question.answer}</span>
+                                    </p>
+                                </div>
+                                <div className="mt-2">
+                                    {isCorrect ? (
+                                        <span className="flex items-center gap-1 text-xs text-green-600 font-medium px-2 py-1 bg-green-100 dark:bg-green-900/50 rounded-full">
+                                            <CheckCircle className="h-3 w-3" /> Correct
+                                        </span>
+                                    ) : (
+                                        <span className="flex items-center gap-1 text-xs text-destructive font-medium px-2 py-1 bg-red-100 dark:bg-red-900/50 rounded-full">
+                                            <XCircle className="h-3 w-3" /> Incorrect
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        )
+                    })}
+                </CardContent>
+            </Card>
         </div>
     );
 }

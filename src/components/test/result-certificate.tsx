@@ -5,6 +5,13 @@ import { useLanguage } from '@/hooks/use-language';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, Award, CheckCircle, XCircle } from 'lucide-react';
+import { Separator } from '../ui/separator';
+
+export interface SubjectAnalysis {
+    name: string;
+    score: number;
+    total: number;
+}
 
 export interface ResultData {
   studentName: string;
@@ -13,6 +20,7 @@ export interface ResultData {
   correctAnswers: number;
   timeTaken: number; // in seconds
   status: 'Pass' | 'Fail';
+  subjects: SubjectAnalysis[];
 }
 
 interface Props {
@@ -77,6 +85,20 @@ export function ResultCertificate({ resultData }: Props) {
             <div className={`mt-6 flex items-center justify-center gap-4 text-4xl font-bold ${resultData.status === 'Pass' ? 'text-green-500' : 'text-destructive'}`}>
                 {resultData.status === 'Pass' ? <CheckCircle /> : <XCircle />}
                 <span>{t(resultData.status.toLowerCase() as any)}</span>
+            </div>
+            
+            <Separator className="my-6" />
+
+            <div>
+                <h4 className="text-xl font-semibold mb-4 text-primary">{t('subjectAnalysis')}</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-left">
+                    {resultData.subjects.map(subject => (
+                        <div key={subject.name} className="bg-background border p-4 rounded-lg shadow-sm">
+                            <p className="font-semibold">{subject.name}</p>
+                            <p className="text-2xl font-bold text-primary mt-1">{subject.score} / {subject.total}</p>
+                        </div>
+                    ))}
+                </div>
             </div>
 
         </CardContent>
