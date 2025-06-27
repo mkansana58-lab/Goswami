@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Menu, Bell, User } from 'lucide-react';
+import { Menu, Bell, User, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/sheet";
 import { useLanguage } from '@/hooks/use-language';
 import { useRouter } from 'next/navigation';
-import { featureGridLinks } from '@/lib/nav-links';
+import { sidebarLinks } from '@/lib/nav-links';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 export function Header() {
   const { t } = useLanguage();
@@ -36,40 +37,61 @@ export function Header() {
         <div className="flex items-center gap-2">
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
+              <Button variant="ghost" size="icon" className="md:hidden text-primary">
                 <Menu className="h-6 w-6" />
                 <span className="sr-only">Toggle Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-3/4 bg-background">
-              <SheetHeader>
-                <SheetTitle className='text-primary'>{t('appName')}</SheetTitle>
-              </SheetHeader>
-              <nav className="mt-8 flex flex-col gap-4">
-                {featureGridLinks.map((link) => (
+            <SheetContent side="left" className="w-3/4 bg-background p-0 flex flex-col">
+                <div className="p-4 border-b border-border/20">
+                    <div className="flex items-center gap-3">
+                        <ShieldCheck className="h-10 w-10 text-primary" />
+                        <div>
+                            <h2 className="text-lg font-bold text-primary">{t('appName')}</h2>
+                            <p className="text-xs text-muted-foreground">डिफेंस एकेडमी</p>
+                        </div>
+                    </div>
+                </div>
+              <nav className="mt-4 flex-grow px-2">
+                <ul className="space-y-1">
+                {sidebarLinks.map((link) => (
+                  <li key={link.href}>
                   <Link
-                    key={link.href}
                     href={link.href}
                     className="flex items-center gap-3 rounded-md p-2 text-base font-medium text-primary hover:bg-accent"
                   >
                     <link.icon className="h-5 w-5" />
                     {t(link.textKey as any)}
                   </Link>
+                  </li>
                 ))}
+                </ul>
               </nav>
+              <div className="p-4 border-t border-border/20 mt-auto">
+                    <div className="flex items-center gap-3">
+                        <Avatar>
+                            <AvatarImage src="https://placehold.co/40x40.png" data-ai-hint="user avatar"/>
+                            <AvatarFallback>A</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="text-sm font-semibold text-primary">AcademyDirector77</p>
+                            <p className="text-xs text-muted-foreground">admin@goswami.com</p>
+                        </div>
+                    </div>
+              </div>
             </SheetContent>
           </Sheet>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="text-primary">
             <Bell className="h-6 w-6" />
             <span className="sr-only">Notifications</span>
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
+              <Button variant="ghost" size="icon" className="rounded-full text-primary">
                 <User className="h-6 w-6" />
                 <span className="sr-only">Profile</span>
               </Button>

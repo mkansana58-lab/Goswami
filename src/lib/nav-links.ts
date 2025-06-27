@@ -13,7 +13,13 @@ import {
     ScrollText,
     Scissors,
     Trophy,
-    CircleDot
+    CircleDot,
+    Video,
+    Download,
+    Users,
+    List,
+    Phone,
+    Cog
   } from 'lucide-react';
   
   export const featureGridLinks = [
@@ -31,6 +37,26 @@ import {
       { href: "/contact", icon: CircleDot, textKey: "contactUs" },
   ];
   
+  export const sidebarLinks = [
+    { href: "/", icon: Home, textKey: "dashboard" },
+    { href: "/courses", icon: BookOpenCheck, textKey: "ourCourses" },
+    { href: "/scholarship", icon: ClipboardPen, textKey: "scholarshipForm" },
+    { href: "/admit-card", icon: Ticket, textKey: "admitCard" },
+    { href: "/live-classes", icon: RadioTower, textKey: "liveClasses" },
+    { href: "/video-lectures", icon: Video, textKey: "videoLectures" },
+    { href: "/downloads", icon: Download, textKey: "downloads" },
+    { href: "/tests", icon: CheckSquare, textKey: "aiTest" },
+    { href: "/ai-tutor", icon: GraduationCap, textKey: "aiTutor" },
+    { href: "/ai-chat", icon: MessageSquare, textKey: "aiChat" },
+    { href: "/current-affairs", icon: ScrollText, textKey: "currentAffairs" },
+    { href: "/cutoff-checker", icon: Scissors, textKey: "cutoffChecker" },
+    { href: "/toppers", icon: Trophy, textKey: "toppers" },
+    { href: "/teachers", icon: Users, textKey: "teachers" },
+    { href: "/school-list", icon: List, textKey: "schoolList" },
+    { href: "/contact", icon: Phone, textKey: "contact" },
+    { href: "/admin", icon: Cog, textKey: "adminPanel" },
+  ];
+
   export const bottomNavLinks = [
       { textKey: 'navHome', href: '/', icon: Home },
       { textKey: 'navCourses', href: '/courses', icon: BookOpenCheck },
@@ -38,4 +64,3 @@ import {
       { textKey: 'navPosts', href: '/daily-posts', icon: Newspaper },
       { textKey: 'navAccount', href: '/account', icon: User },
   ];
-  

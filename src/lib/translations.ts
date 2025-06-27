@@ -40,6 +40,12 @@ export const translations = {
     languageSettingsDescription: "Choose the application language.",
     english: "English",
     hindi: "Hindi",
+    dashboard: "Dashboard",
+    videoLectures: "Video Lectures",
+    downloads: "Downloads",
+    teachers: "Teachers",
+    schoolList: "School List",
+    contact: "Contact",
   },
   hi: {
     appName: "गो स्वामी डिफेंस एकेडमी",
@@ -80,5 +86,11 @@ export const translations = {
     languageSettingsDescription: "एप्लिकेशन की भाषा चुनें।",
     english: "अंग्रेज़ी",
     hindi: "हिंदी",
+    dashboard: "डैशबोर्ड",
+    videoLectures: "वीडियो लेक्चर",
+    downloads: "डाउनलोड्स",
+    teachers: "शिक्षक",
+    schoolList: "स्कूल सूची",
+    contact: "संपर्क",
   }
 };
