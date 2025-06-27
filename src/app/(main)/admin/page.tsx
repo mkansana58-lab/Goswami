@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useLanguage } from "@/hooks/use-language";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -20,17 +20,20 @@ import {
     addVideoLecture, deleteVideoLecture, getVideoLectures,
     addDownload, deleteDownload, getDownloads,
     addCourse, deleteCourse, getCourses,
+    addTeacher, deleteTeacher, getTeachers,
+    addGalleryImage, deleteGalleryImage, getGalleryImages,
     getScholarshipApplications, getStudents, updateAppConfig, getAppConfig,
     type LiveClass, type Notification, type Post, type CurrentAffair,
     type VideoLecture, type Download, type Course, type AppConfig,
-    type ScholarshipApplicationData, type StudentData
+    type ScholarshipApplicationData, type StudentData, type Teacher, type GalleryImage
 } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2 } from 'lucide-react';
+import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
@@ -43,11 +46,14 @@ const settingsSchema = z.object({
 });
 const liveClassSchema = z.object({ title: z.string().min(3), link: z.string().url(), scheduledAt: z.string().min(1) });
 const notificationSchema = z.object({ title: z.string().min(3), content: z.string().min(10) });
-const postSchema = z.object({ title: z.string().min(3), content: z.string().min(10), imageUrl: z.string().url().optional().or(z.literal('')) });
+const postSchema = z.object({ title: z.string().min(3), content: z.string().min(10), imageUrl: z.any().optional() });
 const currentAffairSchema = z.object({ title: z.string().min(3), content: z.string().min(10) });
 const videoLectureSchema = z.object({ title: z.string().min(3), videoUrl: z.string().url() });
 const downloadSchema = z.object({ title: z.string().min(3), pdfUrl: z.string().url() });
-const courseSchema = z.object({ title: z.string().min(3), description: z.string().min(10), imageUrl: z.string().url().optional().or(z.literal('')) });
+const courseSchema = z.object({ title: z.string().min(3), description: z.string().min(10), imageUrl: z.any().optional() });
+const teacherSchema = z.object({ name: z.string().min(3), description: z.string().min(10), imageUrl: z.any().optional() });
+const galleryImageSchema = z.object({ caption: z.string().min(3), imageUrl: z.any().refine(f => f?.length === 1, "Image is required.") });
+
 
 // Helper to format timestamp for datetime-local input
 const toInputDateTimeFormat = (timestamp: Timestamp | undefined) => {
@@ -71,6 +77,7 @@ export default function AdminPage() {
         liveClasses: [] as LiveClass[], notifications: [] as Notification[], posts: [] as Post[],
         currentAffairs: [] as CurrentAffair[], videoLectures: [] as VideoLecture[], downloads: [] as Download[],
         courses: [] as Course[], scholarshipApps: [] as ScholarshipApplicationData[], students: [] as StudentData[],
+        teachers: [] as Teacher[], galleryImages: [] as GalleryImage[],
     });
     const [isLoading, setIsLoading] = useState(true);
 
@@ -81,11 +88,11 @@ export default function AdminPage() {
         try {
             const [
                 config, liveClasses, notifications, posts, currentAffairs, videoLectures,
-                downloads, courses, scholarshipApps, students
+                downloads, courses, scholarshipApps, students, teachers, galleryImages
             ] = await Promise.all([
                 getAppConfig(), getLiveClasses(), getNotifications(), getPosts(),
                 getCurrentAffairs(), getVideoLectures(), getDownloads(), getCourses(),
-                getScholarshipApplications(), getStudents()
+                getScholarshipApplications(), getStudents(), getTeachers(), getGalleryImages()
             ]);
             settingsForm.reset({
                 scholarshipDeadline: toInputDateTimeFormat(config.scholarshipDeadline),
@@ -94,7 +101,7 @@ export default function AdminPage() {
             });
             setData({
                 liveClasses, notifications, posts, currentAffairs, videoLectures,
-                downloads, courses, scholarshipApps, students
+                downloads, courses, scholarshipApps, students, teachers, galleryImages
             });
         } catch (error) {
             toast({ variant: "destructive", title: "Error", description: "Failed to fetch data from server." });
@@ -118,12 +125,6 @@ export default function AdminPage() {
         await updateAppConfig(configData);
         toast({ title: "Settings Saved" });
     };
-
-    async function handleDelete(action: () => Promise<void>) {
-        await action();
-        toast({ title: "Item Deleted" });
-        fetchData();
-    }
 
     if (isAuthLoading) return <div className="flex justify-center items-center h-64"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
     if (!admin) { router.replace('/admin-login'); return null; }
@@ -154,7 +155,7 @@ export default function AdminPage() {
                     </AdminSection>
                     
                     <AdminSection title={t('manageDailyPosts')} icon={Newspaper}>
-                        <CrudForm schema={postSchema} onSubmit={addPost} onRefresh={fetchData} fields={{title: 'text', content: 'textarea', imageUrl: 'url'}} />
+                        <CrudForm schema={postSchema} onSubmit={addPost} onRefresh={fetchData} fields={{title: 'text', content: 'textarea', imageUrl: 'file'}} />
                         <DataTable data={data.posts} columns={['title', 'content']} onDelete={deletePost} onRefresh={fetchData} />
                     </AdminSection>
 
@@ -174,8 +175,18 @@ export default function AdminPage() {
                     </AdminSection>
 
                     <AdminSection title={t('manageCourses')} icon={BookCopy}>
-                        <CrudForm schema={courseSchema} onSubmit={addCourse} onRefresh={fetchData} fields={{title: 'text', description: 'textarea', imageUrl: 'url'}} />
+                        <CrudForm schema={courseSchema} onSubmit={addCourse} onRefresh={fetchData} fields={{title: 'text', description: 'textarea', imageUrl: 'file'}} />
                         <DataTable data={data.courses} columns={['title', 'description']} onDelete={deleteCourse} onRefresh={fetchData} />
+                    </AdminSection>
+
+                    <AdminSection title="Manage Teachers" icon={UserSquare}>
+                        <CrudForm schema={teacherSchema} onSubmit={addTeacher} onRefresh={fetchData} fields={{name: 'text', description: 'textarea', imageUrl: 'file'}} />
+                        <DataTable data={data.teachers} columns={['name', 'description']} onDelete={deleteTeacher} onRefresh={fetchData} />
+                    </AdminSection>
+
+                    <AdminSection title="Manage Coaching Gallery" icon={Camera}>
+                        <CrudForm schema={galleryImageSchema} onSubmit={addGalleryImage} onRefresh={fetchData} fields={{caption: 'text', imageUrl: 'file'}} />
+                        <DataTable data={data.galleryImages} columns={['caption']} onDelete={deleteGalleryImage} onRefresh={fetchData} />
                     </AdminSection>
 
                     <AdminSection title="Scholarship Applications" icon={GraduationCap}>
@@ -192,7 +203,7 @@ export default function AdminPage() {
                        <Table><TableHeader><TableRow><TableHead>Photo</TableHead><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Registered On</TableHead></TableRow></TableHeader>
                            <TableBody>
                                {data.students.map(s => (
-                                   <TableRow key={s.id}><TableCell><ImagePreview url={s.photoUrl} triggerText={<Image src={s.photoUrl || ''} alt="" width={40} height={40} className="rounded-full w-10 h-10 object-cover" data-ai-hint="student photo"/>} /></TableCell><TableCell>{s.name}<br/><span className="text-muted-foreground text-xs">{s.fatherName}</span></TableCell><TableCell>Class: {s.class}<br/>School: {s.school}</TableCell><TableCell>{format(s.createdAt.toDate(), 'PPP')}</TableCell></TableRow>
+                                   <TableRow key={s.id}><TableCell><ImagePreview url={s.photoUrl} triggerText={<Image src={s.photoUrl || `https://placehold.co/40x40.png?text=${s.name[0]}`} alt="" width={40} height={40} className="rounded-full w-10 h-10 object-cover" data-ai-hint="student photo"/>} /></TableCell><TableCell>{s.name}<br/><span className="text-muted-foreground text-xs">{s.fatherName}</span></TableCell><TableCell>Class: {s.class}<br/>School: {s.school}</TableCell><TableCell>{format(s.createdAt.toDate(), 'PPP')}</TableCell></TableRow>
                                ))}
                            </TableBody>
                        </Table>
@@ -212,7 +223,7 @@ const AdminSection = ({ icon: Icon, title, children }: { icon: React.ElementType
     </AccordionItem></Card>
 );
 
-const CrudForm = ({ schema, onSubmit, onRefresh, fields }: { schema: z.ZodObject<any>, onSubmit: (data: any) => Promise<any>, onRefresh: () => void, fields: Record<string, 'text' | 'url' | 'textarea' | 'datetime-local'> }) => {
+const CrudForm = ({ schema, onSubmit, onRefresh, fields }: { schema: z.ZodObject<any>, onSubmit: (data: any) => Promise<any>, onRefresh: () => void, fields: Record<string, 'text' | 'url' | 'textarea' | 'datetime-local' | 'file'> }) => {
     const { t } = useLanguage();
     const form = useForm({ resolver: zodResolver(schema) });
     const { toast } = useToast();
@@ -221,7 +232,25 @@ const CrudForm = ({ schema, onSubmit, onRefresh, fields }: { schema: z.ZodObject
     const handleFormSubmit = async (values: any) => {
         setIsSubmitting(true);
         try {
-            await onSubmit(values);
+            const dataToSubmit = { ...values };
+
+            for (const fieldName in fields) {
+                if (fields[fieldName] === 'file' && values[fieldName]?.[0]) {
+                    const file = values[fieldName][0];
+                    const dataUrl = await new Promise<string>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target?.result as string);
+                        reader.onerror = (error) => reject(error);
+                        reader.readAsDataURL(file);
+                    });
+                    dataToSubmit[fieldName] = dataUrl;
+                } else if (fields[fieldName] === 'file') {
+                    // If file is optional and not provided, remove it from submission
+                    delete dataToSubmit[fieldName];
+                }
+            }
+            
+            await onSubmit(dataToSubmit);
             toast({ title: "Success", description: "Item added successfully." });
             form.reset();
             onRefresh();
@@ -239,6 +268,8 @@ const CrudForm = ({ schema, onSubmit, onRefresh, fields }: { schema: z.ZodObject
                     <Label className="capitalize">{t(fieldName as any) || fieldName.replace(/([A-Z])/g, ' $1')}</Label>
                     {fieldType === 'textarea' ?
                         <Textarea {...form.register(fieldName)} disabled={isSubmitting} /> :
+                    fieldType === 'file' ?
+                        <Input type="file" accept="image/*" {...form.register(fieldName)} disabled={isSubmitting}/> :
                         <Input type={fieldType} {...form.register(fieldName)} disabled={isSubmitting} />
                     }
                     <p className="text-destructive text-sm mt-1">{form.formState.errors[fieldName]?.message as string}</p>
@@ -267,7 +298,7 @@ const DataTable = ({ data, columns, onDelete, onRefresh }: { data: any[], column
 
     return (
         <Table><TableHeader><TableRow>
-            {columns.map(col => <TableHead key={col} className="capitalize">{t(col as any) || col}</TableHead>)}
+            {columns.map(col => <TableHead key={col} className="capitalize">{t(col as any) || col.replace(/([A-Z])/g, ' $1')}</TableHead>)}
             <TableHead>{t('action')}</TableHead>
         </TableRow></TableHeader>
         <TableBody>
@@ -293,11 +324,12 @@ const DataTable = ({ data, columns, onDelete, onRefresh }: { data: any[], column
 const ImagePreview = ({ url, triggerText }: { url?: string; triggerText: React.ReactNode }) => {
     if (!url) return <span className="text-xs text-muted-foreground">N/A</span>;
     return (
-        <AlertDialog>
-            <AlertDialogTrigger asChild><Button variant="ghost" size="sm" className="h-auto p-1">{triggerText}</Button></AlertDialogTrigger>
-            <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Image Preview</AlertDialogTitle></AlertDialogHeader>
+        <Dialog>
+            <DialogTrigger asChild><Button variant="ghost" size="sm" className="h-auto p-1">{triggerText}</Button></DialogTrigger>
+            <DialogContent>
+                <DialogHeader><DialogTitle>Image Preview</DialogTitle></DialogHeader>
                 <div className="flex justify-center p-4"><Image src={url} alt="Preview" width={400} height={400} className="max-w-full h-auto rounded-md" /></div>
-            </AlertDialogContent>
-        </AlertDialog>
+            </DialogContent>
+        </Dialog>
     );
 };

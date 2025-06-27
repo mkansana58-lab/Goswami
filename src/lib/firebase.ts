@@ -1,6 +1,7 @@
+
 // firebase.ts
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getFirestore, collection, getDocs, type Firestore, query, orderBy, Timestamp, addDoc, where, limit, doc, setDoc, getDoc, deleteDoc } from "firebase/firestore";
+import { getFirestore, collection, getDocs, type Firestore, query, orderBy, Timestamp, addDoc, where, limit, doc, setDoc, getDoc, deleteDoc, updateDoc } from "firebase/firestore";
 
 // Firebase configuration from environment variables
 export const firebaseConfig = {
@@ -140,6 +141,21 @@ export interface Course {
     createdAt: Timestamp;
 }
 
+export interface Teacher {
+    id: string;
+    name: string;
+    description: string;
+    imageUrl: string;
+    createdAt: Timestamp;
+}
+
+export interface GalleryImage {
+    id: string;
+    caption: string;
+    imageUrl: string;
+    createdAt: Timestamp;
+}
+
 
 // --- Constants ---
 export const CLASS_UNIQUE_IDS: Record<string, string> = {
@@ -225,7 +241,7 @@ export async function getScholarshipApplicationByNumber(appNumber: string, uniqu
 
 export async function addStudent(name: string): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
-    const studentRef = doc(db, "students", name); // Use name as document ID
+    const studentRef = doc(db, "students", name);
     const docSnap = await getDoc(studentRef);
     if (!docSnap.exists()) {
         await setDoc(studentRef, {
@@ -245,10 +261,10 @@ export async function getStudent(name: string): Promise<StudentData | null> {
     return null;
 }
 
-export async function updateStudent(name: string, data: Partial<StudentData>): Promise<void> {
+export async function updateStudent(name: string, data: Partial<Omit<StudentData, 'id' | 'createdAt'>>): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
     const studentRef = doc(db, "students", name);
-    await setDoc(studentRef, data, { merge: true });
+    await updateDoc(studentRef, data);
 }
 
 export async function getStudents(): Promise<StudentData[]> {
@@ -270,7 +286,7 @@ export async function getTestResults(): Promise<TestResultData[]> {
     if (!db) return [];
     const q = query(collection(db, "testResults"), orderBy("percentage", "desc"), limit(20));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as TestResultData);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TestResultData));
 }
 
 export async function getLiveClasses(): Promise<LiveClass[]> {
@@ -311,6 +327,16 @@ export const deleteDownload = (id: string) => deleteDocument("downloads", id);
 export const addCourse = async (data: Omit<Course, 'id' | 'createdAt'>) => addDoc(collection(db, "courses"), { ...data, createdAt: Timestamp.now() });
 export const getCourses = async (): Promise<Course[]> => (await getDocs(query(collection(db, "courses"), orderBy("createdAt", "desc")))).docs.map(d => ({ id: d.id, ...d.data() } as Course));
 export const deleteCourse = (id: string) => deleteDocument("courses", id);
+
+// --- Teachers ---
+export const addTeacher = async (data: Omit<Teacher, 'id' | 'createdAt'>) => addDoc(collection(db, "teachers"), { ...data, createdAt: Timestamp.now() });
+export const getTeachers = async (): Promise<Teacher[]> => (await getDocs(query(collection(db, "teachers"), orderBy("createdAt", "desc")))).docs.map(d => ({ id: d.id, ...d.data() } as Teacher));
+export const deleteTeacher = (id: string) => deleteDocument("teachers", id);
+
+// --- Gallery Images ---
+export const addGalleryImage = async (data: Omit<GalleryImage, 'id' | 'createdAt'>) => addDoc(collection(db, "galleryImages"), { ...data, createdAt: Timestamp.now() });
+export const getGalleryImages = async (): Promise<GalleryImage[]> => (await getDocs(query(collection(db, "galleryImages"), orderBy("createdAt", "desc")))).docs.map(d => ({ id: d.id, ...d.data() } as GalleryImage));
+export const deleteGalleryImage = (id: string) => deleteDocument("galleryImages", id);
 
 
 export { app, db };

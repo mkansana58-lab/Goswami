@@ -25,9 +25,9 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const ADMIN_EMAIL = 'admin@goswami.com';
-const ADMIN_PASS = 'admin123';
-const ADMIN_NAME = 'AcademyDirector77';
+const ADMIN_EMAIL = 'director@goswami.edu';
+const ADMIN_PASS = 'G0swam!Def_2024';
+const ADMIN_NAME = 'GSDA Director';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [student, setStudent] = useState<Student | null>(null);

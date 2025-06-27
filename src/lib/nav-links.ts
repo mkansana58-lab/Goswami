@@ -1,3 +1,4 @@
+
 import {
     Home,
     BookOpenCheck,
@@ -33,7 +34,6 @@ import {
       { href: "/ai-tutor", icon: GraduationCap, textKey: "aiTutor" },
       { href: "/current-affairs", icon: ScrollText, textKey: "currentAffairs" },
       { href: "/toppers", icon: Trophy, textKey: "toppers" },
-      { href: "/contact", icon: CircleDot, textKey: "contactUs" },
   ];
   
   export const sidebarLinks = [

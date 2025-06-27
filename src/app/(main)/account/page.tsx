@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useLanguage } from "@/hooks/use-language";
@@ -14,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, User, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Timestamp } from "firebase/firestore";
 
 const profileSchema = z.object({
     fatherName: z.string().min(3, "Father's name is required"),
@@ -42,8 +44,8 @@ export default function AccountPage() {
     useEffect(() => {
         if (student?.name) {
             getStudent(student.name).then(data => {
-                setStudentData(data);
                 if (data) {
+                    setStudentData(data);
                     form.reset({
                         fatherName: data.fatherName || "",
                         class: data.class || "",
@@ -51,12 +53,18 @@ export default function AccountPage() {
                         address: data.address || "",
                         school: data.school || ""
                     });
-                    // If essential data is missing, force edit mode
                     if (!data.fatherName || !data.class) {
                         setIsEditing(true);
                     }
+                } else {
+                    // New user with no existing profile data.
+                    // Set minimal data for display and force edit mode.
+                    setStudentData({ name: student.name, createdAt: Timestamp.now() });
+                    setIsEditing(true);
                 }
             }).finally(() => setIsLoading(false));
+        } else {
+            setIsLoading(false);
         }
     }, [student?.name, form]);
 
@@ -68,14 +76,14 @@ export default function AccountPage() {
         const photoFile = values.photo?.[0];
 
         if (photoFile) {
-            const reader = new FileReader();
-            reader.readAsDataURL(photoFile);
-            photoUrl = await new Promise((resolve) => {
+            photoUrl = await new Promise<string>((resolve) => {
+                const reader = new FileReader();
                 reader.onload = (e) => resolve(e.target?.result as string);
+                reader.readAsDataURL(photoFile);
             });
         }
         
-        const dataToUpdate: Partial<StudentData> = { ...values, photoUrl };
+        const dataToUpdate: Partial<Omit<StudentData, 'id' | 'createdAt'>> = { ...values, photoUrl, name: student.name };
 
         try {
             await updateStudent(student.name, dataToUpdate);
@@ -124,7 +132,7 @@ export default function AccountPage() {
                                 <AvatarFallback>{student?.name?.[0]}</AvatarFallback>
                             </Avatar>
                             <div>
-                                <h2 className="text-2xl font-bold">{studentData?.name}</h2>
+                                <h2 className="text-2xl font-bold">{student?.name}</h2>
                                 {isEditing && (
                                     <div className="mt-2">
                                         <Label htmlFor="photo">{t('profilePhoto')}</Label>
