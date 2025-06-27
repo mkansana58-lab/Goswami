@@ -164,6 +164,9 @@ export const translations = {
     toppersList: "Toppers List",
     rank: "Rank",
     subjectAnalysis: "Subject-wise Analysis",
+    joinClass: "Join Class",
+    noLiveClassesTitle: "No Live Classes Scheduled",
+    noLiveClassesDesc: "Please check back later for updates on upcoming live sessions.",
 
 
     // Generic
@@ -335,6 +338,9 @@ export const translations = {
     toppersList: "टॉपर्स की सूची",
     rank: "रैंक",
     subjectAnalysis: "विषय-वार विश्लेषण",
+    joinClass: "कक्षा में शामिल हों",
+    noLiveClassesTitle: "कोई लाइव कक्षा निर्धारित नहीं है",
+    noLiveClassesDesc: "आगामी लाइव सत्रों पर अपडेट के लिए कृपया बाद में देखें।",
 
 
     // Generic
