@@ -45,7 +45,6 @@ const steps = [
 
 export default function ScholarshipPage() {
     const { t } = useLanguage();
-    const { student } = useAuth(); // Get student data from context
     const { toast } = useToast();
     const [currentStep, setCurrentStep] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,22 +62,6 @@ export default function ScholarshipPage() {
         resolver: zodResolver(formSchema),
         defaultValues: { fullName: "", fatherName: "", mobile: "", email: "", age: undefined, class: undefined, school: "", address: "", photo: undefined, signature: undefined },
     });
-
-    useEffect(() => {
-        // Pre-fill form with student data from context
-        if (student) {
-            form.reset({
-                fullName: student.name || "",
-                fatherName: student.fatherName || "",
-                // Mobile and email are not in the main student data, so they are not pre-filled.
-                // This encourages users to enter contact info specific to the application.
-                age: student.age || undefined,
-                class: student.class as any || undefined,
-                school: student.school || "",
-                address: student.address || "",
-            });
-        }
-    }, [student, form]);
 
     const processForm = async (data: ScholarshipFormValues) => {
         setIsSubmitting(true);

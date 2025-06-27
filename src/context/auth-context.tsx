@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useState, useEffect, useCallback } from 'react';
-import { getStudent, registerStudent as firebaseRegisterStudent, type StudentData } from '@/lib/firebase';
+import { getStudent, type StudentData } from '@/lib/firebase';
 
 interface Admin {
   name: string;
@@ -13,7 +13,7 @@ interface AuthContextType {
   admin: Admin | null;
   isLoading: boolean;
   loginStudent: (name: string, password?: string) => Promise<boolean>;
-  registerStudent: (data: Omit<StudentData, 'id' | 'createdAt' | 'photoUrl'>, photoFile: File) => Promise<boolean>;
+  loginAdmin: (accessKey: string) => Promise<boolean>;
   logout: () => void;
   refreshStudentData: (name: string) => Promise<void>;
 }
@@ -65,30 +65,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('student', JSON.stringify(studentData));
         return true;
     }
-    return false;
-  }, []);
-
-  const registerStudent = useCallback(async (data: Omit<StudentData, 'id' | 'createdAt' | 'photoUrl'>, photoFile: File): Promise<boolean> => {
-    const photoUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target?.result as string);
-        reader.onerror = (err) => reject(err);
-        reader.readAsDataURL(photoFile);
-    });
-
-    const fullStudentData = { ...data, photoUrl };
-    
-    // This will throw if student exists, which is handled in the UI
-    await firebaseRegisterStudent(fullStudentData);
-    
-    // Now log them in
-    const newStudent = await getStudent(data.name);
-    if (newStudent) {
-        setStudent(newStudent);
-        localStorage.setItem('student', JSON.stringify(newStudent));
-        return true;
-    }
-    return false;
+    // For now, let's create a new student if they don't exist for demo purposes.
+    // This would be replaced by a proper registration flow.
+    const newStudentData: StudentData = { name: name, createdAt: new Date() as any };
+    await setDoc(doc(db, "students", name), newStudentData);
+    setStudent(newStudentData);
+    localStorage.setItem('student', JSON.stringify(newStudentData));
+    return true;
   }, []);
 
 
@@ -109,7 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setAdmin(null);
   }, []);
 
-  const value = { student, admin, isLoading, loginStudent, registerStudent, loginAdmin, logout, refreshStudentData };
+  const value = { student, admin, isLoading, loginStudent, loginAdmin, logout, refreshStudentData };
 
   return (
     <AuthContext.Provider value={value}>

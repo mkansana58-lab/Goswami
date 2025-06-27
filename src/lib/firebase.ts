@@ -314,21 +314,6 @@ export async function getScholarshipApplicationByNumber(appNumber: string, uniqu
     return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as ScholarshipApplicationData;
 }
 
-export async function registerStudent(data: Omit<StudentData, 'id' | 'createdAt'>): Promise<void> {
-    if (!db) throw new Error("Firestore DB not initialized.");
-    const studentRef = doc(db, "students", data.name);
-    const docSnap = await getDoc(studentRef);
-    if (docSnap.exists()) {
-        throw new Error("Student with this name already exists.");
-    }
-    // Don't store password in DB
-    const { password, ...dataToSave } = data;
-    await setDoc(studentRef, {
-        ...dataToSave,
-        createdAt: Timestamp.now(),
-    });
-}
-
 export async function getStudent(name: string): Promise<StudentData | null> {
     if (!db) return null;
     const studentRef = doc(db, "students", name);
