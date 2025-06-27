@@ -29,7 +29,7 @@ function initializeFirebase() {
 // Ensure Firebase is initialized
 initializeFirebase();
 
-// Define the type for a live class document
+// Live Class types
 export interface LiveClass {
   id: string;
   title: string;
@@ -43,20 +43,48 @@ interface NewLiveClassData {
     scheduledAt: string; // ISO string from datetime-local input
 }
 
+// Notification types
+export interface Notification {
+    id: string;
+    title: string;
+    content: string;
+    createdAt: Timestamp;
+}
+
+interface NewNotificationData {
+    title: string;
+    content: string;
+}
+
 // Function to add a new live class to Firestore
 export async function addLiveClass(classData: NewLiveClassData): Promise<void> {
     if (!db) {
         throw new Error("Firestore DB not initialized.");
     }
     try {
-        const liveClassesCollection = collection(db, "liveClasses");
-        await addDoc(liveClassesCollection, {
+        await addDoc(collection(db, "liveClasses"), {
             title: classData.title,
             link: classData.link,
             scheduledAt: Timestamp.fromDate(new Date(classData.scheduledAt)),
         });
     } catch (error) {
         console.error("Error adding live class to Firestore:", error);
+        throw error;
+    }
+}
+
+// Function to add a new notification to Firestore
+export async function addNotification(notificationData: NewNotificationData): Promise<void> {
+    if (!db) {
+        throw new Error("Firestore DB not initialized.");
+    }
+    try {
+        await addDoc(collection(db, "notifications"), {
+            ...notificationData,
+            createdAt: Timestamp.now(),
+        });
+    } catch (error) {
+        console.error("Error adding notification to Firestore:", error);
         throw error;
     }
 }
@@ -82,5 +110,27 @@ export async function getLiveClasses(): Promise<LiveClass[]> {
     return [];
   }
 }
+
+// Function to fetch notifications from Firestore
+export async function getNotifications(): Promise<Notification[]> {
+    if (!db) {
+      console.error("Firestore DB not initialized. Cannot fetch notifications.");
+      return [];
+    }
+    try {
+      const notificationsCollection = collection(db, "notifications");
+      const q = query(notificationsCollection, orderBy("createdAt", "desc"));
+      const querySnapshot = await getDocs(q);
+      const notifications = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Notification[];
+      return notifications;
+    } catch (error) {
+      console.error("Error fetching notifications from Firestore:", error);
+      return [];
+    }
+}
+
 
 export { app, db };
