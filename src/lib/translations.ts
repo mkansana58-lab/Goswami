@@ -35,6 +35,11 @@ export const translations = {
     accountDetails: "Account Details",
     accountDetailsDescription: "View and manage your account information.",
     editProfile: "Edit Profile",
+    language: "Language",
+    languageSettings: "Language Settings",
+    languageSettingsDescription: "Choose the application language.",
+    english: "English",
+    hindi: "Hindi",
   },
   hi: {
     appName: "गो स्वामी डिफेंस एकेडमी",
@@ -70,5 +75,10 @@ export const translations = {
     accountDetails: "खाता विवरण",
     accountDetailsDescription: "अपनी खाता जानकारी देखें और प्रबंधित करें।",
     editProfile: "प्रोफ़ाइल संपादित करें",
+    language: "भाषा",
+    languageSettings: "भाषा सेटिंग्स",
+    languageSettingsDescription: "एप्लिकेशन की भाषा चुनें।",
+    english: "अंग्रेज़ी",
+    hindi: "हिंदी",
   }
 };
