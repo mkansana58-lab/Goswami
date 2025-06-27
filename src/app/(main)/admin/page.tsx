@@ -30,6 +30,9 @@ const notificationSchema = z.object({
     content: z.string().min(10, "Content must be at least 10 characters."),
 });
 
+type LiveClassFormValues = z.infer<typeof liveClassSchema>;
+type NotificationFormValues = z.infer<typeof notificationSchema>;
+
 export default function AdminPage() {
     const { t } = useLanguage();
     const { toast } = useToast();
@@ -39,27 +42,21 @@ export default function AdminPage() {
     const router = useRouter();
     const isFirebaseConfigured = !!firebaseConfig.projectId;
 
-    const classForm = useForm<z.infer<typeof liveClassSchema>>({
+    const classForm = useForm<LiveClassFormValues>({
         resolver: zodResolver(liveClassSchema),
         defaultValues: { title: "", link: "", scheduledAt: "" }
     });
 
-    const notificationForm = useForm<z.infer<typeof notificationSchema>>({
+    const notificationForm = useForm<NotificationFormValues>({
         resolver: zodResolver(notificationSchema),
         defaultValues: { title: "", content: "" }
     });
 
-    const handleAddClass = async (values: z.infer<typeof liveClassSchema>) => {
+    const handleAddClass = async (values: LiveClassFormValues) => {
         setIsClassLoading(true);
         toast({ title: "Submitting...", description: "Adding live class to the database." });
         try {
-            // Explicitly create a plain object to ensure no proxy/special object issues.
-            const plainData = {
-                title: values.title,
-                link: values.link,
-                scheduledAt: values.scheduledAt,
-            };
-            await addLiveClass(plainData);
+            await addLiveClass(values);
             toast({ title: "Success", description: "Live class has been added successfully." });
             classForm.reset();
         } catch (error) {
@@ -77,16 +74,11 @@ export default function AdminPage() {
         }
     };
 
-    const handleAddNotification = async (values: z.infer<typeof notificationSchema>) => {
+    const handleAddNotification = async (values: NotificationFormValues) => {
         setIsNotificationLoading(true);
         toast({ title: "Submitting...", description: "Adding notification to the database." });
         try {
-             // Explicitly create a plain object to ensure no proxy/special object issues.
-            const plainData = {
-                title: values.title,
-                content: values.content,
-            };
-            await addNotification(plainData);
+            await addNotification(values);
             toast({ title: "Success", description: "Notification has been posted." });
             notificationForm.reset();
         } catch (error) {

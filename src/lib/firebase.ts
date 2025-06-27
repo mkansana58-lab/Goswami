@@ -58,15 +58,15 @@ interface NewNotificationData {
 }
 
 // Function to add a new live class to Firestore
-export async function addLiveClass(classData: NewLiveClassData): Promise<void> {
+export async function addLiveClass({ title, link, scheduledAt }: NewLiveClassData): Promise<void> {
     if (!db) {
         throw new Error("Firestore DB not initialized.");
     }
     try {
         await addDoc(collection(db, "liveClasses"), {
-            title: classData.title,
-            link: classData.link,
-            scheduledAt: Timestamp.fromDate(new Date(classData.scheduledAt)),
+            title: title,
+            link: link,
+            scheduledAt: Timestamp.fromDate(new Date(scheduledAt)),
         });
     } catch (error) {
         console.error("Error adding live class to Firestore:", error);
@@ -75,13 +75,14 @@ export async function addLiveClass(classData: NewLiveClassData): Promise<void> {
 }
 
 // Function to add a new notification to Firestore
-export async function addNotification(notificationData: NewNotificationData): Promise<void> {
+export async function addNotification({ title, content }: NewNotificationData): Promise<void> {
     if (!db) {
         throw new Error("Firestore DB not initialized.");
     }
     try {
         await addDoc(collection(db, "notifications"), {
-            ...notificationData,
+            title: title,
+            content: content,
             createdAt: Timestamp.now(),
         });
     } catch (error) {
