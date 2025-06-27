@@ -133,7 +133,7 @@ export default function AdminPage() {
         <div className="space-y-6">
             <h1 className="text-3xl font-bold text-primary">{t('adminPanel')}</h1>
             {isLoading ? <div className="flex justify-center p-10"><Loader2 className="h-10 w-10 animate-spin" /></div> : (
-                <Accordion type="multiple" collapsible className="w-full space-y-4">
+                <Accordion type="multiple" className="w-full space-y-4">
                     
                     <AdminSection title={t('academySettings')} icon={Settings}>
                         <form onSubmit={settingsForm.handleSubmit(handleSaveSettings)} className="space-y-4">
