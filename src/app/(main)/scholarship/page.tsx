@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -46,6 +47,7 @@ const steps = [
 export default function ScholarshipPage() {
     const { t } = useLanguage();
     const { toast } = useToast();
+    const { student } = useAuth();
     const [currentStep, setCurrentStep] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
@@ -54,14 +56,28 @@ export default function ScholarshipPage() {
     const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
     const [isLoadingConfig, setIsLoadingConfig] = useState(true);
 
+    const form = useForm<ScholarshipFormValues>({
+        resolver: zodResolver(formSchema),
+    });
+
+    useEffect(() => {
+        if (student) {
+            form.reset({
+                fullName: student.name || "",
+                fatherName: student.fatherName || "",
+                class: student.class as any || undefined,
+                age: student.age || undefined,
+                address: student.address || "",
+                school: student.school || ""
+            });
+        }
+    }, [student, form]);
+
+
     useEffect(() => {
         getAppConfig().then(setAppConfig).finally(() => setIsLoadingConfig(false));
     }, []);
 
-    const form = useForm<ScholarshipFormValues>({
-        resolver: zodResolver(formSchema),
-        defaultValues: { fullName: "", fatherName: "", mobile: "", email: "", age: undefined, class: undefined, school: "", address: "", photo: undefined, signature: undefined },
-    });
 
     const processForm = async (data: ScholarshipFormValues) => {
         setIsSubmitting(true);

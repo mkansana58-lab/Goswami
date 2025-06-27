@@ -1,18 +1,37 @@
+
 "use client";
 
 import type { ReactNode } from 'react';
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { getStudent, type StudentData } from '@/lib/firebase';
+import { setDoc, doc, Timestamp } from "firebase/firestore";
+import { db } from '@/lib/firebase';
+import { z } from 'zod';
 
 interface Admin {
   name: string;
 }
+
+const registerSchema = z.object({
+    username: z.string().min(3, "Username is required"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    fatherName: z.string().min(3, "Father's name is required"),
+    class: z.string().min(1, "Class is required"),
+    age: z.coerce.number().min(8, "Age must be at least 8"),
+    address: z.string().min(10, "Full address is required"),
+    school: z.string().min(3, "School name is required"),
+    photo: z.any().refine((files) => files?.length === 1, "Photo is required."),
+});
+
+export type RegisterValues = z.infer<typeof registerSchema>;
+
 
 interface AuthContextType {
   student: StudentData | null;
   admin: Admin | null;
   isLoading: boolean;
   loginStudent: (name: string, password?: string) => Promise<boolean>;
+  registerStudent: (data: RegisterValues) => Promise<boolean>;
   loginAdmin: (accessKey: string) => Promise<boolean>;
   logout: () => void;
   refreshStudentData: (name: string) => Promise<void>;
@@ -58,22 +77,54 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [refreshStudentData]);
 
   const loginStudent = useCallback(async (name: string, password?: string): Promise<boolean> => {
-    // This is a mock login. In a real app, you'd verify password.
+    // This is a mock login. In a real app, you'd verify password against a hash.
     const studentData = await getStudent(name);
     if (studentData) {
         setStudent(studentData);
         localStorage.setItem('student', JSON.stringify(studentData));
         return true;
     }
-    // For now, let's create a new student if they don't exist for demo purposes.
-    // This would be replaced by a proper registration flow.
-    const newStudentData: StudentData = { name: name, createdAt: new Date() as any };
-    await setDoc(doc(db, "students", name), newStudentData);
-    setStudent(newStudentData);
-    localStorage.setItem('student', JSON.stringify(newStudentData));
-    return true;
+    return false;
   }, []);
 
+  const registerStudent = useCallback(async (data: RegisterValues): Promise<boolean> => {
+    // Check if student already exists
+    const existingStudent = await getStudent(data.username);
+    if (existingStudent) {
+        return false; // User already exists
+    }
+
+    let photoUrl = "";
+    const photoFile = data.photo?.[0];
+
+    if (photoFile) {
+        photoUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target?.result as string);
+            reader.readAsDataURL(photoFile);
+        });
+    }
+    
+    // We don't store the password, but in a real app, you'd hash and store it.
+    const { password, username, ...restOfData } = data;
+    
+    const newStudentData: StudentData = {
+        name: username,
+        ...restOfData,
+        photoUrl: photoUrl,
+        createdAt: Timestamp.now()
+    };
+
+    try {
+        await setDoc(doc(db, "students", username), newStudentData);
+        setStudent(newStudentData);
+        localStorage.setItem('student', JSON.stringify(newStudentData));
+        return true;
+    } catch (error) {
+        console.error("Error creating student:", error);
+        return false;
+    }
+  }, []);
 
   const loginAdmin = useCallback(async (accessKey: string): Promise<boolean> => {
     if (accessKey === ADMIN_ACCESS_KEY) {
@@ -92,7 +143,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setAdmin(null);
   }, []);
 
-  const value = { student, admin, isLoading, loginStudent, loginAdmin, logout, refreshStudentData };
+  const value = { student, admin, isLoading, loginStudent, registerStudent, loginAdmin, logout, refreshStudentData };
 
   return (
     <AuthContext.Provider value={value}>
