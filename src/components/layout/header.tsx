@@ -14,7 +14,6 @@ import {
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
@@ -22,6 +21,7 @@ import { useLanguage } from '@/hooks/use-language';
 import { useRouter } from 'next/navigation';
 import { sidebarLinks } from '@/lib/nav-links';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 export function Header() {
   const { t } = useLanguage();
@@ -43,6 +43,9 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-3/4 bg-background p-0 flex flex-col">
+              <VisuallyHidden>
+                <SheetTitle>{t('appName')}</SheetTitle>
+              </VisuallyHidden>
                 <div className="p-4 border-b border-border/20">
                     <div className="flex items-center gap-3">
                         <ShieldCheck className="h-10 w-10 text-primary" />
