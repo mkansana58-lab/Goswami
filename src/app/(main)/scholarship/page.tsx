@@ -18,6 +18,7 @@ import type { FormDataType } from "@/components/scholarship/confirmation-certifi
 import { addScholarshipApplication, getAppConfig, type AppConfig, CLASS_UNIQUE_IDS } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import React from 'react';
 
 const formSchema = z.object({
     fullName: z.string().min(3, "Full name is required"),
@@ -31,6 +32,8 @@ const formSchema = z.object({
     photo: z.any().refine((files) => files?.length === 1, "Photo is required."),
     signature: z.any().refine((files) => files?.length === 1, "Signature is required."),
 });
+
+type ScholarshipFormValues = z.infer<typeof formSchema>;
 
 const steps = [
     { id: 'instructions', title: 'scholarshipInstructionsTitle', icon: Info, fields: [] },
@@ -55,12 +58,12 @@ export default function ScholarshipPage() {
         getAppConfig().then(setAppConfig).finally(() => setIsLoadingConfig(false));
     }, []);
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm<ScholarshipFormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: { fullName: "", fatherName: "", mobile: "", email: "", age: 10, class: "6", school: "", address: "", photo: undefined, signature: undefined },
     });
 
-    const processForm = async (data: z.infer<typeof formSchema>>) => {
+    const processForm = async (data: ScholarshipFormValues) => {
         setIsSubmitting(true);
         const appNum = `GSA${new Date().getFullYear()}${Math.floor(10000 + Math.random() * 90000)}`;
         const uniqueId = CLASS_UNIQUE_IDS[data.class];
@@ -100,7 +103,7 @@ export default function ScholarshipPage() {
             setCurrentStep(step => step + 1);
             return;
         }
-        const fields = steps[currentStep].fields as (keyof z.infer<typeof formSchema>)[];
+        const fields = steps[currentStep].fields as (keyof ScholarshipFormValues)[];
         const output = await form.trigger(fields, { shouldFocus: true });
         if (!output) return;
         if (currentStep === steps.length - 1) {
@@ -141,7 +144,7 @@ export default function ScholarshipPage() {
                 <CardHeader>
                    <Progress value={((currentStep) / (steps.length - 1)) * 100} className="w-full mb-4" />
                    <div className="flex items-center gap-3">
-                        <steps[currentStep].icon className="h-6 w-6 text-primary" />
+                        {React.createElement(steps[currentStep].icon, { className: "h-6 w-6 text-primary" })}
                         <CardTitle>{t(steps[currentStep].title as any)}</CardTitle>
                    </div>
                 </CardHeader>
@@ -248,5 +251,4 @@ export default function ScholarshipPage() {
             </Card>
         </div>
     );
-
-    
+}
