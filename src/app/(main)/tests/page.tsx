@@ -65,9 +65,6 @@ export default function AiTestPage() {
     );
   }
 
-  const mockTests = allTests.filter(t => t.testType === 'mock' || t.testType === 'custom');
-  const practiceTests = allTests.filter(t => t.testType === 'practice');
-
   const TestCard = ({ test }: { test: TestDetails | CustomTest }) => {
     const isEnabled = testSettings[test.id]?.isEnabled ?? true;
     const isEnrolled = enrolledTests.includes(test.id);
@@ -113,26 +110,30 @@ export default function AiTestPage() {
         </CardContent>
         <CardFooter>
             {isEnrolled ? (
-                <Button asChild className="w-full" disabled={!isEnabled}>
-                    {isEnabled ? (
+                <Button asChild className="w-full">
                     <Link href={`/tests/${test.id}`}>{t('startTest')}</Link>
-                    ) : (
-                    <div className="flex items-center justify-center cursor-not-allowed">
-                        <Lock className="mr-2 h-4 w-4" />
-                        Locked
-                    </div>
-                    )}
                 </Button>
             ) : (
                 <Button className="w-full" disabled={!isEnabled || isEnrolling} onClick={onEnrollClick}>
-                    {isEnrolling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Star className="mr-2 h-4 w-4" />}
-                    {t('enroll')}
+                    {isEnrolling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 
+                     !isEnabled ? <Lock className="mr-2 h-4 w-4" /> : <Star className="mr-2 h-4 w-4" />}
+                    {!isEnabled ? 'Locked' : t('enroll')}
                 </Button>
             )}
         </CardFooter>
       </Card>
     );
   };
+  
+  const testsToShow = allTests.filter(test => {
+      const isEnabled = testSettings[test.id]?.isEnabled ?? true;
+      const isEnrolled = enrolledTests.includes(test.id);
+      return isEnabled || isEnrolled;
+  });
+  
+  const mockTestsToShow = testsToShow.filter(t => t.testType === 'mock' || t.testType === 'custom');
+  const practiceTestsToShow = testsToShow.filter(t => t.testType === 'practice');
+
 
   return (
     <div className="space-y-8">
@@ -143,9 +144,9 @@ export default function AiTestPage() {
 
       <div>
         <h2 className="text-2xl font-bold text-primary mb-4">{t('mockTests')}</h2>
-        {mockTests.length > 0 ? (
+        {mockTestsToShow.length > 0 ? (
           <div className="grid md:grid-cols-2 gap-6">
-            {mockTests.map((test) => <TestCard key={test.id} test={test} />)}
+            {mockTestsToShow.map((test) => <TestCard key={test.id} test={test} />)}
           </div>
         ) : (
           <p className="text-muted-foreground text-center">{t('comingSoon')}</p>
@@ -154,9 +155,9 @@ export default function AiTestPage() {
 
       <div>
         <h2 className="text-2xl font-bold text-primary mb-4">{t('practiceTests')}</h2>
-        {practiceTests.length > 0 ? (
+        {practiceTestsToShow.length > 0 ? (
           <div className="grid md:grid-cols-2 gap-6">
-            {practiceTests.map((test) => <TestCard key={test.id} test={test} />)}
+            {practiceTestsToShow.map((test) => <TestCard key={test.id} test={test} />)}
           </div>
         ) : (
           <p className="text-muted-foreground text-center">{t('comingSoon')}</p>
