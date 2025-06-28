@@ -2,42 +2,19 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useContext } from 'react';
 
-type Theme = 'light' | 'dark';
+// Theme logic has been removed to enforce a permanent dark theme.
+// The provider is kept for potential future settings.
 
-interface SettingsContextType {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-}
+interface SettingsContextType {}
 
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const [theme, setThemeState] = useState<Theme>('dark');
-  const [isClient, setIsClient] = useState(false);
 
-  useEffect(() => {
-    setIsClient(true);
-    const storedTheme = localStorage.getItem('theme') as Theme | null;
-    if (storedTheme) {
-        setThemeState(storedTheme);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isClient) {
-      document.documentElement.classList.remove('light', 'dark');
-      document.documentElement.classList.add(theme);
-    }
-  }, [theme, isClient]);
-
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-    localStorage.setItem('theme', newTheme);
-  };
-
-  const value = { theme, setTheme };
+  // No-op provider, as theme is now hardcoded in globals.css
+  const value = {};
 
   return (
     <SettingsContext.Provider value={value}>
