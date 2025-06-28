@@ -1,4 +1,3 @@
-
 // firebase.ts
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getFirestore, collection, getDocs, type Firestore, query, orderBy, Timestamp, addDoc, where, limit, doc, setDoc, getDoc, deleteDoc, updateDoc } from "firebase/firestore";
@@ -176,7 +175,8 @@ export interface ContactInquiry {
     id: string;
     email: string;
     mobile: string;
-    imageUrl?: string; // Added field
+    message: string;
+    imageUrl?: string;
     createdAt: Timestamp;
 }
 
@@ -457,7 +457,6 @@ export const deleteGalleryImage = (id: string) => deleteDocument("galleryImages"
 export const addContactInquiry = async (data: Omit<ContactInquiry, 'id' | 'createdAt'>) => {
     if (!db) throw new Error("Firestore DB not initialized.");
     await addDoc(collection(db, "contactInquiries"), { ...data, createdAt: Timestamp.now() });
-    await sendNotification('New Contact Inquiry', `You have a new message from ${data.email}.`, 'alert');
 };
 export const getContactInquiries = async (): Promise<ContactInquiry[]> => getAll<ContactInquiry>("contactInquiries");
 

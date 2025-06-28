@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -379,10 +378,16 @@ export default function AdminPage() {
                             </AdminSection>
 
                             <AdminSection title="Contact Inquiries" icon={Mail}>
-                                <Table><TableHeader><TableRow><TableHead>Email</TableHead><TableHead>Mobile</TableHead><TableHead>Attachment</TableHead><TableHead>Submitted On</TableHead></TableRow></TableHeader>
+                                <Table><TableHeader><TableRow><TableHead>Email</TableHead><TableHead>Mobile</TableHead><TableHead>Message</TableHead><TableHead>Attachment</TableHead><TableHead>Submitted On</TableHead></TableRow></TableHeader>
                                     <TableBody>
                                         {data.contactInquiries.map(inquiry => (
-                                            <TableRow key={inquiry.id}><TableCell>{inquiry.email}</TableCell><TableCell>{inquiry.mobile}</TableCell><TableCell><ImagePreview url={inquiry.imageUrl} triggerText="View Image" /></TableCell><TableCell>{format(inquiry.createdAt.toDate(), 'PPP p')}</TableCell></TableRow>
+                                            <TableRow key={inquiry.id}>
+                                                <TableCell>{inquiry.email}</TableCell>
+                                                <TableCell>{inquiry.mobile}</TableCell>
+                                                <TableCell className="max-w-xs truncate">{inquiry.message}</TableCell>
+                                                <TableCell><ImagePreview url={inquiry.imageUrl} triggerText="View Image" /></TableCell>
+                                                <TableCell>{format(inquiry.createdAt.toDate(), 'PPP p')}</TableCell>
+                                            </TableRow>
                                         ))}
                                     </TableBody>
                                 </Table>

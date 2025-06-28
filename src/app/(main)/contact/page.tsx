@@ -8,14 +8,16 @@ import { useLanguage } from "@/hooks/use-language";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, Mail, ImagePlus } from 'lucide-react';
+import { Loader2, Mail, ImagePlus, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { addContactInquiry } from '@/lib/firebase';
 
 const contactSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
   mobile: z.string().regex(/^\d{10}$/, "Please enter a valid 10-digit mobile number."),
+  message: z.string().min(10, "Please describe your issue in at least 10 characters."),
   image: z.any().optional(),
 });
 
@@ -28,7 +30,7 @@ export default function ContactPage() {
 
     const form = useForm<ContactFormValues>({
         resolver: zodResolver(contactSchema),
-        defaultValues: { email: "", mobile: "", image: undefined },
+        defaultValues: { email: "", mobile: "", message: "", image: undefined },
     });
 
     const onSubmit = async (values: ContactFormValues) => {
@@ -86,6 +88,13 @@ export default function ContactPage() {
                             <Label htmlFor="mobile">{t('mobileNumber')}</Label>
                             <Input id="mobile" type="tel" {...form.register('mobile')} disabled={isSubmitting} />
                             <p className="text-destructive text-sm mt-1">{form.formState.errors.mobile?.message}</p>
+                        </div>
+                        <div>
+                            <Label htmlFor="message" className="flex items-center gap-2">
+                                <MessageSquare className='h-4 w-4'/> Your Message
+                            </Label>
+                            <Textarea id="message" {...form.register('message')} disabled={isSubmitting} placeholder="Describe your problem or question here..."/>
+                            <p className="text-destructive text-sm mt-1">{form.formState.errors.message?.message}</p>
                         </div>
                         <div>
                             <Label htmlFor="image" className='flex items-center gap-2'><ImagePlus className='h-4 w-4'/> Attach an Image (Optional)</Label>
