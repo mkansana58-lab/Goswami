@@ -1,8 +1,8 @@
 "use client";
 
 import Link from 'next/link';
-import { useState } from 'react';
-import { Menu, Bell, User, ShieldCheck, Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Menu, Bell, User, ShieldCheck, Loader2, Newspaper, Trophy, GraduationCap, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -25,11 +25,24 @@ import { sidebarLinks } from '@/lib/nav-links';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { useAuth } from '@/hooks/use-auth';
-import { getNotifications, type Notification, firebaseConfig } from '@/lib/firebase';
+import { getNotifications, type Notification, firebaseConfig, NotificationCategory } from '@/lib/firebase';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 
+
+const notificationIcons: Record<NotificationCategory, React.ElementType> = {
+    general: Bell,
+    news: Newspaper,
+    result: Trophy,
+    scholarship: GraduationCap,
+    alert: AlertTriangle
+};
+
+const NotificationIcon = ({ category }: { category: NotificationCategory }) => {
+    const Icon = notificationIcons[category] || Bell;
+    return <Icon className="h-5 w-5 mr-3 text-primary" />;
+}
 
 export function Header() {
   const { t } = useLanguage();
@@ -138,12 +151,15 @@ export function Header() {
                             <div className="flex justify-center items-center p-4"><Loader2 className="mr-2 h-6 w-6 animate-spin" />Loading...</div>
                         ) : notifications.length > 0 ? (
                             notifications.map(n => (
-                                <div key={n.id} className="p-3 rounded-lg border bg-card">
-                                   <p className="font-semibold">{n.title}</p>
-                                   <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{n.content}</p>
-                                   <p className="text-xs text-muted-foreground text-right mt-2">
-                                       {n.createdAt ? formatDistanceToNow(n.createdAt.toDate(), { addSuffix: true }) : ''}
-                                   </p>
+                                <div key={n.id} className="p-3 rounded-lg border bg-card flex">
+                                   <NotificationIcon category={n.category} />
+                                   <div className="flex-1">
+                                       <p className="font-semibold">{n.title}</p>
+                                       <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{n.content}</p>
+                                       <p className="text-xs text-muted-foreground text-right mt-2">
+                                           {n.createdAt ? formatDistanceToNow(n.createdAt.toDate(), { addSuffix: true }) : ''}
+                                       </p>
+                                   </div>
                                 </div>
                             ))
                         ) : (

@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useLanguage } from "@/hooks/use-language";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -27,18 +27,21 @@ import {
     getContactInquiries, addEBook, getEBooks, deleteEBook,
     addCustomTest, getCustomTests, deleteCustomTest,
     getTestSettings, updateTestSetting, getTestEnrollments,
+    updateScholarshipApplicationWaiver,
     type LiveClass, type Notification, type Post, type CurrentAffair,
     type VideoLecture, type Download, type Course, type AppConfig,
     type ScholarshipApplicationData, type StudentData, type Teacher, type GalleryImage,
-    type ContactInquiry, type EBook, type CustomTest, type TestSetting, type TestEnrollment
+    type ContactInquiry, type EBook, type CustomTest, type TestSetting, type TestEnrollment,
+    type NewNotificationData, type NotificationCategory
 } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star } from 'lucide-react';
+import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star, CheckSquare, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
@@ -52,7 +55,11 @@ const settingsSchema = z.object({
     splashImage: z.any().optional(),
 });
 const liveClassSchema = z.object({ title: z.string().min(3), link: z.string().url(), scheduledAt: z.string().min(1) });
-const notificationSchema = z.object({ title: z.string().min(3), content: z.string().min(10) });
+const notificationSchema = z.object({ 
+    title: z.string().min(3), 
+    content: z.string().min(10),
+    category: z.enum(['general', 'news', 'result', 'scholarship', 'alert']),
+});
 const postSchema = z.object({ title: z.string().min(3), content: z.string().min(10), imageUrl: z.any().optional() });
 const currentAffairSchema = z.object({ title: z.string().min(3), content: z.string().min(10) });
 const videoLectureSchema = z.object({ title: z.string().min(3), videoUrl: z.string().url() });
@@ -111,13 +118,18 @@ export default function AdminPage() {
     const { admin, isLoading: isAuthLoading } = useAuth();
     const router = useRouter();
 
-    const [data, setData] = useState({
-        liveClasses: [] as LiveClass[], notifications: [] as Notification[], posts: [] as Post[],
-        currentAffairs: [] as CurrentAffair[], videoLectures: [] as VideoLecture[], downloads: [] as Download[],
-        courses: [] as Course[], scholarshipApps: [] as ScholarshipApplicationData[], students: [] as StudentData[],
-        teachers: [] as Teacher[], galleryImages: [] as GalleryImage[], contactInquiries: [] as ContactInquiry[],
-        ebooks: [] as EBook[], customTests: [] as CustomTest[], testSettings: {} as Record<string, TestSetting>,
-        testEnrollments: [] as TestEnrollment[],
+    const [data, setData] = useState<{
+        liveClasses: LiveClass[], notifications: Notification[], posts: Post[],
+        currentAffairs: CurrentAffair[], videoLectures: VideoLecture[], downloads: Download[],
+        courses: Course[], scholarshipApps: ScholarshipApplicationData[], students: StudentData[],
+        teachers: Teacher[], galleryImages: GalleryImage[], contactInquiries: ContactInquiry[],
+        ebooks: EBook[], customTests: CustomTest[], testSettings: Record<string, TestSetting>,
+        testEnrollments: TestEnrollment[],
+    }>({
+        liveClasses: [], notifications: [], posts: [], currentAffairs: [], videoLectures: [], 
+        downloads: [], courses: [], scholarshipApps: [], students: [], teachers: [], 
+        galleryImages: [], contactInquiries: [], ebooks: [], customTests: [], 
+        testSettings: {}, testEnrollments: []
     });
     const [isLoading, setIsLoading] = useState(true);
 
@@ -183,6 +195,24 @@ export default function AdminPage() {
         toast({ title: "Settings Saved" });
     };
 
+    const handleWaiverToggle = async (appId: string, isWaived: boolean) => {
+        try {
+            await updateScholarshipApplicationWaiver(appId, isWaived);
+            setData(prevData => ({
+                ...prevData,
+                scholarshipApps: prevData.scholarshipApps.map(app => 
+                    app.id === appId ? { ...app, isUniqueIdWaived: isWaived } : app
+                )
+            }));
+            toast({ title: "Waiver status updated!" });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Error", description: "Failed to update waiver status." });
+            // Revert UI on failure
+            fetchData();
+        }
+    };
+
+
     if (isAuthLoading) return <div className="flex justify-center items-center h-64"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
     if (!admin) { router.replace('/admin-login'); return null; }
 
@@ -229,8 +259,8 @@ export default function AdminPage() {
                             </AdminSection>
 
                             <AdminSection title={t('manageNotifications')} icon={Bell}>
-                                <CrudForm schema={notificationSchema} onSubmit={addNotification} onRefresh={fetchData} fields={{title: 'text', content: 'textarea'}} />
-                                <DataTable data={data.notifications} columns={['title', 'content']} onDelete={deleteNotification} onRefresh={fetchData} />
+                                <NotificationForm onRefresh={fetchData} />
+                                <DataTable data={data.notifications} columns={['title', 'content', 'category']} onDelete={deleteNotification} onRefresh={fetchData} />
                             </AdminSection>
                             
                             <AdminSection title={t('manageDailyPosts')} icon={Newspaper}>
@@ -277,10 +307,25 @@ export default function AdminPage() {
                     <TabsContent value="view" className="mt-4">
                          <Accordion type="multiple" className="w-full space-y-4">
                             <AdminSection title="Scholarship Applications" icon={GraduationCap}>
-                                <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Class</TableHead><TableHead>Details</TableHead><TableHead>Docs</TableHead><TableHead>Applied On</TableHead></TableRow></TableHeader>
+                                <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Docs</TableHead><TableHead>Applied</TableHead><TableHead>ID Waiver</TableHead></TableRow></TableHeader>
                                     <TableBody>
                                         {data.scholarshipApps.map(app => (
-                                            <TableRow key={app.id}><TableCell>{app.fullName}<br/><span className="text-muted-foreground text-xs">{app.fatherName}</span></TableCell><TableCell>{app.class}</TableCell><TableCell>UID: <span className="font-mono">{app.uniqueId}</span><br/>Mob: {app.mobile}</TableCell><TableCell className="flex gap-2"><ImagePreview url={app.photoUrl} triggerText="Photo" /><ImagePreview url={app.signatureUrl} triggerText="Sign" /></TableCell><TableCell>{format(app.createdAt.toDate(), 'PPP')}</TableCell></TableRow>
+                                            <TableRow key={app.id}>
+                                                <TableCell>{app.fullName}<br/><span className="text-muted-foreground text-xs">{app.fatherName}</span></TableCell>
+                                                <TableCell>App No: <span className="font-mono text-xs">{app.applicationNumber}</span><br/>UID: <span className="font-mono text-xs">{app.uniqueId}</span></TableCell>
+                                                <TableCell className="flex gap-2"><ImagePreview url={app.photoUrl} triggerText="Photo" /><ImagePreview url={app.signatureUrl} triggerText="Sign" /></TableCell>
+                                                <TableCell>{format(app.createdAt.toDate(), 'PP')}</TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        <Switch
+                                                            checked={app.isUniqueIdWaived ?? false}
+                                                            onCheckedChange={(isChecked) => handleWaiverToggle(app.id!, isChecked)}
+                                                            aria-label="Toggle Unique ID waiver"
+                                                        />
+                                                        <span className="text-xs text-muted-foreground">{app.isUniqueIdWaived ? "ON" : "OFF"}</span>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
                                         ))}
                                     </TableBody>
                                 </Table>
@@ -383,6 +428,56 @@ const CrudForm = ({ schema, onSubmit, onRefresh, fields }: { schema: z.ZodObject
                 </div>
             ))}
             <Button type="submit" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t('add')}</Button>
+        </form>
+    );
+};
+
+const NotificationForm = ({ onRefresh }: { onRefresh: () => void }) => {
+    const { t } = useLanguage();
+    const form = useForm<z.infer<typeof notificationSchema>>({ resolver: zodResolver(notificationSchema) });
+    const { toast } = useToast();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const categories: NotificationCategory[] = ['general', 'news', 'result', 'scholarship', 'alert'];
+
+    const handleFormSubmit = async (values: z.infer<typeof notificationSchema>) => {
+        setIsSubmitting(true);
+        try {
+            await addNotification(values);
+            toast({ title: "Success", description: "Notification sent successfully." });
+            form.reset();
+            onRefresh();
+        } catch (error) {
+            toast({ variant: "destructive", title: "Error", description: (error as Error).message });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 mb-6 p-4 border rounded-lg">
+            <div>
+                <Label>{t('title')}</Label>
+                <Input {...form.register('title')} disabled={isSubmitting} />
+                <p className="text-destructive text-sm mt-1">{form.formState.errors.title?.message}</p>
+            </div>
+             <div>
+                <Label>{t('content')}</Label>
+                <Textarea {...form.register('content')} disabled={isSubmitting} />
+                <p className="text-destructive text-sm mt-1">{form.formState.errors.content?.message}</p>
+            </div>
+             <div>
+                <Label>Category</Label>
+                <Select onValueChange={(value: NotificationCategory) => form.setValue('category', value)} disabled={isSubmitting}>
+                    <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
+                    <SelectContent>
+                        {categories.map(cat => (
+                             <SelectItem key={cat} value={cat} className="capitalize">{cat}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                 <p className="text-destructive text-sm mt-1">{form.formState.errors.category?.message}</p>
+            </div>
+            <Button type="submit" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Send Notification</Button>
         </form>
     );
 };

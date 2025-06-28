@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { getScholarshipApplicationByNumber, getAppConfig, type ScholarshipApplicationData, type AppConfig } from '@/lib/firebase';
+import { getScholarshipApplicationByAppNumber, getAppConfig, type ScholarshipApplicationData, type AppConfig } from '@/lib/firebase';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import { AdmitCardDisplay } from '@/components/scholarship/admit-card-display';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -27,8 +27,8 @@ export default function AdmitCardPage() {
   }, []);
 
   const handleDownload = async () => {
-    if (!applicationNumber || !uniqueId) {
-      toast({ variant: "destructive", title: "Error", description: t('admitCardDescription') });
+    if (!applicationNumber) {
+      toast({ variant: "destructive", title: "Error", description: t('applicationNumber') + " is required." });
       return;
     }
     
@@ -44,12 +44,23 @@ export default function AdmitCardPage() {
     setIsLoading(true);
     setAdmitCardData(null);
     try {
-        const data = await getScholarshipApplicationByNumber(applicationNumber, uniqueId);
-        if (data) {
+        const data = await getScholarshipApplicationByAppNumber(applicationNumber);
+        if (!data) {
+             toast({ variant: "destructive", title: "Not Found", description: "Application number not found." });
+             return;
+        }
+
+        // Check if waiver is active or if unique ID matches
+        if (data.isUniqueIdWaived) {
+            setAdmitCardData(data);
+            toast({ title: "Admit Card Found", description: "Your admit card is displayed below." });
+        } else if (!uniqueId) {
+            toast({ variant: "destructive", title: "Unique ID Required", description: "Please enter your Unique ID to proceed." });
+        } else if (data.uniqueId === uniqueId) {
             setAdmitCardData(data);
             toast({ title: "Admit Card Found", description: "Your admit card is displayed below." });
         } else {
-            toast({ variant: "destructive", title: "Not Found", description: "Application number or unique ID is incorrect." });
+            toast({ variant: "destructive", title: "Incorrect Unique ID", description: "The Unique ID you entered is incorrect." });
         }
     } catch (error) {
         toast({ variant: "destructive", title: "Error", description: "An error occurred while fetching your admit card." });
@@ -82,7 +93,7 @@ export default function AdmitCardPage() {
             <Input id="applicationNumber" placeholder="GSA2024..." value={applicationNumber} onChange={(e) => setApplicationNumber(e.target.value)} disabled={isLoading} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="uniqueId">{t('uniqueId')}</Label>
+            <Label htmlFor="uniqueId">{t('uniqueId')} (If required)</Label>
             <Input id="uniqueId" placeholder="Enter your Unique ID" value={uniqueId} onChange={(e) => setUniqueId(e.target.value)} disabled={isLoading} />
           </div>
         </CardContent>
