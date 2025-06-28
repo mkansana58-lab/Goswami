@@ -14,7 +14,7 @@ interface SettingsContextType {
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const [theme, setThemeState] = useState<Theme>('light');
+  const [theme, setThemeState] = useState<Theme>('dark');
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -27,8 +27,8 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (isClient) {
-      document.body.classList.remove('light', 'dark');
-      document.body.classList.add(theme);
+      document.documentElement.classList.remove('light', 'dark');
+      document.documentElement.classList.add(theme);
     }
   }, [theme, isClient]);
 
