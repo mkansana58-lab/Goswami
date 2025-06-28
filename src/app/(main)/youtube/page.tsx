@@ -11,25 +11,43 @@ import { format } from 'date-fns';
 import { Avatar } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
-// Helper to get a valid embed URL from a YouTube link
+// Helper to get a valid embed URL from various YouTube link formats
 const getYouTubeEmbedUrl = (url: string) => {
+    if (!url) return null;
     let videoId: string | null = null;
     try {
         const urlObj = new URL(url);
         if (urlObj.hostname === 'youtu.be') {
+            // Short URL: https://youtu.be/VIDEO_ID
             videoId = urlObj.pathname.slice(1);
         } else if (urlObj.hostname.includes('youtube.com')) {
+            // Standard URL: https://www.youtube.com/watch?v=VIDEO_ID
             videoId = urlObj.searchParams.get('v');
+            if (!videoId) {
+                const pathParts = urlObj.pathname.split('/');
+                if (pathParts[1] === 'shorts') {
+                    // Shorts URL: https://www.youtube.com/shorts/VIDEO_ID
+                    videoId = pathParts[2];
+                } else if (pathParts[1] === 'embed') {
+                    // Embed URL: https://www.youtube.com/embed/VIDEO_ID
+                    videoId = pathParts[2];
+                }
+            }
         }
     } catch (e) {
-        console.error("Invalid YouTube URL:", e);
+        console.error("Invalid YouTube URL provided:", url, e);
         return null;
     }
+
     if (videoId) {
-        return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+        // Remove any extra query params from the videoId, e.g., from shorts URLs
+        const finalVideoId = videoId.split('?')[0];
+        return `https://www.youtube.com/embed/${finalVideoId}?autoplay=1`;
     }
+    
     return null;
 };
+
 
 export default function YouTubePage() {
     const { t } = useLanguage();
@@ -44,17 +62,24 @@ export default function YouTubePage() {
     }, []);
 
     const getYouTubeThumbnail = (url: string) => {
+        let videoId: string | null = null;
         try {
             const urlObj = new URL(url);
-            let videoId = urlObj.searchParams.get('v');
-            if (urlObj.hostname === 'youtu.be') {
+             if (urlObj.hostname === 'youtu.be') {
                 videoId = urlObj.pathname.slice(1);
+            } else if (urlObj.hostname.includes('youtube.com')) {
+                videoId = urlObj.searchParams.get('v');
+                 if (!videoId) {
+                    const pathParts = urlObj.pathname.split('/');
+                    if (pathParts[1] === 'shorts') videoId = pathParts[2];
+                    else if (pathParts[1] === 'embed') videoId = pathParts[2];
+                }
             }
-            if (videoId) {
-                return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-            }
-        } catch (e) {
-            // Invalid URL
+        } catch (e) { /* Invalid URL */ }
+
+        if (videoId) {
+             const finalVideoId = videoId.split('?')[0];
+            return `https://img.youtube.com/vi/${finalVideoId}/hqdefault.jpg`;
         }
         return `https://placehold.co/400x225.png`;
     };
