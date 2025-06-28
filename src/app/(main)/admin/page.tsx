@@ -28,7 +28,7 @@ import {
     getContactInquiries, addEBook, getEBooks, deleteEBook,
     addCustomTest, getCustomTests, deleteCustomTest,
     getTestSettings, updateTestSetting, getTestEnrollments,
-    updateScholarshipApplicationWaiver,
+    updateScholarshipApplicationWaiver, updateTestEnrollmentWaiver,
     type LiveClass, type Notification, type Post, type CurrentAffair,
     type VideoLecture, type Download, type Course, type AppConfig,
     type ScholarshipApplicationData, type StudentData, type Teacher, type GalleryImage,
@@ -196,7 +196,7 @@ export default function AdminPage() {
         toast({ title: "Settings Saved" });
     };
 
-    const handleWaiverToggle = async (appId: string, isWaived: boolean) => {
+    const handleScholarshipWaiverToggle = async (appId: string, isWaived: boolean) => {
         try {
             await updateScholarshipApplicationWaiver(appId, isWaived);
             setData(prevData => ({
@@ -208,7 +208,22 @@ export default function AdminPage() {
             toast({ title: "Waiver status updated!" });
         } catch (error) {
             toast({ variant: "destructive", title: "Error", description: "Failed to update waiver status." });
-            // Revert UI on failure
+            fetchData();
+        }
+    };
+    
+    const handleTestWaiverToggle = async (enrollmentId: string, isWaived: boolean) => {
+        try {
+            await updateTestEnrollmentWaiver(enrollmentId, isWaived);
+            setData(prevData => ({
+                ...prevData,
+                testEnrollments: prevData.testEnrollments.map(e => 
+                    e.id === enrollmentId ? { ...e, attemptsWaived: isWaived } : e
+                )
+            }));
+            toast({ title: "Waiver status updated." });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Error", description: "Failed to update waiver status." });
             fetchData();
         }
     };
@@ -320,7 +335,7 @@ export default function AdminPage() {
                                                     <div className="flex flex-col items-center gap-1">
                                                         <Switch
                                                             checked={app.isUniqueIdWaived ?? false}
-                                                            onCheckedChange={(isChecked) => handleWaiverToggle(app.id!, isChecked)}
+                                                            onCheckedChange={(isChecked) => handleScholarshipWaiverToggle(app.id!, isChecked)}
                                                             aria-label="Toggle Unique ID waiver"
                                                         />
                                                         <span className="text-xs text-muted-foreground">{app.isUniqueIdWaived ? "ON" : "OFF"}</span>
@@ -343,10 +358,21 @@ export default function AdminPage() {
                             </AdminSection>
 
                             <AdminSection title={t('testEnrollments')} icon={Star}>
-                                <Table><TableHeader><TableRow><TableHead>{t('enrolledStudent')}</TableHead><TableHead>{t('test')}</TableHead><TableHead>{t('enrollmentCode')}</TableHead><TableHead>{t('enrolledAt')}</TableHead></TableRow></TableHeader>
+                                <Table><TableHeader><TableRow><TableHead>{t('enrolledStudent')}</TableHead><TableHead>{t('test')}</TableHead><TableHead>{t('enrollmentCode')}</TableHead><TableHead>Attempts Waived</TableHead><TableHead>{t('enrolledAt')}</TableHead></TableRow></TableHeader>
                                     <TableBody>
                                         {data.testEnrollments.map(e => (
-                                            <TableRow key={e.id}><TableCell>{e.studentName}</TableCell><TableCell>{e.testName}</TableCell><TableCell><span className="font-mono text-xs bg-muted px-2 py-1 rounded">{e.enrollmentCode}</span></TableCell><TableCell>{format(e.enrolledAt.toDate(), 'PPP p')}</TableCell></TableRow>
+                                            <TableRow key={e.id}><TableCell>{e.studentName}</TableCell><TableCell>{e.testName}</TableCell><TableCell><span className="font-mono text-xs bg-muted px-2 py-1 rounded">{e.enrollmentCode}</span></TableCell>
+                                            <TableCell>
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        <Switch
+                                                            checked={e.attemptsWaived ?? false}
+                                                            onCheckedChange={(isChecked) => handleTestWaiverToggle(e.id!, isChecked)}
+                                                            aria-label="Toggle test attempt waiver"
+                                                        />
+                                                        <span className="text-xs text-muted-foreground">{e.attemptsWaived ? "ON" : "OFF"}</span>
+                                                    </div>
+                                            </TableCell>
+                                            <TableCell>{format(e.enrolledAt.toDate(), 'PPP p')}</TableCell></TableRow>
                                         ))}
                                     </TableBody>
                                 </Table>

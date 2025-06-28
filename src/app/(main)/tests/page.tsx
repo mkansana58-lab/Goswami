@@ -86,11 +86,14 @@ export default function AiTestPage() {
 
   const TestCard = ({ test }: { test: TestDetails | CustomTest }) => {
     const isEnabledByAdmin = testSettings[test.id]?.isEnabled ?? true;
-    const isEnrolled = enrolledTests.some(e => e.testId === test.id);
+    const enrollment = enrolledTests.find(e => e.testId === test.id);
+    const isEnrolled = !!enrollment;
     const [isEnrolling, setIsEnrolling] = useState(false);
+    
     const attemptCount = attemptCounts[test.id] ?? 0;
     const maxAttempts = 2;
-    const hasAttemptsLeft = attemptCount < maxAttempts;
+    const attemptsWaived = enrollment?.attemptsWaived ?? false;
+    const hasAttemptsLeft = attemptCount < maxAttempts || attemptsWaived;
 
     const onEnrollClick = async () => {
         setIsEnrolling(true);
@@ -150,7 +153,7 @@ export default function AiTestPage() {
                     {!isEnabledByAdmin ? 'Locked' : t('enroll')}
                 </Button>
             )}
-            {isEnrolled && <p className="text-xs text-muted-foreground text-center mt-2">{t('attemptsLeft')}: {Math.max(0, maxAttempts - attemptCount)} / {maxAttempts}</p>}
+            {isEnrolled && <p className="text-xs text-muted-foreground text-center mt-2">{attemptsWaived ? "Attempts: Unlimited" : `${t('attemptsLeft')}: ${Math.max(0, maxAttempts - attemptCount)} / ${maxAttempts}`}</p>}
         </CardFooter>
       </Card>
     );

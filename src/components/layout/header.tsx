@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -61,8 +62,10 @@ export function Header() {
     }
     setIsLoadingNotifications(true);
     try {
-        const fetched = await getNotifications();
-        setNotifications(fetched);
+        const allNotifications = await getNotifications();
+        // Filter notifications: show public ones (no recipient) or ones addressed to the current user.
+        const userNotifications = allNotifications.filter(n => !n.recipient || (student && n.recipient === student.name));
+        setNotifications(userNotifications);
     } catch (e) {
         console.error(e);
         setNotifications([]);
@@ -132,7 +135,7 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2">
-            <Sheet onOpenChange={(open) => open && fetchNotifications()}>
+            <Sheet onOpenChange={(open) => { if (open) fetchNotifications(); }}>
                 <SheetTrigger asChild>
                     <Button variant="ghost" size="icon" className="text-primary">
                         <Bell className="h-6 w-6" />

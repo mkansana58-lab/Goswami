@@ -52,12 +52,14 @@ export interface Notification {
     content: string;
     category: NotificationCategory;
     createdAt: Timestamp;
+    recipient?: string; // For user-specific notifications
 }
 
 export interface NewNotificationData {
     title: string;
     content: string;
     category: NotificationCategory;
+    recipient?: string;
 }
 
 export interface ScholarshipApplicationData {
@@ -216,6 +218,7 @@ export interface TestEnrollment {
     testName: string;
     enrollmentCode: string;
     enrolledAt: Timestamp;
+    attemptsWaived?: boolean;
 }
 
 // --- Constants ---
@@ -230,15 +233,19 @@ export const CLASS_UNIQUE_IDS: Record<string, string> = {
 // --- Functions ---
 
 // Notification helper
-async function sendNotification(title: string, content: string, category: NotificationCategory = 'alert'): Promise<void> {
+async function sendNotification(title: string, content: string, category: NotificationCategory = 'alert', recipient?: string): Promise<void> {
     if (!db) return;
     try {
-        await addDoc(collection(db, "notifications"), {
+        const notificationData: any = {
             title,
             content,
             category,
             createdAt: Timestamp.now(),
-        });
+        };
+        if (recipient) {
+            notificationData.recipient = recipient;
+        }
+        await addDoc(collection(db, "notifications"), notificationData);
     } catch (error) {
         console.error("Failed to send notification:", error);
     }
@@ -359,7 +366,7 @@ export async function getTestResults(): Promise<TestResultData[]> {
     if (!db) return [];
     const q = query(collection(db, "testResults"), orderBy("percentage", "desc"), limit(20));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TestResultData));
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as TestResultData);
 }
 
 export async function getTestResultsForStudentByTest(studentName: string, testId: string): Promise<TestResultData[]> {
@@ -520,18 +527,10 @@ export const updateTestSetting = async (testId: string, isEnabled: boolean) => {
 };
 
 // --- Test Enrollments ---
-const ID_WORDS = [
-  'Apple', 'Ball', 'Cat', 'Dog', 'Eagle', 'Fox', 'Goat', 'Horse', 'Ink', 'Jam', 'Kite', 'Lion', 'Mango', 'Nest', 'Orange', 
-  'Pen', 'Queen', 'Rose', 'Sun', 'Tiger', 'Urdu', 'Van', 'Watch', 'Xray', 'Yak', 'Zebra', 'Cloud', 'River', 'Star', 'Moon'
-];
 function generateEnrollmentCode(): string {
-  const codeWords = [];
-  for (let i = 0; i < 5; i++) {
-    codeWords.push(ID_WORDS[Math.floor(Math.random() * ID_WORDS.length)]);
-  }
-  return codeWords.join('-');
+  // Generates a 5-digit number as a string
+  return (Math.floor(Math.random() * 90000) + 10000).toString();
 }
-
 
 export const addTestEnrollment = async (studentName: string, testId: string, testName: string): Promise<string> => {
     if (!db) throw new Error("Firestore DB not initialized.");
@@ -550,14 +549,22 @@ export const addTestEnrollment = async (studentName: string, testId: string, tes
         testName,
         enrollmentCode,
         enrolledAt: Timestamp.now(),
+        attemptsWaived: false,
     });
 
     await sendNotification(
         'Test Enrollment Successful', 
-        `You have enrolled in "${testName}". Your Enrollment Code is: ${enrollmentCode}. Please save this code.`, 
-        'general'
+        `You have enrolled in "${testName}". Your Enrollment Code is: ${enrollmentCode}. Please save this code to unlock more attempts if needed.`, 
+        'general',
+        studentName // This makes the notification private to the student
     );
     return enrollmentCode;
+};
+
+export const updateTestEnrollmentWaiver = async (enrollmentId: string, isWaived: boolean): Promise<void> => {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    const enrollmentRef = doc(db, "testEnrollments", enrollmentId);
+    await updateDoc(enrollmentRef, { attemptsWaived: isWaived });
 };
 
 export const getEnrollmentsForStudent = async (studentName: string): Promise<TestEnrollment[]> => {
