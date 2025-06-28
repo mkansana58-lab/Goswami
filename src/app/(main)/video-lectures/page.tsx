@@ -5,9 +5,30 @@ import { useState, useEffect } from 'react';
 import { useLanguage } from "@/hooks/use-language";
 import { getVideoLectures, type VideoLecture } from '@/lib/firebase';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { Loader2, Video, ExternalLink } from 'lucide-react';
+import { Loader2, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+
+// Helper to get a valid embed URL from a YouTube link
+const getYouTubeEmbedUrl = (url: string) => {
+    let videoId: string | null = null;
+    try {
+        const urlObj = new URL(url);
+        if (urlObj.hostname === 'youtu.be') {
+            videoId = urlObj.pathname.slice(1);
+        } else if (urlObj.hostname.includes('youtube.com')) {
+            videoId = urlObj.searchParams.get('v');
+        }
+    } catch (e) {
+        console.error("Invalid YouTube URL:", e);
+        return null;
+    }
+    if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    }
+    return null;
+};
 
 export default function VideoLecturesPage() {
     const { t } = useLanguage();
@@ -23,7 +44,11 @@ export default function VideoLecturesPage() {
 
     const getYouTubeThumbnail = (url: string) => {
         try {
-            const videoId = new URL(url).searchParams.get('v');
+            const urlObj = new URL(url);
+            let videoId = urlObj.searchParams.get('v');
+            if (urlObj.hostname === 'youtu.be') {
+                videoId = urlObj.pathname.slice(1);
+            }
             if (videoId) {
                 return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
             }
@@ -53,30 +78,43 @@ export default function VideoLecturesPage() {
                 </Card>
             ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {lectures.map(lecture => (
-                        <Card key={lecture.id} className="flex flex-col">
-                            <a href={lecture.videoUrl} target="_blank" rel="noopener noreferrer">
-                                <img 
-                                    src={getYouTubeThumbnail(lecture.videoUrl)} 
-                                    alt={lecture.title} 
-                                    className="rounded-t-lg object-cover w-full aspect-video"
-                                />
-                            </a>
-                            <CardHeader>
-                                <CardTitle>{lecture.title}</CardTitle>
-                                <p className="text-sm text-muted-foreground pt-1">{format(lecture.createdAt.toDate(), 'PPP')}</p>
-                            </CardHeader>
-                            <CardContent className="flex-grow"></CardContent>
-                            <CardFooter>
-                                <Button asChild className="w-full">
-                                    <a href={lecture.videoUrl} target="_blank" rel="noopener noreferrer">
-                                        <ExternalLink className="mr-2 h-4 w-4" />
-                                        Watch Video
-                                    </a>
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                    ))}
+                    {lectures.map(lecture => {
+                        const embedUrl = getYouTubeEmbedUrl(lecture.videoUrl);
+                        return (
+                        <Dialog key={lecture.id}>
+                             <DialogTrigger asChild>
+                                 <Card className="flex flex-col cursor-pointer transition-transform hover:scale-105">
+                                    <img 
+                                        src={getYouTubeThumbnail(lecture.videoUrl)} 
+                                        alt={lecture.title} 
+                                        className="rounded-t-lg object-cover w-full aspect-video"
+                                    />
+                                    <CardHeader>
+                                        <CardTitle>{lecture.title}</CardTitle>
+                                        <p className="text-sm text-muted-foreground pt-1">{format(lecture.createdAt.toDate(), 'PPP')}</p>
+                                    </CardHeader>
+                                    <CardContent className="flex-grow"></CardContent>
+                                    <CardFooter>
+                                        <Button className="w-full">
+                                            <Video className="mr-2 h-4 w-4" />
+                                            Watch Video
+                                        </Button>
+                                    </CardFooter>
+                                 </Card>
+                            </DialogTrigger>
+                             {embedUrl && (
+                                <DialogContent className="max-w-3xl w-[90vw] aspect-video p-0 border-0">
+                                    <iframe
+                                        className="w-full h-full rounded-lg"
+                                        src={embedUrl}
+                                        title={lecture.title}
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                        allowFullScreen
+                                    ></iframe>
+                                </DialogContent>
+                             )}
+                        </Dialog>
+                    )})}
                 </div>
             )}
         </div>
