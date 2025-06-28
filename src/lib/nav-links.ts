@@ -23,7 +23,8 @@ import {
     Cog,
     BookCopy,
     Library,
-    MessagesSquare
+    MessagesSquare,
+    Youtube
   } from 'lucide-react';
   
   export const featureGridLinks = [
@@ -45,6 +46,7 @@ import {
     { href: "/admit-card", icon: Ticket, textKey: "admitCard" },
     { href: "/live-classes", icon: RadioTower, textKey: "liveClasses" },
     { href: "/video-lectures", icon: Video, textKey: "videoLectures" },
+    { href: "/youtube", icon: Youtube, textKey: "youtube" },
     { href: "/downloads", icon: Download, textKey: "downloads" },
     { href: "/e-books", icon: Library, textKey: "ebooks" },
     { href: "/tests", icon: CheckSquare, textKey: "aiTest" },
