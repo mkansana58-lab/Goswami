@@ -141,20 +141,20 @@ export default function AuthPage() {
             <Card className="w-full max-w-lg">
                  <CardHeader className="text-center">
                     <UserCheck className="mx-auto h-12 w-12 text-primary" />
-                    <CardTitle className="mt-2 text-2xl">Student Portal</CardTitle>
+                    <CardTitle className="mt-2 text-2xl text-primary">Student Portal</CardTitle>
                     <CardDescription>Login or Register to continue</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Tabs defaultValue="register" className="w-full">
+                    <Tabs defaultValue="login" className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="register"><UserPlus className="mr-2 h-4 w-4"/>Register</TabsTrigger>
                             <TabsTrigger value="login"><UserCheck className="mr-2 h-4 w-4"/>Login</TabsTrigger>
+                            <TabsTrigger value="register"><UserPlus className="mr-2 h-4 w-4"/>Register</TabsTrigger>
                         </TabsList>
-                        <TabsContent value="register" className="pt-4">
-                           <RegisterForm />
-                        </TabsContent>
                         <TabsContent value="login" className="pt-4">
                            <LoginForm />
+                        </TabsContent>
+                        <TabsContent value="register" className="pt-4">
+                           <RegisterForm />
                         </TabsContent>
                     </Tabs>
                 </CardContent>
