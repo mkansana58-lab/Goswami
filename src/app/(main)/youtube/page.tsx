@@ -81,10 +81,10 @@ export default function YouTubePage() {
                     {lectures.map(lecture => {
                         const embedUrl = getYouTubeEmbedUrl(lecture.videoUrl);
                         return (
-                            <Dialog key={lecture.id}>
-                                <DialogTrigger asChild>
-                                   <div className="group flex flex-col space-y-2 cursor-pointer">
-                                        <div className="aspect-video w-full overflow-hidden rounded-lg bg-muted">
+                           <div key={lecture.id} className="group flex flex-col space-y-2">
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                       <div className="aspect-video w-full overflow-hidden rounded-lg bg-muted cursor-pointer">
                                             <Image 
                                                 src={getYouTubeThumbnail(lecture.videoUrl)} 
                                                 alt={lecture.title}
@@ -94,38 +94,38 @@ export default function YouTubePage() {
                                                 data-ai-hint="video thumbnail"
                                             />
                                         </div>
-                                        <div className="flex gap-x-3">
-                                            <Avatar className="h-10 w-10 shrink-0">
-                                                <div className="w-full h-full flex items-center justify-center bg-primary rounded-full">
-                                                    <ShieldCheck className="h-6 w-6 text-primary-foreground" />
-                                                </div>
-                                            </Avatar>
-                                            <div className="flex flex-col">
-                                                <h3 className="font-semibold text-foreground text-base leading-snug group-hover:text-primary transition-colors">
-                                                    {lecture.title}
-                                                </h3>
-                                                <p className="text-sm text-muted-foreground mt-1">
-                                                    {t('appName')}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {format(lecture.createdAt.toDate(), 'PPP')}
-                                                </p>
-                                            </div>
+                                    </DialogTrigger>
+                                    {embedUrl && (
+                                        <DialogContent className="max-w-3xl w-[90vw] aspect-video p-0 border-0">
+                                            <iframe
+                                                className="w-full h-full rounded-lg"
+                                                src={embedUrl}
+                                                title={lecture.title}
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                allowFullScreen
+                                            ></iframe>
+                                        </DialogContent>
+                                    )}
+                                </Dialog>
+                                <div className="flex gap-x-3">
+                                    <Avatar className="h-10 w-10 shrink-0">
+                                        <div className="w-full h-full flex items-center justify-center bg-primary rounded-full">
+                                            <ShieldCheck className="h-6 w-6 text-primary-foreground" />
                                         </div>
-                                   </div>
-                                </DialogTrigger>
-                                {embedUrl && (
-                                    <DialogContent className="max-w-3xl w-[90vw] aspect-video p-0 border-0">
-                                        <iframe
-                                            className="w-full h-full rounded-lg"
-                                            src={embedUrl}
-                                            title={lecture.title}
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                            allowFullScreen
-                                        ></iframe>
-                                    </DialogContent>
-                                )}
-                            </Dialog>
+                                    </Avatar>
+                                    <div className="flex flex-col">
+                                        <h3 className="font-semibold text-foreground text-base leading-snug group-hover:text-primary transition-colors">
+                                            {lecture.title}
+                                        </h3>
+                                        <p className="text-sm text-muted-foreground mt-1">
+                                            {t('appName')}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {format(lecture.createdAt.toDate(), 'PPP')}
+                                        </p>
+                                    </div>
+                                </div>
+                           </div>
                         )
                     })}
                 </div>

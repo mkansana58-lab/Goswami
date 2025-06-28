@@ -81,39 +81,39 @@ export default function VideoLecturesPage() {
                     {lectures.map(lecture => {
                         const embedUrl = getYouTubeEmbedUrl(lecture.videoUrl);
                         return (
-                        <Dialog key={lecture.id}>
-                             <DialogTrigger asChild>
-                                 <Card className="flex flex-col cursor-pointer transition-transform hover:scale-105">
-                                    <img 
-                                        src={getYouTubeThumbnail(lecture.videoUrl)} 
-                                        alt={lecture.title} 
-                                        className="rounded-t-lg object-cover w-full aspect-video"
-                                    />
-                                    <CardHeader>
-                                        <CardTitle>{lecture.title}</CardTitle>
-                                        <p className="text-sm text-muted-foreground pt-1">{format(lecture.createdAt.toDate(), 'PPP')}</p>
-                                    </CardHeader>
-                                    <CardContent className="flex-grow"></CardContent>
-                                    <CardFooter>
+                         <Card key={lecture.id} className="flex flex-col transition-transform hover:scale-105">
+                            <img 
+                                src={getYouTubeThumbnail(lecture.videoUrl)} 
+                                alt={lecture.title} 
+                                className="rounded-t-lg object-cover w-full aspect-video"
+                            />
+                            <CardHeader>
+                                <CardTitle>{lecture.title}</CardTitle>
+                                <p className="text-sm text-muted-foreground pt-1">{format(lecture.createdAt.toDate(), 'PPP')}</p>
+                            </CardHeader>
+                            <CardContent className="flex-grow"></CardContent>
+                            <CardFooter>
+                                <Dialog>
+                                     <DialogTrigger asChild>
                                         <Button className="w-full">
                                             <Video className="mr-2 h-4 w-4" />
                                             Watch Video
                                         </Button>
-                                    </CardFooter>
-                                 </Card>
-                            </DialogTrigger>
-                             {embedUrl && (
-                                <DialogContent className="max-w-3xl w-[90vw] aspect-video p-0 border-0">
-                                    <iframe
-                                        className="w-full h-full rounded-lg"
-                                        src={embedUrl}
-                                        title={lecture.title}
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                        allowFullScreen
-                                    ></iframe>
-                                </DialogContent>
-                             )}
-                        </Dialog>
+                                    </DialogTrigger>
+                                     {embedUrl && (
+                                        <DialogContent className="max-w-3xl w-[90vw] aspect-video p-0 border-0">
+                                            <iframe
+                                                className="w-full h-full rounded-lg"
+                                                src={embedUrl}
+                                                title={lecture.title}
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                allowFullScreen
+                                            ></iframe>
+                                        </DialogContent>
+                                     )}
+                                </Dialog>
+                            </CardFooter>
+                         </Card>
                     )})}
                 </div>
             )}
