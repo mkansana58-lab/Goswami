@@ -170,6 +170,12 @@ export const translations = {
     joinClass: "Join Class",
     noLiveClassesTitle: "No Live Classes Scheduled",
     noLiveClassesDesc: "Please check back later for updates on upcoming live sessions.",
+    unlockTestInfoTitle: "Unlock All Tests",
+    unlockTestInfo: "To unlock all test attempts, please pay ₹50 to 9694251069. Then, send the payment screenshot and your Enrollment Code on the 'Contact Us' page.",
+    yourEnrollmentCodeIs: "Enrollment Successful! Your code is:",
+    attemptsLeft: "Attempts",
+    testLocked: "Attempt Limit Reached",
+
 
     // Admin Panel
     manageContent: "Manage Content",
@@ -178,6 +184,7 @@ export const translations = {
     enrolledStudent: "Enrolled Student",
     test: "Test",
     enrolledAt: "Enrolled At",
+    enrollmentCode: "Enrollment Code",
     enroll: "Enroll",
     enrolled: "Enrolled",
     enrollSuccess: "Enrolled successfully!",
@@ -402,6 +409,11 @@ export const translations = {
     joinClass: "कक्षा में शामिल हों",
     noLiveClassesTitle: "कोई लाइव कक्षा निर्धारित नहीं है",
     noLiveClassesDesc: "आगामी लाइव सत्रों पर अपडेट के लिए कृपया बाद में देखें।",
+    unlockTestInfoTitle: "सभी टेस्ट अनलॉक करें",
+    unlockTestInfo: "सभी टेस्ट के प्रयास अनलॉक करने के लिए, कृपया 9694251069 पर ₹50 का भुगतान करें। फिर, भुगतान का स्क्रीनशॉट और अपना एनरोलमेंट कोड 'हमसे संपर्क करें' पेज पर भेजें।",
+    yourEnrollmentCodeIs: "नामांकन सफल! आपका कोड है:",
+    attemptsLeft: "प्रयास",
+    testLocked: "प्रयास सीमा समाप्त",
 
     // Admin Panel
     manageContent: "सामग्री प्रबंधित करें",
@@ -410,6 +422,7 @@ export const translations = {
     enrolledStudent: "नामांकित छात्र",
     test: "टेस्ट",
     enrolledAt: "नामांकन तिथि",
+    enrollmentCode: "एनरोलमेंट कोड",
     enroll: "नामांकन करें",
     enrolled: "नामांकित",
     enrollSuccess: "सफलतापूर्वक नामांकित!",

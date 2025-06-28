@@ -7,10 +7,11 @@ import { useLanguage } from '@/hooks/use-language';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { testsData, type TestDetails } from '@/lib/tests-data';
-import { Clock, FileQuestion, Languages, Lock, Loader2, Star } from 'lucide-react';
-import { getCustomTests, getTestSettings, type CustomTest, type TestSetting, addTestEnrollment, getEnrollmentsForStudent } from '@/lib/firebase';
+import { Clock, FileQuestion, Languages, Lock, Loader2, Star, Key } from 'lucide-react';
+import { getCustomTests, getTestSettings, type CustomTest, type TestSetting, addTestEnrollment, getEnrollmentsForStudent, getTestResultsForStudentByTest, TestEnrollment } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function AiTestPage() {
   const { t } = useLanguage();
@@ -18,7 +19,8 @@ export default function AiTestPage() {
   const { toast } = useToast();
   const [allTests, setAllTests] = useState<(TestDetails | CustomTest)[]>([]);
   const [testSettings, setTestSettings] = useState<Record<string, TestSetting>>({});
-  const [enrolledTests, setEnrolledTests] = useState<string[]>([]);
+  const [enrolledTests, setEnrolledTests] = useState<TestEnrollment[]>([]);
+  const [attemptCounts, setAttemptCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -27,12 +29,21 @@ export default function AiTestPage() {
         try {
             const [customTests, settings] = await Promise.all([getCustomTests(), getTestSettings()]);
             const staticTests = Object.values(testsData);
-            setAllTests([...staticTests, ...customTests]);
+            const allTestsData = [...staticTests, ...customTests];
+            setAllTests(allTestsData);
             setTestSettings(settings);
 
             if (student) {
                 const enrollments = await getEnrollmentsForStudent(student.name);
                 setEnrolledTests(enrollments);
+
+                const counts: Record<string, number> = {};
+                const countPromises = allTestsData.map(async (test) => {
+                    const results = await getTestResultsForStudentByTest(student.name, test.id);
+                    counts[test.id] = results.length;
+                });
+                await Promise.all(countPromises);
+                setAttemptCounts(counts);
             }
         } catch (error) {
             console.error("Failed to fetch tests data:", error);
@@ -47,9 +58,17 @@ export default function AiTestPage() {
     if (!student) return;
     try {
         const testName = t(test.title as any) || test.title;
-        await addTestEnrollment(student.name, test.id, testName);
-        setEnrolledTests(prev => [...prev, test.id]);
-        toast({ title: t('enrollSuccess') });
+        const code = await addTestEnrollment(student.name, test.id, testName);
+        
+        // Refetch enrollments to get the latest data including the new one
+        const updatedEnrollments = await getEnrollmentsForStudent(student.name);
+        setEnrolledTests(updatedEnrollments);
+
+        toast({
+            title: t('yourEnrollmentCodeIs'),
+            description: <p className="font-mono text-lg">{code}</p>,
+            duration: 10000,
+        });
     } catch (e) {
         toast({ variant: 'destructive', title: t('enrollError') });
     }
@@ -66,15 +85,20 @@ export default function AiTestPage() {
   }
 
   const TestCard = ({ test }: { test: TestDetails | CustomTest }) => {
-    const isEnabled = testSettings[test.id]?.isEnabled ?? true;
-    const isEnrolled = enrolledTests.includes(test.id);
+    const isEnabledByAdmin = testSettings[test.id]?.isEnabled ?? true;
+    const isEnrolled = enrolledTests.some(e => e.testId === test.id);
     const [isEnrolling, setIsEnrolling] = useState(false);
+    const attemptCount = attemptCounts[test.id] ?? 0;
+    const maxAttempts = 2;
+    const hasAttemptsLeft = attemptCount < maxAttempts;
 
     const onEnrollClick = async () => {
         setIsEnrolling(true);
         await handleEnroll(test);
         setIsEnrolling(false);
     }
+    
+    const isLocked = !isEnabledByAdmin || (isEnrolled && !hasAttemptsLeft);
 
     return (
       <Card key={test.id} className="flex flex-col">
@@ -108,18 +132,25 @@ export default function AiTestPage() {
             </div>
           )}
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex-col items-stretch pt-4">
             {isEnrolled ? (
-                <Button asChild className="w-full">
-                    <Link href={`/tests/${test.id}`}>{t('startTest')}</Link>
+                <Button asChild className="w-full" disabled={isLocked}>
+                    {isLocked ? (
+                         <div className="flex items-center">
+                            <Lock className="mr-2 h-4 w-4" /> {t('testLocked')}
+                        </div>
+                    ) : (
+                        <Link href={`/tests/${test.id}`}>{t('startTest')}</Link>
+                    )}
                 </Button>
             ) : (
-                <Button className="w-full" disabled={!isEnabled || isEnrolling} onClick={onEnrollClick}>
+                <Button className="w-full" disabled={!isEnabledByAdmin || isEnrolling} onClick={onEnrollClick}>
                     {isEnrolling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 
-                     !isEnabled ? <Lock className="mr-2 h-4 w-4" /> : <Star className="mr-2 h-4 w-4" />}
-                    {!isEnabled ? 'Locked' : t('enroll')}
+                     !isEnabledByAdmin ? <Lock className="mr-2 h-4 w-4" /> : <Star className="mr-2 h-4 w-4" />}
+                    {!isEnabledByAdmin ? 'Locked' : t('enroll')}
                 </Button>
             )}
+            {isEnrolled && <p className="text-xs text-muted-foreground text-center mt-2">{t('attemptsLeft')}: {Math.max(0, maxAttempts - attemptCount)} / {maxAttempts}</p>}
         </CardFooter>
       </Card>
     );
@@ -127,7 +158,7 @@ export default function AiTestPage() {
   
   const testsToShow = allTests.filter(test => {
       const isEnabled = testSettings[test.id]?.isEnabled ?? true;
-      const isEnrolled = enrolledTests.includes(test.id);
+      const isEnrolled = enrolledTests.some(e => e.testId === test.id);
       return isEnabled || isEnrolled;
   });
   
@@ -141,6 +172,14 @@ export default function AiTestPage() {
         <h1 className="text-3xl font-bold text-primary">{t('aiTestTitle')}</h1>
         <p className="text-muted-foreground mt-2">{t('aiTestDescription')}</p>
       </div>
+
+       <Alert variant="default" className="bg-primary/10 border-primary/20 text-primary-foreground">
+            <Key className="h-4 w-4 text-primary" />
+            <AlertTitle className="text-primary">{t('unlockTestInfoTitle')}</AlertTitle>
+            <AlertDescription className="text-primary/90">
+                {t('unlockTestInfo')}
+            </AlertDescription>
+        </Alert>
 
       <div>
         <h2 className="text-2xl font-bold text-primary mb-4">{t('mockTests')}</h2>

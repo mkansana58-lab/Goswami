@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -35,7 +36,7 @@ import {
     type NewNotificationData, type NotificationCategory
 } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star, CheckSquare, Shield } from 'lucide-react';
+import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star, CheckSquare, Shield, Key } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -342,10 +343,10 @@ export default function AdminPage() {
                             </AdminSection>
 
                             <AdminSection title={t('testEnrollments')} icon={Star}>
-                                <Table><TableHeader><TableRow><TableHead>{t('enrolledStudent')}</TableHead><TableHead>{t('test')}</TableHead><TableHead>{t('enrolledAt')}</TableHead></TableRow></TableHeader>
+                                <Table><TableHeader><TableRow><TableHead>{t('enrolledStudent')}</TableHead><TableHead>{t('test')}</TableHead><TableHead>{t('enrollmentCode')}</TableHead><TableHead>{t('enrolledAt')}</TableHead></TableRow></TableHeader>
                                     <TableBody>
                                         {data.testEnrollments.map(e => (
-                                            <TableRow key={e.id}><TableCell>{e.studentName}</TableCell><TableCell>{e.testName}</TableCell><TableCell>{format(e.enrolledAt.toDate(), 'PPP p')}</TableCell></TableRow>
+                                            <TableRow key={e.id}><TableCell>{e.studentName}</TableCell><TableCell>{e.testName}</TableCell><TableCell><span className="font-mono text-xs bg-muted px-2 py-1 rounded">{e.enrollmentCode}</span></TableCell><TableCell>{format(e.enrolledAt.toDate(), 'PPP p')}</TableCell></TableRow>
                                         ))}
                                     </TableBody>
                                 </Table>

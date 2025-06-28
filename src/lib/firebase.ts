@@ -214,6 +214,7 @@ export interface TestEnrollment {
     studentName: string;
     testId: string;
     testName: string;
+    enrollmentCode: string;
     enrolledAt: Timestamp;
 }
 
@@ -359,6 +360,17 @@ export async function getTestResults(): Promise<TestResultData[]> {
     const q = query(collection(db, "testResults"), orderBy("percentage", "desc"), limit(20));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TestResultData));
+}
+
+export async function getTestResultsForStudentByTest(studentName: string, testId: string): Promise<TestResultData[]> {
+    if (!db) return [];
+    const q = query(
+        collection(db, "testResults"),
+        where("studentName", "==", studentName),
+        where("testId", "==", testId)
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as TestResultData);
 }
 
 export async function getLiveClasses(): Promise<LiveClass[]> {
@@ -508,27 +520,51 @@ export const updateTestSetting = async (testId: string, isEnabled: boolean) => {
 };
 
 // --- Test Enrollments ---
-export const addTestEnrollment = async (studentName: string, testId: string, testName: string): Promise<void> => {
+const ID_WORDS = [
+  'Apple', 'Ball', 'Cat', 'Dog', 'Eagle', 'Fox', 'Goat', 'Horse', 'Ink', 'Jam', 'Kite', 'Lion', 'Mango', 'Nest', 'Orange', 
+  'Pen', 'Queen', 'Rose', 'Sun', 'Tiger', 'Urdu', 'Van', 'Watch', 'Xray', 'Yak', 'Zebra', 'Cloud', 'River', 'Star', 'Moon'
+];
+function generateEnrollmentCode(): string {
+  const codeWords = [];
+  for (let i = 0; i < 5; i++) {
+    codeWords.push(ID_WORDS[Math.floor(Math.random() * ID_WORDS.length)]);
+  }
+  return codeWords.join('-');
+}
+
+
+export const addTestEnrollment = async (studentName: string, testId: string, testName: string): Promise<string> => {
     if (!db) throw new Error("Firestore DB not initialized.");
     // Check if already enrolled to prevent duplicates
     const q = query(collection(db, "testEnrollments"), where("studentName", "==", studentName), where("testId", "==", testId));
     const existing = await getDocs(q);
-    if (existing.empty) {
-        await addDoc(collection(db, "testEnrollments"), {
-            studentName,
-            testId,
-            testName,
-            enrolledAt: Timestamp.now(),
-        });
-        await sendNotification('Test Enrollment', `${studentName} has enrolled in the test "${testName}".`, 'general');
+    
+    if (!existing.empty) {
+        return existing.docs[0].data().enrollmentCode;
     }
+
+    const enrollmentCode = generateEnrollmentCode();
+    await addDoc(collection(db, "testEnrollments"), {
+        studentName,
+        testId,
+        testName,
+        enrollmentCode,
+        enrolledAt: Timestamp.now(),
+    });
+
+    await sendNotification(
+        'Test Enrollment Successful', 
+        `You have enrolled in "${testName}". Your Enrollment Code is: ${enrollmentCode}. Please save this code.`, 
+        'general'
+    );
+    return enrollmentCode;
 };
 
-export const getEnrollmentsForStudent = async (studentName: string): Promise<string[]> => {
+export const getEnrollmentsForStudent = async (studentName: string): Promise<TestEnrollment[]> => {
     if (!db) return [];
     const q = query(collection(db, "testEnrollments"), where("studentName", "==", studentName));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => doc.data().testId as string);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as TestEnrollment);
 };
 
 export const getTestEnrollments = async (): Promise<TestEnrollment[]> => {
