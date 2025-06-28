@@ -1,3 +1,4 @@
+
 export type Language = 'en' | 'hi';
 
 export const translations = {
@@ -43,6 +44,7 @@ export const translations = {
     dashboard: "Dashboard",
     videoLectures: "Video Lectures",
     youtube: "YouTube",
+    gdaLearning: "GDA Learning",
     downloads: "Downloads",
     ebooks: "E-Books",
     teachers: "Teachers",
@@ -279,6 +281,7 @@ export const translations = {
     dashboard: "डैशबोर्ड",
     videoLectures: "वीडियो लेक्चर",
     youtube: "यूट्यूब",
+    gdaLearning: "जीडीए लर्निंग",
     downloads: "डाउनलोड्स",
     ebooks: "ई-बुक्स",
     teachers: "शिक्षक",

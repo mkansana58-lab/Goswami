@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useLanguage } from "@/hooks/use-language";
 import { getVideoLectures, type VideoLecture } from '@/lib/firebase';
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Youtube as YoutubeIcon, ShieldCheck } from 'lucide-react';
+import { Loader2, BookCopy, ShieldCheck } from 'lucide-react';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Avatar } from '@/components/ui/avatar';
@@ -37,8 +37,8 @@ export default function YouTubePage() {
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-3">
-                <YoutubeIcon className="h-8 w-8 text-red-500" />
-                <h1 className="text-3xl font-bold text-primary">{t('youtube')}</h1>
+                <BookCopy className="h-8 w-8 text-primary" />
+                <h1 className="text-3xl font-bold text-primary">{t('gdaLearning')}</h1>
             </div>
             
             {isLoading ? (
