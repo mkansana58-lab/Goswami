@@ -51,6 +51,10 @@ export const translations = {
     schoolList: "School List",
     contact: "Contact",
     courses: "Courses",
+    studentPortal: "Student Portal",
+    confirmationPage: "Confirmation Page",
+    cityIntimationSlip: "City Intimation Slip",
+    downloadResult: "Download Result",
 
     // Scholarship Form Translations
     scholarshipTitle: "Scholarship Application Form 2024",
@@ -148,6 +152,7 @@ export const translations = {
     result: "Result",
     pass: "Pass",
     fail: "Fail",
+    pending: "Pending",
     printCertificate: "Print Certificate",
     marksObtained: "Marks Obtained",
     totalMarks: "Total Marks",
@@ -191,6 +196,9 @@ export const translations = {
     enrolled: "Enrolled",
     enrollSuccess: "Enrolled successfully!",
     enrollError: "Failed to enroll. Please try again.",
+    cityIntimationSlipStartDate: "City Intimation Slip Start Date",
+    resultAnnouncementDate: "Result Announcement Date",
+
 
     // Admin & Profile
     academySettings: "Academy Settings",
@@ -288,6 +296,10 @@ export const translations = {
     schoolList: "स्कूल सूची",
     contact: "संपर्क",
     courses: "कोर्सेज़",
+    studentPortal: "स्टूडेंट पोर्टल",
+    confirmationPage: "कन्फर्मेशन पेज",
+    cityIntimationSlip: "सिटी इंटिमेशन स्लिप",
+    downloadResult: "रिजल्ट डाउनलोड करें",
 
     // Scholarship Form Translations
     scholarshipTitle: "छात्रवृत्ति आवेदन पत्र 2024",
@@ -388,6 +400,7 @@ export const translations = {
     result: "परिणाम",
     pass: "पास",
     fail: "फेल",
+    pending: "लंबित",
     printCertificate: "प्रमाण पत्र प्रिंट करें",
     marksObtained: "प्राप्तांक",
     totalMarks: "कुल अंक",
@@ -430,6 +443,8 @@ export const translations = {
     enrolled: "नामांकित",
     enrollSuccess: "सफलतापूर्वक नामांकित!",
     enrollError: "नामांकन करने में विफल। कृपया पुन: प्रयास करें।",
+    cityIntimationSlipStartDate: "सिटी इंटिमेशन स्लिप प्रारंभ तिथि",
+    resultAnnouncementDate: "परिणाम घोषणा तिथि",
 
     // Admin & Profile
     academySettings: "अकादमी सेटिंग्स",

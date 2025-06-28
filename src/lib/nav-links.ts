@@ -7,7 +7,7 @@ import {
     User,
     ShieldCheck,
     ClipboardPen,
-    Ticket,
+    Briefcase,
     RadioTower,
     GraduationCap,
     MessageSquare,
@@ -29,7 +29,7 @@ import {
   
   export const featureGridLinks = [
       { href: "/scholarship", icon: ClipboardPen, textKey: "scholarshipForm" },
-      { href: "/admit-card", icon: Ticket, textKey: "admitCard" },
+      { href: "/student-portal", icon: Briefcase, textKey: "studentPortal" },
       { href: "/courses", icon: BookOpenCheck, textKey: "ourCourses" },
       { href: "/live-classes", icon: RadioTower, textKey: "liveClasses" },
       { href: "/daily-posts", icon: Newspaper, textKey: "dailyPosts" },
@@ -43,7 +43,7 @@ import {
     { href: "/home", icon: Home, textKey: "dashboard" },
     { href: "/courses", icon: BookOpenCheck, textKey: "ourCourses" },
     { href: "/scholarship", icon: ClipboardPen, textKey: "scholarshipForm" },
-    { href: "/admit-card", icon: Ticket, textKey: "admitCard" },
+    { href: "/student-portal", icon: Briefcase, textKey: "studentPortal" },
     { href: "/live-classes", icon: RadioTower, textKey: "liveClasses" },
     { href: "/video-lectures", icon: Video, textKey: "videoLectures" },
     { href: "/youtube", icon: BookCopy, textKey: "gdaLearning" },

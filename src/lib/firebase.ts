@@ -76,7 +76,8 @@ export interface ScholarshipApplicationData {
     address: string;
     photoUrl: string; // as data URI
     signatureUrl: string; // as data URI
-    isUniqueIdWaived?: boolean; // New field
+    isUniqueIdWaived?: boolean;
+    resultStatus?: 'pending' | 'pass' | 'fail';
     createdAt: Timestamp;
 }
 
@@ -109,6 +110,8 @@ export interface AppConfig {
     examDate?: Timestamp;
     admitCardDownloadStartDate?: Timestamp;
     splashImageUrl?: string;
+    cityIntimationSlipStartDate?: Timestamp;
+    resultAnnouncementDate?: Timestamp;
 }
 
 export interface Post {
@@ -284,6 +287,7 @@ export async function updateAppConfig(data: Partial<AppConfig>): Promise<void> {
 
 export async function addLiveClass({ title, link, scheduledAt }: NewLiveClassData): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
+    // No notification on purpose as requested
     await addDoc(collection(db, "liveClasses"), {
         title,
         link,
@@ -294,15 +298,16 @@ export async function addLiveClass({ title, link, scheduledAt }: NewLiveClassDat
 export const deleteLiveClass = (id: string) => deleteDocument("liveClasses", id);
 
 
-export async function addNotification({ title, content, category }: NewNotificationData): Promise<void> {
-    await sendNotification(title, content, category);
+export async function addNotification({ title, content, category, recipient }: NewNotificationData): Promise<void> {
+    await sendNotification(title, content, category, recipient);
 }
 export const deleteNotification = (id: string) => deleteDocument("notifications", id);
 
-export async function addScholarshipApplication(data: Omit<ScholarshipApplicationData, 'createdAt' | 'id'>): Promise<void> {
+export async function addScholarshipApplication(data: Omit<ScholarshipApplicationData, 'createdAt' | 'id' | 'resultStatus'>): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
     await addDoc(collection(db, "scholarshipApplications"), {
         ...data,
+        resultStatus: 'pending',
         createdAt: Timestamp.now(),
     });
     // Student-facing notification
@@ -315,6 +320,11 @@ export async function updateScholarshipApplicationWaiver(appId: string, isWaived
     await updateDoc(appRef, { isUniqueIdWaived: isWaived });
 }
 
+export async function updateScholarshipApplicationResultStatus(appId: string, status: 'pending' | 'pass' | 'fail'): Promise<void> {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    const appRef = doc(db, "scholarshipApplications", appId);
+    await updateDoc(appRef, { resultStatus: status });
+}
 
 export async function getScholarshipApplications(): Promise<ScholarshipApplicationData[]> {
     return getAll<ScholarshipApplicationData>("scholarshipApplications");
@@ -517,7 +527,7 @@ export const updateTestSetting = async (testId: string, isEnabled: boolean) => {
 // --- Test Enrollments ---
 function generateEnrollmentCode(): string {
   // Generates a 5-digit number as a string
-  return (Math.floor(Math.random() * 90000) + 10000).toString();
+  return Math.floor(10000 + Math.random() * 90000).toString();
 }
 
 export const addTestEnrollment = async (studentName: string, testId: string, testName: string): Promise<string> => {
@@ -542,7 +552,7 @@ export const addTestEnrollment = async (studentName: string, testId: string, tes
 
     await sendNotification(
         'Test Enrollment Successful', 
-        `You have enrolled in "${testName}". Your Enrollment Code is: ${enrollmentCode}. Please save this code to unlock more attempts if needed.`, 
+        `You have enrolled in "${testName}". Your unique 5-digit Enrollment Code is: ${enrollmentCode}. Please save this code.`, 
         'general',
         studentName // This makes the notification private to the student
     );

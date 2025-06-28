@@ -23,7 +23,7 @@ import {
     addCourse, deleteCourse, getCourses,
     addTeacher, deleteTeacher, getTeachers,
     addGalleryImage, deleteGalleryImage, getGalleryImages,
-    getScholarshipApplications, getStudents, updateAppConfig, getAppConfig,
+    getScholarshipApplications, updateScholarshipApplicationResultStatus, getStudents, updateAppConfig, getAppConfig,
     getContactInquiries, addEBook, getEBooks, deleteEBook,
     addCustomTest, getCustomTests, deleteCustomTest,
     getTestSettings, updateTestSetting, getTestEnrollments,
@@ -35,7 +35,7 @@ import {
     type NewNotificationData, type NotificationCategory
 } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star, CheckSquare, Shield, Key } from 'lucide-react';
+import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star, CheckSquare, Shield, Key, Award } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -52,6 +52,8 @@ const settingsSchema = z.object({
     scholarshipDeadline: z.string().optional(),
     examDate: z.string().optional(),
     admitCardDownloadStartDate: z.string().optional(),
+    cityIntimationSlipStartDate: z.string().optional(),
+    resultAnnouncementDate: z.string().optional(),
     splashImage: z.any().optional(),
 });
 const liveClassSchema = z.object({ title: z.string().min(3), link: z.string().url(), scheduledAt: z.string().min(1) });
@@ -59,6 +61,7 @@ const notificationSchema = z.object({
     title: z.string().min(3), 
     content: z.string().min(10),
     category: z.enum(['general', 'news', 'result', 'scholarship', 'alert']),
+    recipient: z.string().optional(),
 });
 const postSchema = z.object({ title: z.string().min(3), content: z.string().min(10), imageUrl: z.any().optional() });
 const currentAffairSchema = z.object({ title: z.string().min(3), content: z.string().min(10) });
@@ -152,6 +155,8 @@ export default function AdminPage() {
                 scholarshipDeadline: toInputDateTimeFormat(config.scholarshipDeadline),
                 examDate: toInputDateTimeFormat(config.examDate),
                 admitCardDownloadStartDate: toInputDateTimeFormat(config.admitCardDownloadStartDate),
+                cityIntimationSlipStartDate: toInputDateTimeFormat(config.cityIntimationSlipStartDate),
+                resultAnnouncementDate: toInputDateTimeFormat(config.resultAnnouncementDate),
             });
             setData({
                 liveClasses, notifications, posts, currentAffairs, videoLectures,
@@ -178,6 +183,8 @@ export default function AdminPage() {
             ...(dateValues.scholarshipDeadline && { scholarshipDeadline: Timestamp.fromDate(new Date(dateValues.scholarshipDeadline)) }),
             ...(dateValues.examDate && { examDate: Timestamp.fromDate(new Date(dateValues.examDate)) }),
             ...(dateValues.admitCardDownloadStartDate && { admitCardDownloadStartDate: Timestamp.fromDate(new Date(dateValues.admitCardDownloadStartDate)) }),
+            ...(dateValues.cityIntimationSlipStartDate && { cityIntimationSlipStartDate: Timestamp.fromDate(new Date(dateValues.cityIntimationSlipStartDate)) }),
+            ...(dateValues.resultAnnouncementDate && { resultAnnouncementDate: Timestamp.fromDate(new Date(dateValues.resultAnnouncementDate)) }),
         };
 
         if (splashImage?.[0]) {
@@ -194,6 +201,23 @@ export default function AdminPage() {
         await updateAppConfig(configData);
         toast({ title: "Settings Saved" });
     };
+
+    const handleResultStatusChange = async (appId: string, status: 'pending' | 'pass' | 'fail') => {
+        try {
+            await updateScholarshipApplicationResultStatus(appId, status);
+            setData(prevData => ({
+                ...prevData,
+                scholarshipApps: prevData.scholarshipApps.map(app =>
+                    app.id === appId ? { ...app, resultStatus: status } : app
+                )
+            }));
+            toast({ title: "Result status updated!" });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Error", description: "Failed to update result status." });
+            fetchData();
+        }
+    };
+
 
     const handleScholarshipWaiverToggle = async (appId: string, isWaived: boolean) => {
         try {
@@ -247,6 +271,8 @@ export default function AdminPage() {
                                      <div><Label>{t('scholarshipDeadline')}</Label><Input type="datetime-local" {...settingsForm.register('scholarshipDeadline')} /></div>
                                      <div><Label>{t('examDate')}</Label><Input type="datetime-local" {...settingsForm.register('examDate')} /></div>
                                      <div><Label>{t('admitCardStartDate')}</Label><Input type="datetime-local" {...settingsForm.register('admitCardDownloadStartDate')} /></div>
+                                     <div><Label>{t('cityIntimationSlipStartDate')}</Label><Input type="datetime-local" {...settingsForm.register('cityIntimationSlipStartDate')} /></div>
+                                     <div><Label>{t('resultAnnouncementDate')}</Label><Input type="datetime-local" {...settingsForm.register('resultAnnouncementDate')} /></div>
                                      <div><Label>Splash Screen Image (for App Start)</Label><Input type="file" accept="image/*" {...settingsForm.register('splashImage')} /></div>
                                      <Button type="submit">{t('saveSettings')}</Button>
                                 </form>
@@ -322,7 +348,7 @@ export default function AdminPage() {
                     <TabsContent value="view" className="mt-4">
                          <Accordion type="multiple" className="w-full space-y-4">
                             <AdminSection title="Scholarship Applications" icon={GraduationCap}>
-                                <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Docs</TableHead><TableHead>Applied</TableHead><TableHead>ID Waiver</TableHead></TableRow></TableHeader>
+                                <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Docs</TableHead><TableHead>Applied</TableHead><TableHead>ID Waiver</TableHead><TableHead>Result</TableHead></TableRow></TableHeader>
                                     <TableBody>
                                         {data.scholarshipApps.map(app => (
                                             <TableRow key={app.id}>
@@ -340,6 +366,21 @@ export default function AdminPage() {
                                                         <span className="text-xs text-muted-foreground">{app.isUniqueIdWaived ? "ON" : "OFF"}</span>
                                                     </div>
                                                 </TableCell>
+                                                <TableCell>
+                                                    <Select
+                                                        defaultValue={app.resultStatus || 'pending'}
+                                                        onValueChange={(value) => handleResultStatusChange(app.id!, value as 'pending' | 'pass' | 'fail')}
+                                                    >
+                                                        <SelectTrigger className="w-[100px]">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="pending">{t('pending')}</SelectItem>
+                                                            <SelectItem value="pass">{t('pass')}</SelectItem>
+                                                            <SelectItem value="fail">{t('fail')}</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
@@ -350,7 +391,7 @@ export default function AdminPage() {
                                <Table><TableHeader><TableRow><TableHead>Photo</TableHead><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Registered On</TableHead></TableRow></TableHeader>
                                    <TableBody>
                                        {data.students.map(s => (
-                                           <TableRow key={s.id}><TableCell><ImagePreview url={s.photoUrl} triggerText={<Image src={s.photoUrl || `https://placehold.co/40x40.png?text=${s.name[0]}`} alt="" width={40} height={40} className="rounded-full w-10 h-10 object-cover" data-ai-hint="student photo"/>} /></TableCell><TableCell>{s.name}<br/><span className="text-muted-foreground text-xs">{s.fatherName}</span></TableCell><TableCell>Class: {s.class}<br/>School: {s.school}</TableCell><TableCell>{format(s.createdAt.toDate(), 'PPP')}</TableCell></TableRow>
+                                           <TableRow key={s.id}><TableCell><ImagePreview url={s.photoUrl} triggerText={<Image src={s.photoUrl || `https://placehold.co/40x40.png?text=${s.name[0]}`} alt="" width={40} height={40} className="rounded-full w-10 h-10 object-cover" data-ai-hint="student photo" />} /></TableCell><TableCell>{s.name}<br/><span className="text-muted-foreground text-xs">{s.fatherName}</span></TableCell><TableCell>Class: {s.class}<br/>School: {s.school}</TableCell><TableCell>{format(s.createdAt.toDate(), 'PPP')}</TableCell></TableRow>
                                        ))}
                                    </TableBody>
                                </Table>
@@ -508,6 +549,11 @@ const NotificationForm = ({ onRefresh }: { onRefresh: () => void }) => {
                     </SelectContent>
                 </Select>
                  <p className="text-destructive text-sm mt-1">{form.formState.errors.category?.message}</p>
+            </div>
+             <div>
+                <Label>Recipient (Optional: for specific student)</Label>
+                <Input {...form.register('recipient')} disabled={isSubmitting} placeholder="Enter student's full name" />
+                <p className="text-destructive text-sm mt-1">{form.formState.errors.recipient?.message}</p>
             </div>
             <Button type="submit" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Send Notification</Button>
         </form>
