@@ -19,8 +19,8 @@ export default function RootPage() {
       // If student is logged in, go to home.
       router.replace('/home');
     } else {
-      // If no student, go to login.
-      router.replace('/student-login');
+      // If no student, go to register first.
+      router.replace('/register');
     }
   }, [isLoading, student, router]);
 

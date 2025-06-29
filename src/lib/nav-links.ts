@@ -28,7 +28,7 @@ import {
   } from 'lucide-react';
   
   export const featureGridLinks = [
-      { href: "/scholarship", icon: ClipboardPen, textKey: "scholarshipForm" },
+      { href: "/group-chat", icon: MessagesSquare, textKey: "groupChat" },
       { href: "/student-portal", icon: Briefcase, textKey: "studentPortal" },
       { href: "/courses", icon: BookOpenCheck, textKey: "ourCourses" },
       { href: "/live-classes", icon: RadioTower, textKey: "liveClasses" },

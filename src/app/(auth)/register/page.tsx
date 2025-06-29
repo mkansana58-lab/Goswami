@@ -24,7 +24,7 @@ const registerSchema = z.object({
     age: z.coerce.number().min(8, "Age must be at least 8"),
     address: z.string().min(10, "Full address is required"),
     school: z.string().min(3, "School name is required"),
-    photo: z.any().refine((files) => files?.length === 1, "Photo is required."),
+    photo: z.any().optional(),
 });
 
 export default function RegisterPage() {
@@ -48,7 +48,7 @@ export default function RegisterPage() {
              toast({
                 variant: "destructive",
                 title: "Registration Failed",
-                description: "A user with this name might already exist. Please try another name.",
+                description: "An unexpected error occurred. Please try again.",
             });
         }
         setIsLoading(false);
@@ -73,7 +73,7 @@ export default function RegisterPage() {
                             <div><Label>{t('schoolName')}</Label><Input {...form.register('school')} /><p className="text-destructive text-xs">{form.formState.errors.school?.message}</p></div>
                             <div className="md:col-span-2"><Label>{t('fullAddress')}</Label><Input {...form.register('address')} /><p className="text-destructive text-xs">{form.formState.errors.address?.message}</p></div>
                             <div className="md:col-span-2">
-                                <Label htmlFor="photo">{t('profilePhoto')}</Label>
+                                <Label htmlFor="photo">{t('profilePhoto')} (Optional)</Label>
                                 <Input id="photo" type="file" accept="image/*" {...form.register('photo')} />
                                 <p className="text-destructive text-xs">{form.formState.errors.photo?.message as string}</p>
                             </div>

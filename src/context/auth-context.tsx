@@ -20,7 +20,7 @@ const registerSchema = z.object({
     age: z.coerce.number().min(8, "Age must be at least 8"),
     address: z.string().min(10, "Full address is required"),
     school: z.string().min(3, "School name is required"),
-    photo: z.any().refine((files) => files?.length === 1, "Photo is required."),
+    photo: z.any().optional(),
 });
 
 export type RegisterValues = z.infer<typeof registerSchema>;
@@ -88,12 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const registerStudent = useCallback(async (data: RegisterValues): Promise<boolean> => {
-    // Check if student already exists
-    const existingStudent = await getStudent(data.username);
-    if (existingStudent) {
-        return false; // User already exists
-    }
-
+    // This allows re-registration with the same username, overwriting old data.
     let photoUrl = "";
     const photoFile = data.photo?.[0];
 
@@ -116,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     try {
-        await setDoc(doc(db, "students", username), newStudentData);
+        await setDoc(doc(db, "students", username), newStudentData, { merge: true });
         setStudent(newStudentData);
         localStorage.setItem('student', JSON.stringify(newStudentData));
         return true;
