@@ -1,3 +1,4 @@
+
 "use client";
 // firebase.ts
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
@@ -118,9 +119,10 @@ export interface ScholarshipTestResult {
     score: number;
     totalQuestions: number;
     percentage: number;
-    timeTaken: number;
+    timeTaken: number; // in seconds
     answers: Record<number, string>;
     allQuestions: Question[];
+    targetTestEnrollmentCode?: string;
     submittedAt: Timestamp;
 }
 
@@ -262,8 +264,8 @@ const generateRandomCode = (length: number) => {
     return Math.floor(Math.pow(10, length - 1) + Math.random() * (Math.pow(10, length) - Math.pow(10, length - 1) - 1)).toString();
 };
 
-// Notification helper
-async function sendNotification(title: string, content: string, category: NotificationCategory = 'alert', recipient?: string): Promise<void> {
+// Notification helper - Only for student actions, not admin ones.
+async function sendStudentNotification(title: string, content: string, category: NotificationCategory = 'alert', recipient?: string): Promise<void> {
     if (!db) return;
     try {
         const notificationData: any = {
@@ -275,8 +277,7 @@ async function sendNotification(title: string, content: string, category: Notifi
         if (recipient) {
             notificationData.recipient = recipient;
         }
-        // Do not await this, let it run in the background
-        addDoc(collection(db, "notifications"), notificationData);
+        await addDoc(collection(db, "notifications"), notificationData);
     } catch (error) {
         console.error("Failed to send notification:", error);
     }
@@ -317,7 +318,6 @@ export async function updateAppConfig(data: Partial<AppConfig>): Promise<void> {
 
 export async function addLiveClass({ title, link, scheduledAt }: NewLiveClassData): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
-    // No admin-triggered notifications
     await addDoc(collection(db, "liveClasses"), {
         title,
         link,
@@ -330,7 +330,6 @@ export const deleteLiveClass = (id: string) => deleteDocument("liveClasses", id)
 
 export async function addNotification({ title, content, category, recipient }: NewNotificationData): Promise<void> {
      if (!db) throw new Error("Firestore DB not initialized.");
-     // This function is for admin-sent notifications, so we don't trigger another notification
      await addDoc(collection(db, "notifications"), { title, content, category, recipient, createdAt: Timestamp.now() });
 }
 export const deleteNotification = (id: string) => deleteDocument("notifications", id);
@@ -352,11 +351,13 @@ export async function addScholarshipApplication(data: Omit<ScholarshipApplicatio
         resultStatus: 'pending',
         createdAt: Timestamp.now(),
     });
-    // Student-facing notification for successful application
-    sendNotification('Application Received', `Your application for ${data.fullName} (App No: ${applicationNumber}) has been received.`, 'scholarship', data.fullName);
+    
+    sendStudentNotification('Application Received', `Your application for ${data.fullName} (App No: ${applicationNumber}) has been received.`, 'scholarship', data.fullName);
 
     return { applicationNumber, rollNumber, onlineTestCode };
 }
+
+export const deleteScholarshipApplication = (id: string) => deleteDocument("scholarshipApplications", id);
 
 export async function updateScholarshipApplicationWaiver(appId: string, isWaived: boolean): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
@@ -419,6 +420,8 @@ export async function getStudents(): Promise<StudentData[]> {
     return getAll<StudentData>("students");
 }
 
+export const deleteStudent = (id: string) => deleteDocument("students", id);
+
 export async function addTestResult(data: Omit<TestResultData, 'submittedAt' | 'id'>): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
     await addDoc(collection(db, "testResults"), {
@@ -447,6 +450,16 @@ export async function getScholarshipTestResultByAppNumber(appNumber: string): Pr
     if (querySnapshot.empty) return null;
     return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as ScholarshipTestResult;
 }
+
+export async function getScholarshipTestResults(): Promise<ScholarshipTestResult[]> {
+    if (!db) return [];
+    const q = query(collection(db, "scholarshipTestResults"), orderBy("score", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as ScholarshipTestResult);
+}
+
+export const deleteScholarshipTestResult = (id: string) => deleteDocument("scholarshipTestResults", id);
+
 
 export async function getTestResults(): Promise<TestResultData[]> {
     if (!db) return [];
@@ -547,6 +560,8 @@ export const addContactInquiry = async (data: Omit<ContactInquiry, 'id' | 'creat
     await addDoc(collection(db, "contactInquiries"), { ...data, createdAt: Timestamp.now() });
 };
 export const getContactInquiries = async (): Promise<ContactInquiry[]> => getAll<ContactInquiry>("contactInquiries");
+export const deleteContactInquiry = (id: string) => deleteDocument("contactInquiries", id);
+
 
 // --- Chat Messages ---
 export const addChatMessage = async (data: Omit<ChatMessage, 'id' | 'createdAt'>) => {
@@ -626,7 +641,7 @@ export const addTestEnrollment = async (studentName: string, testId: string, tes
         attemptsWaived: false,
     });
 
-    sendNotification(
+    sendStudentNotification(
         'Test Enrollment Successful', 
         `You have enrolled in "${testName}". Your unique 5-digit Enrollment Code is: ${enrollmentCode}. Please save this code.`, 
         'general',
@@ -634,6 +649,9 @@ export const addTestEnrollment = async (studentName: string, testId: string, tes
     );
     return enrollmentCode;
 };
+
+export const deleteTestEnrollment = (id: string) => deleteDocument("testEnrollments", id);
+
 
 export const updateTestEnrollmentWaiver = async (enrollmentId: string, isWaived: boolean): Promise<void> => {
     if (!db) throw new Error("Firestore DB not initialized.");

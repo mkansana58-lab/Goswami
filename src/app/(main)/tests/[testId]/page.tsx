@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -119,7 +120,7 @@ export default function TestPlayerPage() {
     // Special handling for the scholarship test
     if (testId === 'scholarship-test-main' && scholarshipApplicantData) {
       let totalCorrect = 0;
-      allQuestions.forEach((q, index) => {
+      allQuestions.forEach((q) => {
         if (answers[q.id] === q.answer) {
           totalCorrect++;
         }
@@ -135,7 +136,8 @@ export default function TestPlayerPage() {
         percentage: percentage,
         timeTaken: timeTaken,
         answers: answers,
-        allQuestions: allQuestions
+        allQuestions: allQuestions,
+        targetTestEnrollmentCode: scholarshipApplicantData.targetTestEnrollmentCode,
       });
       sessionStorage.removeItem(`test-progress-${testId}`);
       sessionStorage.removeItem('scholarship-applicant-data');

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -28,14 +29,15 @@ import {
     addCustomTest, getCustomTests, deleteCustomTest,
     getTestSettings, updateTestSetting, getTestEnrollments,
     updateScholarshipApplicationWaiver, updateTestEnrollmentWaiver,
+    getScholarshipTestResults, deleteScholarshipTestResult, deleteScholarshipApplication, deleteStudent, deleteTestEnrollment, deleteContactInquiry,
     type LiveClass, type Notification, type Post, type CurrentAffair,
     type VideoLecture, type Download, type Course, type AppConfig,
     type ScholarshipApplicationData, type StudentData, type Teacher, type GalleryImage,
     type ContactInquiry, type EBook, type CustomTest, type TestSetting, type TestEnrollment,
-    type NewNotificationData, type NotificationCategory
+    type ScholarshipTestResult
 } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star, CheckSquare, Shield, Key, Award, AlertCircle } from 'lucide-react';
+import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star, CheckSquare, Shield, Key, Award, AlertCircle, Trophy } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -102,6 +104,13 @@ const toInputDateTimeFormat = (timestamp: Timestamp | undefined) => {
     }
 };
 
+const formatTime = (seconds: number) => {
+    if (isNaN(seconds) || seconds < 0) return "0s";
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}m ${remainingSeconds}s`;
+};
+
 const customTestJsonExample = `[
   {
     "id": 1,
@@ -129,12 +138,12 @@ export default function AdminPage() {
         courses: Course[], scholarshipApps: ScholarshipApplicationData[], students: StudentData[],
         teachers: Teacher[], galleryImages: GalleryImage[], contactInquiries: ContactInquiry[],
         ebooks: EBook[], customTests: CustomTest[], testSettings: Record<string, TestSetting>,
-        testEnrollments: TestEnrollment[],
+        testEnrollments: TestEnrollment[], scholarshipTestResults: ScholarshipTestResult[],
     }>({
         liveClasses: [], notifications: [], posts: [], currentAffairs: [], videoLectures: [], 
         downloads: [], courses: [], scholarshipApps: [], students: [], teachers: [], 
         galleryImages: [], contactInquiries: [], ebooks: [], customTests: [], 
-        testSettings: {}, testEnrollments: []
+        testSettings: {}, testEnrollments: [], scholarshipTestResults: []
     });
     const [isLoading, setIsLoading] = useState(true);
 
@@ -146,12 +155,14 @@ export default function AdminPage() {
             const [
                 config, liveClasses, notifications, posts, currentAffairs, videoLectures,
                 downloads, courses, scholarshipApps, students, teachers, galleryImages,
-                contactInquiries, ebooks, customTests, testSettings, testEnrollments
+                contactInquiries, ebooks, customTests, testSettings, testEnrollments,
+                scholarshipTestResults
             ] = await Promise.all([
                 getAppConfig(), getLiveClasses(), getNotifications(), getPosts(),
                 getCurrentAffairs(), getVideoLectures(), getDownloads(), getCourses(),
                 getScholarshipApplications(), getStudents(), getTeachers(), getGalleryImages(),
                 getContactInquiries(), getEBooks(), getCustomTests(), getTestSettings(), getTestEnrollments(),
+                getScholarshipTestResults()
             ]);
             settingsForm.reset({
                 scholarshipDeadline: toInputDateTimeFormat(config.scholarshipDeadline),
@@ -163,9 +174,11 @@ export default function AdminPage() {
             setData({
                 liveClasses, notifications, posts, currentAffairs, videoLectures,
                 downloads, courses, scholarshipApps, students, teachers, galleryImages,
-                contactInquiries, ebooks, customTests, testSettings, testEnrollments
+                contactInquiries, ebooks, customTests, testSettings, testEnrollments,
+                scholarshipTestResults
             });
         } catch (error) {
+            console.error(error);
             toast({ variant: "destructive", title: "Error", description: "Failed to fetch data from server." });
         } finally {
             setIsLoading(false);
@@ -250,6 +263,16 @@ export default function AdminPage() {
         } catch (error) {
             toast({ variant: "destructive", title: "Error", description: "Failed to update waiver status." });
             fetchData();
+        }
+    };
+
+    const handleDelete = async (deleteFn: (id: string) => Promise<void>, id: string, name: string) => {
+        try {
+            await deleteFn(id);
+            toast({ title: `${name} Deleted` });
+            fetchData();
+        } catch (error) {
+            toast({ variant: "destructive", title: "Error", description: `Failed to delete ${name}.` });
         }
     };
 
@@ -358,7 +381,7 @@ export default function AdminPage() {
                     <TabsContent value="view" className="mt-4">
                          <Accordion type="multiple" className="w-full space-y-4">
                             <AdminSection title="Scholarship Applications" icon={GraduationCap}>
-                                <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Docs</TableHead><TableHead>Applied</TableHead><TableHead>ID Waiver</TableHead><TableHead>Result</TableHead></TableRow></TableHeader>
+                                <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Docs</TableHead><TableHead>Applied</TableHead><TableHead>ID Waiver</TableHead><TableHead>Result</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
                                     <TableBody>
                                         {data.scholarshipApps.map(app => (
                                             <TableRow key={app.id}>
@@ -391,6 +414,40 @@ export default function AdminPage() {
                                                         </SelectContent>
                                                     </Select>
                                                 </TableCell>
+                                                <TableCell>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild><Button variant="destructive" size="icon"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader><AlertDialogTitle>{t('confirmDelete')}</AlertDialogTitle><AlertDialogDescription>Delete application for {app.fullName}?</AlertDialogDescription></AlertDialogHeader>
+                                                            <AlertDialogFooter><AlertDialogCancel>{t('cancel')}</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(deleteScholarshipApplication, app.id!, 'Application')}>{t('delete')}</AlertDialogAction></AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </AdminSection>
+
+                             <AdminSection title="Scholarship Test Results" icon={Trophy}>
+                                <Table><TableHeader><TableRow><TableHead>Rank</TableHead><TableHead>Name</TableHead><TableHead>Score</TableHead><TableHead>Time</TableHead><TableHead>Target Test Code</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
+                                    <TableBody>
+                                        {data.scholarshipTestResults.map((result, index) => (
+                                            <TableRow key={result.id}>
+                                                <TableCell className="font-bold text-lg">{index + 1}</TableCell>
+                                                <TableCell>{result.studentName}<br/><span className="text-muted-foreground text-xs">{result.applicationNumber}</span></TableCell>
+                                                <TableCell>{result.score}/{result.totalQuestions} ({result.percentage.toFixed(1)}%)</TableCell>
+                                                <TableCell>{formatTime(result.timeTaken)}</TableCell>
+                                                <TableCell><span className="font-mono text-xs bg-muted px-2 py-1 rounded">{result.targetTestEnrollmentCode || 'N/A'}</span></TableCell>
+                                                <TableCell>
+                                                     <AlertDialog>
+                                                        <AlertDialogTrigger asChild><Button variant="destructive" size="icon"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader><AlertDialogTitle>{t('confirmDelete')}</AlertDialogTitle><AlertDialogDescription>Delete test result for {result.studentName}?</AlertDialogDescription></AlertDialogHeader>
+                                                            <AlertDialogFooter><AlertDialogCancel>{t('cancel')}</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(deleteScholarshipTestResult, result.id!, 'Test Result')}>{t('delete')}</AlertDialogAction></AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
@@ -398,21 +455,34 @@ export default function AdminPage() {
                             </AdminSection>
 
                             <AdminSection title="Registered Students" icon={Users}>
-                               <Table><TableHeader><TableRow><TableHead>Photo</TableHead><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Registered On</TableHead></TableRow></TableHeader>
+                               <Table><TableHeader><TableRow><TableHead>Photo</TableHead><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Registered On</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
                                    <TableBody>
                                        {data.students.map(s => (
-                                           <TableRow key={s.id}><TableCell><ImagePreview url={s.photoUrl} triggerText={<Image src={s.photoUrl || `https://placehold.co/40x40.png?text=${s.name[0]}`} alt="" width={40} height={40} className="rounded-full w-10 h-10 object-cover" data-ai-hint="student photo" />} /></TableCell><TableCell>{s.name}<br/><span className="text-muted-foreground text-xs">{s.fatherName}</span></TableCell><TableCell>Class: {s.class}<br/>School: {s.school}</TableCell><TableCell>{format(s.createdAt.toDate(), 'PPP')}</TableCell></TableRow>
+                                           <TableRow key={s.id}><TableCell><ImagePreview url={s.photoUrl} triggerText={<Image src={s.photoUrl || `https://placehold.co/40x40.png?text=${s.name[0]}`} alt="" width={40} height={40} className="rounded-full w-10 h-10 object-cover" data-ai-hint="student photo" />} /></TableCell><TableCell>{s.name}<br/><span className="text-muted-foreground text-xs">{s.fatherName}</span></TableCell><TableCell>Class: {s.class}<br/>School: {s.school}</TableCell><TableCell>{format(s.createdAt.toDate(), 'PPP')}</TableCell>
+                                           <TableCell>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild><Button variant="destructive" size="icon"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader><AlertDialogTitle>{t('confirmDelete')}</AlertDialogTitle><AlertDialogDescription>Delete student {s.name}?</AlertDialogDescription></AlertDialogHeader>
+                                                        <AlertDialogFooter><AlertDialogCancel>{t('cancel')}</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(deleteStudent, s.id!, 'Student')}>{t('delete')}</AlertDialogAction></AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </TableCell>
+                                           </TableRow>
                                        ))}
                                    </TableBody>
                                </Table>
                             </AdminSection>
 
                             <AdminSection title={t('testEnrollments')} icon={Star}>
-                                <Table><TableHeader><TableRow><TableHead>{t('enrolledStudent')}</TableHead><TableHead>{t('test')}</TableHead><TableHead>{t('enrollmentCode')}</TableHead><TableHead>Attempts Waived</TableHead><TableHead>{t('enrolledAt')}</TableHead></TableRow></TableHeader>
+                                <Table><TableHeader><TableRow><TableHead>{t('enrolledStudent')}</TableHead><TableHead>{t('test')}</TableHead><TableHead>{t('enrollmentCode')}</TableHead><TableHead>Attempts Waived</TableHead><TableHead>{t('enrolledAt')}</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
                                     <TableBody>
                                         {data.testEnrollments.map(e => (
-                                            <TableRow key={e.id}><TableCell>{e.studentName}</TableCell><TableCell>{e.testName}</TableCell><TableCell><span className="font-mono text-xs bg-muted px-2 py-1 rounded">{e.enrollmentCode}</span></TableCell>
-                                            <TableCell>
+                                            <TableRow key={e.id}>
+                                                <TableCell>{e.studentName}</TableCell>
+                                                <TableCell>{e.testName}</TableCell>
+                                                <TableCell><span className="font-mono text-xs bg-muted px-2 py-1 rounded">{e.enrollmentCode}</span></TableCell>
+                                                <TableCell>
                                                     <div className="flex flex-col items-center gap-1">
                                                         <Switch
                                                             checked={e.attemptsWaived ?? false}
@@ -421,15 +491,25 @@ export default function AdminPage() {
                                                         />
                                                         <span className="text-xs text-muted-foreground">{e.attemptsWaived ? "ON" : "OFF"}</span>
                                                     </div>
-                                            </TableCell>
-                                            <TableCell>{format(e.enrolledAt.toDate(), 'PPP p')}</TableCell></TableRow>
+                                                </TableCell>
+                                                <TableCell>{format(e.enrolledAt.toDate(), 'PPP p')}</TableCell>
+                                                <TableCell>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild><Button variant="destructive" size="icon"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader><AlertDialogTitle>{t('confirmDelete')}</AlertDialogTitle><AlertDialogDescription>Delete enrollment for {e.studentName}?</AlertDialogDescription></AlertDialogHeader>
+                                                            <AlertDialogFooter><AlertDialogCancel>{t('cancel')}</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(deleteTestEnrollment, e.id!, 'Enrollment')}>{t('delete')}</AlertDialogAction></AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </TableCell>
+                                            </TableRow>
                                         ))}
                                     </TableBody>
                                 </Table>
                             </AdminSection>
 
                             <AdminSection title="Contact Inquiries" icon={Mail}>
-                                <Table><TableHeader><TableRow><TableHead>Email</TableHead><TableHead>Mobile</TableHead><TableHead>Message</TableHead><TableHead>Attachment</TableHead><TableHead>Submitted On</TableHead></TableRow></TableHeader>
+                                <Table><TableHeader><TableRow><TableHead>Email</TableHead><TableHead>Mobile</TableHead><TableHead>Message</TableHead><TableHead>Attachment</TableHead><TableHead>Submitted On</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
                                     <TableBody>
                                         {data.contactInquiries.map(inquiry => (
                                             <TableRow key={inquiry.id}>
@@ -438,6 +518,15 @@ export default function AdminPage() {
                                                 <TableCell className="max-w-xs truncate">{inquiry.message}</TableCell>
                                                 <TableCell><ImagePreview url={inquiry.imageUrl} triggerText="View Image" /></TableCell>
                                                 <TableCell>{format(inquiry.createdAt.toDate(), 'PPP p')}</TableCell>
+                                                <TableCell>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild><Button variant="destructive" size="icon"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader><AlertDialogTitle>{t('confirmDelete')}</AlertDialogTitle><AlertDialogDescription>Delete inquiry from {inquiry.email}?</AlertDialogDescription></AlertDialogHeader>
+                                                            <AlertDialogFooter><AlertDialogCancel>{t('cancel')}</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(deleteContactInquiry, inquiry.id!, 'Inquiry')}>{t('delete')}</AlertDialogAction></AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
@@ -526,12 +615,7 @@ const NotificationForm = ({ onRefresh }: { onRefresh: () => void }) => {
         setIsSubmitting(true);
         try {
             // Admin-sent notifications should not trigger further notifications.
-            // await addNotification(values);
-            if (!db) throw new Error("Firestore DB not initialized.");
-            await addDoc(collection(db, "notifications"), {
-                ...values,
-                createdAt: Timestamp.now(),
-            });
+            await addNotification(values);
 
             toast({ title: "Success", description: "Notification sent successfully." });
             form.reset();
