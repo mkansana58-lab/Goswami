@@ -101,7 +101,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     
     // We don't store the password, but in a real app, you'd hash and store it.
-    const { password, username, ...restOfData } = data;
+    // Destructure 'photo' out to prevent saving the FileList object to Firestore.
+    const { password, username, photo, ...restOfData } = data;
     
     const newStudentData: StudentData = {
         name: username,
