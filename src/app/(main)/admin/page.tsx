@@ -29,7 +29,7 @@ import {
     getContactInquiries, addEBook, getEBooks, deleteEBook,
     addCustomTest, getCustomTests, deleteCustomTest,
     getTestSettings, updateTestSetting, getTestEnrollments,
-    updateScholarshipApplicationWaiver, updateTestEnrollmentWaiver,
+    updateTestEnrollmentWaiver,
     getScholarshipTestResults, deleteScholarshipTestResult, deleteScholarshipApplication, deleteStudent, deleteTestEnrollment, deleteContactInquiry,
     type LiveClass, type Notification, type Post, type CurrentAffair,
     type VideoLecture, type Download, type Course, type AppConfig,
@@ -237,23 +237,6 @@ export default function AdminPage() {
             fetchData();
         }
     };
-
-
-    const handleScholarshipWaiverToggle = async (appId: string, isWaived: boolean) => {
-        try {
-            await updateScholarshipApplicationWaiver(appId, isWaived);
-            setData(prevData => ({
-                ...prevData,
-                scholarshipApps: prevData.scholarshipApps.map(app => 
-                    app.id === appId ? { ...app, isUniqueIdWaived: isWaived } : app
-                )
-            }));
-            toast({ title: "Waiver status updated!" });
-        } catch (error) {
-            toast({ variant: "destructive", title: "Error", description: "Failed to update waiver status." });
-            fetchData();
-        }
-    };
     
     const handleTestWaiverToggle = async (enrollmentId: string, isWaived: boolean) => {
         try {
@@ -396,7 +379,7 @@ export default function AdminPage() {
                     <TabsContent value="view" className="mt-4">
                          <Accordion type="multiple" className="w-full space-y-4">
                             <AdminSection title="Scholarship Applications" icon={GraduationCap}>
-                                <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Docs</TableHead><TableHead>Applied</TableHead><TableHead>ID Waiver</TableHead><TableHead>Result</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
+                                <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Docs</TableHead><TableHead>Applied</TableHead><TableHead>Result</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
                                     <TableBody>
                                         {data.scholarshipApps.map(app => (
                                             <TableRow key={app.id}>
@@ -404,16 +387,6 @@ export default function AdminPage() {
                                                 <TableCell>App No: <span className="font-mono text-xs">{app.applicationNumber}</span><br/>UID: <span className="font-mono text-xs">{app.uniqueId}</span></TableCell>
                                                 <TableCell className="flex gap-2"><ImagePreview url={app.photoUrl} triggerText="Photo" /><ImagePreview url={app.signatureUrl} triggerText="Sign" /></TableCell>
                                                 <TableCell>{format(app.createdAt.toDate(), 'PP')}</TableCell>
-                                                <TableCell>
-                                                    <div className="flex flex-col items-center gap-1">
-                                                        <Switch
-                                                            checked={app.isUniqueIdWaived ?? false}
-                                                            onCheckedChange={(isChecked) => handleScholarshipWaiverToggle(app.id!, isChecked)}
-                                                            aria-label="Toggle Unique ID waiver"
-                                                        />
-                                                        <span className="text-xs text-muted-foreground">{app.isUniqueIdWaived ? "ON" : "OFF"}</span>
-                                                    </div>
-                                                </TableCell>
                                                 <TableCell>
                                                     <Select
                                                         defaultValue={app.resultStatus || 'pending'}

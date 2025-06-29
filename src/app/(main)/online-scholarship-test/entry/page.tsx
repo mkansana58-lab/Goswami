@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { getScholarshipApplicationByOnlineTestCode, getAppConfig, type AppConfig, type ScholarshipApplicationData } from '@/lib/firebase';
+import { getScholarshipApplicationByAppNumber, getAppConfig, type AppConfig, type ScholarshipApplicationData } from '@/lib/firebase';
 import { Loader2, KeyRound, User, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { format } from 'date-fns';
@@ -27,7 +27,8 @@ export default function OnlineScholarshipTestEntryPage() {
   const router = useRouter();
   
   const [step, setStep] = useState<'entry' | 'confirm'>('entry');
-  const [onlineTestCode, setOnlineTestCode] = useState('');
+  const [applicationNumber, setApplicationNumber] = useState('');
+  const [uniqueId, setUniqueId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
   const [verifiedApplicant, setVerifiedApplicant] = useState<ScholarshipApplicationData | null>(null);
@@ -37,8 +38,8 @@ export default function OnlineScholarshipTestEntryPage() {
   }, []);
 
   const handleVerifyCode = async () => {
-    if (!onlineTestCode) {
-      toast({ variant: "destructive", title: "Error", description: "Online Test Code is required." });
+    if (!applicationNumber || !uniqueId) {
+      toast({ variant: "destructive", title: "Error", description: "Application Number and Unique ID are required." });
       return;
     }
     if (!student) {
@@ -58,24 +59,34 @@ export default function OnlineScholarshipTestEntryPage() {
 
     setIsLoading(true);
     try {
-        const appData = await getScholarshipApplicationByOnlineTestCode(onlineTestCode);
+        const appData = await getScholarshipApplicationByAppNumber(applicationNumber);
         
         if (!appData) {
-            toast({ variant: "destructive", title: "Invalid Code", description: "The Online Test Code you entered is not valid." });
+            toast({ variant: "destructive", title: "Invalid Application Number", description: "The Application Number you entered is not valid." });
+            return;
+        }
+
+        if (appData.uniqueId !== uniqueId) {
+             toast({ variant: "destructive", title: "Invalid Unique ID", description: "The Unique ID you entered is incorrect." });
+            return;
+        }
+
+        if (appData.testMode !== 'online') {
+            toast({ variant: "destructive", title: "Incorrect Test Mode", description: "This application is registered for an Offline test." });
             return;
         }
 
         if (appData.fullName !== student.name) {
-            toast({ variant: "destructive", title: "Mismatch Error", description: "This code does not belong to you. Please check your admit card." });
+            toast({ variant: "destructive", title: "Mismatch Error", description: "This application does not belong to you. Please check your details." });
             return;
         }
 
         setVerifiedApplicant(appData);
         setStep('confirm');
-        toast({ title: "Code Verified", description: "Please confirm your details to start the test." });
+        toast({ title: "Details Verified", description: "Please confirm your identity to start the test." });
 
     } catch (error) {
-        toast({ variant: "destructive", title: "Error", description: "An error occurred while verifying your code." });
+        toast({ variant: "destructive", title: "Error", description: "An error occurred while verifying your details." });
     } finally {
         setIsLoading(false);
     }
@@ -93,24 +104,28 @@ export default function OnlineScholarshipTestEntryPage() {
       <div className="flex flex-col items-center text-center">
         <KeyRound className="h-12 w-12 text-primary" />
         <h1 className="text-3xl font-bold text-primary mt-2">Online Scholarship Test</h1>
-        <p className="text-muted-foreground">Enter the code from your admit card to begin.</p>
+        <p className="text-muted-foreground">Enter your details from the admit card to begin.</p>
       </div>
 
       {step === 'entry' && (
         <Card className="max-w-md mx-auto">
           <CardHeader>
-            <CardTitle>Enter Your Code</CardTitle>
-            <CardDescription>This code is available on your admit card if you selected the 'Online' test mode.</CardDescription>
+            <CardTitle>Enter Your Details</CardTitle>
+            <CardDescription>Enter your Application Number and secret Unique ID to proceed.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="online-test-code">Online Test Code</Label>
-              <Input id="online-test-code" placeholder="Enter your code here" value={onlineTestCode} onChange={(e) => setOnlineTestCode(e.target.value)} disabled={isLoading} />
+              <Label htmlFor="application-number">{t('applicationNumber')}</Label>
+              <Input id="application-number" placeholder="GSA2024..." value={applicationNumber} onChange={(e) => setApplicationNumber(e.target.value)} disabled={isLoading} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="unique-id">{t('uniqueId')}</Label>
+              <Input id="unique-id" placeholder="Enter your 6-digit Unique ID" value={uniqueId} onChange={(e) => setUniqueId(e.target.value)} disabled={isLoading} />
             </div>
           </CardContent>
           <CardFooter>
             <Button className="w-full" onClick={handleVerifyCode} disabled={isLoading}>
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Verify Code"}
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Verify Details"}
             </Button>
           </CardFooter>
         </Card>

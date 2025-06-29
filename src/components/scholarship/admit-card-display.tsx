@@ -55,14 +55,11 @@ export function AdmitCardDisplay({ data, scholarshipTestStartDate, scholarshipTe
                           <p className="font-semibold">Roll Number:</p><p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{data.rollNumber}</p>
                           <p className="font-semibold">{t('applicationNumber')}:</p><p className="font-mono">{data.applicationNumber}</p>
                           
-                          {data.isUniqueIdWaived ? (
-                              <><p className="font-semibold">{t('uniqueId')}:</p><p className="font-mono text-green-500">Waived</p></>
-                          ) : (
-                              <><p className="font-semibold">{t('uniqueId')}:</p><p className="font-mono">{data.uniqueId}</p></>
-                          )}
-
-                          {data.testMode === 'online' && data.onlineTestCode && (
-                              <><p className="font-semibold">Online Test Code:</p><p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{data.onlineTestCode}</p></>
+                          {data.testMode === 'online' && (
+                             <>
+                              <p className="font-semibold">{t('uniqueId')}:</p>
+                              <p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{data.uniqueId}</p>
+                             </>
                           )}
 
                           <p className="font-semibold">{t('fullName')}:</p><p>{data.fullName}</p>

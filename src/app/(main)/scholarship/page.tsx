@@ -116,7 +116,7 @@ export default function ScholarshipPage() {
             const finalDataForUI: FormDataType = { 
                 ...data,
                 rollNumber: result.rollNumber,
-                onlineTestCode: result.onlineTestCode,
+                uniqueId: result.uniqueId,
                 photoUrl: photoDataUrl,
                 signatureUrl: signatureDataUrl 
             };

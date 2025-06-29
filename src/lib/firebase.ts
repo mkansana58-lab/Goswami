@@ -69,7 +69,6 @@ export interface ScholarshipApplicationData {
     applicationNumber: string;
     rollNumber: string;
     uniqueId: string;
-    onlineTestCode?: string;
     fullName: string;
     fatherName: string;
     mobile: string;
@@ -83,7 +82,6 @@ export interface ScholarshipApplicationData {
     testMode: 'online' | 'offline';
     photoUrl: string; // as data URI
     signatureUrl: string; // as data URI
-    isUniqueIdWaived?: boolean;
     resultStatus?: 'pending' | 'pass' | 'fail';
     createdAt: Timestamp;
 }
@@ -251,14 +249,6 @@ export interface TestEnrollment {
     extraAttempts?: number;
 }
 
-// --- Constants ---
-export const CLASS_UNIQUE_IDS: Record<string, string> = {
-    "5": "8824",
-    "6": "7456",
-    "7": "80235",
-    "8": "0080",
-    "9": "4734",
-};
 
 // --- Helper Functions ---
 
@@ -337,26 +327,21 @@ export async function addNotification({ title, content, category, recipient }: N
 }
 export const deleteNotification = (id: string) => deleteDocument("notifications", id);
 
-export async function addScholarshipApplication(data: Omit<ScholarshipApplicationData, 'createdAt' | 'id' | 'resultStatus' | 'applicationNumber' | 'rollNumber' | 'uniqueId' | 'onlineTestCode'>): Promise<{applicationNumber: string, rollNumber: string, onlineTestCode?: string}> {
+export async function addScholarshipApplication(data: Omit<ScholarshipApplicationData, 'createdAt' | 'id' | 'resultStatus' | 'applicationNumber' | 'rollNumber' | 'uniqueId'>): Promise<{applicationNumber: string, rollNumber: string, uniqueId: string}> {
     if (!db) throw new Error("Firestore DB not initialized.");
     
     const applicationNumber = `GSA${new Date().getFullYear()}${generateRandomCode(5)}`;
     const rollNumber = `R${generateRandomCode(8)}`;
-    const uniqueId = CLASS_UNIQUE_IDS[data.class];
     
-    let onlineTestCode: string | undefined;
-    if (data.testMode === 'online') {
-        let isCodeUnique = false;
-        let newCode = '';
-        while (!isCodeUnique) {
-            newCode = generateRandomCode(6);
-            const q = query(collection(db, "scholarshipApplications"), where("onlineTestCode", "==", newCode), limit(1));
-            const snapshot = await getDocs(q);
-            if (snapshot.empty) {
-                isCodeUnique = true;
-            }
+    let uniqueId = '';
+    let isCodeUnique = false;
+    while (!isCodeUnique) {
+        uniqueId = generateRandomCode(6); // A new 6-digit unique ID
+        const q = query(collection(db, "scholarshipApplications"), where("uniqueId", "==", uniqueId), limit(1));
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) {
+            isCodeUnique = true;
         }
-        onlineTestCode = newCode;
     }
     
     await addDoc(collection(db, "scholarshipApplications"), {
@@ -364,23 +349,16 @@ export async function addScholarshipApplication(data: Omit<ScholarshipApplicatio
         applicationNumber,
         rollNumber,
         uniqueId,
-        onlineTestCode,
         resultStatus: 'pending',
         createdAt: Timestamp.now(),
     });
     
-    sendStudentNotification('Application Received', `Your application for ${data.fullName} (App No: ${applicationNumber}) has been received.`, 'scholarship', data.fullName);
+    sendStudentNotification('Application Received', `Your application for ${data.fullName} (App No: ${applicationNumber}) has been received. Your secret Unique ID is ${uniqueId}. Please save it.`, 'scholarship', data.fullName);
 
-    return { applicationNumber, rollNumber, onlineTestCode };
+    return { applicationNumber, rollNumber, uniqueId };
 }
 
 export const deleteScholarshipApplication = (id: string) => deleteDocument("scholarshipApplications", id);
-
-export async function updateScholarshipApplicationWaiver(appId: string, isWaived: boolean): Promise<void> {
-    if (!db) throw new Error("Firestore DB not initialized.");
-    const appRef = doc(db, "scholarshipApplications", appId);
-    await updateDoc(appRef, { isUniqueIdWaived: isWaived });
-}
 
 export async function updateScholarshipApplicationResultStatus(appId: string, status: 'pending' | 'pass' | 'fail'): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
@@ -403,19 +381,6 @@ export async function getScholarshipApplicationByAppNumber(appNumber: string): P
     if (querySnapshot.empty) return null;
     return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as ScholarshipApplicationData;
 }
-
-export async function getScholarshipApplicationByOnlineTestCode(code: string): Promise<ScholarshipApplicationData | null> {
-    if (!db) return null;
-    const q = query(
-        collection(db, "scholarshipApplications"), 
-        where("onlineTestCode", "==", code),
-        limit(1)
-    );
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) return null;
-    return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as ScholarshipApplicationData;
-}
-
 
 export async function getStudent(name: string): Promise<StudentData | null> {
     if (!db) return null;

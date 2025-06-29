@@ -28,8 +28,8 @@ export default function AdmitCardPage() {
   }, []);
 
   const handleDownload = async () => {
-    if (!applicationNumber) {
-      toast({ variant: "destructive", title: "Error", description: t('applicationNumber') + " is required." });
+    if (!applicationNumber || !uniqueId) {
+      toast({ variant: "destructive", title: "Error", description: t('applicationNumber') + " and " + t('uniqueId') + " are required." });
       return;
     }
     
@@ -51,13 +51,7 @@ export default function AdmitCardPage() {
              return;
         }
 
-        // Check if waiver is active or if unique ID matches
-        if (data.isUniqueIdWaived) {
-            setAdmitCardData(data);
-            toast({ title: "Admit Card Found", description: "Your admit card is displayed below." });
-        } else if (!uniqueId) {
-            toast({ variant: "destructive", title: "Unique ID Required", description: "Please enter your Unique ID to proceed." });
-        } else if (data.uniqueId === uniqueId) {
+        if (data.uniqueId === uniqueId) {
             setAdmitCardData(data);
             toast({ title: "Admit Card Found", description: "Your admit card is displayed below." });
         } else {
@@ -105,8 +99,8 @@ export default function AdmitCardPage() {
             <Input id="applicationNumber" placeholder="GSA2024..." value={applicationNumber} onChange={(e) => setApplicationNumber(e.target.value)} disabled={isLoading} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="uniqueId">{t('uniqueId')} (If required)</Label>
-            <Input id="uniqueId" placeholder="Enter your Unique ID" value={uniqueId} onChange={(e) => setUniqueId(e.target.value)} disabled={isLoading} />
+            <Label htmlFor="uniqueId">{t('uniqueId')}</Label>
+            <Input id="uniqueId" placeholder="Enter your 6-digit Unique ID" value={uniqueId} onChange={(e) => setUniqueId(e.target.value)} disabled={isLoading} />
           </div>
         </CardContent>
         <CardFooter>
@@ -119,5 +113,3 @@ export default function AdmitCardPage() {
     </div>
   );
 }
-
-    
