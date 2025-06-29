@@ -15,6 +15,7 @@ export const translations = {
     cutoffChecker: "Cut-off Checker",
     toppers: "Toppers",
     contactUs: "Contact Us",
+    quizGame: "Quiz Game",
     navHome: "Home",
     navCourses: "Courses",
     navTest: "Test",
@@ -58,7 +59,6 @@ export const translations = {
     reviewAnswers: "Review Answers",
 
     // Scholarship Form Translations
-    scholarshipTitle: "Scholarship Application Form 2024",
     scholarshipInstructionsTitle: "Instructions",
     scholarshipInstructionsP1: "Welcome to the Go Swami Defence Academy scholarship application. Please read the instructions carefully before proceeding.",
     scholarshipInstructionsP2: "The application fee is ₹50. Students who perform well in the scholarship test will receive one month of free tuition and coaching.",
@@ -270,6 +270,7 @@ export const translations = {
     cutoffChecker: "कट-ऑफ चेकर",
     toppers: "टॉपर्स",
     contactUs: "संपर्क करें",
+    quizGame: "क्विज़ गेम",
     navHome: "होम",
     navCourses: "कोर्स",
     navTest: "टेस्ट",
@@ -313,7 +314,6 @@ export const translations = {
     reviewAnswers: "उत्तरों की समीक्षा करें",
 
     // Scholarship Form Translations
-    scholarshipTitle: "छात्रवृत्ति आवेदन पत्र 2024",
     scholarshipInstructionsTitle: "निर्देश",
     scholarshipInstructionsP1: "गो स्वामी डिफेंस एकेडमी छात्रवृत्ति आवेदन में आपका स्वागत है। कृपया आगे बढ़ने से पहले निर्देशों को ध्यान से पढ़ें।",
     scholarshipInstructionsP2: "आवेदन शुल्क ₹50 है। छात्रवृत्ति परीक्षा में अच्छा प्रदर्शन करने वाले छात्रों को एक महीने की मुफ्त ट्यूशन और कोचिंग मिलेगी।",
