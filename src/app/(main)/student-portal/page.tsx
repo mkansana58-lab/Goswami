@@ -1,19 +1,20 @@
-
 "use client";
 
 import { useLanguage } from "@/hooks/use-language";
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Briefcase, FileText, Award, CalendarCheck, Download, ChevronRight } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Briefcase, FileText, Award, CalendarCheck, Download, ChevronRight, TestTube2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function StudentPortalPage() {
     const { t } = useLanguage();
 
     const portalLinks = [
-        { href: '/admit-card', titleKey: 'admitCard', description: 'Download your exam admit card', icon: FileText, enabled: true },
-        { href: '/result', titleKey: 'downloadResult', description: 'Check and download your result', icon: Award, enabled: true },
+        { href: '/scholarship', titleKey: 'scholarshipForm', description: 'Apply for the scholarship test', icon: FileText, enabled: true },
+        { href: '/admit-card', titleKey: 'admitCard', description: 'Download your exam admit card', icon: Download, enabled: true },
         { href: '/city-intimation', titleKey: 'cityIntimationSlip', description: 'Check your exam city', icon: CalendarCheck, enabled: true },
+        { href: '/online-scholarship-test/entry', titleKey: 'onlineTest', description: 'Give the online scholarship test', icon: TestTube2, enabled: true },
+        { href: '/result', titleKey: 'downloadResult', description: 'Check and download your result', icon: Award, enabled: true },
         { href: '/scholarship-confirmation', titleKey: 'confirmationPage', description: 'Download your application form', icon: Download, enabled: true },
     ];
 
@@ -42,11 +43,6 @@ export default function StudentPortalPage() {
                                 </div>
                                 <ChevronRight className="h-5 w-5 text-muted-foreground" />
                             </CardHeader>
-                             {!link.enabled && (
-                                <CardContent className="p-4 pt-0 text-center">
-                                    <p className="text-xs font-semibold text-primary/80">{t('comingSoon')}</p>
-                                </CardContent>
-                            )}
                         </Card>
                     </Link>
                 ))}

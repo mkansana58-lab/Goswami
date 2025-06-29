@@ -3,7 +3,7 @@
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, Download, Calendar, Clock, MapPin, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, Download, Calendar, Clock, MapPin, ArrowLeft, KeyRound } from 'lucide-react';
 import Image from 'next/image';
 import type { ScholarshipApplicationData } from '@/lib/firebase';
 import { format } from 'date-fns';
@@ -31,8 +31,8 @@ export function AdmitCardDisplay({ data, examDate, onBack }: Props) {
         @media print {
           body * { visibility: hidden; }
           .printable-area, .printable-area * { visibility: visible; }
-          .printable-area { position: absolute; left: 0; top: 0; width: 100%; }
-          .no-print { display: none; }
+          .printable-area { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 1rem;}
+          .no-print { display: none !important; }
         }
       `}</style>
       <Card className="border-2 border-primary">
@@ -51,7 +51,17 @@ export function AdmitCardDisplay({ data, examDate, onBack }: Props) {
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                         <p className="font-semibold">Roll Number:</p><p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{data.rollNumber}</p>
                         <p className="font-semibold">{t('applicationNumber')}:</p><p className="font-mono">{data.applicationNumber}</p>
-                        <p className="font-semibold">{t('uniqueId')}:</p><p className="font-mono">{data.uniqueId}</p>
+                        
+                        {data.isUniqueIdWaived ? (
+                             <p className="font-semibold">{t('uniqueId')}:</p><p className="font-mono text-green-500">Waived</p>
+                        ) : (
+                             <p className="font-semibold">{t('uniqueId')}:</p><p className="font-mono">{data.uniqueId}</p>
+                        )}
+
+                        {data.testMode === 'online' && (
+                             <p className="font-semibold">Online Test Code:</p><p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{data.onlineTestCode}</p>
+                        )}
+
                         <p className="font-semibold">{t('fullName')}:</p><p>{data.fullName}</p>
                         <p className="font-semibold">{t('fathersName')}:</p><p>{data.fatherName}</p>
                         <p className="font-semibold">{t('selectClass')}:</p><p>{data.class}</p>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useLanguage } from '@/hooks/use-language';
@@ -16,8 +15,10 @@ export interface FormDataType {
   class: string;
   school: string;
   address: string;
+  targetExam: string;
   testMode?: 'online' | 'offline';
   rollNumber?: string;
+  onlineTestCode?: string;
   photoUrl: string;
   signatureUrl: string;
 }
@@ -90,6 +91,9 @@ export function ConfirmationCertificate({ formData, applicationNumber }: Props) 
 
                         <p className="font-semibold">{t('schoolName')}:</p>
                         <p>{formData.school}</p>
+
+                        <p className="font-semibold">Target Exam:</p>
+                        <p>{formData.targetExam}</p>
 
                         <p className="font-semibold">{t('mobileNumber')}:</p>
                         <p>{formData.mobile}</p>

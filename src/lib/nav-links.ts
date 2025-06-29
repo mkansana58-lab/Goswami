@@ -1,4 +1,3 @@
-
 import {
     Home,
     BookOpenCheck,
@@ -41,9 +40,8 @@ import {
   
   export const sidebarLinks = [
     { href: "/home", icon: Home, textKey: "dashboard" },
-    { href: "/courses", icon: BookOpenCheck, textKey: "ourCourses" },
-    { href: "/scholarship", icon: ClipboardPen, textKey: "scholarshipForm" },
     { href: "/student-portal", icon: Briefcase, textKey: "studentPortal" },
+    { href: "/courses", icon: BookOpenCheck, textKey: "ourCourses" },
     { href: "/live-classes", icon: RadioTower, textKey: "liveClasses" },
     { href: "/video-lectures", icon: Video, textKey: "videoLectures" },
     { href: "/youtube", icon: BookCopy, textKey: "gdaLearning" },

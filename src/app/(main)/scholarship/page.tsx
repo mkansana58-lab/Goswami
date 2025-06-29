@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -14,10 +13,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Progress } from "@/components/ui/progress";
-import { Info, User, BookOpen, MapPin, Upload, Loader2, AlertTriangle, Phone, CheckSquare } from "lucide-react";
+import { Info, User, BookOpen, MapPin, Upload, Loader2, AlertTriangle, Phone, CheckSquare, Target } from "lucide-react";
 import { ConfirmationCertificate } from "@/components/scholarship/confirmation-certificate";
 import type { FormDataType } from "@/components/scholarship/confirmation-certificate";
-import { addScholarshipApplication, getAppConfig, type AppConfig, CLASS_UNIQUE_IDS } from "@/lib/firebase";
+import { addScholarshipApplication, getAppConfig, type AppConfig } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import React from 'react';
@@ -31,6 +30,7 @@ const formSchema = z.object({
     class: z.enum(["5", "6", "7", "8", "9"]),
     school: z.string().min(3, "School name is required"),
     address: z.string().min(10, "Full address is required"),
+    targetExam: z.string().min(3, "Target exam is required (e.g., Sainik School, RMS)"),
     testMode: z.enum(['online', 'offline'], { required_error: "Please select a test mode." }),
     photo: z.any().refine((files) => files?.length === 1, "Photo is required."),
     signature: z.any().refine((files) => files?.length === 1, "Signature is required."),
@@ -41,9 +41,9 @@ type ScholarshipFormValues = z.infer<typeof formSchema>;
 const steps = [
     { id: 'instructions', title: 'scholarshipInstructionsTitle', icon: Info, fields: [] },
     { id: 'personal', title: 'step1Title', icon: User, fields: ['fullName', 'fatherName', 'mobile', 'email'] },
-    { id: 'academic', title: 'step2Title', icon: BookOpen, fields: ['age', 'class', 'school'] },
-    { id: 'address', title: 'step3Title', icon: MapPin, fields: ['address'] },
+    { id: 'academic', title: 'step2Title', icon: BookOpen, fields: ['age', 'class', 'school', 'targetExam'] },
     { id: 'options', title: 'Test Options', icon: CheckSquare, fields: ['testMode'] },
+    { id: 'address', title: 'step3Title', icon: MapPin, fields: ['address'] },
     { id: 'uploads', title: 'step4Title', icon: Upload, fields: ['photo', 'signature'] },
 ]
 
@@ -84,9 +84,6 @@ export default function ScholarshipPage() {
 
     const processForm = async (data: ScholarshipFormValues) => {
         setIsSubmitting(true);
-        const appNum = `GSA${new Date().getFullYear()}${Math.floor(10000 + Math.random() * 90000)}`;
-        const rollNum = `R${Date.now().toString().slice(-8)}`;
-        const uniqueId = CLASS_UNIQUE_IDS[data.class];
         
         const { photo, signature, ...restOfData } = data;
 
@@ -102,12 +99,20 @@ export default function ScholarshipPage() {
             reader.readAsDataURL(signature[0]);
         });
 
-        const dataForFirestore = { ...restOfData, applicationNumber: appNum, rollNumber: rollNum, uniqueId, photoUrl: photoDataUrl, signatureUrl: signatureDataUrl };
-        const finalDataForUI = { ...data, rollNumber: rollNum, photoUrl: photoDataUrl, signatureUrl: signatureDataUrl };
+        const dataForFirestore = { ...restOfData, photoUrl: photoDataUrl, signatureUrl: signatureDataUrl };
                 
         try {
-            await addScholarshipApplication(dataForFirestore);
-            setApplicationNumber(appNum);
+            const result = await addScholarshipApplication(dataForFirestore);
+            setApplicationNumber(result.applicationNumber);
+            
+            const finalDataForUI: FormDataType = { 
+                ...data,
+                rollNumber: result.rollNumber,
+                onlineTestCode: result.onlineTestCode,
+                photoUrl: photoDataUrl,
+                signatureUrl: signatureDataUrl 
+            };
+
             setFormData(finalDataForUI);
             setIsSubmitted(true);
             toast({ title: "Success", description: "Application submitted successfully." });
@@ -204,14 +209,10 @@ export default function ScholarshipPage() {
                                 <div><Label>{t('age')}</Label><Input {...form.register('age')} type="number" disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.age?.message}</p></div>
                                 <div><Label>{t('selectClass')}</Label><Select onValueChange={(value) => form.setValue('class', value as "5"|"6"|"7"|"8"|"9")} defaultValue={form.getValues('class')} disabled={isSubmitting}><SelectTrigger><SelectValue placeholder={t('selectClass')} /></SelectTrigger><SelectContent><SelectItem value="5">Class 5</SelectItem><SelectItem value="6">Class 6</SelectItem><SelectItem value="7">Class 7</SelectItem><SelectItem value="8">Class 8</SelectItem><SelectItem value="9">Class 9</SelectItem></SelectContent></Select><p className="text-destructive text-xs">{form.formState.errors.class?.message}</p></div>
                                 <div><Label>{t('schoolName')}</Label><Input {...form.register('school')} disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.school?.message}</p></div>
+                                <div><Label>Target Exam</Label><Input {...form.register('targetExam')} placeholder="e.g., Sainik School, RMS" disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.targetExam?.message}</p></div>
                             </div>
                         )}
                         {currentStep === 3 && (
-                            <div className="space-y-4">
-                                <div><Label>{t('fullAddress')}</Label><Input {...form.register('address')} placeholder={t('fullAddressPlaceholder')} disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.address?.message}</p></div>
-                            </div>
-                        )}
-                         {currentStep === 4 && (
                             <div className="space-y-4">
                                 <Label>Test Mode</Label>
                                 <RadioGroup onValueChange={(value) => form.setValue('testMode', value as 'online' | 'offline')} defaultValue={form.getValues('testMode')} className="grid grid-cols-2 gap-4">
@@ -219,6 +220,11 @@ export default function ScholarshipPage() {
                                     <div><RadioGroupItem value="offline" id="offline" className="peer sr-only" /><Label htmlFor="offline" className="flex items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">Offline</Label></div>
                                 </RadioGroup>
                                 <p className="text-destructive text-xs">{form.formState.errors.testMode?.message}</p>
+                            </div>
+                        )}
+                        {currentStep === 4 && (
+                             <div className="space-y-4">
+                                <div><Label>{t('fullAddress')}</Label><Input {...form.register('address')} placeholder={t('fullAddressPlaceholder')} disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.address?.message}</p></div>
                             </div>
                         )}
                         {currentStep === 5 && (

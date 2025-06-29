@@ -35,7 +35,7 @@ import {
     type NewNotificationData, type NotificationCategory
 } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star, CheckSquare, Shield, Key, Award } from 'lucide-react';
+import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star, CheckSquare, Shield, Key, Award, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -46,6 +46,7 @@ import Image from 'next/image';
 import { format } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
 import { testsData } from '@/lib/tests-data';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // Schemas
 const settingsSchema = z.object({
@@ -72,6 +73,7 @@ const courseSchema = z.object({ title: z.string().min(3), description: z.string(
 const teacherSchema = z.object({ name: z.string().min(3), description: z.string().min(10), imageUrl: z.any().optional() });
 const galleryImageSchema = z.object({ caption: z.string().min(3), imageUrl: z.any().refine(f => f?.length === 1, "Image is required.") });
 const customTestSchema = z.object({
+  id: z.string().min(3, "Test ID is required. Use only letters, numbers, and dashes (e.g., 'my-test-id').").regex(/^[a-z0-9-]+$/, "ID must be lowercase with letters, numbers, and dashes only."),
   title: z.string().min(3),
   description: z.string().min(10),
   timeLimit: z.coerce.number().min(1),
@@ -283,15 +285,23 @@ export default function AdminPage() {
                             </AdminSection>
                             
                             <AdminSection title="Manage Custom Tests" icon={FilePlus2}>
-                                <p className="text-sm text-muted-foreground mb-2">
-                                    Add custom tests manually. Use the sample JSON format below for the 'Questions JSON' field.
+                                <Alert variant="default" className="bg-blue-950 border-blue-800">
+                                    <AlertCircle className="h-4 w-4 text-blue-400" />
+                                    <AlertTitle className="text-blue-300">How to Create the Scholarship Test</AlertTitle>
+                                    <AlertDescription className="text-blue-400">
+                                        To create the main scholarship test that students will take online, create a new custom test below and give it the specific ID: <code className="font-mono bg-blue-800/50 px-1 py-0.5 rounded">'scholarship-test-main'</code>. The system will automatically use this test for online scholarship applicants.
+                                    </AlertDescription>
+                                </Alert>
+
+                                <p className="text-sm text-muted-foreground my-2">
+                                    Use the sample JSON format below for the 'Questions JSON' field.
                                 </p>
                                 <pre className="p-2 bg-muted rounded-md text-xs overflow-x-auto mb-4"><code>{customTestJsonExample}</code></pre>
                                 <CrudForm schema={customTestSchema} onSubmit={addCustomTest} onRefresh={fetchData} fields={{
-                                    title: 'text', description: 'textarea', timeLimit: 'number',
+                                    id: 'text', title: 'text', description: 'textarea', timeLimit: 'number',
                                     medium: 'text', languageForAI: 'text', questionsJson: 'textarea',
                                 }} />
-                                <DataTable data={data.customTests} columns={['title', 'description']} onDelete={deleteCustomTest} onRefresh={fetchData} />
+                                <DataTable data={data.customTests} columns={['id', 'title', 'description']} onDelete={deleteCustomTest} onRefresh={fetchData} />
                             </AdminSection>
 
                             <AdminSection title={t('manageLiveClasses')} icon={Tv}>
@@ -515,7 +525,14 @@ const NotificationForm = ({ onRefresh }: { onRefresh: () => void }) => {
     const handleFormSubmit = async (values: z.infer<typeof notificationSchema>) => {
         setIsSubmitting(true);
         try {
-            await addNotification(values);
+            // Admin-sent notifications should not trigger further notifications.
+            // await addNotification(values);
+            if (!db) throw new Error("Firestore DB not initialized.");
+            await addDoc(collection(db, "notifications"), {
+                ...values,
+                createdAt: Timestamp.now(),
+            });
+
             toast({ title: "Success", description: "Notification sent successfully." });
             form.reset();
             onRefresh();

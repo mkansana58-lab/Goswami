@@ -1,3 +1,4 @@
+"use client";
 // firebase.ts
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getFirestore, collection, getDocs, type Firestore, query, orderBy, Timestamp, addDoc, where, limit, doc, setDoc, getDoc, deleteDoc, updateDoc } from "firebase/firestore";
@@ -65,8 +66,9 @@ export interface NewNotificationData {
 export interface ScholarshipApplicationData {
     id?: string;
     applicationNumber: string;
-    rollNumber?: string;
+    rollNumber: string;
     uniqueId: string;
+    onlineTestCode?: string;
     fullName: string;
     fatherName: string;
     mobile: string;
@@ -75,7 +77,8 @@ export interface ScholarshipApplicationData {
     class: string;
     school: string;
     address: string;
-    testMode?: 'online' | 'offline';
+    targetExam: string;
+    testMode: 'online' | 'offline';
     photoUrl: string; // as data URI
     signatureUrl: string; // as data URI
     isUniqueIdWaived?: boolean;
@@ -104,6 +107,17 @@ export interface TestResultData {
     score: number;
     totalQuestions: number;
     percentage: number;
+    submittedAt: Timestamp;
+}
+
+export interface ScholarshipTestResult {
+    id?: string;
+    studentName: string;
+    score: number;
+    totalQuestions: number;
+    percentage: number;
+    timeTaken: number;
+    answers: Record<number, string>;
     submittedAt: Timestamp;
 }
 
@@ -236,7 +250,12 @@ export const CLASS_UNIQUE_IDS: Record<string, string> = {
     "9": "4734",
 };
 
-// --- Functions ---
+// --- Helper Functions ---
+
+// Generate a random numeric string of a given length
+const generateRandomCode = (length: number) => {
+    return Math.floor(Math.pow(10, length - 1) + Math.random() * (Math.pow(10, length) - Math.pow(10, length - 1) - 1)).toString();
+};
 
 // Notification helper
 async function sendNotification(title: string, content: string, category: NotificationCategory = 'alert', recipient?: string): Promise<void> {
@@ -251,7 +270,8 @@ async function sendNotification(title: string, content: string, category: Notifi
         if (recipient) {
             notificationData.recipient = recipient;
         }
-        await addDoc(collection(db, "notifications"), notificationData);
+        // Do not await this, let it run in the background
+        addDoc(collection(db, "notifications"), notificationData);
     } catch (error) {
         console.error("Failed to send notification:", error);
     }
@@ -271,6 +291,9 @@ async function getAll<T>(collectionName: string): Promise<T[]> {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as T);
 }
 
+
+// --- App-specific Functions ---
+
 export async function getAppConfig(): Promise<AppConfig> {
     if (!db) return {};
     const configRef = doc(db, "appConfig", "settings");
@@ -289,7 +312,7 @@ export async function updateAppConfig(data: Partial<AppConfig>): Promise<void> {
 
 export async function addLiveClass({ title, link, scheduledAt }: NewLiveClassData): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
-    // No notification on purpose
+    // No admin-triggered notifications
     await addDoc(collection(db, "liveClasses"), {
         title,
         link,
@@ -301,19 +324,33 @@ export const deleteLiveClass = (id: string) => deleteDocument("liveClasses", id)
 
 
 export async function addNotification({ title, content, category, recipient }: NewNotificationData): Promise<void> {
-    await sendNotification(title, content, category, recipient);
+     if (!db) throw new Error("Firestore DB not initialized.");
+     // This function is for admin-sent notifications, so we don't trigger another notification
+     await addDoc(collection(db, "notifications"), { title, content, category, recipient, createdAt: Timestamp.now() });
 }
 export const deleteNotification = (id: string) => deleteDocument("notifications", id);
 
-export async function addScholarshipApplication(data: Omit<ScholarshipApplicationData, 'createdAt' | 'id' | 'resultStatus'>): Promise<void> {
+export async function addScholarshipApplication(data: Omit<ScholarshipApplicationData, 'createdAt' | 'id' | 'resultStatus' | 'applicationNumber' | 'rollNumber' | 'uniqueId' | 'onlineTestCode'>): Promise<{applicationNumber: string, rollNumber: string, onlineTestCode?: string}> {
     if (!db) throw new Error("Firestore DB not initialized.");
+    
+    const applicationNumber = `GSA${new Date().getFullYear()}${generateRandomCode(5)}`;
+    const rollNumber = `R${generateRandomCode(8)}`;
+    const uniqueId = CLASS_UNIQUE_IDS[data.class];
+    const onlineTestCode = data.testMode === 'online' ? generateRandomCode(6) : undefined;
+    
     await addDoc(collection(db, "scholarshipApplications"), {
         ...data,
+        applicationNumber,
+        rollNumber,
+        uniqueId,
+        onlineTestCode,
         resultStatus: 'pending',
         createdAt: Timestamp.now(),
     });
-    // Student-facing notification
-    await sendNotification('Application Received', `Your application for ${data.fullName} (App No: ${data.applicationNumber}) has been received.`, 'scholarship', data.fullName);
+    // Student-facing notification for successful application
+    sendNotification('Application Received', `Your application for ${data.fullName} (App No: ${applicationNumber}) has been received.`, 'scholarship', data.fullName);
+
+    return { applicationNumber, rollNumber, onlineTestCode };
 }
 
 export async function updateScholarshipApplicationWaiver(appId: string, isWaived: boolean): Promise<void> {
@@ -344,6 +381,19 @@ export async function getScholarshipApplicationByAppNumber(appNumber: string): P
     return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as ScholarshipApplicationData;
 }
 
+export async function getScholarshipApplicationByOnlineTestCode(code: string): Promise<ScholarshipApplicationData | null> {
+    if (!db) return null;
+    const q = query(
+        collection(db, "scholarshipApplications"), 
+        where("onlineTestCode", "==", code),
+        limit(1)
+    );
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) return null;
+    return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as ScholarshipApplicationData;
+}
+
+
 export async function getStudent(name: string): Promise<StudentData | null> {
     if (!db) return null;
     const studentRef = doc(db, "students", name);
@@ -367,6 +417,14 @@ export async function getStudents(): Promise<StudentData[]> {
 export async function addTestResult(data: Omit<TestResultData, 'submittedAt' | 'id'>): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
     await addDoc(collection(db, "testResults"), {
+        ...data,
+        submittedAt: Timestamp.now(),
+    });
+}
+
+export async function addScholarshipTestResult(data: Omit<ScholarshipTestResult, 'submittedAt' | 'id'>): Promise<void> {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    await addDoc(collection(db, "scholarshipTestResults"), {
         ...data,
         submittedAt: Timestamp.now(),
     });
@@ -482,7 +540,7 @@ export const addChatMessage = async (data: Omit<ChatMessage, 'id' | 'createdAt'>
 export const addCustomTest = async (data: any) => {
     if (!db) throw new Error("Firestore DB not initialized.");
     const questions = JSON.parse(data.questionsJson);
-    const testData = {
+    const testData: Omit<CustomTest, 'id' | 'createdAt'> = {
         title: data.title,
         description: data.description,
         medium: data.medium,
@@ -491,11 +549,10 @@ export const addCustomTest = async (data: any) => {
         totalQuestions: questions.length,
         testType: 'custom',
         questions: questions,
-        createdAt: Timestamp.now()
     };
-    const newTest = await addDoc(collection(db, "customTests"), testData);
-    return newTest;
+    await setDoc(doc(db, "customTests", data.id), { ...testData, createdAt: Timestamp.now() });
 };
+
 export const getCustomTests = async (): Promise<CustomTest[]> => getAll<CustomTest>("customTests");
 export const getCustomTest = async (id: string): Promise<CustomTest | null> => {
     if (!db) return null;
@@ -528,8 +585,7 @@ export const updateTestSetting = async (testId: string, isEnabled: boolean) => {
 
 // --- Test Enrollments ---
 function generateEnrollmentCode(): string {
-  // Generates a 5-digit number as a string
-  return Math.floor(10000 + Math.random() * 90000).toString();
+  return generateRandomCode(5);
 }
 
 export const addTestEnrollment = async (studentName: string, testId: string, testName: string): Promise<string> => {
@@ -552,7 +608,7 @@ export const addTestEnrollment = async (studentName: string, testId: string, tes
         attemptsWaived: false,
     });
 
-    await sendNotification(
+    sendNotification(
         'Test Enrollment Successful', 
         `You have enrolled in "${testName}". Your unique 5-digit Enrollment Code is: ${enrollmentCode}. Please save this code.`, 
         'general',

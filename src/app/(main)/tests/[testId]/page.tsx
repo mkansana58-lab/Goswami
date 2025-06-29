@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -14,7 +13,8 @@ import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Clock, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getCustomTest, type CustomTest } from '@/lib/firebase';
+import { addScholarshipTestResult, addTestResult, getCustomTest, type CustomTest } from '@/lib/firebase';
+import { useAuth } from '@/hooks/use-auth';
 
 type Answers = { [key: number]: string };
 
@@ -23,6 +23,7 @@ export default function TestPlayerPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
+  const { student } = useAuth();
   const testId = Array.isArray(params.testId) ? params.testId[0] : params.testId;
 
   const [testDetails, setTestDetails] = useState<TestDetails | CustomTest | null>(null);
@@ -99,12 +100,39 @@ export default function TestPlayerPage() {
     loadTest();
   }, [testId, t, router, toast]);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
+    if (!student || !testDetails) return;
+  
+    // Special handling for the scholarship test
+    if (testId === 'scholarship-test-main') {
+      let totalCorrect = 0;
+      allQuestions.forEach((q, index) => {
+        if (answers[index] === q.answer) {
+          totalCorrect++;
+        }
+      });
+      const timeTaken = (testDetails.timeLimit * 60) - timeLeft;
+      const percentage = (totalCorrect / testDetails.totalQuestions) * 100;
+
+      await addScholarshipTestResult({
+        studentName: student.name,
+        score: totalCorrect,
+        totalQuestions: testDetails.totalQuestions,
+        percentage: percentage,
+        timeTaken: timeTaken,
+        answers: answers
+      });
+      sessionStorage.removeItem(`test-progress-${testId}`);
+      router.push(`/online-scholarship-test/submitted`);
+      return;
+    }
+  
+    // Default handling for other tests
     sessionStorage.setItem(`test-result-${testId}`, JSON.stringify({ answers, timeLeft, questions: allQuestions }));
     sessionStorage.removeItem(`test-progress-${testId}`);
     toast({ title: t('testSubmitted') });
     router.push(`/tests/${testId}/results`);
-  }, [answers, timeLeft, allQuestions, testId, router, t, toast]);
+  }, [answers, timeLeft, allQuestions, testId, router, t, toast, student, testDetails]);
 
   useEffect(() => {
     if (isGenerating || !testDetails) return;

@@ -1,4 +1,3 @@
-
 export type Language = 'en' | 'hi';
 
 export const translations = {
@@ -55,6 +54,7 @@ export const translations = {
     confirmationPage: "Confirmation Page",
     cityIntimationSlip: "City Intimation Slip",
     downloadResult: "Download Result",
+    onlineTest: "Online Scholarship Test",
 
     // Scholarship Form Translations
     scholarshipTitle: "Scholarship Application Form 2024",
@@ -300,6 +300,7 @@ export const translations = {
     confirmationPage: "कन्फर्मेशन पेज",
     cityIntimationSlip: "सिटी इंटिमेशन स्लिप",
     downloadResult: "रिजल्ट डाउनलोड करें",
+    onlineTest: "ऑनलाइन स्कॉलरशिप टेस्ट",
 
     // Scholarship Form Translations
     scholarshipTitle: "छात्रवृत्ति आवेदन पत्र 2024",

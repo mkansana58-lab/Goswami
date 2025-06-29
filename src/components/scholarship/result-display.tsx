@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useLanguage } from '@/hooks/use-language';
@@ -59,7 +58,7 @@ export function ResultDisplay({ data, onBack }: Props) {
                         {isPass ? (
                             <div className='bg-green-500/10 border border-green-500/30 rounded-lg p-4'>
                                 <h3 className='font-bold text-green-400'>Congratulations on Your Scholarship!</h3>
-                                <p className='mt-2 text-sm text-green-400/80'>As a scholarship recipient, you will receive 3 months of free tuition and access to all our premium test series.</p>
+                                <p className='mt-2 text-sm text-green-400/80'>As a scholarship recipient, you will receive 3 months of free tuition and access to all our premium test series for your target exam.</p>
                             </div>
                         ) : (
                             <p>We regret to inform you that you did not pass the scholarship exam. We encourage you to continue working hard and wish you the best for your future.</p>
