@@ -9,10 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { getScholarshipApplicationByOnlineTestCode, getAppConfig, type AppConfig } from '@/lib/firebase';
-import { Loader2, KeyRound } from 'lucide-react';
+import { getScholarshipApplicationByOnlineTestCode, getAppConfig, type AppConfig, type ScholarshipApplicationData } from '@/lib/firebase';
+import { Loader2, KeyRound, User, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { format } from 'date-fns';
+import Image from 'next/image';
 
 
 // This is the hardcoded ID for the scholarship test.
@@ -24,15 +25,18 @@ export default function OnlineScholarshipTestEntryPage() {
   const { toast } = useToast();
   const { student } = useAuth();
   const router = useRouter();
+  
+  const [step, setStep] = useState<'entry' | 'confirm'>('entry');
   const [onlineTestCode, setOnlineTestCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
+  const [verifiedApplicant, setVerifiedApplicant] = useState<ScholarshipApplicationData | null>(null);
 
   useEffect(() => {
     getAppConfig().then(setAppConfig);
   }, []);
 
-  const handleStartTest = async () => {
+  const handleVerifyCode = async () => {
     if (!onlineTestCode) {
       toast({ variant: "destructive", title: "Error", description: "Online Test Code is required." });
       return;
@@ -66,17 +70,22 @@ export default function OnlineScholarshipTestEntryPage() {
             return;
         }
 
-        // Store applicant data in session storage to be used on the test page
-        sessionStorage.setItem('scholarship-applicant-data', JSON.stringify(appData));
-        
-        toast({ title: "Code Verified", description: "Redirecting to the test..." });
-        router.push(`/tests/${SCHOLARSHIP_TEST_ID}`);
+        setVerifiedApplicant(appData);
+        setStep('confirm');
+        toast({ title: "Code Verified", description: "Please confirm your details to start the test." });
 
     } catch (error) {
         toast({ variant: "destructive", title: "Error", description: "An error occurred while verifying your code." });
     } finally {
         setIsLoading(false);
     }
+  };
+
+  const handleStartTest = () => {
+    if (!verifiedApplicant) return;
+     // Store applicant data in session storage to be used on the test page
+    sessionStorage.setItem('scholarship-applicant-data', JSON.stringify(verifiedApplicant));
+    router.push(`/tests/${SCHOLARSHIP_TEST_ID}`);
   };
 
   return (
@@ -87,26 +96,51 @@ export default function OnlineScholarshipTestEntryPage() {
         <p className="text-muted-foreground">Enter the code from your admit card to begin.</p>
       </div>
 
-      <Card className="max-w-md mx-auto">
-        <CardHeader>
-          <CardTitle>Enter Your Code</CardTitle>
-          <CardDescription>This code is available on your admit card if you selected the 'Online' test mode.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="online-test-code">Online Test Code</Label>
-            <Input id="online-test-code" placeholder="Enter your code here" value={onlineTestCode} onChange={(e) => setOnlineTestCode(e.target.value)} disabled={isLoading} />
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button className="w-full" onClick={handleStartTest} disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Start Test
-          </Button>
-        </CardFooter>
-      </Card>
+      {step === 'entry' && (
+        <Card className="max-w-md mx-auto">
+          <CardHeader>
+            <CardTitle>Enter Your Code</CardTitle>
+            <CardDescription>This code is available on your admit card if you selected the 'Online' test mode.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="online-test-code">Online Test Code</Label>
+              <Input id="online-test-code" placeholder="Enter your code here" value={onlineTestCode} onChange={(e) => setOnlineTestCode(e.target.value)} disabled={isLoading} />
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button className="w-full" onClick={handleVerifyCode} disabled={isLoading}>
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Verify Code"}
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
+
+      {step === 'confirm' && verifiedApplicant && (
+          <Card className="max-w-md mx-auto animate-in fade-in-50">
+            <CardHeader>
+                <CardTitle>Confirm Your Identity</CardTitle>
+                <CardDescription>Please confirm that these are your details before starting the test.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex items-center gap-4">
+                    <Image src={verifiedApplicant.photoUrl || 'https://placehold.co/80x80.png'} alt="Applicant photo" width={80} height={80} className="rounded-md border" data-ai-hint="student photo"/>
+                    <div className="space-y-1 text-sm">
+                        <p><span className="font-semibold">Name:</span> {verifiedApplicant.fullName}</p>
+                        <p><span className="font-semibold">App No:</span> {verifiedApplicant.applicationNumber}</p>
+                        <p><span className="font-semibold">Class:</span> {verifiedApplicant.class}</p>
+                    </div>
+                </div>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+                <Button variant="outline" onClick={() => setStep('entry')}>Go Back</Button>
+                 <Button className="w-full" onClick={handleStartTest}>
+                    Start Test <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+            </CardFooter>
+          </Card>
+      )}
+
     </div>
   );
 }
-
-    

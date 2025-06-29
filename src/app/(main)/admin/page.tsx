@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useLanguage } from "@/hooks/use-language";
@@ -34,10 +34,10 @@ import {
     type VideoLecture, type Download, type Course, type AppConfig,
     type ScholarshipApplicationData, type StudentData, type Teacher, type GalleryImage,
     type ContactInquiry, type EBook, type CustomTest, type TestSetting, type TestEnrollment,
-    type ScholarshipTestResult
+    type ScholarshipTestResult, type Question
 } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star, CheckSquare, Shield, Key, Award, AlertCircle, Trophy } from 'lucide-react';
+import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star, CheckSquare, Shield, Key, Award, AlertCircle, Trophy, PlusCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -49,6 +49,7 @@ import { format } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
 import { testsData } from '@/lib/tests-data';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 // Schemas
 const settingsSchema = z.object({
@@ -75,7 +76,7 @@ const eBookSchema = z.object({ title: z.string().min(3), pdfUrl: z.string().url(
 const courseSchema = z.object({ title: z.string().min(3), description: z.string().min(10), imageUrl: z.any().optional() });
 const teacherSchema = z.object({ name: z.string().min(3), description: z.string().min(10), imageUrl: z.any().optional() });
 const galleryImageSchema = z.object({ caption: z.string().min(3), imageUrl: z.any().refine(f => f?.length === 1, "Image is required.") });
-const customTestSchema = z.object({
+const customTestJsonSchema = z.object({
   id: z.string().min(3, "Test ID is required. Use only letters, numbers, and dashes (e.g., 'my-test-id').").regex(/^[a-z0-9-]+$/, "ID must be lowercase with letters, numbers, and dashes only."),
   title: z.string().min(3),
   description: z.string().min(10),
@@ -319,15 +320,24 @@ export default function AdminPage() {
                                         To create the main scholarship test that students will take online, create a new custom test below and give it the specific ID: <code className="font-mono bg-blue-800/50 px-1 py-0.5 rounded">'scholarship-test-main'</code>. The system will automatically use this test for online scholarship applicants.
                                     </AlertDescription>
                                 </Alert>
+                                <Tabs defaultValue="builder" className="mt-4">
+                                    <TabsList>
+                                        <TabsTrigger value="builder">Visual Builder</TabsTrigger>
+                                        <TabsTrigger value="json">JSON Input</TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="builder">
+                                        <CustomTestBuilderForm onRefresh={fetchData} />
+                                    </TabsContent>
+                                    <TabsContent value="json">
+                                        <p className="text-sm text-muted-foreground my-2">Use the sample JSON format below for the 'Questions JSON' field.</p>
+                                        <pre className="p-2 bg-muted rounded-md text-xs overflow-x-auto mb-4"><code>{customTestJsonExample}</code></pre>
+                                        <CrudForm schema={customTestJsonSchema} onSubmit={addCustomTest} onRefresh={fetchData} fields={{
+                                            id: 'text', title: 'text', description: 'textarea', timeLimit: 'number',
+                                            medium: 'text', languageForAI: 'text', questionsJson: 'textarea',
+                                        }} />
+                                    </TabsContent>
+                                </Tabs>
 
-                                <p className="text-sm text-muted-foreground my-2">
-                                    Use the sample JSON format below for the 'Questions JSON' field.
-                                </p>
-                                <pre className="p-2 bg-muted rounded-md text-xs overflow-x-auto mb-4"><code>{customTestJsonExample}</code></pre>
-                                <CrudForm schema={customTestSchema} onSubmit={addCustomTest} onRefresh={fetchData} fields={{
-                                    id: 'text', title: 'text', description: 'textarea', timeLimit: 'number',
-                                    medium: 'text', languageForAI: 'text', questionsJson: 'textarea',
-                                }} />
                                 <DataTable data={data.customTests} columns={['id', 'title', 'description']} onDelete={deleteCustomTest} onRefresh={fetchData} />
                             </AdminSection>
 
@@ -519,7 +529,7 @@ export default function AdminPage() {
                                             <TableRow key={inquiry.id}>
                                                 <TableCell>{inquiry.email}</TableCell>
                                                 <TableCell>{inquiry.mobile}</TableCell>
-                                                <TableCell className="max-w-xs truncate">{inquiry.message}</TableCell>
+                                                <TableCell className="max-w-xs break-words">{inquiry.message}</TableCell>
                                                 <TableCell><ImagePreview url={inquiry.imageUrl} triggerText="View Image" /></TableCell>
                                                 <TableCell>{format(inquiry.createdAt.toDate(), 'PPP p')}</TableCell>
                                                 <TableCell>
@@ -618,9 +628,7 @@ const NotificationForm = ({ onRefresh }: { onRefresh: () => void }) => {
     const handleFormSubmit = async (values: z.infer<typeof notificationSchema>) => {
         setIsSubmitting(true);
         try {
-            // Admin-sent notifications should not trigger further notifications.
             await addNotification(values);
-
             toast({ title: "Success", description: "Notification sent successfully." });
             form.reset();
             onRefresh();
@@ -689,7 +697,7 @@ const DataTable = ({ data, columns, onDelete, onRefresh }: { data: any[], column
         <TableBody>
             {data.map(item => (
                 <TableRow key={item.id}>
-                    {columns.map(col => <TableCell key={col} className="truncate max-w-xs">{item[col]}</TableCell>)}
+                    {columns.map(col => <TableCell key={col} className="max-w-xs break-words">{item[col]}</TableCell>)}
                     <TableCell>
                         <AlertDialog>
                             <AlertDialogTrigger asChild><Button variant="destructive" size="icon"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
@@ -759,4 +767,110 @@ const TestSettingsManager = ({ initialSettings, customTests }: { initialSettings
     )
 }
 
-    
+const testBuilderSchema = z.object({
+  id: z.string().min(3, "Test ID is required.").regex(/^[a-z0-9-]+$/, "ID must be lowercase with letters, numbers, and dashes only."),
+  title: z.string().min(3, "Title is required."),
+  description: z.string().min(10, "Description is required."),
+  timeLimit: z.coerce.number().min(1, "Time limit is required."),
+  medium: z.string().min(1, "Medium is required."),
+  languageForAI: z.string().min(1, "Language for AI is required."),
+  questions: z.array(z.object({
+    question: z.string().min(1, "Question text is required."),
+    options: z.array(z.string().min(1, "Option text cannot be empty.")).length(4, "There must be exactly 4 options."),
+    answer: z.string().min(1, "A correct answer must be selected."),
+  })).min(1, "At least one question is required."),
+});
+
+type TestBuilderFormValues = z.infer<typeof testBuilderSchema>;
+
+const CustomTestBuilderForm = ({ onRefresh }: { onRefresh: () => void }) => {
+    const { t } = useLanguage();
+    const { toast } = useToast();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const form = useForm<TestBuilderFormValues>({
+        resolver: zodResolver(testBuilderSchema),
+        defaultValues: {
+            id: "", title: "", description: "", timeLimit: 60, medium: "Hindi", languageForAI: "Hindi",
+            questions: [{ question: "", options: ["", "", "", ""], answer: "" }]
+        }
+    });
+
+    const { fields, append, remove } = useFieldArray({
+        control: form.control,
+        name: "questions"
+    });
+
+    const onSubmit = async (data: TestBuilderFormValues) => {
+        setIsSubmitting(true);
+        try {
+            const questionsWithIds = data.questions.map((q, index) => ({...q, id: index + 1}));
+            const dataToSave = {
+                ...data,
+                questionsJson: JSON.stringify(questionsWithIds),
+            };
+            
+            await addCustomTest(dataToSave);
+            toast({ title: "Success", description: "Custom test created successfully." });
+            form.reset();
+            onRefresh();
+        } catch (error) {
+            console.error(error);
+            toast({ variant: "destructive", title: "Error", description: "Failed to create custom test." });
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
+    return (
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-4 border rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><Label>Test ID</Label><Input {...form.register('id')} /><p className="text-destructive text-xs">{form.formState.errors.id?.message}</p></div>
+                <div><Label>Title</Label><Input {...form.register('title')} /><p className="text-destructive text-xs">{form.formState.errors.title?.message}</p></div>
+                <div className="md:col-span-2"><Label>Description</Label><Textarea {...form.register('description')} /><p className="text-destructive text-xs">{form.formState.errors.description?.message}</p></div>
+                <div><Label>Time Limit (minutes)</Label><Input type="number" {...form.register('timeLimit')} /><p className="text-destructive text-xs">{form.formState.errors.timeLimit?.message}</p></div>
+                <div><Label>Medium</Label><Input {...form.register('medium')} /><p className="text-destructive text-xs">{form.formState.errors.medium?.message}</p></div>
+                <div><Label>Language for AI</Label><Input {...form.register('languageForAI')} /><p className="text-destructive text-xs">{form.formState.errors.languageForAI?.message}</p></div>
+            </div>
+
+            <Separator />
+            
+            <h3 className="text-lg font-semibold">Questions</h3>
+            {fields.map((field, index) => (
+                <div key={field.id} className="space-y-3 p-4 border rounded-md relative">
+                    <Label className="font-bold">Question {index + 1}</Label>
+                    <Textarea placeholder="Question text..." {...form.register(`questions.${index}.question`)} />
+                    <p className="text-destructive text-xs">{form.formState.errors.questions?.[index]?.question?.message}</p>
+
+                    <RadioGroup onValueChange={(value) => form.setValue(`questions.${index}.answer`, value)}>
+                        <div className="space-y-2">
+                            {Array.from({ length: 4 }).map((_, optionIndex) => (
+                                <div key={optionIndex} className="flex items-center gap-2">
+                                    <RadioGroupItem value={form.watch(`questions.${index}.options.${optionIndex}`)} id={`q${index}-opt${optionIndex}`} />
+                                    <Input placeholder={`Option ${optionIndex + 1}`} {...form.register(`questions.${index}.options.${optionIndex}`)} />
+                                </div>
+                            ))}
+                        </div>
+                    </RadioGroup>
+                    <p className="text-destructive text-xs">{form.formState.errors.questions?.[index]?.options?.message}</p>
+                    <p className="text-destructive text-xs">{form.formState.errors.questions?.[index]?.answer?.message}</p>
+
+                    <Button type="button" variant="destructive" size="sm" onClick={() => remove(index)} className="mt-2">Remove Question</Button>
+                </div>
+            ))}
+
+            <Button type="button" variant="outline" onClick={() => append({ question: "", options: ["", "", "", ""], answer: "" })}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Question
+            </Button>
+            
+            <p className="text-destructive text-xs">{form.formState.errors.questions?.message}</p>
+            
+            <Separator />
+
+            <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create Test
+            </Button>
+        </form>
+    );
+};

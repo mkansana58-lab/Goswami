@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, ReactElement } from "react";
@@ -33,8 +34,8 @@ const formSchema = z.object({
     targetExam: z.string().min(3, "Target exam is required (e.g., Sainik School, RMS)"),
     testMode: z.enum(['online', 'offline'], { required_error: "Please select a test mode." }),
     targetTestEnrollmentCode: z.string().min(5, "Enrollment code is required").max(5, "Must be 5 digits").optional(),
-    photo: z.any().refine((files) => files?.length === 1, "Photo is required."),
-    signature: z.any().refine((files) => files?.length === 1, "Signature is required."),
+    photo: z.any().optional(),
+    signature: z.any().optional(),
 });
 
 type ScholarshipFormValues = z.infer<typeof formSchema>;
@@ -88,17 +89,23 @@ export default function ScholarshipPage() {
         
         const { photo, signature, ...restOfData } = data;
 
-        const photoDataUrl = await new Promise<string>(resolve => {
-            const reader = new FileReader();
-            reader.onload = (e) => resolve(e.target?.result as string);
-            reader.readAsDataURL(photo[0]);
-        });
+        let photoDataUrl = "";
+        if (data.photo?.[0]) {
+            photoDataUrl = await new Promise<string>(resolve => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target?.result as string);
+                reader.readAsDataURL(data.photo[0]);
+            });
+        }
         
-        const signatureDataUrl = await new Promise<string>(resolve => {
-            const reader = new FileReader();
-            reader.onload = (e) => resolve(e.target?.result as string);
-            reader.readAsDataURL(signature[0]);
-        });
+        let signatureDataUrl = "";
+        if (data.signature?.[0]) {
+            signatureDataUrl = await new Promise<string>(resolve => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target?.result as string);
+                reader.readAsDataURL(data.signature[0]);
+            });
+        }
 
         const dataForFirestore = { ...restOfData, photoUrl: photoDataUrl, signatureUrl: signatureDataUrl };
                 
@@ -237,8 +244,8 @@ export default function ScholarshipPage() {
                         )}
                         {currentStep === 5 && (
                             <div className="space-y-4">
-                                <div><Label htmlFor="photo">{t('uploadPhoto')}</Label><Input id="photo" type="file" accept="image/*" {...form.register('photo')} disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.photo?.message as string}</p></div>
-                                <div><Label htmlFor="signature">{t('uploadSignature')}</Label><Input id="signature" type="file" accept="image/*" {...form.register('signature')} disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.signature?.message as string}</p></div>
+                                <div><Label htmlFor="photo">{t('uploadPhoto')} (Optional)</Label><Input id="photo" type="file" accept="image/*" {...form.register('photo')} disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.photo?.message as string}</p></div>
+                                <div><Label htmlFor="signature">{t('uploadSignature')} (Optional)</Label><Input id="signature" type="file" accept="image/*" {...form.register('signature')} disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.signature?.message as string}</p></div>
                             </div>
                         )}
                     </form>

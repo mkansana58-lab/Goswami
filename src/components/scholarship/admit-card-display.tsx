@@ -89,10 +89,10 @@ export function AdmitCardDisplay({ data, scholarshipTestStartDate, scholarshipTe
                   </div>
                   <div className="space-y-4 flex flex-col items-center">
                       <div className="w-32 h-40 border-2 border-dashed flex items-center justify-center bg-muted/50">
-                        <Image src={data.photoUrl} alt="Student Photo" width={128} height={160} className="object-cover w-full h-full" data-ai-hint="student photo"/>
+                        <Image src={data.photoUrl || 'https://placehold.co/128x160.png'} alt="Student Photo" width={128} height={160} className="object-cover w-full h-full" data-ai-hint="student photo"/>
                       </div>
                       <div className="w-32 h-16 border-2 border-dashed flex items-center justify-center bg-muted/50">
-                          <Image src={data.signatureUrl} alt="Student Signature" width={128} height={64} className="object-contain w-full h-full" data-ai-hint="student signature"/>
+                          <Image src={data.signatureUrl || 'https://placehold.co/128x64.png'} alt="Student Signature" width={128} height={64} className="object-contain w-full h-full" data-ai-hint="signature"/>
                       </div>
                   </div>
               </div>
@@ -129,5 +129,3 @@ export function AdmitCardDisplay({ data, scholarshipTestStartDate, scholarshipTe
     </>
   );
 }
-
-    

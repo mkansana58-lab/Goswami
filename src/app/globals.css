@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    overflow-x: hidden;
+  }
+  
   :root {
     --background: 220 13% 10%;
     --foreground: 210 20% 98%;
@@ -42,5 +46,6 @@
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
   }
 }

@@ -343,7 +343,21 @@ export async function addScholarshipApplication(data: Omit<ScholarshipApplicatio
     const applicationNumber = `GSA${new Date().getFullYear()}${generateRandomCode(5)}`;
     const rollNumber = `R${generateRandomCode(8)}`;
     const uniqueId = CLASS_UNIQUE_IDS[data.class];
-    const onlineTestCode = data.testMode === 'online' ? generateRandomCode(6) : undefined;
+    
+    let onlineTestCode: string | undefined;
+    if (data.testMode === 'online') {
+        let isCodeUnique = false;
+        let newCode = '';
+        while (!isCodeUnique) {
+            newCode = generateRandomCode(6);
+            const q = query(collection(db, "scholarshipApplications"), where("onlineTestCode", "==", newCode), limit(1));
+            const snapshot = await getDocs(q);
+            if (snapshot.empty) {
+                isCodeUnique = true;
+            }
+        }
+        onlineTestCode = newCode;
+    }
     
     await addDoc(collection(db, "scholarshipApplications"), {
         ...data,
