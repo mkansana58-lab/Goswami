@@ -97,7 +97,7 @@ const QuizGamePage = () => {
   };
 
   const useFiftyFifty = () => {
-    if (!lifelines.fiftyFifty || !question) return;
+    if (!lifelines.fiftyFifty || !question || gameState !== 'playing') return;
     
     const incorrectOptions = question.options.filter(opt => opt !== question.answer);
     const optionsToHide = [];
@@ -125,7 +125,7 @@ const QuizGamePage = () => {
     switch(gameState) {
       case 'picking_subject':
         return (
-          <Card className="text-center animate-in fade-in-50">
+          <Card className="text-center animate-in fade-in-50 bg-card/70 backdrop-blur-sm">
             <CardHeader><CardTitle>Choose Your Subject</CardTitle></CardHeader>
             <CardContent className="flex flex-col gap-4">
               {subjects.map(s => (
@@ -140,15 +140,15 @@ const QuizGamePage = () => {
       case 'game_over':
         const amountWon = selectedAnswer === question?.answer ? prizeLadder[level].amount : getSafePrize();
         return (
-             <Card className="text-center animate-in fade-in-50">
+             <Card className="text-center animate-in fade-in-50 bg-card/70 backdrop-blur-sm">
                 <CardHeader>
-                    <CardTitle className={amountWon > 0 ? "text-green-400" : "text-destructive"}>
+                    <CardTitle className={cn("text-3xl", amountWon > 0 ? "text-green-400" : "text-destructive")}>
                         {amountWon > 0 ? `Congratulations!` : 'Game Over'}
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <p className="text-lg">You have won:</p>
-                    <p className="text-5xl font-bold flex items-center justify-center">
+                    <p className="text-5xl font-bold flex items-center justify-center text-amber-400">
                         <IndianRupee className="h-10 w-10"/>
                         {amountWon.toLocaleString('en-IN')}
                     </p>
@@ -171,16 +171,23 @@ const QuizGamePage = () => {
                 <div className="flex-1 space-y-6">
                     {/* Lifelines */}
                      <div className="flex justify-center gap-4">
-                        <Button variant="outline" className="rounded-full aspect-square h-16 w-16 flex flex-col" onClick={useFiftyFifty} disabled={!lifelines.fiftyFifty}>
-                           <span className="font-bold">50:50</span>
-                           {!lifelines.fiftyFifty && <X className="h-5 w-5 absolute text-destructive"/>}
+                        <Button
+                            variant="outline"
+                            className="relative rounded-full aspect-square h-16 w-16 flex flex-col border-2 border-yellow-500 text-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)] hover:bg-yellow-500/10 disabled:shadow-none disabled:opacity-50"
+                            onClick={useFiftyFifty}
+                            disabled={!lifelines.fiftyFifty || gameState !== 'playing'}
+                        >
+                           <span className="font-bold text-lg">50:50</span>
+                           {!lifelines.fiftyFifty && <X className="h-8 w-8 absolute text-destructive/70"/>}
                         </Button>
                     </div>
 
                     {/* Question Card */}
-                    <Card className="text-center relative overflow-hidden">
+                    <Card className="text-center relative overflow-hidden bg-black/30 border-2 border-purple-500/50 shadow-lg shadow-purple-500/20">
                         <CardHeader>
-                            <CardTitle className="text-xl md:text-2xl leading-relaxed">{question.question}</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl leading-relaxed text-white font-sans">
+                                {question.question}
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {question.options.map((opt, i) => {
@@ -195,23 +202,23 @@ const QuizGamePage = () => {
                                         variant="outline"
                                         size="lg"
                                         className={cn(
-                                            "h-auto py-3 text-lg justify-start transition-all duration-300",
+                                            "h-auto py-3 text-base md:text-lg justify-start transition-all duration-300 border-2 border-blue-400/50 bg-blue-950/50 text-blue-100 hover:bg-blue-900 hover:border-blue-300",
                                             isHidden && "opacity-0 pointer-events-none",
-                                            isSelected && !isAnswer && "bg-yellow-500/80 border-yellow-400 text-black",
-                                            isAnswer && "bg-green-500/80 border-green-400 text-black animate-pulse",
-                                            isWrongSelection && "bg-red-500/80 border-red-400 text-white"
+                                            isSelected && "bg-yellow-500/80 border-yellow-400 text-black shadow-[0_0_10px_#facc15]",
+                                            isAnswer && "bg-green-500/80 border-green-400 text-black animate-pulse shadow-[0_0_15px_#22c55e]",
+                                            isWrongSelection && "bg-red-600/80 border-red-400 text-white shadow-[0_0_15px_#ef4444]"
                                         )}
                                         onClick={() => handleAnswerSelect(opt)}
                                         disabled={gameState !== 'playing'}
                                     >
-                                        <span className="font-bold mr-4 text-primary">{String.fromCharCode(65 + i)}:</span>
+                                        <span className="font-bold mr-4 text-yellow-400">{String.fromCharCode(65 + i)}:</span>
                                         {opt}
                                     </Button>
                                 )
                             })}
                         </CardContent>
                          {isLoading && gameState === 'playing' && (
-                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10">
                                 <Loader2 className="h-10 w-10 animate-spin text-white" />
                             </div>
                         )}
@@ -219,16 +226,16 @@ const QuizGamePage = () => {
 
                     {/* Explanation / Next Button */}
                     {gameState === 'answer_revealed' && (
-                         <Card className="animate-in fade-in-50 text-center">
+                         <Card className="animate-in fade-in-50 text-center bg-black/30 border-muted-foreground/30">
                             <CardHeader>
-                                <CardTitle className={cn("flex items-center justify-center gap-2", isCorrect ? "text-green-400" : "text-destructive")}>
+                                <CardTitle className={cn("flex items-center justify-center gap-2 text-2xl", isCorrect ? "text-green-400" : "text-destructive")}>
                                     {isCorrect ? <Check /> : <X />}
                                     {isCorrect ? 'Correct Answer!' : 'Wrong Answer!'}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p>{question.explanation}</p>
-                                <Button onClick={handleNextStep} className="mt-4">
+                                <p className="text-slate-300">{question.explanation}</p>
+                                <Button onClick={handleNextStep} className="mt-4 bg-purple-600 hover:bg-purple-700 text-white shadow-lg">
                                     {isCorrect ? 'Next Question' : 'See Final Score'} <ArrowRight className="ml-2 h-4 w-4"/>
                                 </Button>
                             </CardContent>
@@ -241,12 +248,12 @@ const QuizGamePage = () => {
                     <ul className="flex flex-row-reverse lg:flex-col-reverse justify-center gap-1">
                         {prizeLadder.map((prize, i) => (
                             <li key={prize.amount} className={cn(
-                                "text-center rounded-md p-1 lg:p-2 text-sm lg:text-base transition-all duration-300",
-                                i < level && "text-yellow-600",
-                                i === level && "bg-primary text-primary-foreground font-bold scale-110",
-                                prize.safe && "font-bold text-cyan-400"
+                                "text-center rounded-md p-1 lg:p-2 text-sm lg:text-base transition-all duration-300 font-bold text-slate-300/70 border border-transparent",
+                                i < level && "text-yellow-600/70",
+                                i === level && "bg-orange-500/80 text-white scale-110 border-orange-300 shadow-lg shadow-orange-500/30",
+                                prize.safe && "text-cyan-300"
                             )}>
-                                <span className="hidden lg:inline-block mr-2">{prizeLadder.length - i}.</span>
+                                <span className="hidden lg:inline-block mr-2 opacity-70">{prizeLadder.length - i}.</span>
                                 <IndianRupee className="inline h-3 w-3 lg:h-4 lg:w-4 mb-0.5" />
                                 {prize.amount.toLocaleString('en-IN')}
                             </li>
@@ -260,10 +267,11 @@ const QuizGamePage = () => {
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      <div className="absolute inset-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
        <div className="flex flex-col items-center text-center">
             <Gamepad2 className="h-16 w-16 text-primary animate-pulse" />
-            <h1 className="text-4xl font-bold text-primary mt-2">ज्ञान-योद्धा क्विज़</h1>
+            <h1 className="text-4xl font-headline font-bold mt-2 bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent">ज्ञान-योद्धा क्विज़</h1>
             <p className="text-muted-foreground">खेलें, सीखें, और जीतें!</p>
         </div>
         {renderContent()}

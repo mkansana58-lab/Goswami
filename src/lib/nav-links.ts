@@ -36,7 +36,7 @@ import {
       { href: "/tests", icon: CheckSquare, textKey: "aiTest" },
       { href: "/ai-tutor", icon: GraduationCap, textKey: "aiTutor" },
       { href: "/quiz-game", icon: Gamepad2, textKey: "quizGame" },
-      { href: "/youtube", icon: BookCopy, textKey: "gdaLearning" },
+      { href: "/youtube", icon: Youtube, textKey: "youtube" },
   ];
   
   export const sidebarLinks = [
@@ -45,7 +45,7 @@ import {
     { href: "/courses", icon: BookOpenCheck, textKey: "ourCourses" },
     { href: "/live-classes", icon: RadioTower, textKey: "liveClasses" },
     { href: "/video-lectures", icon: Video, textKey: "videoLectures" },
-    { href: "/youtube", icon: BookCopy, textKey: "gdaLearning" },
+    { href: "/youtube", icon: Youtube, textKey: "youtube" },
     { href: "/downloads", icon: Download, textKey: "downloads" },
     { href: "/e-books", icon: Library, textKey: "ebooks" },
     { href: "/tests", icon: CheckSquare, textKey: "aiTest" },
