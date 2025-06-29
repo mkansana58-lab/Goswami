@@ -7,13 +7,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useLanguage } from "@/hooks/use-language";
 import { useAuth } from "@/hooks/use-auth";
-import { getStudent, updateStudent, type StudentData } from "@/lib/firebase";
+import { getStudent, updateStudent, getEnrollmentsForStudent, redeemWinningsForAttempts, type StudentData, type TestEnrollment } from "@/lib/firebase";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, User, Edit } from "lucide-react";
+import { Loader2, User, Edit, Banknote, IndianRupee } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Timestamp } from "firebase/firestore";
 
@@ -28,6 +28,8 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
+const ATTEMPT_COST = 20000;
+
 export default function AccountPage() {
     const { t } = useLanguage();
     const { student, refreshStudentData, isLoading: isAuthLoading } = useAuth();
@@ -36,6 +38,8 @@ export default function AccountPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [enrollments, setEnrollments] = useState<TestEnrollment[]>([]);
+    const [isRedeeming, setIsRedeeming] = useState<string | null>(null);
     
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
@@ -61,6 +65,7 @@ export default function AccountPage() {
                     setIsEditing(true);
                 }
             }).finally(() => setIsLoading(false));
+            getEnrollmentsForStudent(student.name).then(setEnrollments);
         } else {
             setIsLoading(false);
         }
@@ -81,13 +86,12 @@ export default function AccountPage() {
             });
         }
         
-        // Exclude the 'photo' file input from the data being sent to Firestore
         const { photo, ...dataToSave } = values;
         const dataToUpdate: Partial<Omit<StudentData, 'id' | 'createdAt'>> = { ...dataToSave, photoUrl, name: student.name };
 
         try {
             await updateStudent(student.name, dataToUpdate);
-            await refreshStudentData(student.name); // Refresh context
+            await refreshStudentData(student.name);
             setStudentData(prev => ({ ...prev, ...dataToUpdate } as StudentData));
             setIsEditing(false);
             toast({ title: "Profile Updated", description: "Your information has been saved." });
@@ -96,6 +100,26 @@ export default function AccountPage() {
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to update profile.' });
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleRedeem = async (enrollmentId: string) => {
+        if (!student?.name || (student.quizWinnings || 0) < ATTEMPT_COST) {
+            toast({ variant: 'destructive', title: 'Not enough winnings!' });
+            return;
+        }
+        setIsRedeeming(enrollmentId);
+        try {
+            await redeemWinningsForAttempts(student.name, enrollmentId, ATTEMPT_COST, 1);
+            await refreshStudentData(student.name);
+            const updatedEnrollments = await getEnrollmentsForStudent(student.name);
+            setEnrollments(updatedEnrollments);
+            toast({ title: 'Success!', description: '1 extra attempt has been added.' });
+        } catch (error) {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Redemption failed. Please try again.' });
+        } finally {
+            setIsRedeeming(null);
         }
     };
     
@@ -172,6 +196,45 @@ export default function AccountPage() {
                         </CardFooter>
                     )}
                 </form>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Banknote /> Redeem Winnings</CardTitle>
+                    <CardDescription>Use your quiz winnings to buy more test attempts.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="text-center p-4 rounded-lg bg-accent">
+                        <p className="text-sm text-accent-foreground">Your Winnings Balance</p>
+                        <p className="text-4xl font-bold text-primary flex items-center justify-center">
+                            <IndianRupee className="h-8 w-8" />
+                            {(student?.quizWinnings || 0).toLocaleString('en-IN')}
+                        </p>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                        <h4 className="font-semibold">Your Enrolled Tests:</h4>
+                        {enrollments.length > 0 ? (
+                            enrollments.map(e => (
+                                <div key={e.id} className="flex justify-between items-center p-3 border rounded-lg bg-background/50">
+                                    <div>
+                                        <p className="font-medium">{e.testName}</p>
+                                        <p className="text-xs text-muted-foreground">Extra Attempts: {e.extraAttempts || 0}</p>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => handleRedeem(e.id!)}
+                                        disabled={isRedeeming === e.id || (student?.quizWinnings || 0) < ATTEMPT_COST}
+                                        className="shrink-0"
+                                    >
+                                        {isRedeeming === e.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Buy 1 Attempt <IndianRupee className="h-3 w-3 ml-1" />{ATTEMPT_COST.toLocaleString('en-IN')}</>}
+                                    </Button>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-sm text-muted-foreground text-center py-4">You have not enrolled in any tests yet.</p>
+                        )}
+                    </div>
+                </CardContent>
             </Card>
         </div>
     );

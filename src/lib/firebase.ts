@@ -2,7 +2,7 @@
 "use client";
 // firebase.ts
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getFirestore, collection, getDocs, type Firestore, query, orderBy, Timestamp, addDoc, where, limit, doc, setDoc, getDoc, deleteDoc, updateDoc } from "firebase/firestore";
+import { getFirestore, collection, getDocs, type Firestore, query, orderBy, Timestamp, addDoc, where, limit, doc, setDoc, getDoc, deleteDoc, updateDoc, increment, runTransaction } from "firebase/firestore";
 
 // Firebase configuration from environment variables
 export const firebaseConfig = {
@@ -98,6 +98,7 @@ export interface StudentData {
     address?: string;
     school?: string;
     photoUrl?: string; // as data URI
+    quizWinnings?: number;
     createdAt: Timestamp;
 }
 
@@ -247,6 +248,7 @@ export interface TestEnrollment {
     enrollmentCode: string;
     enrolledAt: Timestamp;
     attemptsWaived?: boolean;
+    extraAttempts?: number;
 }
 
 // --- Constants ---
@@ -415,6 +417,29 @@ export async function updateStudent(name: string, data: Partial<Omit<StudentData
     if (!db) throw new Error("Firestore DB not initialized.");
     const studentRef = doc(db, "students", name);
     await updateDoc(studentRef, data);
+}
+
+export async function addQuizWinnings(studentName: string, amount: number): Promise<void> {
+    if (!db || amount <= 0) return;
+    const studentRef = doc(db, "students", studentName);
+    await updateDoc(studentRef, {
+        quizWinnings: increment(amount)
+    });
+}
+
+export async function redeemWinningsForAttempts(studentName: string, enrollmentId: string, cost: number, attemptsToAdd: number): Promise<void> {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    const studentRef = doc(db, "students", studentName);
+    const enrollmentRef = doc(db, "testEnrollments", enrollmentId);
+
+    await runTransaction(db, async (transaction) => {
+        const studentDoc = await transaction.get(studentRef);
+        if (!studentDoc.exists() || (studentDoc.data().quizWinnings || 0) < cost) {
+            throw new Error("Insufficient winnings or student not found!");
+        }
+        transaction.update(studentRef, { quizWinnings: increment(-cost) });
+        transaction.update(enrollmentRef, { extraAttempts: increment(attemptsToAdd) });
+    });
 }
 
 export async function getStudents(): Promise<StudentData[]> {
@@ -640,6 +665,7 @@ export const addTestEnrollment = async (studentName: string, testId: string, tes
         enrollmentCode,
         enrolledAt: Timestamp.now(),
         attemptsWaived: false,
+        extraAttempts: 0,
     });
 
     sendStudentNotification(
@@ -676,5 +702,3 @@ export async function getTestEnrollments(): Promise<TestEnrollment[]> {
 
 
 export { app, db };
-
-    

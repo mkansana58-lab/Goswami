@@ -9,6 +9,8 @@ import { Loader2, BrainCircuit, Users, Brain, Gamepad2, IndianRupee, X, Check, A
 import { useToast } from '@/hooks/use-toast';
 import { generateQuizQuestion, type QuizGameOutput } from '@/ai/flows/quiz-game-flow';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/use-auth';
+import { addQuizWinnings } from '@/lib/firebase';
 
 type GameState = 'picking_subject' | 'playing' | 'answer_revealed' | 'game_over';
 type Lifeline = 'fiftyFifty';
@@ -28,6 +30,7 @@ const subjects = [
 const QuizGamePage = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const { student, refreshStudentData } = useAuth();
   
   const [gameState, setGameState] = useState<GameState>('picking_subject');
   const [subject, setSubject] = useState<string>('');
@@ -37,6 +40,37 @@ const QuizGamePage = () => {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [hiddenOptions, setHiddenOptions] = useState<string[]>([]);
   const [lifelines, setLifelines] = useState<Record<Lifeline, boolean>>({ fiftyFifty: true });
+  const [winningsAdded, setWinningsAdded] = useState(false);
+
+  const getSafePrize = () => {
+    let safeAmount = 0;
+    for (let i = level - 1; i >= 0; i--) {
+        if (prizeLadder[i].safe) {
+            safeAmount = prizeLadder[i].amount;
+            break;
+        }
+    }
+    return safeAmount;
+  };
+  
+  useEffect(() => {
+    if (gameState === 'game_over' && !winningsAdded && student?.name) {
+        const isCorrect = selectedAnswer === question?.answer;
+        const amountWon = isCorrect ? prizeLadder[level].amount : getSafePrize();
+        if (amountWon > 0) {
+            addQuizWinnings(student.name, amountWon)
+                .then(() => {
+                    refreshStudentData(student.name);
+                    toast({ title: `Congratulations!`, description: `₹${amountWon.toLocaleString('en-IN')} added to your winnings!` });
+                })
+                .catch(() => {
+                    toast({ variant: 'destructive', title: 'Error', description: 'Could not save your winnings.' });
+                });
+            setWinningsAdded(true);
+        }
+    }
+  }, [gameState, question, selectedAnswer, level, student, refreshStudentData, toast, winningsAdded]);
+
 
   const resetGame = () => {
     setGameState('picking_subject');
@@ -46,6 +80,7 @@ const QuizGamePage = () => {
     setSelectedAnswer(null);
     setHiddenOptions([]);
     setLifelines({ fiftyFifty: true });
+    setWinningsAdded(false);
   };
   
   const fetchQuestion = async (currentLevel: number, selectedSubject: string) => {
@@ -110,17 +145,6 @@ const QuizGamePage = () => {
     setLifelines(prev => ({ ...prev, fiftyFifty: false }));
   };
   
-  const getSafePrize = () => {
-    let safeAmount = 0;
-    for (let i = level - 1; i >= 0; i--) {
-        if (prizeLadder[i].safe) {
-            safeAmount = prizeLadder[i].amount;
-            break;
-        }
-    }
-    return safeAmount;
-  }
-
   const renderContent = () => {
     switch(gameState) {
       case 'picking_subject':
@@ -138,7 +162,8 @@ const QuizGamePage = () => {
         );
 
       case 'game_over':
-        const amountWon = selectedAnswer === question?.answer ? prizeLadder[level].amount : getSafePrize();
+        const isCorrectFinal = selectedAnswer === question?.answer;
+        const amountWon = isCorrectFinal ? prizeLadder[level].amount : getSafePrize();
         return (
              <Card className="text-center animate-in fade-in-50 bg-card/70 backdrop-blur-sm">
                 <CardHeader>
