@@ -24,8 +24,7 @@ export function AdmitCardDisplay({ data, scholarshipTestStartDate, scholarshipTe
   };
 
   return (
-    <>
-      <div className="max-w-4xl mx-auto my-8">
+    <div className="max-w-4xl mx-auto my-8">
         <Button variant="outline" onClick={onBack} className="mb-4 no-print">
               <ArrowLeft className="mr-2 h-4 w-4" /> Back
         </Button>
@@ -55,7 +54,7 @@ export function AdmitCardDisplay({ data, scholarshipTestStartDate, scholarshipTe
                           <p className="font-semibold">Roll Number:</p><p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{data.rollNumber}</p>
                           <p className="font-semibold">{t('applicationNumber')}:</p><p className="font-mono">{data.applicationNumber}</p>
                           
-                          {data.testMode === 'online' && (
+                          {data.testMode === 'online' && data.uniqueId && (
                              <>
                               <p className="font-semibold">{t('uniqueId')}:</p>
                               <p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{data.uniqueId}</p>
@@ -122,7 +121,6 @@ export function AdmitCardDisplay({ data, scholarshipTestStartDate, scholarshipTe
           </CardFooter>
         </Card>
         </div>
-      </div>
-    </>
+    </div>
   );
 }

@@ -35,7 +35,7 @@ import {
     type VideoLecture, type Download, type Course, type AppConfig,
     type ScholarshipApplicationData, type StudentData, type Teacher, type GalleryImage,
     type ContactInquiry, type EBook, type CustomTest, type TestSetting, type TestEnrollment,
-    type ScholarshipTestResult, type Question
+    type ScholarshipTestResult, type Question, type NotificationCategory
 } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star, CheckSquare, Shield, Key, Award, AlertCircle, Trophy, PlusCircle } from 'lucide-react';

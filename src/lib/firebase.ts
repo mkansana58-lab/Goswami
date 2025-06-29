@@ -334,13 +334,23 @@ export async function addScholarshipApplication(data: Omit<ScholarshipApplicatio
     const rollNumber = `R${generateRandomCode(8)}`;
     
     let uniqueId = '';
-    let isCodeUnique = false;
-    while (!isCodeUnique) {
-        uniqueId = generateRandomCode(6); // A new 6-digit unique ID
-        const q = query(collection(db, "scholarshipApplications"), where("uniqueId", "==", uniqueId), limit(1));
-        const snapshot = await getDocs(q);
-        if (snapshot.empty) {
-            isCodeUnique = true;
+    
+    // Only generate a uniqueId if the test mode is online
+    if (data.testMode === 'online') {
+        let isCodeUnique = false;
+        let attempts = 0;
+        // This loop ensures the generated ID is truly unique.
+        while (!isCodeUnique && attempts < 10) {
+            uniqueId = generateRandomCode(6);
+            const q = query(collection(db, "scholarshipApplications"), where("uniqueId", "==", uniqueId));
+            const snapshot = await getDocs(q);
+            if (snapshot.empty) {
+                isCodeUnique = true;
+            }
+            attempts++;
+        }
+        if (!isCodeUnique) {
+            throw new Error("Could not generate a unique ID. Please try again later.");
         }
     }
     
@@ -348,12 +358,16 @@ export async function addScholarshipApplication(data: Omit<ScholarshipApplicatio
         ...data,
         applicationNumber,
         rollNumber,
-        uniqueId,
+        uniqueId, // This will be an empty string for offline mode
         resultStatus: 'pending',
         createdAt: Timestamp.now(),
     });
     
-    sendStudentNotification('Application Received', `Your application for ${data.fullName} (App No: ${applicationNumber}) has been received. Your secret Unique ID is ${uniqueId}. Please save it.`, 'scholarship', data.fullName);
+    if (data.testMode === 'online') {
+        sendStudentNotification('Application Received', `Your application for ${data.fullName} (App No: ${applicationNumber}) has been received. Your secret 6-digit Unique ID is ${uniqueId}. Please save it for the online test.`, 'scholarship', data.fullName);
+    } else {
+         sendStudentNotification('Application Received', `Your application for ${data.fullName} (App No: ${applicationNumber}) has been received.`, 'scholarship', data.fullName);
+    }
 
     return { applicationNumber, rollNumber, uniqueId };
 }
