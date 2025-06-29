@@ -76,7 +76,6 @@ export default function CityIntimationPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [applicationNumber, setApplicationNumber] = useState('');
-  const [uniqueId, setUniqueId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [applicationData, setApplicationData] = useState<ScholarshipApplicationData | null>(null);
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
@@ -109,14 +108,8 @@ export default function CityIntimationPage() {
              return;
         }
 
-        if (data.isUniqueIdWaived || data.uniqueId === uniqueId) {
-             setApplicationData(data);
-             toast({ title: "Slip Found", description: "Your city intimation slip is displayed below." });
-        } else if (!uniqueId) {
-            toast({ variant: "destructive", title: "Unique ID Required", description: "Please enter your Unique ID to proceed." });
-        } else {
-            toast({ variant: "destructive", title: "Incorrect Unique ID", description: "The Unique ID you entered is incorrect." });
-        }
+        setApplicationData(data);
+        toast({ title: "Slip Found", description: "Your city intimation slip is displayed below." });
         
     } catch (error) {
         toast({ variant: "destructive", title: "Error", description: "An error occurred while fetching your details." });
@@ -149,16 +142,12 @@ export default function CityIntimationPage() {
       <Card className="max-w-md mx-auto">
         <CardHeader>
           <CardTitle>Find Your Exam City</CardTitle>
-          <CardDescription>Enter your application number and Unique ID.</CardDescription>
+          <CardDescription>Enter your application number to find your slip.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="applicationNumber">{t('applicationNumber')}</Label>
             <Input id="applicationNumber" placeholder="GSA2024..." value={applicationNumber} onChange={(e) => setApplicationNumber(e.target.value)} disabled={isLoading} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="uniqueId">{t('uniqueId')} (If required)</Label>
-            <Input id="uniqueId" placeholder="Enter your Unique ID" value={uniqueId} onChange={(e) => setUniqueId(e.target.value)} disabled={isLoading} />
           </div>
         </CardContent>
         <CardFooter>

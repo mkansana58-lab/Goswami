@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactElement } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Progress } from "@/components/ui/progress";
-import { Info, User, BookOpen, MapPin, Upload, Loader2, AlertTriangle, Phone, CheckSquare, Target } from "lucide-react";
+import { Info, User, BookOpen, MapPin, Upload, Loader2, AlertTriangle, Phone, CheckSquare, Target, Trophy } from "lucide-react";
 import { ConfirmationCertificate } from "@/components/scholarship/confirmation-certificate";
 import type { FormDataType } from "@/components/scholarship/confirmation-certificate";
 import { addScholarshipApplication, getAppConfig, type AppConfig } from "@/lib/firebase";
@@ -32,17 +32,18 @@ const formSchema = z.object({
     address: z.string().min(10, "Full address is required"),
     targetExam: z.string().min(3, "Target exam is required (e.g., Sainik School, RMS)"),
     testMode: z.enum(['online', 'offline'], { required_error: "Please select a test mode." }),
+    targetTestEnrollmentCode: z.string().min(5, "Enrollment code is required").max(5, "Must be 5 digits").optional(),
     photo: z.any().refine((files) => files?.length === 1, "Photo is required."),
     signature: z.any().refine((files) => files?.length === 1, "Signature is required."),
 });
 
 type ScholarshipFormValues = z.infer<typeof formSchema>;
 
-const steps = [
+const steps: { id: string; title: string; icon: React.ElementType; fields: (keyof ScholarshipFormValues)[] }[] = [
     { id: 'instructions', title: 'scholarshipInstructionsTitle', icon: Info, fields: [] },
     { id: 'personal', title: 'step1Title', icon: User, fields: ['fullName', 'fatherName', 'mobile', 'email'] },
     { id: 'academic', title: 'step2Title', icon: BookOpen, fields: ['age', 'class', 'school', 'targetExam'] },
-    { id: 'options', title: 'Test Options', icon: CheckSquare, fields: ['testMode'] },
+    { id: 'options', title: 'Test Options', icon: CheckSquare, fields: ['testMode', 'targetTestEnrollmentCode'] },
     { id: 'address', title: 'step3Title', icon: MapPin, fields: ['address'] },
     { id: 'uploads', title: 'step4Title', icon: Upload, fields: ['photo', 'signature'] },
 ]
@@ -128,7 +129,7 @@ export default function ScholarshipPage() {
             setCurrentStep(step => step + 1);
             return;
         }
-        const fields = steps[currentStep].fields as (keyof ScholarshipFormValues)[];
+        const fields = steps[currentStep].fields;
         const output = await form.trigger(fields, { shouldFocus: true });
         if (!output) return;
         if (currentStep === steps.length - 1) {
@@ -209,7 +210,7 @@ export default function ScholarshipPage() {
                                 <div><Label>{t('age')}</Label><Input {...form.register('age')} type="number" disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.age?.message}</p></div>
                                 <div><Label>{t('selectClass')}</Label><Select onValueChange={(value) => form.setValue('class', value as "5"|"6"|"7"|"8"|"9")} defaultValue={form.getValues('class')} disabled={isSubmitting}><SelectTrigger><SelectValue placeholder={t('selectClass')} /></SelectTrigger><SelectContent><SelectItem value="5">Class 5</SelectItem><SelectItem value="6">Class 6</SelectItem><SelectItem value="7">Class 7</SelectItem><SelectItem value="8">Class 8</SelectItem><SelectItem value="9">Class 9</SelectItem></SelectContent></Select><p className="text-destructive text-xs">{form.formState.errors.class?.message}</p></div>
                                 <div><Label>{t('schoolName')}</Label><Input {...form.register('school')} disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.school?.message}</p></div>
-                                <div><Label>Target Exam</Label><Input {...form.register('targetExam')} placeholder="e.g., Sainik School, RMS" disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.targetExam?.message}</p></div>
+                                <div><Label>{t('targetExam')}</Label><Input {...form.register('targetExam')} placeholder="e.g., Sainik School, RMS" disabled={isSubmitting}/><p className="text-destructive text-xs">{form.formState.errors.targetExam?.message}</p></div>
                             </div>
                         )}
                         {currentStep === 3 && (
@@ -220,6 +221,13 @@ export default function ScholarshipPage() {
                                     <div><RadioGroupItem value="offline" id="offline" className="peer sr-only" /><Label htmlFor="offline" className="flex items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">Offline</Label></div>
                                 </RadioGroup>
                                 <p className="text-destructive text-xs">{form.formState.errors.testMode?.message}</p>
+                                
+                                <div className="pt-4">
+                                    <Label htmlFor="targetTestEnrollmentCode">{t('targetTestEnrollmentCode')}</Label>
+                                    <CardDescription className="text-xs mb-2">{t('targetTestEnrollmentCodeDesc')}</CardDescription>
+                                    <Input id="targetTestEnrollmentCode" {...form.register('targetTestEnrollmentCode')} placeholder="e.g., 12345" disabled={isSubmitting} />
+                                    <p className="text-destructive text-xs">{form.formState.errors.targetTestEnrollmentCode?.message}</p>
+                                </div>
                             </div>
                         )}
                         {currentStep === 4 && (

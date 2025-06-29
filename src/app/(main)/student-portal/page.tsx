@@ -3,7 +3,7 @@
 import { useLanguage } from "@/hooks/use-language";
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Briefcase, FileText, Award, CalendarCheck, Download, ChevronRight, TestTube2 } from "lucide-react";
+import { Briefcase, FileText, Award, CalendarCheck, Download, ChevronRight, TestTube2, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function StudentPortalPage() {
@@ -15,6 +15,7 @@ export default function StudentPortalPage() {
         { href: '/city-intimation', titleKey: 'cityIntimationSlip', description: 'Check your exam city', icon: CalendarCheck, enabled: true },
         { href: '/online-scholarship-test/entry', titleKey: 'onlineTest', description: 'Give the online scholarship test', icon: TestTube2, enabled: true },
         { href: '/result', titleKey: 'downloadResult', description: 'Check and download your result', icon: Award, enabled: true },
+        { href: '/student-portal/review-answers', titleKey: 'reviewAnswers', description: 'Review your online test answers', icon: ClipboardList, enabled: true },
         { href: '/scholarship-confirmation', titleKey: 'confirmationPage', description: 'Download your application form', icon: Download, enabled: true },
     ];
 

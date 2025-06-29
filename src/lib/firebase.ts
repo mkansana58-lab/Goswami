@@ -78,6 +78,7 @@ export interface ScholarshipApplicationData {
     school: string;
     address: string;
     targetExam: string;
+    targetTestEnrollmentCode?: string;
     testMode: 'online' | 'offline';
     photoUrl: string; // as data URI
     signatureUrl: string; // as data URI
@@ -112,12 +113,14 @@ export interface TestResultData {
 
 export interface ScholarshipTestResult {
     id?: string;
+    applicationNumber: string;
     studentName: string;
     score: number;
     totalQuestions: number;
     percentage: number;
     timeTaken: number;
     answers: Record<number, string>;
+    allQuestions: Question[];
     submittedAt: Timestamp;
 }
 
@@ -208,6 +211,13 @@ export interface ChatMessage {
     createdAt: Timestamp;
 }
 
+export interface Question {
+    id: number;
+    question: string;
+    options: string[];
+    answer: string;
+}
+
 export interface CustomTest {
     id: string;
     title: string;
@@ -217,12 +227,7 @@ export interface CustomTest {
     timeLimit: number;
     totalQuestions: number;
     testType: 'custom';
-    questions: Array<{
-        id: number;
-        question: string;
-        options: string[];
-        answer: string;
-    }>;
+    questions: Question[];
     createdAt: Timestamp;
 }
 
@@ -428,6 +433,19 @@ export async function addScholarshipTestResult(data: Omit<ScholarshipTestResult,
         ...data,
         submittedAt: Timestamp.now(),
     });
+}
+
+export async function getScholarshipTestResultByAppNumber(appNumber: string): Promise<ScholarshipTestResult | null> {
+    if (!db) return null;
+    const q = query(
+        collection(db, "scholarshipTestResults"),
+        where("applicationNumber", "==", appNumber),
+        orderBy("submittedAt", "desc"),
+        limit(1)
+    );
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) return null;
+    return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as ScholarshipTestResult;
 }
 
 export async function getTestResults(): Promise<TestResultData[]> {

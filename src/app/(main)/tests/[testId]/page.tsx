@@ -13,7 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Clock, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addScholarshipTestResult, addTestResult, getCustomTest, type CustomTest } from '@/lib/firebase';
+import { addScholarshipTestResult, addTestResult, getCustomTest, type CustomTest, type ScholarshipApplicationData } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 
 type Answers = { [key: number]: string };
@@ -32,10 +32,23 @@ export default function TestPlayerPage() {
   const [answers, setAnswers] = useState<Answers>({});
   const [timeLeft, setTimeLeft] = useState(0);
   const [isGenerating, setIsGenerating] = useState(true);
+  const [scholarshipApplicantData, setScholarshipApplicantData] = useState<ScholarshipApplicationData | null>(null);
   
   useEffect(() => {
     const loadTest = async () => {
       if (!testId) return;
+
+      // Check if this is a scholarship test attempt
+      if (testId === 'scholarship-test-main') {
+        const applicantDataString = sessionStorage.getItem('scholarship-applicant-data');
+        if (applicantDataString) {
+          setScholarshipApplicantData(JSON.parse(applicantDataString));
+        } else {
+            toast({ variant: "destructive", title: "Invalid Entry", description: "Please enter the test via the Student Portal." });
+            router.replace('/student-portal');
+            return;
+        }
+      }
 
       setIsGenerating(true);
       let data: TestDetails | CustomTest | null = null;
@@ -104,10 +117,10 @@ export default function TestPlayerPage() {
     if (!student || !testDetails) return;
   
     // Special handling for the scholarship test
-    if (testId === 'scholarship-test-main') {
+    if (testId === 'scholarship-test-main' && scholarshipApplicantData) {
       let totalCorrect = 0;
       allQuestions.forEach((q, index) => {
-        if (answers[index] === q.answer) {
+        if (answers[q.id] === q.answer) {
           totalCorrect++;
         }
       });
@@ -115,14 +128,17 @@ export default function TestPlayerPage() {
       const percentage = (totalCorrect / testDetails.totalQuestions) * 100;
 
       await addScholarshipTestResult({
+        applicationNumber: scholarshipApplicantData.applicationNumber,
         studentName: student.name,
         score: totalCorrect,
         totalQuestions: testDetails.totalQuestions,
         percentage: percentage,
         timeTaken: timeTaken,
-        answers: answers
+        answers: answers,
+        allQuestions: allQuestions
       });
       sessionStorage.removeItem(`test-progress-${testId}`);
+      sessionStorage.removeItem('scholarship-applicant-data');
       router.push(`/online-scholarship-test/submitted`);
       return;
     }
@@ -132,7 +148,7 @@ export default function TestPlayerPage() {
     sessionStorage.removeItem(`test-progress-${testId}`);
     toast({ title: t('testSubmitted') });
     router.push(`/tests/${testId}/results`);
-  }, [answers, timeLeft, allQuestions, testId, router, t, toast, student, testDetails]);
+  }, [answers, timeLeft, allQuestions, testId, router, t, toast, student, testDetails, scholarshipApplicantData]);
 
   useEffect(() => {
     if (isGenerating || !testDetails) return;
@@ -160,8 +176,8 @@ export default function TestPlayerPage() {
     };
   }, [isGenerating, timeLeft, testDetails, allQuestions, answers, currentQuestionIndex, testId, handleSubmit]);
 
-  const handleAnswerSelect = (answer: string) => {
-    setAnswers(prev => ({ ...prev, [currentQuestionIndex]: answer }));
+  const handleAnswerSelect = (questionId: number, answer: string) => {
+    setAnswers(prev => ({ ...prev, [questionId]: answer }));
   };
 
   const goToNext = () => {
@@ -213,16 +229,16 @@ export default function TestPlayerPage() {
         <CardContent className="pt-6">
             {currentQuestion && (
                 <div className="space-y-4">
-                    <p className="font-semibold text-lg">{currentQuestion.question}</p>
+                    <p className="font-semibold text-lg">{currentQuestion.id}. {currentQuestion.question}</p>
                     <RadioGroup
-                        value={answers[currentQuestionIndex] || ''}
-                        onValueChange={handleAnswerSelect}
+                        value={answers[currentQuestion.id] || ''}
+                        onValueChange={(value) => handleAnswerSelect(currentQuestion.id, value)}
                         className="space-y-2"
                     >
                         {currentQuestion.options.map((option, index) => (
                         <div key={index} className="flex items-center space-x-2 p-3 border rounded-md has-[:checked]:bg-accent has-[:checked]:border-primary cursor-pointer">
-                            <RadioGroupItem value={option} id={`option-${currentQuestionIndex}-${index}`} />
-                            <Label htmlFor={`option-${currentQuestionIndex}-${index}`} className="w-full cursor-pointer">{option}</Label>
+                            <RadioGroupItem value={option} id={`option-${currentQuestion.id}-${index}`} />
+                            <Label htmlFor={`option-${currentQuestion.id}-${index}`} className="w-full cursor-pointer">{option}</Label>
                         </div>
                         ))}
                     </RadioGroup>

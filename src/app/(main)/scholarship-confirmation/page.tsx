@@ -51,7 +51,8 @@ export default function ScholarshipConfirmationPage() {
   };
   
   if (applicationData) {
-    return <ConfirmationCertificate formData={applicationData} applicationNumber={applicationData.applicationNumber} />;
+    // We cast here because we know we have the full data for the certificate
+    return <ConfirmationCertificate formData={applicationData as any} applicationNumber={applicationData.applicationNumber} />;
   }
 
   return (

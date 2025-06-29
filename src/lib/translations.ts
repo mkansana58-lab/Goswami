@@ -55,6 +55,7 @@ export const translations = {
     cityIntimationSlip: "City Intimation Slip",
     downloadResult: "Download Result",
     onlineTest: "Online Scholarship Test",
+    reviewAnswers: "Review Answers",
 
     // Scholarship Form Translations
     scholarshipTitle: "Scholarship Application Form 2024",
@@ -77,6 +78,9 @@ export const translations = {
     age: "Age",
     selectClass: "Class",
     schoolName: "School Name",
+    targetExam: "Target Exam",
+    targetTestEnrollmentCode: "Target Test Enrollment Code",
+    targetTestEnrollmentCodeDesc: "If you win the scholarship, which test do you want free access to? Enter its 5-digit enrollment code.",
     
     step3Title: "Address Details",
     fullAddress: "Full Address",
@@ -103,6 +107,12 @@ export const translations = {
     admitCardDownloadBtn: "Download Admit Card",
     admitCardNotAvailable: "Admit card downloads have not started yet.",
     admitCardNotAvailableDesc: "Downloads will begin on",
+
+    // Answer Review
+    answerReviewTitle: "Review Your Answers",
+    answerReviewDesc: "Enter your application number to see your submitted answers.",
+    findMyAnswers: "Find My Answers",
+    enterAppNumberToReview: "Enter Application Number to review your answers",
 
     // AI Tutor
     aiTutorTitle: "AI Tutor",
@@ -168,7 +178,6 @@ export const translations = {
     cancel: "Cancel",
     submit: "Submit",
     generatingTest: "Generating your test, please wait...",
-    reviewAnswers: "Review Your Answers",
     yourAnswer: "Your Answer",
     correctAnswer: "Correct Answer",
     toppersList: "Toppers List",
@@ -301,6 +310,7 @@ export const translations = {
     cityIntimationSlip: "सिटी इंटिमेशन स्लिप",
     downloadResult: "रिजल्ट डाउनलोड करें",
     onlineTest: "ऑनलाइन स्कॉलरशिप टेस्ट",
+    reviewAnswers: "उत्तरों की समीक्षा करें",
 
     // Scholarship Form Translations
     scholarshipTitle: "छात्रवृत्ति आवेदन पत्र 2024",
@@ -323,6 +333,9 @@ export const translations = {
     age: "आयु",
     selectClass: "कक्षा",
     schoolName: "स्कूल का नाम",
+    targetExam: "लक्षित परीक्षा",
+    targetTestEnrollmentCode: "लक्षित टेस्ट एनरोलमेंट कोड",
+    targetTestEnrollmentCodeDesc: "यदि आप छात्रवृत्ति जीतते हैं, तो आप कौन सी टेस्ट श्रृंखला मुफ्त में चाहते हैं? उसका 5 अंकों का एनरोलमेंट कोड दर्ज करें।",
     
     step3Title: "पते का विवरण",
     fullAddress: "पूरा पता",
@@ -350,6 +363,12 @@ export const translations = {
     admitCardDownloadBtn: "एडमिट कार्ड डाउनलोड करें",
     admitCardNotAvailable: "एडमिट कार्ड डाउनलोड अभी शुरू नहीं हुए हैं।",
     admitCardNotAvailableDesc: "डाउनलोड शुरू होंगे",
+
+    // Answer Review
+    answerReviewTitle: "अपने उत्तरों की समीक्षा करें",
+    answerReviewDesc: "अपने प्रस्तुत उत्तरों को देखने के लिए अपना आवेदन संख्या दर्ज करें।",
+    findMyAnswers: "मेरे उत्तर खोजें",
+    enterAppNumberToReview: "अपने उत्तरों की समीक्षा के लिए आवेदन संख्या दर्ज करें",
 
     // AI Tutor
     aiTutorTitle: "AI ट्यूटर",
@@ -417,7 +436,6 @@ export const translations = {
     cancel: "रद्द करें",
     submit: "जमा करें",
     generatingTest: "आपका टेस्ट जेनरेट हो रहा है, कृपया प्रतीक्षा करें...",
-    reviewAnswers: "अपने उत्तरों की समीक्षा करें",
     yourAnswer: "आपका उत्तर",
     correctAnswer: "सही उत्तर",
     toppersList: "टॉपर्स की सूची",

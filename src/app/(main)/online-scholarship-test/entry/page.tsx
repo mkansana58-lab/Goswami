@@ -48,8 +48,9 @@ export default function OnlineScholarshipTestEntryPage() {
             return;
         }
 
-        // TODO: In a future version, check if the test has already been taken.
-
+        // Store applicant data in session storage to be used on the test page
+        sessionStorage.setItem('scholarship-applicant-data', JSON.stringify(appData));
+        
         toast({ title: "Code Verified", description: "Redirecting to the test..." });
         router.push(`/tests/${SCHOLARSHIP_TEST_ID}`);
 
