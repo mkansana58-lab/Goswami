@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
@@ -8,9 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { getScholarshipApplicationByOnlineTestCode } from '@/lib/firebase';
+import { getScholarshipApplicationByOnlineTestCode, getAppConfig, type AppConfig } from '@/lib/firebase';
 import { Loader2, KeyRound } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { format } from 'date-fns';
+
 
 // This is the hardcoded ID for the scholarship test.
 // Admin must create a custom test with this exact ID.
@@ -23,6 +26,11 @@ export default function OnlineScholarshipTestEntryPage() {
   const router = useRouter();
   const [onlineTestCode, setOnlineTestCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
+
+  useEffect(() => {
+    getAppConfig().then(setAppConfig);
+  }, []);
 
   const handleStartTest = async () => {
     if (!onlineTestCode) {
@@ -31,6 +39,16 @@ export default function OnlineScholarshipTestEntryPage() {
     }
     if (!student) {
         toast({ variant: "destructive", title: "Error", description: "You must be logged in to take the test." });
+        return;
+    }
+
+    const now = new Date();
+    if (appConfig?.scholarshipTestStartDate && now < appConfig.scholarshipTestStartDate.toDate()) {
+        toast({ variant: "destructive", title: "Test Not Started", description: `The test will start on ${format(appConfig.scholarshipTestStartDate.toDate(), 'PPP p')}` });
+        return;
+    }
+     if (appConfig?.scholarshipTestEndDate && now > appConfig.scholarshipTestEndDate.toDate()) {
+        toast({ variant: "destructive", title: "Test Has Ended", description: `The test window has closed.` });
         return;
     }
 
@@ -90,3 +108,5 @@ export default function OnlineScholarshipTestEntryPage() {
     </div>
   );
 }
+
+    

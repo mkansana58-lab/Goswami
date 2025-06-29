@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -7,9 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { getScholarshipTestResultByAppNumber, type ScholarshipTestResult, type Question } from '@/lib/firebase';
+import { getScholarshipTestResultByAppNumber, getScholarshipApplicationByAppNumber, type ScholarshipTestResult, type Question } from '@/lib/firebase';
 import { Loader2, CheckCircle, XCircle, HelpCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertTitle } from '@/components/ui/alert';
+
 
 export default function ReviewAnswersPage() {
   const { t } = useLanguage();
@@ -17,6 +20,7 @@ export default function ReviewAnswersPage() {
   const [applicationNumber, setApplicationNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [testResult, setTestResult] = useState<ScholarshipTestResult | null>(null);
+  const [searchMessage, setSearchMessage] = useState<string | null>(null);
 
   const handleSearch = async () => {
     if (!applicationNumber) {
@@ -25,12 +29,19 @@ export default function ReviewAnswersPage() {
     }
     setIsLoading(true);
     setTestResult(null);
+    setSearchMessage(null);
     try {
         const result = await getScholarshipTestResultByAppNumber(applicationNumber);
-        if (!result) {
-            toast({ variant: "destructive", title: "Not Found", description: "No test result found for this application number." });
-        } else {
+        if (result) {
             setTestResult(result);
+        } else {
+            // Check if an application exists to differentiate between "not taken" and "invalid number"
+            const application = await getScholarshipApplicationByAppNumber(applicationNumber);
+            if (application) {
+                setSearchMessage("आपने अभी तक ऑनलाइन स्कॉलरशिप टेस्ट नहीं दिया है।");
+            } else {
+                setSearchMessage("यह एप्लीकेशन नंबर नहीं मिला। कृपया दोबारा जांचें।");
+            }
         }
     } catch (error) {
         console.error(error);
@@ -55,6 +66,11 @@ export default function ReviewAnswersPage() {
             <CardDescription>{t('enterAppNumberToReview')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+             {searchMessage && (
+                <Alert variant="destructive">
+                    <AlertTitle>{searchMessage}</AlertTitle>
+                </Alert>
+            )}
             <div className="space-y-2">
               <Label htmlFor="applicationNumber">{t('applicationNumber')}</Label>
               <Input id="applicationNumber" placeholder="GSA2024..." value={applicationNumber} onChange={(e) => setApplicationNumber(e.target.value)} disabled={isLoading} />
@@ -68,7 +84,7 @@ export default function ReviewAnswersPage() {
         </Card>
       ) : (
         <div className="max-w-4xl mx-auto space-y-4">
-            <Button variant="outline" onClick={() => setTestResult(null)}>Search Again</Button>
+            <Button variant="outline" onClick={() => { setTestResult(null); setApplicationNumber(''); }}>Search Again</Button>
             <Card>
                 <CardHeader>
                     <CardTitle>Answer Review for {testResult.studentName}</CardTitle>
@@ -109,3 +125,5 @@ export default function ReviewAnswersPage() {
     </div>
   );
 }
+
+    

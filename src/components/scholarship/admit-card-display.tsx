@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useLanguage } from '@/hooks/use-language';
@@ -10,11 +11,12 @@ import { format } from 'date-fns';
 
 interface Props {
   data: ScholarshipApplicationData;
-  examDate?: Date;
+  scholarshipTestStartDate?: Date;
+  scholarshipTestEndDate?: Date;
   onBack: () => void;
 }
 
-export function AdmitCardDisplay({ data, examDate, onBack }: Props) {
+export function AdmitCardDisplay({ data, scholarshipTestStartDate, scholarshipTestEndDate, onBack }: Props) {
   const { t } = useLanguage();
 
   const handlePrint = () => {
@@ -69,10 +71,20 @@ export function AdmitCardDisplay({ data, examDate, onBack }: Props) {
                           <p className="font-semibold">Test Mode:</p><p className='capitalize'>{data.testMode}</p>
                           
                           <p className="font-semibold col-span-2 mt-4 text-primary">Exam Details:</p>
-                          <p className="font-semibold flex items-center gap-2"><Calendar className="h-4 w-4"/>Exam Date:</p><p>{examDate ? format(examDate, 'PPP') : 'To be announced'}</p>
-                          <p className="font-semibold flex items-center gap-2"><Clock className="h-4 w-4"/>Exam Time:</p><p>{examDate ? format(examDate, 'p') : 'To be announced'}</p>
-                          <p className="font-semibold col-span-2 flex items-start gap-2"><MapPin className="h-4 w-4 mt-0.5"/>Exam Center:</p>
-                          <p className="col-span-2 -mt-2">Go Swami Defence Academy, Khargpur, Dholpur, Rajasthan - 328023</p>
+                          
+                           {data.testMode === 'online' && scholarshipTestStartDate && scholarshipTestEndDate ? (
+                            <>
+                                <p className="font-semibold flex items-center gap-2"><Calendar className="h-4 w-4"/>Online Test Window:</p>
+                                <p>
+                                    {format(scholarshipTestStartDate, 'PP, p')} to {format(scholarshipTestEndDate, 'PP, p')}
+                                </p>
+                            </>
+                           ) : (
+                            <>
+                                <p className="font-semibold flex items-center gap-2"><MapPin className="h-4 w-4 mt-0.5"/>Exam Center:</p>
+                                <p className="col-span-2 -mt-2">Go Swami Defence Academy, Khargpur, Dholpur, Rajasthan - 328023</p>
+                            </>
+                           )}
                       </div>
                   </div>
                   <div className="space-y-4 flex flex-col items-center">
@@ -117,3 +129,5 @@ export function AdmitCardDisplay({ data, examDate, onBack }: Props) {
     </>
   );
 }
+
+    

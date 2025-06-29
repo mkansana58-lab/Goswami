@@ -53,7 +53,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 // Schemas
 const settingsSchema = z.object({
     scholarshipDeadline: z.string().optional(),
-    examDate: z.string().optional(),
+    scholarshipTestStartDate: z.string().optional(),
+    scholarshipTestEndDate: z.string().optional(),
     admitCardDownloadStartDate: z.string().optional(),
     cityIntimationSlipStartDate: z.string().optional(),
     resultAnnouncementDate: z.string().optional(),
@@ -166,7 +167,8 @@ export default function AdminPage() {
             ]);
             settingsForm.reset({
                 scholarshipDeadline: toInputDateTimeFormat(config.scholarshipDeadline),
-                examDate: toInputDateTimeFormat(config.examDate),
+                scholarshipTestStartDate: toInputDateTimeFormat(config.scholarshipTestStartDate),
+                scholarshipTestEndDate: toInputDateTimeFormat(config.scholarshipTestEndDate),
                 admitCardDownloadStartDate: toInputDateTimeFormat(config.admitCardDownloadStartDate),
                 cityIntimationSlipStartDate: toInputDateTimeFormat(config.cityIntimationSlipStartDate),
                 resultAnnouncementDate: toInputDateTimeFormat(config.resultAnnouncementDate),
@@ -196,7 +198,8 @@ export default function AdminPage() {
 
         const configData: Partial<AppConfig> = {
             ...(dateValues.scholarshipDeadline && { scholarshipDeadline: Timestamp.fromDate(new Date(dateValues.scholarshipDeadline)) }),
-            ...(dateValues.examDate && { examDate: Timestamp.fromDate(new Date(dateValues.examDate)) }),
+            ...(dateValues.scholarshipTestStartDate && { scholarshipTestStartDate: Timestamp.fromDate(new Date(dateValues.scholarshipTestStartDate)) }),
+            ...(dateValues.scholarshipTestEndDate && { scholarshipTestEndDate: Timestamp.fromDate(new Date(dateValues.scholarshipTestEndDate)) }),
             ...(dateValues.admitCardDownloadStartDate && { admitCardDownloadStartDate: Timestamp.fromDate(new Date(dateValues.admitCardDownloadStartDate)) }),
             ...(dateValues.cityIntimationSlipStartDate && { cityIntimationSlipStartDate: Timestamp.fromDate(new Date(dateValues.cityIntimationSlipStartDate)) }),
             ...(dateValues.resultAnnouncementDate && { resultAnnouncementDate: Timestamp.fromDate(new Date(dateValues.resultAnnouncementDate)) }),
@@ -294,7 +297,8 @@ export default function AdminPage() {
                             <AdminSection title={t('academySettings')} icon={Settings}>
                                 <form onSubmit={settingsForm.handleSubmit(handleSaveSettings)} className="space-y-4">
                                      <div><Label>{t('scholarshipDeadline')}</Label><Input type="datetime-local" {...settingsForm.register('scholarshipDeadline')} /></div>
-                                     <div><Label>{t('examDate')}</Label><Input type="datetime-local" {...settingsForm.register('examDate')} /></div>
+                                     <div><Label>Scholarship Test Start Date</Label><Input type="datetime-local" {...settingsForm.register('scholarshipTestStartDate')} /></div>
+                                     <div><Label>Scholarship Test End Date</Label><Input type="datetime-local" {...settingsForm.register('scholarshipTestEndDate')} /></div>
                                      <div><Label>{t('admitCardStartDate')}</Label><Input type="datetime-local" {...settingsForm.register('admitCardDownloadStartDate')} /></div>
                                      <div><Label>{t('cityIntimationSlipStartDate')}</Label><Input type="datetime-local" {...settingsForm.register('cityIntimationSlipStartDate')} /></div>
                                      <div><Label>{t('resultAnnouncementDate')}</Label><Input type="datetime-local" {...settingsForm.register('resultAnnouncementDate')} /></div>
@@ -754,3 +758,5 @@ const TestSettingsManager = ({ initialSettings, customTests }: { initialSettings
         </div>
     )
 }
+
+    

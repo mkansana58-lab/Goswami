@@ -128,7 +128,8 @@ export interface ScholarshipTestResult {
 
 export interface AppConfig {
     scholarshipDeadline?: Timestamp;
-    examDate?: Timestamp;
+    scholarshipTestStartDate?: Timestamp;
+    scholarshipTestEndDate?: Timestamp;
     admitCardDownloadStartDate?: Timestamp;
     splashImageUrl?: string;
     cityIntimationSlipStartDate?: Timestamp;
@@ -675,3 +676,5 @@ export async function getTestEnrollments(): Promise<TestEnrollment[]> {
 
 
 export { app, db };
+
+    

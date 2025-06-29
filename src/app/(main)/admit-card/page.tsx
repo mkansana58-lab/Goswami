@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -73,7 +74,8 @@ export default function AdmitCardPage() {
       return (
         <AdmitCardDisplay 
             data={admitCardData} 
-            examDate={appConfig.examDate?.toDate()} 
+            scholarshipTestStartDate={appConfig.scholarshipTestStartDate?.toDate()}
+            scholarshipTestEndDate={appConfig.scholarshipTestEndDate?.toDate()}
             onBack={() => setAdmitCardData(null)}
         />
       );
@@ -117,3 +119,5 @@ export default function AdmitCardPage() {
     </div>
   );
 }
+
+    
