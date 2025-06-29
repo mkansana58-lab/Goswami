@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, BrainCircuit, Users, Brain, Gamepad2, IndianRupee, X, Check, ArrowRight, Globe, Dribbble } from 'lucide-react';
+import { Loader2, BrainCircuit, Users, Brain, Gamepad2, IndianRupee, X, Check, ArrowRight, Globe, Dribbble, Calculator, SpellCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateQuizQuestion, type QuizGameOutput } from '@/ai/flows/quiz-game-flow';
 import { cn } from '@/lib/utils';
@@ -24,6 +24,8 @@ const prizeLadder = [
 const subjects = [
   { name: 'सामान्य ज्ञान', icon: BrainCircuit },
   { name: 'विज्ञान', icon: Brain },
+  { name: 'गणित', icon: Calculator },
+  { name: 'अंग्रेजी', icon: SpellCheck },
   { name: 'इतिहास', icon: Users },
   { name: 'भूगोल', icon: Globe },
   { name: 'खेल', icon: Dribbble },
@@ -64,10 +66,13 @@ const QuizGamePage = () => {
                 .then(() => {
                     refreshStudentData(student.name);
                     toast({ title: `Congratulations!`, description: `₹${amountWon.toLocaleString('en-IN')} added to your winnings!` });
+                    setWinningsAdded(true); // Set only on successful save
                 })
                 .catch(() => {
                     toast({ variant: 'destructive', title: 'Error', description: 'Could not save your winnings.' });
                 });
+        } else {
+             // No winnings, but mark as "processed" to prevent re-triggering
             setWinningsAdded(true);
         }
     }
