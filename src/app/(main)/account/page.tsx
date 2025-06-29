@@ -7,15 +7,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useLanguage } from "@/hooks/use-language";
 import { useAuth } from "@/hooks/use-auth";
-import { getStudent, updateStudent, getEnrollmentsForStudent, redeemWinningsForAttempts, type StudentData, type TestEnrollment } from "@/lib/firebase";
+import { getStudent, updateStudent, getEnrollmentsForStudent, redeemWinningsForAttempts, deleteTestEnrollment, type StudentData, type TestEnrollment } from "@/lib/firebase";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, User, Edit, Banknote, IndianRupee } from "lucide-react";
+import { Loader2, User, Edit, Banknote, IndianRupee, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Timestamp } from "firebase/firestore";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const profileSchema = z.object({
     fatherName: z.string().min(3, "Father's name is required"),
@@ -40,6 +41,7 @@ export default function AccountPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [enrollments, setEnrollments] = useState<TestEnrollment[]>([]);
     const [isRedeeming, setIsRedeeming] = useState<string | null>(null);
+    const [isUnenrolling, setIsUnenrolling] = useState<string | null>(null);
     
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
@@ -123,6 +125,22 @@ export default function AccountPage() {
         }
     };
     
+    const handleUnenroll = async (enrollmentId: string) => {
+        if (!student?.name) return;
+        setIsUnenrolling(enrollmentId);
+        try {
+            await deleteTestEnrollment(enrollmentId);
+            toast({ title: 'Unenrolled', description: 'You have successfully unenrolled from the test.' });
+            const updatedEnrollments = await getEnrollmentsForStudent(student.name);
+            setEnrollments(updatedEnrollments);
+        } catch (error) {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to unenroll. Please try again.' });
+        } finally {
+            setIsUnenrolling(null);
+        }
+    };
+
     if (isLoading || isAuthLoading) {
         return <div className="flex justify-center items-center h-64"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
     }
@@ -220,14 +238,37 @@ export default function AccountPage() {
                                         <p className="font-medium">{e.testName}</p>
                                         <p className="text-xs text-muted-foreground">Extra Attempts: {e.extraAttempts || 0}</p>
                                     </div>
-                                    <Button
-                                        size="sm"
-                                        onClick={() => handleRedeem(e.id!)}
-                                        disabled={isRedeeming === e.id || (student?.quizWinnings || 0) < ATTEMPT_COST}
-                                        className="shrink-0"
-                                    >
-                                        {isRedeeming === e.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Buy 1 Attempt <IndianRupee className="h-3 w-3 ml-1" />{ATTEMPT_COST.toLocaleString('en-IN')}</>}
-                                    </Button>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            size="sm"
+                                            onClick={() => handleRedeem(e.id!)}
+                                            disabled={isRedeeming === e.id || (student?.quizWinnings || 0) < ATTEMPT_COST}
+                                            className="shrink-0"
+                                        >
+                                            {isRedeeming === e.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Buy 1 Attempt <IndianRupee className="h-3 w-3 ml-1" />{ATTEMPT_COST.toLocaleString('en-IN')}</>}
+                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="destructive" size="icon" className="h-9 w-9 shrink-0">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure you want to unenroll?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will remove your enrollment for "{e.testName}". You will lose any purchased extra attempts. This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleUnenroll(e.id!)} disabled={isUnenrolling === e.id}>
+                                                        {isUnenrolling === e.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Unenroll'}
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
                                 </div>
                             ))
                         ) : (
