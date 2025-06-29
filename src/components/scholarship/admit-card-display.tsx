@@ -1,10 +1,9 @@
-
 "use client";
 
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, Download, Calendar, Clock, MapPin } from 'lucide-react';
+import { ShieldCheck, Download, Calendar, Clock, MapPin, ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
 import type { ScholarshipApplicationData } from '@/lib/firebase';
 import { format } from 'date-fns';
@@ -12,9 +11,10 @@ import { format } from 'date-fns';
 interface Props {
   data: ScholarshipApplicationData;
   examDate?: Date;
+  onBack: () => void;
 }
 
-export function AdmitCardDisplay({ data, examDate }: Props) {
+export function AdmitCardDisplay({ data, examDate, onBack }: Props) {
   const { t } = useLanguage();
 
   const handlePrint = () => {
@@ -22,7 +22,11 @@ export function AdmitCardDisplay({ data, examDate }: Props) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto my-8 printable-area">
+    <div className="max-w-4xl mx-auto my-8">
+      <Button variant="outline" onClick={onBack} className="mb-4 no-print">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+      </Button>
+      <div className="printable-area">
        <style jsx global>{`
         @media print {
           body * { visibility: hidden; }
@@ -45,12 +49,13 @@ export function AdmitCardDisplay({ data, examDate }: Props) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-2 space-y-4">
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                        <p className="font-semibold">{t('applicationNumber')}:</p><p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{data.applicationNumber}</p>
-                        <p className="font-semibold">{t('uniqueId')}:</p><p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{data.uniqueId}</p>
+                        <p className="font-semibold">Roll Number:</p><p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{data.rollNumber}</p>
+                        <p className="font-semibold">{t('applicationNumber')}:</p><p className="font-mono">{data.applicationNumber}</p>
+                        <p className="font-semibold">{t('uniqueId')}:</p><p className="font-mono">{data.uniqueId}</p>
                         <p className="font-semibold">{t('fullName')}:</p><p>{data.fullName}</p>
                         <p className="font-semibold">{t('fathersName')}:</p><p>{data.fatherName}</p>
                         <p className="font-semibold">{t('selectClass')}:</p><p>{data.class}</p>
-                        <p className="font-semibold">{t('schoolName')}:</p><p>{data.school}</p>
+                        <p className="font-semibold">Test Mode:</p><p className='capitalize'>{data.testMode}</p>
                         
                         <p className="font-semibold col-span-2 mt-4 text-primary">Exam Details:</p>
                         <p className="font-semibold flex items-center gap-2"><Calendar className="h-4 w-4"/>Exam Date:</p><p>{examDate ? format(examDate, 'PPP') : 'To be announced'}</p>
@@ -69,13 +74,25 @@ export function AdmitCardDisplay({ data, examDate }: Props) {
                 </div>
             </div>
 
+            {data.testMode === 'offline' && (
+                <Card className="mt-6 bg-blue-900/20 border-blue-800/50">
+                    <CardHeader><CardTitle className="text-blue-300 text-lg">ऑफ़लाइन परीक्षा के लिए निर्देश</CardTitle></CardHeader>
+                    <CardContent className="text-blue-400 text-sm space-y-1">
+                        <p>1. कृपया इस एडमिट कार्ड की एक मुद्रित प्रति परीक्षा हॉल में लाएँ।</p>
+                        <p>2. आपको एक वैध फोटो पहचान पत्र (जैसे आधार कार्ड) भी लाना होगा।</p>
+                        <p>3. परीक्षा केंद्र पर रिपोर्टिंग समय से कम से कम 30 मिनट पहले पहुँचें।</p>
+                        <p>4. परीक्षा हॉल के अंदर किसी भी इलेक्ट्रॉनिक उपकरण की अनुमति नहीं है।</p>
+                        <p>5. अपना रोल नंबर ध्यान से याद रखें।</p>
+                    </CardContent>
+                </Card>
+            )}
+
              <Card className="mt-6 bg-destructive/10 border-destructive/50">
                 <CardHeader><CardTitle className="text-destructive text-lg">Instructions for Candidate</CardTitle></CardHeader>
                 <CardContent className="text-destructive/90 text-sm space-y-1">
                     <p>1. Please bring a printed copy of this admit card to the examination hall.</p>
                     <p>2. You must also bring a valid photo ID proof (e.g., Aadhar Card).</p>
                     <p>3. Reach the examination center at least 30 minutes before the reporting time.</p>
-                    <p>4. No electronic devices are allowed inside the examination hall.</p>
                 </CardContent>
             </Card>
 
@@ -84,6 +101,7 @@ export function AdmitCardDisplay({ data, examDate }: Props) {
             <Button onClick={handlePrint}><Download className="mr-2 h-4 w-4" />{t('admitCardDownloadBtn')}</Button>
         </CardFooter>
       </Card>
+      </div>
     </div>
   );
 }

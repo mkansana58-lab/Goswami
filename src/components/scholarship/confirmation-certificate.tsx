@@ -16,6 +16,8 @@ export interface FormDataType {
   class: string;
   school: string;
   address: string;
+  testMode?: 'online' | 'offline';
+  rollNumber?: string;
   photoUrl: string;
   signatureUrl: string;
 }
@@ -71,6 +73,9 @@ export function ConfirmationCertificate({ formData, applicationNumber }: Props) 
                         <p className="font-semibold">{t('applicationNumber')}:</p>
                         <p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{applicationNumber}</p>
                         
+                        <p className="font-semibold">Roll Number:</p>
+                        <p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{formData.rollNumber || 'N/A'}</p>
+
                         <p className="font-semibold">{t('fullName')}:</p>
                         <p>{formData.fullName}</p>
                         
@@ -91,6 +96,9 @@ export function ConfirmationCertificate({ formData, applicationNumber }: Props) 
                         
                         <p className="font-semibold">{t('emailAddress')}:</p>
                         <p>{formData.email}</p>
+
+                         <p className="font-semibold">Test Mode:</p>
+                        <p className='capitalize'>{formData.testMode}</p>
 
                         <p className="font-semibold">{t('fullAddress')}:</p>
                         <p className="col-span-2">{formData.address}</p>

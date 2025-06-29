@@ -69,6 +69,16 @@ export default function AdmitCardPage() {
     }
   };
 
+  if (admitCardData && appConfig) {
+      return (
+        <AdmitCardDisplay 
+            data={admitCardData} 
+            examDate={appConfig.examDate?.toDate()} 
+            onBack={() => setAdmitCardData(null)}
+        />
+      );
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-primary">{t('admitCard')}</h1>
@@ -104,12 +114,6 @@ export default function AdmitCardPage() {
           </Button>
         </CardFooter>
       </Card>
-
-      {admitCardData && appConfig && (
-        <div className="mt-8">
-            <AdmitCardDisplay data={admitCardData} examDate={appConfig.examDate?.toDate()} />
-        </div>
-      )}
     </div>
   );
 }

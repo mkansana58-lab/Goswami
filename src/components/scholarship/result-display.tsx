@@ -4,7 +4,7 @@
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, Download, Award, ThumbsUp, ThumbsDown, ArrowLeft } from 'lucide-react';
+import { Download, Award, ThumbsUp, ThumbsDown, ArrowLeft } from 'lucide-react';
 import type { ScholarshipApplicationData } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 
@@ -55,12 +55,16 @@ export function ResultDisplay({ data, onBack }: Props) {
                         <span className="text-6xl">{isPass ? t('pass') : t('fail')}</span>
                     </div>
 
-                    <p className="text-muted-foreground max-w-md mx-auto pt-4">
-                        {isPass 
-                            ? "Congratulations! You have successfully passed the scholarship exam. We will contact you soon with further details."
-                            : "We regret to inform you that you did not pass the scholarship exam. We encourage you to continue working hard and wish you the best for your future."
-                        }
-                    </p>
+                    <div className="text-muted-foreground max-w-md mx-auto pt-4">
+                        {isPass ? (
+                            <div className='bg-green-500/10 border border-green-500/30 rounded-lg p-4'>
+                                <h3 className='font-bold text-green-400'>Congratulations on Your Scholarship!</h3>
+                                <p className='mt-2 text-sm text-green-400/80'>As a scholarship recipient, you will receive 3 months of free tuition and access to all our premium test series.</p>
+                            </div>
+                        ) : (
+                            <p>We regret to inform you that you did not pass the scholarship exam. We encourage you to continue working hard and wish you the best for your future.</p>
+                        )}
+                    </div>
 
                 </CardContent>
                 <CardFooter className="justify-center p-4 no-print">

@@ -65,6 +65,7 @@ export interface NewNotificationData {
 export interface ScholarshipApplicationData {
     id?: string;
     applicationNumber: string;
+    rollNumber?: string;
     uniqueId: string;
     fullName: string;
     fatherName: string;
@@ -74,6 +75,7 @@ export interface ScholarshipApplicationData {
     class: string;
     school: string;
     address: string;
+    testMode?: 'online' | 'offline';
     photoUrl: string; // as data URI
     signatureUrl: string; // as data URI
     isUniqueIdWaived?: boolean;
@@ -287,7 +289,7 @@ export async function updateAppConfig(data: Partial<AppConfig>): Promise<void> {
 
 export async function addLiveClass({ title, link, scheduledAt }: NewLiveClassData): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
-    // No notification on purpose as requested
+    // No notification on purpose
     await addDoc(collection(db, "liveClasses"), {
         title,
         link,

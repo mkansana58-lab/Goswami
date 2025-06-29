@@ -13,8 +13,8 @@ export default function StudentPortalPage() {
     const portalLinks = [
         { href: '/admit-card', titleKey: 'admitCard', description: 'Download your exam admit card', icon: FileText, enabled: true },
         { href: '/result', titleKey: 'downloadResult', description: 'Check and download your result', icon: Award, enabled: true },
-        { href: '#', titleKey: 'cityIntimationSlip', description: 'Check your exam city', icon: CalendarCheck, enabled: false },
-        { href: '/scholarship-confirmation', titleKey: 'confirmationPage', description: 'Download your application form', icon: Download, enabled: false },
+        { href: '/city-intimation', titleKey: 'cityIntimationSlip', description: 'Check your exam city', icon: CalendarCheck, enabled: true },
+        { href: '/scholarship-confirmation', titleKey: 'confirmationPage', description: 'Download your application form', icon: Download, enabled: true },
     ];
 
     return (
@@ -27,7 +27,7 @@ export default function StudentPortalPage() {
             
             <div className="max-w-md mx-auto space-y-4">
                 {portalLinks.map(link => (
-                    <Link key={link.titleKey} href={link.enabled ? link.href : '#'} passHref>
+                    <Link key={link.titleKey} href={link.href} passHref>
                         <Card className={cn(
                             "hover:border-primary/50 hover:bg-accent transition-all",
                             !link.enabled && "bg-muted/50 hover:border-muted-foreground/20 cursor-not-allowed"
