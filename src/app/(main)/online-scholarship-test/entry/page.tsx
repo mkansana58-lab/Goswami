@@ -75,15 +75,18 @@ export default function OnlineScholarshipTestEntryPage() {
             return;
         }
 
-        if (appData.fullName !== student.name) {
-            toast({ variant: "destructive", title: "Mismatch Error", description: "This application does not belong to the logged-in student. Please check your details." });
+        if (appData.fullName.trim().toLowerCase() !== student.name.trim().toLowerCase()) {
+            toast({
+                variant: "destructive",
+                title: "Name Mismatch",
+                description: `The name on this application (${appData.fullName}) does not match your logged-in name (${student.name}). Please check your details.`,
+            });
             return;
         }
 
         if (appData.isPaymentVerified) {
             setVerifiedApplicant(appData);
             setStep('confirm');
-            toast({ title: "Details Verified", description: "Please confirm your identity to start the test." });
         } else {
             setStep('payment');
         }
