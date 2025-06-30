@@ -14,7 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Clock, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addScholarshipTestResult, addTestResult, getCustomTest, type CustomTest, type ScholarshipApplicationData } from '@/lib/firebase';
+import { addScholarshipTestResult, addTestResult, getCustomTest, type CustomTest, type ScholarshipApplicationData, getAppConfig } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 
 type Answers = { [key: number]: string };
@@ -33,14 +33,58 @@ export default function TestPlayerPage() {
   const [answers, setAnswers] = useState<Answers>({});
   const [timeLeft, setTimeLeft] = useState(0);
   const [isGenerating, setIsGenerating] = useState(true);
+  const [isScholarshipTest, setIsScholarshipTest] = useState(false);
   const [scholarshipApplicantData, setScholarshipApplicantData] = useState<ScholarshipApplicationData | null>(null);
   
+  const handleSubmit = useCallback(async () => {
+    if (!student || !testDetails) return;
+  
+    // Special handling for the scholarship test
+    if (isScholarshipTest && scholarshipApplicantData) {
+      let totalCorrect = 0;
+      allQuestions.forEach((q) => {
+        if (answers[q.id] === q.answer) {
+          totalCorrect++;
+        }
+      });
+      const timeTaken = (testDetails.timeLimit * 60) - timeLeft;
+      const percentage = (totalCorrect / allQuestions.length) * 100;
+
+      await addScholarshipTestResult({
+        applicationNumber: scholarshipApplicantData.applicationNumber,
+        studentName: student.name,
+        score: totalCorrect,
+        totalQuestions: allQuestions.length,
+        percentage: isNaN(percentage) ? 0 : percentage,
+        timeTaken: timeTaken,
+        answers: answers,
+        allQuestions: allQuestions,
+        targetTestEnrollmentCode: scholarshipApplicantData.targetTestEnrollmentCode,
+      });
+      sessionStorage.removeItem(`test-progress-${testId}`);
+      sessionStorage.removeItem('scholarship-applicant-data');
+      router.push(`/online-scholarship-test/submitted`);
+      return;
+    }
+  
+    // Default handling for other tests
+    sessionStorage.setItem(`test-result-${testId}`, JSON.stringify({ answers, timeLeft, questions: allQuestions }));
+    sessionStorage.removeItem(`test-progress-${testId}`);
+    toast({ title: t('testSubmitted') });
+    router.push(`/tests/${testId}/results`);
+  }, [answers, timeLeft, allQuestions, testId, router, t, toast, student, testDetails, scholarshipApplicantData, isScholarshipTest]);
+
+
   useEffect(() => {
     const loadTest = async () => {
       if (!testId) return;
+      setIsGenerating(true);
 
-      // Check if this is a scholarship test attempt
-      if (testId === 'scholarship-test-main') {
+      const appConfig = await getAppConfig();
+      const isSchTest = appConfig.scholarshipTestId === testId;
+      setIsScholarshipTest(isSchTest);
+
+      if (isSchTest) {
         const applicantDataString = sessionStorage.getItem('scholarship-applicant-data');
         if (applicantDataString) {
           setScholarshipApplicantData(JSON.parse(applicantDataString));
@@ -51,7 +95,6 @@ export default function TestPlayerPage() {
         }
       }
 
-      setIsGenerating(true);
       let data: TestDetails | CustomTest | null = null;
       let isStaticTestWithGeneration = false;
 
@@ -113,44 +156,6 @@ export default function TestPlayerPage() {
     };
     loadTest();
   }, [testId, t, router, toast]);
-
-  const handleSubmit = useCallback(async () => {
-    if (!student || !testDetails) return;
-  
-    // Special handling for the scholarship test
-    if (testId === 'scholarship-test-main' && scholarshipApplicantData) {
-      let totalCorrect = 0;
-      allQuestions.forEach((q) => {
-        if (answers[q.id] === q.answer) {
-          totalCorrect++;
-        }
-      });
-      const timeTaken = (testDetails.timeLimit * 60) - timeLeft;
-      const percentage = (totalCorrect / testDetails.totalQuestions) * 100;
-
-      await addScholarshipTestResult({
-        applicationNumber: scholarshipApplicantData.applicationNumber,
-        studentName: student.name,
-        score: totalCorrect,
-        totalQuestions: testDetails.totalQuestions,
-        percentage: percentage,
-        timeTaken: timeTaken,
-        answers: answers,
-        allQuestions: allQuestions,
-        targetTestEnrollmentCode: scholarshipApplicantData.targetTestEnrollmentCode,
-      });
-      sessionStorage.removeItem(`test-progress-${testId}`);
-      sessionStorage.removeItem('scholarship-applicant-data');
-      router.push(`/online-scholarship-test/submitted`);
-      return;
-    }
-  
-    // Default handling for other tests
-    sessionStorage.setItem(`test-result-${testId}`, JSON.stringify({ answers, timeLeft, questions: allQuestions }));
-    sessionStorage.removeItem(`test-progress-${testId}`);
-    toast({ title: t('testSubmitted') });
-    router.push(`/tests/${testId}/results`);
-  }, [answers, timeLeft, allQuestions, testId, router, t, toast, student, testDetails, scholarshipApplicantData]);
 
   useEffect(() => {
     if (isGenerating || !testDetails) return;
@@ -217,7 +222,7 @@ export default function TestPlayerPage() {
       <Card>
         <CardHeader className="border-b">
           <div className="flex justify-between items-center">
-             <CardTitle>{t('testInProgress')}: {t(testDetails.title as any) || testDetails.title}</CardTitle>
+             <CardTitle>{t(testDetails.title as any) || testDetails.title}</CardTitle>
              <div className="flex items-center gap-2 font-mono text-lg bg-primary text-primary-foreground px-3 py-1 rounded-md">
                 <Clock className="h-5 w-5" />
                 <span>{formatTime(timeLeft)}</span>
@@ -231,7 +236,7 @@ export default function TestPlayerPage() {
         <CardContent className="pt-6">
             {currentQuestion && (
                 <div className="space-y-4">
-                    <p className="font-semibold text-lg">{currentQuestion.id}. {currentQuestion.question}</p>
+                    <p className="font-semibold text-lg">{currentQuestionIndex + 1}. {currentQuestion.question}</p>
                     <RadioGroup
                         value={answers[currentQuestion.id] || ''}
                         onValueChange={(value) => handleAnswerSelect(currentQuestion.id, value)}
@@ -268,9 +273,15 @@ export default function TestPlayerPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-            <Button onClick={goToNext} disabled={currentQuestionIndex === allQuestions.length - 1}>
-                {t('next')}
-            </Button>
+            {currentQuestionIndex === allQuestions.length - 1 ? (
+                 <Button onClick={goToNext} disabled>
+                    {t('next')}
+                </Button>
+            ) : (
+                <Button onClick={goToNext}>
+                    {t('next')}
+                </Button>
+            )}
         </CardFooter>
       </Card>
     </div>

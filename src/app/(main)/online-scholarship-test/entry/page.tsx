@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { getScholarshipApplicationByAppNumber, getAppConfig, type AppConfig, type ScholarshipApplicationData } from '@/lib/firebase';
+import { getScholarshipApplicationByAppNumber, getAppConfig, type AppConfig, type ScholarshipApplicationData, getScholarshipTestResultByAppNumber } from '@/lib/firebase';
 import { Loader2, KeyRound, User, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { format } from 'date-fns';
@@ -56,15 +56,18 @@ export default function OnlineScholarshipTestEntryPage() {
 
     setIsLoading(true);
     try {
-        const appData = await getScholarshipApplicationByAppNumber(applicationNumber);
+        const [appData, existingResult] = await Promise.all([
+            getScholarshipApplicationByAppNumber(applicationNumber),
+            getScholarshipTestResultByAppNumber(applicationNumber)
+        ]);
         
         if (!appData) {
             toast({ variant: "destructive", title: "Invalid Application Number", description: "The Application Number you entered is not valid." });
             return;
         }
 
-        if (appData.uniqueId !== uniqueId) {
-             toast({ variant: "destructive", title: "Invalid Unique ID", description: "The Unique ID you entered is incorrect." });
+        if (existingResult) {
+            toast({ variant: "destructive", title: "Test Already Taken", description: "You have already submitted the test for this application number." });
             return;
         }
 
@@ -73,8 +76,15 @@ export default function OnlineScholarshipTestEntryPage() {
             return;
         }
 
+        const idCheckRequired = !appData.uniqueIdCheckWaived;
+
+        if (idCheckRequired && appData.uniqueId !== uniqueId) {
+             toast({ variant: "destructive", title: "Invalid Unique ID", description: "The Unique ID you entered is incorrect." });
+            return;
+        }
+
         if (appData.fullName !== student.name) {
-            toast({ variant: "destructive", title: "Mismatch Error", description: "This application does not belong to you. Please check your details." });
+            toast({ variant: "destructive", title: "Mismatch Error", description: "This application does not belong to the logged-in student. Please check your details." });
             return;
         }
 
@@ -104,7 +114,7 @@ export default function OnlineScholarshipTestEntryPage() {
       <div className="flex flex-col items-center text-center">
         <KeyRound className="h-12 w-12 text-primary" />
         <h1 className="text-3xl font-bold text-primary mt-2">Online Scholarship Test</h1>
-        <p className="text-muted-foreground">Enter your details from the admit card to begin.</p>
+        <p className="text-muted-foreground">Enter your details to begin the test.</p>
       </div>
 
        {!appConfig?.scholarshipTestId && (
@@ -153,10 +163,17 @@ export default function OnlineScholarshipTestEntryPage() {
                         <p><span className="font-semibold">Class:</span> {verifiedApplicant.class}</p>
                     </div>
                 </div>
+                <Alert>
+                    <AlertTriangle className="h-4 w-4"/>
+                    <AlertTitle>Important Instructions</AlertTitle>
+                    <AlertDescription>
+                        The test is timed. Once started, you cannot pause it. Do not close the browser window or go back.
+                    </AlertDescription>
+                </Alert>
             </CardContent>
             <CardFooter className="flex justify-between">
                 <Button variant="outline" onClick={() => setStep('entry')}>Go Back</Button>
-                 <Button className="w-full" onClick={handleStartTest}>
+                 <Button onClick={handleStartTest}>
                     Start Test <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
             </CardFooter>

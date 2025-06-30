@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getScholarshipApplicationByAppNumber, getAppConfig, type ScholarshipApplicationData, type AppConfig } from '@/lib/firebase';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Loader2, AlertTriangle, ArrowRight } from 'lucide-react';
 import { AdmitCardDisplay } from '@/components/scholarship/admit-card-display';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { format } from 'date-fns';
@@ -51,13 +51,16 @@ export default function AdmitCardPage() {
              return;
         }
 
-        const needsIdCheck = data.testMode === 'online' && !data.uniqueIdCheckWaived;
-        if (needsIdCheck && data.uniqueId !== uniqueId) {
-            toast({ variant: "destructive", title: "Incorrect Unique ID", description: "The Unique ID you entered is incorrect for this application." });
+        if (data.testMode === 'online') {
+            toast({ 
+                variant: 'default', 
+                title: 'Online Test Applicant', 
+                description: 'For online tests, please proceed to the Online Test portal directly.'
+            });
             return;
         }
 
-        // If we reach here, it's either offline, waived, or correct ID was provided.
+        // For offline tests, no Unique ID check is needed.
         setAdmitCardData(data);
         toast({ title: "Admit Card Found", description: "Your admit card is displayed below." });
 
@@ -82,6 +85,12 @@ export default function AdmitCardPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-primary">{t('admitCard')}</h1>
+       <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+                यह पेज केवल **ऑफलाइन** परीक्षा देने वाले छात्रों के लिए है। ऑनलाइन परीक्षा देने वाले छात्र सीधे स्टूडेंट पोर्टल से टेस्ट दे सकते हैं।
+            </AlertDescription>
+        </Alert>
       
       {appConfig?.admitCardDownloadStartDate && new Date() < appConfig.admitCardDownloadStartDate.toDate() && (
          <Alert>
@@ -95,16 +104,12 @@ export default function AdmitCardPage() {
       <Card className="max-w-md mx-auto">
         <CardHeader>
           <CardTitle>{t('admitCardTitle')}</CardTitle>
-          <CardDescription>{t('admitCardDescription')}</CardDescription>
+          <CardDescription>अपना एडमिट कार्ड डाउनलोड करने के लिए आवेदन संख्या दर्ज करें।</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="applicationNumber">{t('applicationNumber')}</Label>
             <Input id="applicationNumber" placeholder="GSA2024..." value={applicationNumber} onChange={(e) => setApplicationNumber(e.target.value)} disabled={isLoading} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="uniqueId">{t('uniqueId')} (for Online Test)</Label>
-            <Input id="uniqueId" placeholder="Enter your 6-digit Unique ID if applicable" value={uniqueId} onChange={(e) => setUniqueId(e.target.value)} disabled={isLoading} />
           </div>
         </CardContent>
         <CardFooter>

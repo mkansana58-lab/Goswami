@@ -1,3 +1,4 @@
+
 "use client";
 
 import { CheckCircle } from "lucide-react";
@@ -15,7 +16,7 @@ export default function TestSubmittedPage() {
                 </CardHeader>
                 <CardContent>
                     <p className="text-muted-foreground">
-                        Thank you for completing the scholarship test. Your result will be declared on the date announced by the academy. You can check your result from the Student Portal.
+                        Thank you for completing the scholarship test. Your result will be declared on the date announced by the academy. You can review your answers from the Student Portal.
                     </p>
                     <Button asChild className="mt-6">
                         <Link href="/student-portal">Go to Student Portal</Link>

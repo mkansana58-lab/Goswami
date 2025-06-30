@@ -106,14 +106,16 @@ export function AdmitCardDisplay({ data, scholarshipTestStartDate, scholarshipTe
                   </Card>
               )}
 
-              <Card className="mt-6 bg-destructive/10 border-destructive/50">
-                  <CardHeader><CardTitle className="text-destructive text-lg">Instructions for Candidate</CardTitle></CardHeader>
-                  <CardContent className="text-destructive/90 text-sm space-y-1">
-                      <p>1. Please bring a printed copy of this admit card to the examination hall.</p>
-                      <p>2. You must also bring a valid photo ID proof (e.g., Aadhar Card).</p>
-                      <p>3. Reach the examination center at least 30 minutes before the reporting time.</p>
-                  </CardContent>
-              </Card>
+              {data.testMode === 'online' && (
+                <Card className="mt-6 bg-green-900/20 border-green-800/50">
+                    <CardHeader><CardTitle className="text-green-300 text-lg">ऑनलाइन परीक्षा के लिए निर्देश</CardTitle></CardHeader>
+                    <CardContent className="text-green-400 text-sm space-y-1">
+                        <p>1. आपको स्टूडेंट पोर्टल से सीधे ऑनलाइन टेस्ट देना होगा।</p>
+                        <p>2. टेस्ट शुरू करने के लिए आपको अपने एप्लीकेशन नंबर और 6 अंकों की यूनिक आईडी की आवश्यकता होगी।</p>
+                        <p>3. कृपया अपनी यूनिक आईडी किसी के साथ साझा न करें।</p>
+                    </CardContent>
+                </Card>
+              )}
 
           </CardContent>
           <CardFooter className="justify-center p-4 no-print">

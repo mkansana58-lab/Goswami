@@ -116,7 +116,6 @@ export default function ScholarshipPage() {
             const finalDataForUI: FormDataType = { 
                 ...data,
                 rollNumber: result.rollNumber,
-                uniqueId: result.uniqueId,
                 photoUrl: photoDataUrl,
                 signatureUrl: signatureDataUrl 
             };
@@ -125,7 +124,7 @@ export default function ScholarshipPage() {
             setIsSubmitted(true);
             toast({ title: "Success", description: "Application submitted successfully." });
         } catch (error) {
-            toast({ variant: "destructive", title: "Submission Failed", description: "Could not save your application. Please try again." });
+            toast({ variant: "destructive", title: "Submission Failed", description: (error as Error).message });
         } finally {
             setIsSubmitting(false);
         }
@@ -178,7 +177,7 @@ export default function ScholarshipPage() {
                 <Phone className="h-4 w-4" />
                 <AlertTitle>Unique ID प्राप्त करने के लिए निर्देश</AlertTitle>
                 <AlertDescription>
-                    यूनिक आईडी पाने के लिए कृपया 9694251069 पर ₹50 का पेमेंट करें। पेमेंट का स्क्रीनशॉट और अपना रजिस्ट्रेशन नंबर हमें इसी WhatsApp नंबर पर भेजें। इसके बाद हम आपको नोटिफिकेशन में आपकी यूनिक आईडी भेज देंगे।
+                    यह केवल ऑनलाइन परीक्षा देने वाले छात्रों के लिए है। यूनिक आईडी पाने के लिए कृपया 9694251069 पर ₹50 का पेमेंट करें। पेमेंट का स्क्रीनशॉट और अपना रजिस्ट्रेशन नंबर हमें इसी WhatsApp नंबर पर भेजें। इसके बाद हम आपको नोटिफिकेशन में आपकी यूनिक आईडी भेज देंगे।
                 </AlertDescription>
             </Alert>
 

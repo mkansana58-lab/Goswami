@@ -329,9 +329,16 @@ export async function addNotification({ title, content, category, recipient }: N
 }
 export const deleteNotification = (id: string) => deleteDocument("notifications", id);
 
-export async function addScholarshipApplication(data: Omit<ScholarshipApplicationData, 'createdAt' | 'id' | 'resultStatus' | 'applicationNumber' | 'rollNumber' | 'uniqueId' | 'uniqueIdCheckWaived'>): Promise<{applicationNumber: string, rollNumber: string, uniqueId: string}> {
+export async function addScholarshipApplication(data: Omit<ScholarshipApplicationData, 'createdAt' | 'id' | 'resultStatus' | 'applicationNumber' | 'rollNumber' | 'uniqueId' | 'uniqueIdCheckWaived'>): Promise<{applicationNumber: string, rollNumber: string}> {
     if (!db) throw new Error("Firestore DB not initialized.");
     
+    // Check for existing application with the same name and father's name to prevent duplicates
+    const q = query(collection(db, "scholarshipApplications"), where("fullName", "==", data.fullName), where("fatherName", "==", data.fatherName));
+    const existingSnapshot = await getDocs(q);
+    if (!existingSnapshot.empty) {
+        throw new Error("An application for this student already exists.");
+    }
+
     const applicationNumber = `GSA${new Date().getFullYear()}${generateRandomCode(5)}`;
     const rollNumber = `R${generateRandomCode(8)}`;
     
@@ -372,7 +379,7 @@ export async function addScholarshipApplication(data: Omit<ScholarshipApplicatio
          sendStudentNotification('Application Received', `Your application for ${data.fullName} (App No: ${applicationNumber}) has been received.`, 'scholarship', data.fullName);
     }
 
-    return { applicationNumber, rollNumber, uniqueId };
+    return { applicationNumber, rollNumber };
 }
 
 export const deleteScholarshipApplication = (id: string) => deleteDocument("scholarshipApplications", id);
@@ -600,7 +607,15 @@ export const addChatMessage = async (data: Omit<ChatMessage, 'id' | 'createdAt'>
 // --- Custom Tests ---
 export const addCustomTest = async (data: any) => {
     if (!db) throw new Error("Firestore DB not initialized.");
-    const questions = JSON.parse(data.questionsJson);
+
+    let questions: Question[];
+    // Handle both JSON string and already-parsed array from visual builder
+    if (typeof data.questionsJson === 'string') {
+        questions = JSON.parse(data.questionsJson);
+    } else {
+        questions = data.questions.map((q: any, index: number) => ({ ...q, id: index + 1 }));
+    }
+
     const testData: Omit<CustomTest, 'id' | 'createdAt'> = {
         title: data.title,
         description: data.description,

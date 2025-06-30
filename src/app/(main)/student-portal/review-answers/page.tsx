@@ -38,7 +38,11 @@ export default function ReviewAnswersPage() {
             // Check if an application exists to differentiate between "not taken" and "invalid number"
             const application = await getScholarshipApplicationByAppNumber(applicationNumber);
             if (application) {
-                setSearchMessage("आपने अभी तक ऑनलाइन स्कॉलरशिप टेस्ट नहीं दिया है।");
+                if (application.testMode === 'offline') {
+                    setSearchMessage("यह सुविधा केवल ऑनलाइन परीक्षा देने वाले छात्रों के लिए है।");
+                } else {
+                    setSearchMessage("आपने अभी तक ऑनलाइन स्कॉलरशिप टेस्ट नहीं दिया है।");
+                }
             } else {
                 setSearchMessage("यह एप्लीकेशन नंबर नहीं मिला। कृपया दोबारा जांचें।");
             }
@@ -125,5 +129,3 @@ export default function ReviewAnswersPage() {
     </div>
   );
 }
-
-    

@@ -102,7 +102,7 @@ export const translations = {
 
     // Admit Card
     admitCardTitle: "Download Admit Card",
-    admitCardDescription: "Enter your Application Number and Unique ID to download your admit card.",
+    admitCardDescription: "Enter your Application Number to download your admit card.",
     uniqueId: "Unique ID",
     admitCardDownloadBtn: "Download Admit Card",
     admitCardNotAvailable: "Admit card downloads have not started yet.",
@@ -358,7 +358,7 @@ export const translations = {
 
     // Admit Card
     admitCardTitle: "एडमिट कार्ड डाउनलोड करें",
-    admitCardDescription: "एडमिट कार्ड डाउनलोड करने के लिए अपना आवेदन क्रमांक और यूनिक आईडी दर्ज करें।",
+    admitCardDescription: "एडमिट कार्ड डाउनलोड करने के लिए अपना आवेदन क्रमांक दर्ज करें।",
     uniqueId: "यूनिक आईडी",
     admitCardDownloadBtn: "एडमिट कार्ड डाउनलोड करें",
     admitCardNotAvailable: "एडमिट कार्ड डाउनलोड अभी शुरू नहीं हुए हैं।",

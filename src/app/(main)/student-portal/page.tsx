@@ -12,11 +12,11 @@ export default function StudentPortalPage() {
 
     const portalLinks = [
         { href: '/scholarship', titleKey: 'scholarshipForm', description: 'Apply for the scholarship test', icon: FileText, enabled: true },
-        { href: '/admit-card', titleKey: 'admitCard', description: 'Download your exam admit card', icon: Download, enabled: true },
-        { href: '/online-scholarship-test/entry', titleKey: 'onlineTest', description: 'Give the online scholarship test', icon: TestTube2, enabled: true },
+        { href: '/admit-card', titleKey: 'admitCard', description: 'Download admit card for OFFLINE test', icon: Download, enabled: true },
+        { href: '/online-scholarship-test/entry', titleKey: 'onlineTest', description: 'Take the online scholarship test', icon: TestTube2, enabled: true },
         { href: '/result', titleKey: 'downloadResult', description: 'Check and download your result', icon: Award, enabled: true },
         { href: '/student-portal/review-answers', titleKey: 'reviewAnswers', description: 'Review your online test answers', icon: ClipboardList, enabled: true },
-        { href: '/scholarship-confirmation', titleKey: 'confirmationPage', description: 'Download your application form', icon: Download, enabled: true },
+        { href: '/scholarship-confirmation', titleKey: 'confirmationPage', description: 'Download your submitted application form', icon: Download, enabled: true },
     ];
 
     return (

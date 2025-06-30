@@ -19,7 +19,6 @@ export interface FormDataType {
   targetExam: string;
   testMode?: 'online' | 'offline';
   rollNumber?: string;
-  uniqueId: string;
   photoUrl: string;
   signatureUrl: string;
 }
@@ -78,9 +77,6 @@ export function ConfirmationCertificate({ formData, applicationNumber }: Props) 
                         <p className="font-semibold">Roll Number:</p>
                         <p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{formData.rollNumber || 'N/A'}</p>
                         
-                        <p className="font-semibold">{t('uniqueId')}:</p>
-                        <p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{formData.uniqueId}</p>
-
                         <p className="font-semibold">{t('fullName')}:</p>
                         <p>{formData.fullName}</p>
                         
