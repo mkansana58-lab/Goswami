@@ -52,7 +52,7 @@ const QuizGamePage = () => {
   useEffect(() => {
     const generateIntro = async () => {
         try {
-            const response = await textToSpeech("ज्ञान-योद्धा क्विज़ में आपका स्वागत है!");
+            const response = await textToSpeech("कौन बनेगा करोड़पति में आपका स्वागत है!");
             setIntroAudioUrl(response.media);
         } catch (error) {
             console.error("Failed to generate intro audio:", error);
@@ -325,7 +325,7 @@ const QuizGamePage = () => {
       <div className="absolute inset-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
        <div className="flex flex-col items-center text-center">
             <Gamepad2 className="h-16 w-16 text-primary animate-pulse" />
-            <h1 className="text-4xl font-headline font-bold mt-2 bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent">ज्ञान-योद्धा क्विज़</h1>
+            <h1 className="text-4xl font-headline font-bold mt-2 bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent">कौन बनेगा करोड़पति</h1>
             <p className="text-muted-foreground">खेलें, सीखें, और जीतें!</p>
         </div>
         {renderContent()}
