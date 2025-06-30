@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -204,6 +203,9 @@ export default function AdminPage() {
     const handleSaveSettings = async (values: z.infer<typeof settingsSchema>) => {
         const { splashImage, paymentQrCode, ...otherValues } = values;
 
+        // Handle "none" value from Select by converting it to an empty string
+        const scholarshipTestId = otherValues.scholarshipTestId === 'none' ? '' : otherValues.scholarshipTestId;
+
         const configData: Partial<AppConfig> = {
             ...(otherValues.scholarshipDeadline && { scholarshipDeadline: Timestamp.fromDate(new Date(otherValues.scholarshipDeadline)) }),
             ...(otherValues.scholarshipTestStartDate && { scholarshipTestStartDate: Timestamp.fromDate(new Date(otherValues.scholarshipTestStartDate)) }),
@@ -211,7 +213,7 @@ export default function AdminPage() {
             ...(otherValues.admitCardDownloadStartDate && { admitCardDownloadStartDate: Timestamp.fromDate(new Date(otherValues.admitCardDownloadStartDate)) }),
             ...(otherValues.cityIntimationSlipStartDate && { cityIntimationSlipStartDate: Timestamp.fromDate(new Date(otherValues.cityIntimationSlipStartDate)) }),
             ...(otherValues.resultAnnouncementDate && { resultAnnouncementDate: Timestamp.fromDate(new Date(otherValues.resultAnnouncementDate)) }),
-            scholarshipTestId: otherValues.scholarshipTestId || '',
+            scholarshipTestId: scholarshipTestId || '',
         };
 
         try {
@@ -328,7 +330,7 @@ export default function AdminPage() {
                                         >
                                             <SelectTrigger><SelectValue placeholder="Select the test to use for online scholarships" /></SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="">None</SelectItem>
+                                                <SelectItem value="none">None</SelectItem>
                                                 {data.customTests.map(test => (
                                                     <SelectItem key={test.id} value={test.id}>{test.title} ({test.id})</SelectItem>
                                                 ))}
