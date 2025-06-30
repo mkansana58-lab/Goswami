@@ -1,230 +1,242 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Loader2, Truck, X, Check, ArrowRight, RefreshCw, Trophy } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Loader2, Truck, X, Check, ArrowRight, RefreshCw, Trophy, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateMathQuestion, type MathQuestionOutput } from '@/ai/flows/math-tractor-flow';
+import { useAuth } from '@/hooks/use-auth';
+import { addQuizWinnings } from '@/lib/firebase';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
-type GameState = 'start' | 'playing' | 'answered' | 'finished';
-const TOTAL_LEVELS = 20; // Increased levels for more difficulty
+type GameState = 'start' | 'playing' | 'gameOver';
+
+const GAME_WIDTH = 400;
+const GAME_HEIGHT = 500;
+const TRACTOR_WIDTH = 50;
+const TRACTOR_HEIGHT = 40;
+const ROAD_SPEED = 2;
+const FORK_Y_POSITION = 150;
 
 export default function MathTractorPage() {
     const { t } = useLanguage();
     const { toast } = useToast();
-
+    const { student, refreshStudentData } = useAuth();
+    
     const [gameState, setGameState] = useState<GameState>('start');
-    const [level, setLevel] = useState(0);
     const [question, setQuestion] = useState<MathQuestionOutput | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-    const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-    const [tractorColor, setTractorColor] = useState('red');
+    const [score, setScore] = useState(0);
+    const [tractorX, setTractorX] = useState(GAME_WIDTH / 2 - TRACTOR_WIDTH / 2);
+    const [roadY, setRoadY] = useState(-GAME_HEIGHT); // Start road off-screen
+    const [fork, setFork] = useState<{ left: string, right: string } | null>(null);
 
-    const fetchNewQuestion = async (currentLevel: number) => {
+    const gameLoopRef = useRef<NodeJS.Timeout>();
+    const gameContainerRef = useRef<HTMLDivElement>(null);
+
+    const fetchNewQuestion = useCallback(async () => {
         setIsLoading(true);
-        setSelectedAnswer(null);
-        setIsCorrect(null);
+        setFork(null);
+        setRoadY(-GAME_HEIGHT);
         try {
-            const res = await generateMathQuestion({ level: currentLevel });
+            const res = await generateMathQuestion({ level: score });
             setQuestion(res);
-            setGameState('playing');
+            
+            // Randomly assign correct answer to left or right fork
+            const options = [...res.options.filter(o => o !== res.answer)];
+            const wrongOption = options[Math.floor(Math.random() * options.length)];
+            if (Math.random() > 0.5) {
+                setFork({ left: res.answer, right: wrongOption });
+            } else {
+                setFork({ left: wrongOption, right: res.answer });
+            }
+            
+            setIsLoading(false);
+            setRoadY(-200); // Start the road animation
+
         } catch (e) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Failed to generate a new question. Please try again.' });
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to get a question.' });
             setGameState('start');
-        } finally {
             setIsLoading(false);
         }
-    };
+    }, [score, toast]);
 
     const startGame = () => {
-        setLevel(0);
-        setTractorColor('red');
-        fetchNewQuestion(0);
+        setScore(0);
+        setGameState('playing');
+        fetchNewQuestion();
+        gameContainerRef.current?.focus();
     };
 
-    const handleAnswerSelect = (option: string) => {
-        if (gameState !== 'playing') return;
-        
-        setSelectedAnswer(option);
-        const correct = option === question?.answer;
-        setIsCorrect(correct);
-        setGameState('answered');
+    const gameOver = () => {
+        setGameState('gameOver');
+        if (gameLoopRef.current) clearInterval(gameLoopRef.current);
     };
 
-    const handleNext = () => {
-        if (isCorrect) {
-            if (level + 1 >= TOTAL_LEVELS) {
-                setGameState('finished');
-            } else {
-                const nextLevel = level + 1;
-                setLevel(nextLevel);
-                // Change tractor color at certain levels
-                if (nextLevel === 5) setTractorColor('blue');
-                if (nextLevel === 12) setTractorColor('green');
-                fetchNewQuestion(nextLevel);
+    const handleCorrectAnswer = useCallback(async () => {
+        const newScore = score + 1;
+        setScore(newScore);
+
+        if (newScore > 0 && newScore % 10 === 0) {
+            const pointsWon = 10000;
+            toast({ title: 'Congratulations!', description: `You won ${pointsWon.toLocaleString()} points for 10 correct answers!` });
+            if(student) {
+                await addQuizWinnings(student.name, pointsWon);
+                await refreshStudentData(student.name);
             }
+        }
+        fetchNewQuestion();
+    }, [score, student, toast, fetchNewQuestion, refreshStudentData]);
+
+
+    const moveTractor = (direction: 'left' | 'right') => {
+        if (gameState !== 'playing') return;
+        const moveAmount = 20;
+        if (direction === 'left') {
+            setTractorX(prev => Math.max(0, prev - moveAmount));
         } else {
-            // Tractor is stuck, try again
-            setSelectedAnswer(null);
-            setIsCorrect(null);
-            setGameState('playing');
+            setTractorX(prev => Math.min(GAME_WIDTH - TRACTOR_WIDTH, prev + moveAmount));
         }
     };
     
-    // Calculate tractor position as a percentage.
-    const tractorPosition = level * (100 / TOTAL_LEVELS);
+    // Game Loop
+    useEffect(() => {
+        if (gameState === 'playing' && fork) {
+            gameLoopRef.current = setInterval(() => {
+                setRoadY(prevY => {
+                    const newY = prevY + ROAD_SPEED;
+                    if (newY > GAME_HEIGHT) {
+                        // If player misses the fork, it's a game over
+                        gameOver();
+                        return -GAME_HEIGHT;
+                    }
 
-    const renderGameContent = () => {
-        if (isLoading) {
-            return <div className="flex justify-center items-center h-64"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
+                    // Collision detection
+                    if (newY > GAME_HEIGHT - FORK_Y_POSITION && newY < GAME_HEIGHT - FORK_Y_POSITION + 50) {
+                        const tractorCenter = tractorX + TRACTOR_WIDTH / 2;
+                        const isLeft = tractorCenter < GAME_WIDTH / 2;
+                        const chosenAnswer = isLeft ? fork.left : fork.right;
+
+                        if (chosenAnswer === question?.answer) {
+                            handleCorrectAnswer();
+                        } else {
+                            gameOver();
+                        }
+                    }
+                    return newY;
+                });
+            }, 16); // ~60 FPS
         }
+        return () => {
+            if (gameLoopRef.current) clearInterval(gameLoopRef.current);
+        };
+    }, [gameState, fork, tractorX, question, handleCorrectAnswer]);
 
-        if (gameState === 'start' || gameState === 'finished') {
-            return (
-                 <Card className="text-center bg-card/70 backdrop-blur-sm">
-                    <CardHeader>
-                        <CardTitle className="text-2xl flex items-center justify-center gap-3">
-                           {gameState === 'start' ? 'Get Ready to Drive!' : <><Trophy className="text-amber-400 h-8 w-8"/>You Reached the Village!</>}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground mb-4">
-                           {gameState === 'start' ? 'सही जवाब देकर अपने ट्रैक्टर को गाँव तक पहुँचाएँ।' : 'बहुत बढ़िया! आप एक माहिर मैथ ड्राइवर हैं।'}
-                        </p>
-                        <Button onClick={startGame} size="lg">
-                            {gameState === 'start' ? 'Start Driving' : 'Play Again'} <RefreshCw className="ml-2 h-4 w-4"/>
-                        </Button>
-                    </CardContent>
-                </Card>
-            );
+
+     // Keyboard controls
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowLeft') moveTractor('left');
+            if (e.key === 'ArrowRight') moveTractor('right');
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [gameState]);
+
+
+    const renderGameScreen = () => {
+        if (isLoading) {
+            return <div className="flex justify-center items-center h-full"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
         }
 
         return (
-            <Card className="bg-card/70 backdrop-blur-sm">
-                <CardHeader>
-                    <CardTitle className="text-center text-xl md:text-3xl font-sans tracking-wide">{question?.question}</CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-4">
-                    {question?.options.map((opt, i) => {
-                        const isSelected = selectedAnswer === opt;
-                        const isTheCorrectAnswer = question.answer === opt;
-
-                        return (
-                            <Button
-                                key={i}
-                                variant="outline"
-                                size="lg"
-                                className={cn(
-                                    "h-auto py-4 text-xl font-bold justify-center transition-all duration-300 border-2",
-                                    gameState === 'answered' && isTheCorrectAnswer && "bg-green-500/80 border-green-400 text-black animate-pulse",
-                                    gameState === 'answered' && isSelected && !isTheCorrectAnswer && "bg-red-600/80 border-red-400 text-white",
-                                    gameState === 'playing' && "hover:bg-amber-500/20 hover:border-amber-400"
-                                )}
-                                onClick={() => handleAnswerSelect(opt)}
-                                disabled={gameState !== 'playing'}
-                            >
-                                {opt}
-                            </Button>
-                        )
-                    })}
-                </CardContent>
-                {gameState === 'answered' && (
-                    <CardContent className="text-center mt-4">
-                        <div className={cn("flex items-center justify-center gap-2 text-xl font-bold", isCorrect ? "text-green-400" : "text-destructive")}>
-                           {isCorrect ? <Check /> : <X />}
-                           {isCorrect ? 'सही जवाब! ट्रैक्टर आगे बढ़ गया।' : 'गलत जवाब! ट्रैक्टर कीचड़ में फँस गया।'}
+            <>
+                {/* Road */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-full bg-gray-600" style={{ transform: `translateY(${roadY - GAME_HEIGHT}px) translateX(-50%)` }}/>
+                
+                {/* Fork in the road */}
+                {fork && (
+                     <div className="absolute w-full" style={{ top: roadY }}>
+                        <div className="absolute left-0 w-1/2 h-40 bg-gray-600 -skew-x-12" />
+                        <div className="absolute right-0 w-1/2 h-40 bg-gray-600 skew-x-12" />
+                        <div className="absolute top-10 w-full flex justify-around text-white font-bold text-2xl">
+                           <span>{fork.left}</span>
+                           <span>{fork.right}</span>
                         </div>
-                        <Button onClick={handleNext} className="mt-4">
-                           {isCorrect ? 'अगला सवाल' : 'फिर से कोशिश करें'} <ArrowRight className="ml-2 h-4 w-4"/>
-                        </Button>
-                    </CardContent>
+                    </div>
                 )}
-            </Card>
-        );
+                
+                {/* Tractor */}
+                <div 
+                    className="absolute bottom-5 transition-transform duration-100" 
+                    style={{ left: tractorX, width: TRACTOR_WIDTH, height: TRACTOR_HEIGHT }}
+                >
+                    <Image src="https://placehold.co/100x80.png" alt="Tractor" layout="fill" data-ai-hint="red tractor top down cartoon"/>
+                </div>
+
+                {/* Question Board */}
+                 {question && gameState === 'playing' && (
+                    <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-yellow-400 p-4 rounded-lg border-4 border-yellow-600 text-black text-center shadow-lg">
+                        <p className="text-xl font-bold">{question.question}</p>
+                    </div>
+                 )}
+
+                 {/* Score */}
+                 <div className="absolute top-2 right-2 bg-black/50 text-white p-2 rounded-lg font-bold">
+                    Score: {score}
+                 </div>
+            </>
+        )
     }
-    
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6 flex flex-col items-center">
             <div className="text-center">
                 <Truck className="mx-auto h-12 w-12 text-primary" />
                 <h1 className="text-3xl font-bold text-primary mt-2">Math Tractor Drive</h1>
-                <p className="text-muted-foreground">गणित के सवाल हल करें और अपने ट्रैक्टर को आगे बढ़ाएँ!</p>
+                <p className="text-muted-foreground">Steer the tractor to the correct answer!</p>
             </div>
             
-            {/* Game Board */}
-            <div className="w-full h-56 bg-gradient-to-b from-cyan-400 to-sky-600 rounded-lg p-4 relative overflow-hidden shadow-inner">
-                {/* Background Scenery */}
-                 <div className="absolute bottom-16 left-0 w-full h-20 bg-green-600"></div>
-                 <div className="absolute bottom-16 left-0 w-[2000px] h-20 bg-[url('https://www.transparenttextures.com/patterns/farmer.png')] opacity-10"></div>
-                 <Image src="https://placehold.co/100x50.png" alt="Tree" width={100} height={50} className="absolute bottom-20 left-[15%]" data-ai-hint="cartoon tree"/>
-                 <Image src="https://placehold.co/80x40.png" alt="Tree" width={80} height={40} className="absolute bottom-20 left-[45%]" data-ai-hint="cartoon tree"/>
-                 <Image src="https://placehold.co/120x60.png" alt="Tree" width={120} height={60} className="absolute bottom-20 left-[70%]" data-ai-hint="cartoon tree"/>
-
-                {/* Winding Road SVG */}
-                <svg viewBox="0 0 1000 100" preserveAspectRatio="none" className="absolute bottom-0 left-0 w-full h-24">
-                    <path d="M-50,60 C200,10 300,100 500,60 S700,0 1050,50" stroke="#a16207" strokeWidth="35" fill="none" />
-                    <path d="M-50,60 C200,10 300,100 500,60 S700,0 1050,50" stroke="#ca8a04" strokeWidth="25" fill="none" />
-                     <path d="M-50,60 C200,10 300,100 500,60 S700,0 1050,50" stroke="#eab308" strokeDasharray="15 15" strokeWidth="2" fill="none" />
-                </svg>
-
-                {/* Village at the end */}
-                <Image src="https://placehold.co/150x75.png" alt="Village" width={150} height={75} className="absolute bottom-16 right-0" data-ai-hint="small village cartoon"/>
-
-                {/* Tractor */}
-                 <div 
-                    className="absolute bottom-[4.5rem] transition-all duration-1000 ease-in-out" 
-                    style={{ left: `calc(${tractorPosition}% - 40px)` }}
-                 >
-                    <Image 
-                        src="https://placehold.co/80x60.png" 
-                        width={80} 
-                        height={60} 
-                        alt="Tractor" 
-                        data-ai-hint={`${tractorColor} tractor side view cartoon`}
-                        className={cn("drop-shadow-lg", gameState === 'answered' && !isCorrect && "animate-shake")}
-                    />
-                 </div>
-                 
-                 {/* Mud Splash on wrong answer */}
-                 {gameState === 'answered' && !isCorrect && (
-                     <div 
-                        className="absolute bottom-10 transition-all duration-1000 ease-in-out" 
-                        style={{ left: `calc(${tractorPosition}% - 20px)` }}
-                     >
-                        <Image src="https://placehold.co/80x40.png" width={80} height={40} alt="Mud Splash" data-ai-hint="mud splash cartoon" className="opacity-70"/>
-                     </div>
-                 )}
-
-
-                {/* Progress Bar */}
-                <div className="absolute top-2 left-4 right-4">
-                    <p className="text-xs text-center text-white/80 mb-1">Road to Village</p>
-                    <Progress value={tractorPosition} />
-                </div>
+            <div 
+                ref={gameContainerRef}
+                className="w-full max-w-sm h-[500px] bg-green-500 rounded-lg overflow-hidden relative border-4 border-black"
+                tabIndex={0}
+            >
+                {gameState === 'start' && (
+                    <div className="absolute inset-0 bg-black/70 flex flex-col justify-center items-center z-10">
+                        <Card className="text-center">
+                            <CardHeader><CardTitle>Ready to Drive?</CardTitle></CardHeader>
+                            <CardContent>
+                                <Button onClick={startGame} size="lg">Start Game</Button>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
+                 {gameState === 'gameOver' && (
+                    <div className="absolute inset-0 bg-black/70 flex flex-col justify-center items-center z-10">
+                        <Card className="text-center">
+                            <CardHeader>
+                                <CardTitle className="text-destructive">Game Over!</CardTitle>
+                                <CardDescription>Final Score: {score}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Button onClick={startGame} size="lg">Play Again</Button>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
+                {gameState === 'playing' && renderGameScreen()}
             </div>
-
-            {renderGameContent()}
             
-            <style jsx>{\`
-                .animate-shake {
-                    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-                    transform: translate3d(0, 0, 0);
-                }
-                @keyframes shake {
-                    10%, 90% { transform: translate3d(-1px, 0, 0) rotate(-1deg); }
-                    20%, 80% { transform: translate3d(2px, 0, 0) rotate(2deg); }
-                    30%, 50%, 70% { transform: translate3d(-4px, 0, 0) rotate(-3deg); }
-                    40%, 60% { transform: translate3d(4px, 0, 0) rotate(3deg); }
-                }
-            \`}</style>
+            {/* Mobile Controls */}
+            <div className="flex md:hidden justify-between w-full max-w-sm mt-4">
+                <Button onMouseDown={() => moveTractor('left')} className="p-8 text-2xl"><ArrowLeft /></Button>
+                <Button onMouseDown={() => moveTractor('right')} className="p-8 text-2xl"><ArrowRight /></Button>
+            </div>
         </div>
     );
 }
