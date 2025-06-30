@@ -10,6 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { generateTrueFalseQuestion, type TrueFalseOutput } from '@/ai/flows/true-false-flow';
 import { textToSpeech } from '@/ai/flows/tts-flow';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/use-auth';
+import { addQuizWinnings } from '@/lib/firebase';
 
 type GameState = 'picking_subject' | 'playing' | 'revealed';
 
@@ -23,6 +25,7 @@ const subjects = [
 export default function TrueFalseGamePage() {
     const { t } = useLanguage();
     const { toast } = useToast();
+    const { student, refreshStudentData } = useAuth();
     
     const [gameState, setGameState] = useState<GameState>('picking_subject');
     const [subject, setSubject] = useState<string>('');
@@ -30,7 +33,12 @@ export default function TrueFalseGamePage() {
     const [isLoading, setIsLoading] = useState(false);
     const [userAnswer, setUserAnswer] = useState<boolean | null>(null);
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
+    const [resultAudioUrl, setResultAudioUrl] = useState<string | null>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
+    const resultAudioRef = useRef<HTMLAudioElement>(null);
+
+    const [score, setScore] = useState(0);
+    const [streak, setStreak] = useState(0);
 
      useEffect(() => {
         if (audioUrl && audioRef.current) {
@@ -38,11 +46,18 @@ export default function TrueFalseGamePage() {
         }
     }, [audioUrl]);
 
+     useEffect(() => {
+        if (resultAudioUrl && resultAudioRef.current) {
+            resultAudioRef.current.play().catch(e => console.log("Browser prevented autoplay of result audio."));
+        }
+    }, [resultAudioUrl]);
+
     const fetchQuestion = async (selectedSubject: string) => {
         setIsLoading(true);
         setQuestionData(null);
         setUserAnswer(null);
         setAudioUrl(null);
+        setResultAudioUrl(null);
         setGameState('playing');
         try {
             const res = await generateTrueFalseQuestion({ subject: selectedSubject });
@@ -63,10 +78,45 @@ export default function TrueFalseGamePage() {
         fetchQuestion(selectedSubject);
     };
 
-    const handleAnswer = (answer: boolean) => {
-        if (gameState !== 'playing') return;
+    const handleAnswer = async (answer: boolean) => {
+        if (gameState !== 'playing' || !questionData || !student) return;
         setUserAnswer(answer);
         setGameState('revealed');
+        
+        const isCorrect = answer === questionData.isTrue;
+        let newStreak = streak;
+        let textToSpeak = '';
+
+        if (isCorrect) {
+            setScore(s => s + 1);
+            newStreak = streak + 1;
+            setStreak(newStreak);
+            textToSpeak = 'सही जवाब!';
+        } else {
+            setStreak(0);
+            newStreak = 0;
+            textToSpeak = 'गलत जवाब!';
+        }
+
+        if (newStreak === 5) {
+            const points = 5000;
+            textToSpeak += ` लगातार 5 सही जवाब! आपने ${points.toLocaleString('en-IN')} अंक जीते हैं।`;
+            setStreak(0); // Reset streak after winning
+            try {
+                await addQuizWinnings(student.name, points);
+                await refreshStudentData(student.name);
+                toast({ title: `You won ${points} points!` });
+            } catch (error) {
+                 toast({ variant: 'destructive', title: 'Error saving points' });
+            }
+        }
+
+        try {
+            const audioRes = await textToSpeech(textToSpeak);
+            setResultAudioUrl(audioRes.media);
+        } catch(err) {
+            console.error("Failed to generate result audio", err);
+        }
     };
 
     const handleNextQuestion = () => {
@@ -78,6 +128,8 @@ export default function TrueFalseGamePage() {
         setSubject('');
         setQuestionData(null);
         setUserAnswer(null);
+        setScore(0);
+        setStreak(0);
     }
 
     const renderContent = () => {
@@ -142,6 +194,10 @@ export default function TrueFalseGamePage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <p className="text-muted-foreground">{questionData.explanation}</p>
+                                <div className="flex justify-center gap-4 font-semibold">
+                                    <p>Score: {score}</p>
+                                    <p>Correct Streak: {streak}</p>
+                                </div>
                                 <div className="flex justify-center gap-4">
                                     <Button onClick={handleNextQuestion} size="lg">{t('nextQuestion')}</Button>
                                     <Button onClick={resetGame} size="lg" variant="outline">Choose Subject</Button>
@@ -160,6 +216,7 @@ export default function TrueFalseGamePage() {
     return (
         <div className="space-y-6">
             <audio ref={audioRef} src={audioUrl || ''} />
+            <audio ref={resultAudioRef} src={resultAudioUrl || ''} />
             <div className="absolute inset-x-0 top-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
             <div className="text-center">
                 <Binary className="mx-auto h-12 w-12 text-primary" />

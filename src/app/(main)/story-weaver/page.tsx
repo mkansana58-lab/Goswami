@@ -13,12 +13,15 @@ import { useToast } from '@/hooks/use-toast';
 import { generatePassageWithQuestions, type PassageGeneratorOutput } from '@/ai/flows/story-weaver-flow';
 import { textToSpeech } from '@/ai/flows/tts-flow';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/use-auth';
+import { addQuizWinnings } from '@/lib/firebase';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
 
 const ReadingPracticePage = () => {
     const { t, language } = useLanguage();
     const { toast } = useToast();
+    const { student, refreshStudentData } = useAuth();
     
     const [passageData, setPassageData] = useState<PassageGeneratorOutput | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -26,14 +29,22 @@ const ReadingPracticePage = () => {
     const [answerStates, setAnswerStates] = useState<Record<number, AnswerState>>({});
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [passageAudioUrl, setPassageAudioUrl] = useState<string | null>(null);
+    const [resultAudioUrl, setResultAudioUrl] = useState<string | null>(null);
     const [isAudioLoading, setIsAudioLoading] = useState(false);
     const audioRef = useRef<HTMLAudioElement>(null);
+    const resultAudioRef = useRef<HTMLAudioElement>(null);
 
     useEffect(() => {
         if (passageAudioUrl && audioRef.current) {
             audioRef.current.play().catch(e => console.log("Browser prevented autoplay of passage audio."));
         }
     }, [passageAudioUrl]);
+
+    useEffect(() => {
+        if (resultAudioUrl && resultAudioRef.current) {
+            resultAudioRef.current.play().catch(e => console.log("Browser prevented autoplay of result audio."));
+        }
+    }, [resultAudioUrl]);
 
     const handleGenerate = async () => {
         setIsLoading(true);
@@ -42,6 +53,7 @@ const ReadingPracticePage = () => {
         setAnswerStates({});
         setIsSubmitted(false);
         setPassageAudioUrl(null);
+        setResultAudioUrl(null);
 
         try {
             const res = await generatePassageWithQuestions({
@@ -61,18 +73,41 @@ const ReadingPracticePage = () => {
         setAnswers(prev => ({ ...prev, [questionIndex]: selectedOption }));
     };
 
-    const handleSubmit = () => {
-        if (!passageData) return;
+    const handleSubmit = async () => {
+        if (!passageData || !student) return;
         const newAnswerStates: Record<number, AnswerState> = {};
+        let correctCount = 0;
         passageData.questions.forEach((q, index) => {
             if (answers[index] === q.answer) {
                 newAnswerStates[index] = 'correct';
+                correctCount++;
             } else {
                 newAnswerStates[index] = 'incorrect';
             }
         });
         setAnswerStates(newAnswerStates);
         setIsSubmitted(true);
+
+        let textToSpeak = `आपने ${passageData.questions.length} में से ${correctCount} सवालों के सही जवाब दिए हैं।`;
+        
+        if (correctCount === passageData.questions.length) {
+            const points = 10000;
+            textToSpeak += ` शानदार! आपने ${points.toLocaleString('en-IN')} अंक जीते हैं।`;
+            try {
+                await addQuizWinnings(student.name, points);
+                await refreshStudentData(student.name);
+                toast({ title: "You won 10,000 points!" });
+            } catch (error) {
+                toast({ variant: 'destructive', title: 'Error saving points' });
+            }
+        }
+
+        try {
+            const audioRes = await textToSpeech(textToSpeak);
+            setResultAudioUrl(audioRes.media);
+        } catch(err) {
+            console.error("Failed to generate result audio", err);
+        }
     };
 
     const handleListen = async () => {
@@ -92,7 +127,8 @@ const ReadingPracticePage = () => {
 
     return (
         <div className="space-y-6">
-            {passageAudioUrl && <audio ref={audioRef} src={passageAudioUrl} />}
+            <audio ref={audioRef} src={passageAudioUrl || ''} />
+            <audio ref={resultAudioRef} src={resultAudioUrl || ''} />
             <div className="absolute inset-x-0 top-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
             <div className="text-center">
                 <BookText className="mx-auto h-12 w-12 text-primary" />

@@ -57,8 +57,10 @@ const QuizGamePage = () => {
   
   const [introAudioUrl, setIntroAudioUrl] = useState<string | null>(null);
   const [questionAudioUrl, setQuestionAudioUrl] = useState<string | null>(null);
+  const [outroAudioUrl, setOutroAudioUrl] = useState<string | null>(null);
   const introAudioRef = useRef<HTMLAudioElement>(null);
   const questionAudioRef = useRef<HTMLAudioElement>(null);
+  const outroAudioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     const generateIntro = async () => {
@@ -84,6 +86,12 @@ const QuizGamePage = () => {
     }
   }, [questionAudioUrl]);
 
+  useEffect(() => {
+    if (outroAudioUrl && outroAudioRef.current) {
+        outroAudioRef.current.play().catch(e => console.log("Browser prevented autoplay of outro audio."));
+    }
+  }, [outroAudioUrl]);
+
 
   const getSafePrize = () => {
     let safeAmount = 0;
@@ -100,6 +108,15 @@ const QuizGamePage = () => {
     if (gameState === 'game_over' && !winningsAdded && student?.name) {
         const isCorrect = selectedAnswer === question?.answer;
         const amountWon = isCorrect ? prizeLadder[level].amount : getSafePrize();
+        
+        const speakText = amountWon > 0 
+            ? `बधाई हो! आप ${amountWon.toLocaleString('en-IN')} रुपये जीत चुके हैं।` 
+            : 'कोई बात नहीं, बेहतर करने के लिए फिर से प्रयास करें।';
+        
+        textToSpeech(speakText)
+            .then(res => setOutroAudioUrl(res.media))
+            .catch(err => console.error("Failed to generate outro audio", err));
+
         if (amountWon > 0) {
             addQuizWinnings(student.name, amountWon)
                 .then(() => {
@@ -127,6 +144,7 @@ const QuizGamePage = () => {
     setHiddenOptions([]);
     setLifelines({ fiftyFifty: true });
     setWinningsAdded(false);
+    setOutroAudioUrl(null);
   };
   
   const fetchQuestion = async (currentLevel: number, selectedSubject: string) => {
@@ -142,7 +160,6 @@ const QuizGamePage = () => {
       setSelectedAnswer(null);
       setGameState('playing');
       
-      // Speak the question
       const questionTextToSpeak = `प्रश्न ${prizeLadder[currentLevel].amount.toLocaleString('en-IN')} के लिए, यह रहा आपकी स्क्रीन पर। ${res.question}`;
       const audioRes = await textToSpeech(questionTextToSpeak);
       setQuestionAudioUrl(audioRes.media);
@@ -347,8 +364,9 @@ const QuizGamePage = () => {
 
   return (
     <div className="space-y-6 relative">
-      {introAudioUrl && <audio ref={introAudioRef} src={introAudioUrl} />}
-      {questionAudioUrl && <audio ref={questionAudioRef} src={questionAudioUrl} />}
+      <audio ref={introAudioRef} src={introAudioUrl || ''} />
+      <audio ref={questionAudioRef} src={questionAudioUrl || ''} />
+      <audio ref={outroAudioRef} src={outroAudioUrl || ''} />
       <div className="absolute inset-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
        <div className="flex flex-col items-center text-center">
             <Gamepad2 className="h-16 w-16 text-primary animate-pulse" />
