@@ -111,13 +111,13 @@ const ReadingPracticePage = () => {
 
         let textToSpeak = `आपने ${passageData.questions.length} में से ${correctCount} सवालों के सही जवाब दिए हैं।`;
         
-        if (correctCount === passageData.questions.length) {
-            const points = 10000;
-            textToSpeak += ` शानदार! आपने ${points.toLocaleString('en-IN')} अंक जीते हैं।`;
+        if (passageData.questions.length > 0 && correctCount === passageData.questions.length) {
+            const points = 5000;
+            textToSpeak += ` शानदार! आपने सभी सवालों के सही जवाब दिए और ${points.toLocaleString('en-IN')} अंक जीते हैं।`;
             try {
                 await addQuizWinnings(student.name, points);
                 await refreshStudentData(student.name);
-                toast({ title: "You won 10,000 points!" });
+                toast({ title: `Congratulations! You won ${points} points!` });
             } catch (error) {
                 toast({ variant: 'destructive', title: 'Error saving points' });
             }
@@ -139,7 +139,7 @@ const ReadingPracticePage = () => {
             <div className="text-center">
                 <BookText className="mx-auto h-12 w-12 text-primary" />
                 <h1 className="text-3xl font-bold text-primary mt-2">जेएनवी के लिए गद्यांश</h1>
-                <p className="text-muted-foreground">नवोदय विद्यालय प्रवेश परीक्षा की तैयारी के लिए अपठित गद्यांश का अभ्यास करें।</p>
+                <p className="text-muted-foreground">नवोदय विद्यालय (JNV) प्रवेश परीक्षा की तैयारी के लिए अपठित गद्यांश का अभ्यास करें।</p>
             </div>
 
             {!passageData && !isLoading && (
