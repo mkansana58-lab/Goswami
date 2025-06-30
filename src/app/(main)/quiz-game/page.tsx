@@ -32,6 +32,14 @@ const subjects = [
   { name: 'खेल', icon: Dribbble },
 ];
 
+const optionButtonColors = [
+    "border-blue-400/50 bg-blue-950/50 text-blue-100 hover:bg-blue-900 hover:border-blue-300",
+    "border-purple-400/50 bg-purple-950/50 text-purple-100 hover:bg-purple-900 hover:border-purple-300",
+    "border-green-400/50 bg-green-950/50 text-green-100 hover:bg-green-900 hover:border-green-300",
+    "border-amber-400/50 bg-amber-950/50 text-amber-100 hover:bg-amber-900 hover:border-amber-300"
+];
+
+
 const QuizGamePage = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
@@ -272,7 +280,8 @@ const QuizGamePage = () => {
                                         variant="outline"
                                         size="lg"
                                         className={cn(
-                                            "h-auto py-3 text-base md:text-lg justify-start transition-all duration-300 border-2 border-blue-400/50 bg-blue-950/50 text-blue-100 hover:bg-blue-900 hover:border-blue-300",
+                                            "h-auto py-3 text-base md:text-lg justify-start transition-all duration-300 border-2",
+                                            optionButtonColors[i],
                                             isHidden && "opacity-0 pointer-events-none",
                                             isSelected && "bg-yellow-500/80 border-yellow-400 text-black shadow-[0_0_10px_#facc15]",
                                             isAnswer && "bg-green-500/80 border-green-400 text-black animate-pulse shadow-[0_0_15px_#22c55e]",

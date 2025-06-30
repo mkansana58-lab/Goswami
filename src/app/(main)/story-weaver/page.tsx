@@ -1,16 +1,17 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, BookText, Check, X } from 'lucide-react';
+import { Loader2, BookText, Check, X, Headphones } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generatePassageWithQuestions, type PassageGeneratorOutput } from '@/ai/flows/story-weaver-flow';
+import { textToSpeech } from '@/ai/flows/tts-flow';
 import { cn } from '@/lib/utils';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
@@ -24,6 +25,15 @@ const ReadingPracticePage = () => {
     const [answers, setAnswers] = useState<Record<number, string>>({});
     const [answerStates, setAnswerStates] = useState<Record<number, AnswerState>>({});
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [passageAudioUrl, setPassageAudioUrl] = useState<string | null>(null);
+    const [isAudioLoading, setIsAudioLoading] = useState(false);
+    const audioRef = useRef<HTMLAudioElement>(null);
+
+    useEffect(() => {
+        if (passageAudioUrl && audioRef.current) {
+            audioRef.current.play().catch(e => console.log("Browser prevented autoplay of passage audio."));
+        }
+    }, [passageAudioUrl]);
 
     const handleGenerate = async () => {
         setIsLoading(true);
@@ -31,6 +41,7 @@ const ReadingPracticePage = () => {
         setAnswers({});
         setAnswerStates({});
         setIsSubmitted(false);
+        setPassageAudioUrl(null);
 
         try {
             const res = await generatePassageWithQuestions({
@@ -64,8 +75,24 @@ const ReadingPracticePage = () => {
         setIsSubmitted(true);
     };
 
+    const handleListen = async () => {
+        if (!passageData?.passage || isAudioLoading) return;
+        setIsAudioLoading(true);
+        setPassageAudioUrl(null);
+        try {
+            const response = await textToSpeech(passageData.passage);
+            setPassageAudioUrl(response.media);
+        } catch (error) {
+            console.error("Error generating audio:", error);
+            toast({ variant: "destructive", title: "Audio Error" });
+        } finally {
+            setIsAudioLoading(false);
+        }
+    }
+
     return (
         <div className="space-y-6">
+            {passageAudioUrl && <audio ref={audioRef} src={passageAudioUrl} />}
             <div className="absolute inset-x-0 top-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
             <div className="text-center">
                 <BookText className="mx-auto h-12 w-12 text-primary" />
@@ -92,8 +119,16 @@ const ReadingPracticePage = () => {
             {passageData && (
                 <div className="space-y-6">
                     <Card className="bg-card/70 backdrop-blur-sm">
-                        <CardHeader>
+                        <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Reading Passage</CardTitle>
+                             <Button onClick={handleListen} variant="outline" size="sm" disabled={isAudioLoading}>
+                                {isAudioLoading ? (
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                    <Headphones className="h-4 w-4 mr-2" />
+                                )}
+                                Listen
+                            </Button>
                         </CardHeader>
                         <CardContent>
                             <ScrollArea className="h-48">
@@ -124,8 +159,8 @@ const ReadingPracticePage = () => {
                                                  <div key={optIndex} className={cn(
                                                     "flex items-center space-x-3 rounded-lg border-2 p-3 transition-colors",
                                                     isSubmitted ? "cursor-not-allowed" : "cursor-pointer",
-                                                    isCorrect ? "border-green-500 bg-green-500/10" : "border-muted",
-                                                    isWrong ? "border-destructive bg-destructive/10" : "border-muted",
+                                                    isCorrect ? "border-green-500 bg-green-500/10" : "border-purple-500/50 hover:bg-purple-900/50",
+                                                    isWrong ? "border-destructive bg-destructive/10" : "border-purple-500/50 hover:bg-purple-900/50",
                                                     !isSubmitted && isSelected ? "border-primary" : ""
                                                  )}>
                                                     <RadioGroupItem value={option} id={`q${index}-opt${optIndex}`} />

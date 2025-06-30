@@ -1,13 +1,14 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Binary, Check, X, BrainCircuit, Users, Globe, Brain } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateTrueFalseQuestion, type TrueFalseOutput } from '@/ai/flows/true-false-flow';
+import { textToSpeech } from '@/ai/flows/tts-flow';
 import { cn } from '@/lib/utils';
 
 type GameState = 'picking_subject' | 'playing' | 'revealed';
@@ -28,15 +29,26 @@ export default function TrueFalseGamePage() {
     const [questionData, setQuestionData] = useState<TrueFalseOutput | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [userAnswer, setUserAnswer] = useState<boolean | null>(null);
+    const [audioUrl, setAudioUrl] = useState<string | null>(null);
+    const audioRef = useRef<HTMLAudioElement>(null);
+
+     useEffect(() => {
+        if (audioUrl && audioRef.current) {
+            audioRef.current.play().catch(e => console.log("Browser prevented autoplay of audio."));
+        }
+    }, [audioUrl]);
 
     const fetchQuestion = async (selectedSubject: string) => {
         setIsLoading(true);
         setQuestionData(null);
         setUserAnswer(null);
+        setAudioUrl(null);
         setGameState('playing');
         try {
             const res = await generateTrueFalseQuestion({ subject: selectedSubject });
             setQuestionData(res);
+            const audioRes = await textToSpeech(res.statement);
+            setAudioUrl(audioRes.media);
         } catch (e) {
             console.error(e);
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to generate a new question.' });
@@ -99,7 +111,7 @@ export default function TrueFalseGamePage() {
                         </CardHeader>
                         <CardContent className="grid grid-cols-2 gap-4">
                             <Button
-                                className={cn("h-24 text-2xl font-bold transition-all duration-300",
+                                className={cn("h-24 text-2xl font-bold transition-all duration-300 bg-blue-600 hover:bg-blue-700",
                                     gameState === 'revealed' && questionData.isTrue && "bg-green-600 hover:bg-green-700 border-2 border-green-400 shadow-lg",
                                     gameState === 'revealed' && userAnswer === true && !isCorrect && "bg-red-600 hover:bg-red-700 border-2 border-red-400 shadow-lg"
                                 )}
@@ -109,7 +121,7 @@ export default function TrueFalseGamePage() {
                                 <Check className="mr-4 h-8 w-8" /> {t('trueText')}
                             </Button>
                              <Button
-                                className={cn("h-24 text-2xl font-bold transition-all duration-300",
+                                className={cn("h-24 text-2xl font-bold transition-all duration-300 bg-purple-600 hover:bg-purple-700",
                                     gameState === 'revealed' && !questionData.isTrue && "bg-green-600 hover:bg-green-700 border-2 border-green-400 shadow-lg",
                                     gameState === 'revealed' && userAnswer === false && !isCorrect && "bg-red-600 hover:bg-red-700 border-2 border-red-400 shadow-lg"
                                 )}
@@ -147,6 +159,7 @@ export default function TrueFalseGamePage() {
 
     return (
         <div className="space-y-6">
+            <audio ref={audioRef} src={audioUrl || ''} />
             <div className="absolute inset-x-0 top-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
             <div className="text-center">
                 <Binary className="mx-auto h-12 w-12 text-primary" />
