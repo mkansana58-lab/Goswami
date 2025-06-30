@@ -109,9 +109,7 @@ const QuizGamePage = () => {
         const isCorrect = selectedAnswer === question?.answer;
         const amountWon = isCorrect ? prizeLadder[level].amount : getSafePrize();
         
-        const speakText = amountWon > 0 
-            ? `बधाई हो! आप ${amountWon.toLocaleString('en-IN')} रुपये जीत चुके हैं।` 
-            : 'कोई बात नहीं, बेहतर करने के लिए फिर से प्रयास करें।';
+        const speakText = `आप ${amountWon.toLocaleString('en-IN')} रुपये जीत चुके हैं।`;
         
         textToSpeech(speakText)
             .then(res => setOutroAudioUrl(res.media))

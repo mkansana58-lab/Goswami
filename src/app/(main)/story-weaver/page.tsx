@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, BookText, Check, X, Headphones } from 'lucide-react';
+import { Loader2, BookText, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generatePassageWithQuestions, type PassageGeneratorOutput } from '@/ai/flows/story-weaver-flow';
 import { textToSpeech } from '@/ai/flows/tts-flow';
@@ -30,7 +30,6 @@ const ReadingPracticePage = () => {
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [passageAudioUrl, setPassageAudioUrl] = useState<string | null>(null);
     const [resultAudioUrl, setResultAudioUrl] = useState<string | null>(null);
-    const [isAudioLoading, setIsAudioLoading] = useState(false);
     const audioRef = useRef<HTMLAudioElement>(null);
     const resultAudioRef = useRef<HTMLAudioElement>(null);
 
@@ -61,6 +60,9 @@ const ReadingPracticePage = () => {
                 language: language === 'hi' ? 'Hindi' : 'English',
             });
             setPassageData(res);
+            // Auto-play audio
+            const audioResponse = await textToSpeech(res.passage);
+            setPassageAudioUrl(audioResponse.media);
         } catch (e) {
             console.error(e);
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to generate a new passage.' });
@@ -110,21 +112,6 @@ const ReadingPracticePage = () => {
         }
     };
 
-    const handleListen = async () => {
-        if (!passageData?.passage || isAudioLoading) return;
-        setIsAudioLoading(true);
-        setPassageAudioUrl(null);
-        try {
-            const response = await textToSpeech(passageData.passage);
-            setPassageAudioUrl(response.media);
-        } catch (error) {
-            console.error("Error generating audio:", error);
-            toast({ variant: "destructive", title: "Audio Error" });
-        } finally {
-            setIsAudioLoading(false);
-        }
-    }
-
     return (
         <div className="space-y-6">
             {passageAudioUrl && <audio ref={audioRef} src={passageAudioUrl} />}
@@ -155,16 +142,8 @@ const ReadingPracticePage = () => {
             {passageData && (
                 <div className="space-y-6">
                     <Card className="bg-card/70 backdrop-blur-sm">
-                        <CardHeader className="flex flex-row items-center justify-between">
+                        <CardHeader>
                             <CardTitle>Reading Passage</CardTitle>
-                             <Button onClick={handleListen} variant="outline" size="sm" disabled={isAudioLoading}>
-                                {isAudioLoading ? (
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                ) : (
-                                    <Headphones className="h-4 w-4 mr-2" />
-                                )}
-                                Listen
-                            </Button>
                         </CardHeader>
                         <CardContent>
                             <ScrollArea className="h-48">
