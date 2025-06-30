@@ -28,8 +28,8 @@ export default function AdmitCardPage() {
   }, []);
 
   const handleDownload = async () => {
-    if (!applicationNumber || !uniqueId) {
-      toast({ variant: "destructive", title: "Error", description: t('applicationNumber') + " and " + t('uniqueId') + " are required." });
+    if (!applicationNumber) {
+      toast({ variant: "destructive", title: "Error", description: t('applicationNumber') + " is required." });
       return;
     }
     
@@ -51,12 +51,16 @@ export default function AdmitCardPage() {
              return;
         }
 
-        if (data.uniqueId === uniqueId) {
-            setAdmitCardData(data);
-            toast({ title: "Admit Card Found", description: "Your admit card is displayed below." });
-        } else {
-            toast({ variant: "destructive", title: "Incorrect Unique ID", description: "The Unique ID you entered is incorrect." });
+        const needsIdCheck = data.testMode === 'online' && !data.uniqueIdCheckWaived;
+        if (needsIdCheck && data.uniqueId !== uniqueId) {
+            toast({ variant: "destructive", title: "Incorrect Unique ID", description: "The Unique ID you entered is incorrect for this application." });
+            return;
         }
+
+        // If we reach here, it's either offline, waived, or correct ID was provided.
+        setAdmitCardData(data);
+        toast({ title: "Admit Card Found", description: "Your admit card is displayed below." });
+
     } catch (error) {
         toast({ variant: "destructive", title: "Error", description: "An error occurred while fetching your admit card." });
     } finally {
@@ -99,8 +103,8 @@ export default function AdmitCardPage() {
             <Input id="applicationNumber" placeholder="GSA2024..." value={applicationNumber} onChange={(e) => setApplicationNumber(e.target.value)} disabled={isLoading} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="uniqueId">{t('uniqueId')}</Label>
-            <Input id="uniqueId" placeholder="Enter your 6-digit Unique ID" value={uniqueId} onChange={(e) => setUniqueId(e.target.value)} disabled={isLoading} />
+            <Label htmlFor="uniqueId">{t('uniqueId')} (for Online Test)</Label>
+            <Input id="uniqueId" placeholder="Enter your 6-digit Unique ID if applicable" value={uniqueId} onChange={(e) => setUniqueId(e.target.value)} disabled={isLoading} />
           </div>
         </CardContent>
         <CardFooter>

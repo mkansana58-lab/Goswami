@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useLanguage } from "@/hooks/use-language";
@@ -12,7 +13,6 @@ export default function StudentPortalPage() {
     const portalLinks = [
         { href: '/scholarship', titleKey: 'scholarshipForm', description: 'Apply for the scholarship test', icon: FileText, enabled: true },
         { href: '/admit-card', titleKey: 'admitCard', description: 'Download your exam admit card', icon: Download, enabled: true },
-        { href: '/city-intimation', titleKey: 'cityIntimationSlip', description: 'Check your exam city', icon: CalendarCheck, enabled: true },
         { href: '/online-scholarship-test/entry', titleKey: 'onlineTest', description: 'Give the online scholarship test', icon: TestTube2, enabled: true },
         { href: '/result', titleKey: 'downloadResult', description: 'Check and download your result', icon: Award, enabled: true },
         { href: '/student-portal/review-answers', titleKey: 'reviewAnswers', description: 'Review your online test answers', icon: ClipboardList, enabled: true },

@@ -31,6 +31,7 @@ import {
     getTestSettings, updateTestSetting, getTestEnrollments,
     updateTestEnrollmentWaiver,
     getScholarshipTestResults, deleteScholarshipTestResult, deleteScholarshipApplication, deleteStudent, deleteTestEnrollment, deleteContactInquiry,
+    updateScholarshipApplicationWaiver,
     type LiveClass, type Notification, type Post, type CurrentAffair,
     type VideoLecture, type Download, type Course, type AppConfig,
     type ScholarshipApplicationData, type StudentData, type Teacher, type GalleryImage,
@@ -61,6 +62,7 @@ const settingsSchema = z.object({
     cityIntimationSlipStartDate: z.string().optional(),
     resultAnnouncementDate: z.string().optional(),
     splashImage: z.any().optional(),
+    scholarshipTestId: z.string().optional(),
 });
 const liveClassSchema = z.object({ title: z.string().min(3), link: z.string().url(), scheduledAt: z.string().min(1) });
 const notificationSchema = z.object({ 
@@ -174,6 +176,7 @@ export default function AdminPage() {
                 admitCardDownloadStartDate: toInputDateTimeFormat(config.admitCardDownloadStartDate),
                 cityIntimationSlipStartDate: toInputDateTimeFormat(config.cityIntimationSlipStartDate),
                 resultAnnouncementDate: toInputDateTimeFormat(config.resultAnnouncementDate),
+                scholarshipTestId: config.scholarshipTestId,
             });
             setData({
                 liveClasses, notifications, posts, currentAffairs, videoLectures,
@@ -196,15 +199,16 @@ export default function AdminPage() {
     }, [admin, fetchData]);
 
     const handleSaveSettings = async (values: z.infer<typeof settingsSchema>) => {
-        const { splashImage, ...dateValues } = values;
+        const { splashImage, ...otherValues } = values;
 
         const configData: Partial<AppConfig> = {
-            ...(dateValues.scholarshipDeadline && { scholarshipDeadline: Timestamp.fromDate(new Date(dateValues.scholarshipDeadline)) }),
-            ...(dateValues.scholarshipTestStartDate && { scholarshipTestStartDate: Timestamp.fromDate(new Date(dateValues.scholarshipTestStartDate)) }),
-            ...(dateValues.scholarshipTestEndDate && { scholarshipTestEndDate: Timestamp.fromDate(new Date(dateValues.scholarshipTestEndDate)) }),
-            ...(dateValues.admitCardDownloadStartDate && { admitCardDownloadStartDate: Timestamp.fromDate(new Date(dateValues.admitCardDownloadStartDate)) }),
-            ...(dateValues.cityIntimationSlipStartDate && { cityIntimationSlipStartDate: Timestamp.fromDate(new Date(dateValues.cityIntimationSlipStartDate)) }),
-            ...(dateValues.resultAnnouncementDate && { resultAnnouncementDate: Timestamp.fromDate(new Date(dateValues.resultAnnouncementDate)) }),
+            ...(otherValues.scholarshipDeadline && { scholarshipDeadline: Timestamp.fromDate(new Date(otherValues.scholarshipDeadline)) }),
+            ...(otherValues.scholarshipTestStartDate && { scholarshipTestStartDate: Timestamp.fromDate(new Date(otherValues.scholarshipTestStartDate)) }),
+            ...(otherValues.scholarshipTestEndDate && { scholarshipTestEndDate: Timestamp.fromDate(new Date(otherValues.scholarshipTestEndDate)) }),
+            ...(otherValues.admitCardDownloadStartDate && { admitCardDownloadStartDate: Timestamp.fromDate(new Date(otherValues.admitCardDownloadStartDate)) }),
+            ...(otherValues.cityIntimationSlipStartDate && { cityIntimationSlipStartDate: Timestamp.fromDate(new Date(otherValues.cityIntimationSlipStartDate)) }),
+            ...(otherValues.resultAnnouncementDate && { resultAnnouncementDate: Timestamp.fromDate(new Date(otherValues.resultAnnouncementDate)) }),
+            scholarshipTestId: otherValues.scholarshipTestId || '',
         };
 
         if (splashImage?.[0]) {
@@ -237,6 +241,22 @@ export default function AdminPage() {
             fetchData();
         }
     };
+    
+    const handleIdWaiverToggle = async (appId: string, isWaived: boolean) => {
+         try {
+            await updateScholarshipApplicationWaiver(appId, isWaived);
+            setData(prevData => ({
+                ...prevData,
+                scholarshipApps: prevData.scholarshipApps.map(app => 
+                    app.id === appId ? { ...app, uniqueIdCheckWaived: isWaived } : app
+                )
+            }));
+            toast({ title: "Waiver status updated." });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Error", description: "Failed to update waiver status." });
+            fetchData();
+        }
+    }
     
     const handleTestWaiverToggle = async (enrollmentId: string, isWaived: boolean) => {
         try {
@@ -281,11 +301,27 @@ export default function AdminPage() {
                         <Accordion type="multiple" className="w-full space-y-4">
                             <AdminSection title={t('academySettings')} icon={Settings}>
                                 <form onSubmit={settingsForm.handleSubmit(handleSaveSettings)} className="space-y-4">
+                                     <div className="space-y-2">
+                                        <Label>Online Scholarship Test</Label>
+                                        <Select
+                                            defaultValue={settingsForm.getValues('scholarshipTestId')}
+                                            onValueChange={(value) => settingsForm.setValue('scholarshipTestId', value)}
+                                        >
+                                            <SelectTrigger><SelectValue placeholder="Select the test to use for online scholarships" /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="">None</SelectItem>
+                                                {data.customTests.map(test => (
+                                                    <SelectItem key={test.id} value={test.id}>{test.title} ({test.id})</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-destructive text-xs">{settingsForm.formState.errors.scholarshipTestId?.message}</p>
+                                    </div>
+                                    <Separator />
                                      <div><Label>{t('scholarshipDeadline')}</Label><Input type="datetime-local" {...settingsForm.register('scholarshipDeadline')} /></div>
                                      <div><Label>Scholarship Test Start Date</Label><Input type="datetime-local" {...settingsForm.register('scholarshipTestStartDate')} /></div>
                                      <div><Label>Scholarship Test End Date</Label><Input type="datetime-local" {...settingsForm.register('scholarshipTestEndDate')} /></div>
                                      <div><Label>{t('admitCardStartDate')}</Label><Input type="datetime-local" {...settingsForm.register('admitCardDownloadStartDate')} /></div>
-                                     <div><Label>{t('cityIntimationSlipStartDate')}</Label><Input type="datetime-local" {...settingsForm.register('cityIntimationSlipStartDate')} /></div>
                                      <div><Label>{t('resultAnnouncementDate')}</Label><Input type="datetime-local" {...settingsForm.register('resultAnnouncementDate')} /></div>
                                      <div><Label>Splash Screen Image (for App Start)</Label><Input type="file" accept="image/*" {...settingsForm.register('splashImage')} /></div>
                                      <Button type="submit">{t('saveSettings')}</Button>
@@ -297,13 +333,6 @@ export default function AdminPage() {
                             </AdminSection>
                             
                             <AdminSection title="Manage Custom Tests" icon={FilePlus2}>
-                                <Alert variant="default" className="bg-blue-950 border-blue-800">
-                                    <AlertCircle className="h-4 w-4 text-blue-400" />
-                                    <AlertTitle className="text-blue-300">How to Create the Scholarship Test</AlertTitle>
-                                    <AlertDescription className="text-blue-400">
-                                        To create the main scholarship test that students will take online, create a new custom test below and give it the specific ID: <code className="font-mono bg-blue-800/50 px-1 py-0.5 rounded">'scholarship-test-main'</code>. The system will automatically use this test for online scholarship applicants.
-                                    </AlertDescription>
-                                </Alert>
                                 <Tabs defaultValue="builder" className="mt-4">
                                     <TabsList>
                                         <TabsTrigger value="builder">Visual Builder</TabsTrigger>
@@ -379,14 +408,24 @@ export default function AdminPage() {
                     <TabsContent value="view" className="mt-4">
                          <Accordion type="multiple" className="w-full space-y-4">
                             <AdminSection title="Scholarship Applications" icon={GraduationCap}>
-                                <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Docs</TableHead><TableHead>Applied</TableHead><TableHead>Result</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
+                                <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Docs</TableHead><TableHead>ID Waiver</TableHead><TableHead>Result</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
                                     <TableBody>
                                         {data.scholarshipApps.map(app => (
                                             <TableRow key={app.id}>
                                                 <TableCell>{app.fullName}<br/><span className="text-muted-foreground text-xs">{app.fatherName}</span></TableCell>
-                                                <TableCell>App No: <span className="font-mono text-xs">{app.applicationNumber}</span><br/>UID: <span className="font-mono text-xs">{app.uniqueId}</span></TableCell>
+                                                <TableCell>App No: <span className="font-mono text-xs">{app.applicationNumber}</span><br/>UID: <span className="font-mono text-xs">{app.uniqueId || 'N/A'}</span></TableCell>
                                                 <TableCell className="flex gap-2"><ImagePreview url={app.photoUrl} triggerText="Photo" /><ImagePreview url={app.signatureUrl} triggerText="Sign" /></TableCell>
-                                                <TableCell>{format(app.createdAt.toDate(), 'PP')}</TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        <Switch
+                                                            disabled={app.testMode !== 'online'}
+                                                            checked={app.uniqueIdCheckWaived ?? false}
+                                                            onCheckedChange={(isChecked) => handleIdWaiverToggle(app.id!, isChecked)}
+                                                            aria-label="Toggle Unique ID check waiver"
+                                                        />
+                                                         <span className="text-xs text-muted-foreground">{app.uniqueIdCheckWaived ? "ON" : "OFF"}</span>
+                                                    </div>
+                                                </TableCell>
                                                 <TableCell>
                                                     <Select
                                                         defaultValue={app.resultStatus || 'pending'}

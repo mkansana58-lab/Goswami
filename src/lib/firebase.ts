@@ -83,6 +83,7 @@ export interface ScholarshipApplicationData {
     photoUrl: string; // as data URI
     signatureUrl: string; // as data URI
     resultStatus?: 'pending' | 'pass' | 'fail';
+    uniqueIdCheckWaived?: boolean;
     createdAt: Timestamp;
 }
 
@@ -133,6 +134,7 @@ export interface AppConfig {
     splashImageUrl?: string;
     cityIntimationSlipStartDate?: Timestamp;
     resultAnnouncementDate?: Timestamp;
+    scholarshipTestId?: string;
 }
 
 export interface Post {
@@ -327,7 +329,7 @@ export async function addNotification({ title, content, category, recipient }: N
 }
 export const deleteNotification = (id: string) => deleteDocument("notifications", id);
 
-export async function addScholarshipApplication(data: Omit<ScholarshipApplicationData, 'createdAt' | 'id' | 'resultStatus' | 'applicationNumber' | 'rollNumber' | 'uniqueId'>): Promise<{applicationNumber: string, rollNumber: string, uniqueId: string}> {
+export async function addScholarshipApplication(data: Omit<ScholarshipApplicationData, 'createdAt' | 'id' | 'resultStatus' | 'applicationNumber' | 'rollNumber' | 'uniqueId' | 'uniqueIdCheckWaived'>): Promise<{applicationNumber: string, rollNumber: string, uniqueId: string}> {
     if (!db) throw new Error("Firestore DB not initialized.");
     
     const applicationNumber = `GSA${new Date().getFullYear()}${generateRandomCode(5)}`;
@@ -360,6 +362,7 @@ export async function addScholarshipApplication(data: Omit<ScholarshipApplicatio
         rollNumber,
         uniqueId, // This will be an empty string for offline mode
         resultStatus: 'pending',
+        uniqueIdCheckWaived: false,
         createdAt: Timestamp.now(),
     });
     
@@ -378,6 +381,12 @@ export async function updateScholarshipApplicationResultStatus(appId: string, st
     if (!db) throw new Error("Firestore DB not initialized.");
     const appRef = doc(db, "scholarshipApplications", appId);
     await updateDoc(appRef, { resultStatus: status });
+}
+
+export async function updateScholarshipApplicationWaiver(appId: string, isWaived: boolean): Promise<void> {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    const appRef = doc(db, "scholarshipApplications", appId);
+    await updateDoc(appRef, { uniqueIdCheckWaived: isWaived });
 }
 
 export async function getScholarshipApplications(): Promise<ScholarshipApplicationData[]> {

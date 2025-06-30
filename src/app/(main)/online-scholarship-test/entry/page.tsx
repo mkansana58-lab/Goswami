@@ -14,11 +14,8 @@ import { Loader2, KeyRound, User, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { format } from 'date-fns';
 import Image from 'next/image';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-
-// This is the hardcoded ID for the scholarship test.
-// Admin must create a custom test with this exact ID.
-const SCHOLARSHIP_TEST_ID = 'scholarship-test-main';
 
 export default function OnlineScholarshipTestEntryPage() {
   const { t } = useLanguage();
@@ -93,10 +90,13 @@ export default function OnlineScholarshipTestEntryPage() {
   };
 
   const handleStartTest = () => {
-    if (!verifiedApplicant) return;
+    if (!verifiedApplicant || !appConfig?.scholarshipTestId) {
+        toast({ variant: 'destructive', title: 'Test Not Configured', description: 'The scholarship test has not been configured by the admin yet.' });
+        return;
+    }
      // Store applicant data in session storage to be used on the test page
     sessionStorage.setItem('scholarship-applicant-data', JSON.stringify(verifiedApplicant));
-    router.push(`/tests/${SCHOLARSHIP_TEST_ID}`);
+    router.push(`/tests/${appConfig.scholarshipTestId}`);
   };
 
   return (
@@ -107,6 +107,13 @@ export default function OnlineScholarshipTestEntryPage() {
         <p className="text-muted-foreground">Enter your details from the admit card to begin.</p>
       </div>
 
+       {!appConfig?.scholarshipTestId && (
+            <Alert variant="destructive">
+                <AlertTitle>Test Not Available</AlertTitle>
+                <AlertDescription>The admin has not configured the online scholarship test yet. Please check back later.</AlertDescription>
+            </Alert>
+        )}
+
       {step === 'entry' && (
         <Card className="max-w-md mx-auto">
           <CardHeader>
@@ -116,15 +123,15 @@ export default function OnlineScholarshipTestEntryPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="application-number">{t('applicationNumber')}</Label>
-              <Input id="application-number" placeholder="GSA2024..." value={applicationNumber} onChange={(e) => setApplicationNumber(e.target.value)} disabled={isLoading} />
+              <Input id="application-number" placeholder="GSA2024..." value={applicationNumber} onChange={(e) => setApplicationNumber(e.target.value)} disabled={isLoading || !appConfig?.scholarshipTestId} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="unique-id">{t('uniqueId')}</Label>
-              <Input id="unique-id" placeholder="Enter your 6-digit Unique ID" value={uniqueId} onChange={(e) => setUniqueId(e.target.value)} disabled={isLoading} />
+              <Input id="unique-id" placeholder="Enter your 6-digit Unique ID" value={uniqueId} onChange={(e) => setUniqueId(e.target.value)} disabled={isLoading || !appConfig?.scholarshipTestId} />
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full" onClick={handleVerifyCode} disabled={isLoading}>
+            <Button className="w-full" onClick={handleVerifyCode} disabled={isLoading || !appConfig?.scholarshipTestId}>
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Verify Details"}
             </Button>
           </CardFooter>
