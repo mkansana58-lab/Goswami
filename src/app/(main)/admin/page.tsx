@@ -304,12 +304,12 @@ export default function AdminPage() {
                                      <div className="space-y-2">
                                         <Label>Online Scholarship Test</Label>
                                         <Select
-                                            defaultValue={settingsForm.getValues('scholarshipTestId')}
-                                            onValueChange={(value) => settingsForm.setValue('scholarshipTestId', value)}
+                                            value={settingsForm.watch('scholarshipTestId') || 'none'}
+                                            onValueChange={(value) => settingsForm.setValue('scholarshipTestId', value === 'none' ? '' : value)}
                                         >
                                             <SelectTrigger><SelectValue placeholder="Select the test to use for online scholarships" /></SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="">None</SelectItem>
+                                                <SelectItem value="none">None</SelectItem>
                                                 {data.customTests.map(test => (
                                                     <SelectItem key={test.id} value={test.id}>{test.title} ({test.id})</SelectItem>
                                                 ))}
