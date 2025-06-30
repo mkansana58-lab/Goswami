@@ -67,21 +67,6 @@ export const translations = {
     nextQuestion: "Next Question",
     correct: "Correct!",
     incorrect: "Incorrect!",
-    progressReport: "Progress Report",
-    mathTractorDrive: "Math Tractor Drive",
-    gameZone: "Game Zone",
-
-    // Game Zone
-    tractorGameTitle: "Math Tractor Drive",
-    tractorGameDesc: "Answer math questions to drive your tractor to the village!",
-    shootingGameTitle: "Shoot The Right Answer",
-    shootingGameDesc: "Pop the balloons with the correct answers.",
-    marketGameTitle: "Village Knowledge Market",
-    marketGameDesc: "Answer GK questions to buy items from the market.",
-    farmerGameTitle: "Smart Farmer",
-    farmerGameDesc: "Use your science knowledge to grow the best crops.",
-    festivalGameTitle: "Festival Quiz Adventure",
-    festivalGameDesc: "Complete fun missions based on Indian festivals.",
 
     // Scholarship Form Translations
     scholarshipInstructionsTitle: "Instructions",
@@ -104,8 +89,6 @@ export const translations = {
     selectClass: "Class",
     schoolName: "School Name",
     targetExam: "Target Exam",
-    targetTestEnrollmentCode: "Target Test Enrollment Code",
-    targetTestEnrollmentCodeDesc: "If you win the scholarship, which test do you want free access to? Enter its 5-digit enrollment code.",
     
     step3Title: "Address Details",
     fullAddress: "Full Address",
@@ -214,8 +197,8 @@ export const translations = {
     unlockTestInfoTitle: "Unlock All Tests",
     unlockTestInfo: "To unlock all test attempts, please pay ₹50 to 9694251069. Then, send the payment screenshot and your Enrollment Code on the 'Contact Us' page.",
     yourEnrollmentCodeIs: "Enrollment Successful! Your code is:",
-    attemptsLeft: "Attempts",
-    testLocked: "Attempt Limit Reached",
+    attemptsLeft: "Attempts Left",
+    testLocked: "Test Locked",
 
 
     // Admin Panel
@@ -346,21 +329,6 @@ export const translations = {
     nextQuestion: "अगला प्रश्न",
     correct: "सही!",
     incorrect: "गलत!",
-    progressReport: "प्रगति रिपोर्ट",
-    mathTractorDrive: "मैथ ट्रैक्टर ड्राइव",
-    gameZone: "गेम ज़ोन",
-
-    // Game Zone
-    tractorGameTitle: "ट्रैक्टर वाला मैथ गेम",
-    tractorGameDesc: "गाँव तक पहुँचने के लिए गणित के सवालों के जवाब दें!",
-    shootingGameTitle: "पढ़ाई वाली शूटिंग",
-    shootingGameDesc: "सही जवाब वाले गुब्बारे पर निशाना लगाओ।",
-    marketGameTitle: "गांव का ज्ञान बाजार",
-    marketGameDesc: "GK के सवालों के जवाब देकर बाजार से सामान खरीदो।",
-    farmerGameTitle: "स्मार्ट किसान",
-    farmerGameDesc: "विज्ञान के ज्ञान से स्मार्ट खेती करो।",
-    festivalGameTitle: "त्योहार क्विज़ एडवेंचर",
-    festivalGameDesc: "त्योहारों पर आधारित मज़ेदार मिशन पूरे करो।",
 
     // Scholarship Form Translations
     scholarshipInstructionsTitle: "निर्देश",
@@ -383,8 +351,6 @@ export const translations = {
     selectClass: "कक्षा",
     schoolName: "स्कूल का नाम",
     targetExam: "लक्षित परीक्षा",
-    targetTestEnrollmentCode: "लक्षित टेस्ट एनरोलमेंट कोड",
-    targetTestEnrollmentCodeDesc: "यदि आप छात्रवृत्ति जीतते हैं, तो आप कौन सी टेस्ट श्रृंखला मुफ्त में चाहते हैं? उसका 5 अंकों का एनरोलमेंट कोड दर्ज करें।",
     
     step3Title: "पते का विवरण",
     fullAddress: "पूरा पता",
@@ -496,8 +462,9 @@ export const translations = {
     unlockTestInfoTitle: "सभी टेस्ट अनलॉक करें",
     unlockTestInfo: "सभी टेस्ट के प्रयास अनलॉक करने के लिए, कृपया 9694251069 पर ₹50 का भुगतान करें। फिर, भुगतान का स्क्रीनशॉट और अपना एनरोलमेंट कोड 'हमसे संपर्क करें' पेज पर भेजें।",
     yourEnrollmentCodeIs: "नामांकन सफल! आपका कोड है:",
-    attemptsLeft: "प्रयास",
-    testLocked: "प्रयास सीमा समाप्त",
+    attemptsLeft: "शेष प्रयास",
+    testLocked: "टेस्ट लॉक है",
+
 
     // Admin Panel
     manageContent: "सामग्री प्रबंधित करें",
