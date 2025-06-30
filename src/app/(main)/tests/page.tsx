@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription }
 import { Button } from '@/components/ui/button';
 import { testsData, type TestDetails } from '@/lib/tests-data';
 import { Clock, FileQuestion, Languages, Lock, Loader2, Star, Key } from 'lucide-react';
-import { getCustomTests, getTestSettings, type CustomTest, type TestSetting, addTestEnrollment, getEnrollmentsForStudent, getTestResultsForStudentByTest, type TestEnrollment } from '@/lib/firebase';
+import { getCustomTests, getTestSettings, type CustomTest, type TestSetting, addTestEnrollment, getEnrollmentsForStudent, getTestResultsForStudentByTest, type TestEnrollment, getAppConfig } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -27,9 +27,19 @@ export default function AiTestPage() {
     const fetchPageData = async () => {
         setIsLoading(true);
         try {
-            const [customTests, settings] = await Promise.all([getCustomTests(), getTestSettings()]);
+            const [customTests, settings, config] = await Promise.all([
+                getCustomTests(),
+                getTestSettings(),
+                getAppConfig()
+            ]);
             const staticTests = Object.values(testsData);
-            const allTestsData = [...staticTests, ...customTests];
+            let allTestsData = [...staticTests, ...customTests];
+
+            // Filter out the scholarship test if it's set, so it doesn't appear in the general list
+            if (config.scholarshipTestId) {
+                allTestsData = allTestsData.filter(test => test.id !== config.scholarshipTestId);
+            }
+
             setAllTests(allTestsData);
             setTestSettings(settings);
 
