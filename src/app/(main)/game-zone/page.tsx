@@ -4,7 +4,7 @@
 import { useLanguage } from "@/hooks/use-language";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Sparkles, Sprout, Target, Banknote, Rocket, ChevronRight, Puzzle } from "lucide-react";
+import { Sparkles, Sprout, Target, Banknote, Rocket, ChevronRight, Atom } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function LearningGamesPage() {
@@ -28,19 +28,19 @@ export default function LearningGamesPage() {
             color: "hover:border-blue-500/80 hover:bg-blue-500/10"
         },
         { 
-            href: '#',
+            href: '/knowledge-bazaar',
             titleKey: "villageMarket", 
             descriptionKey: "villageMarketDescription",
             icon: Banknote,
-            enabled: false,
+            enabled: true,
             color: "hover:border-green-500/80 hover:bg-green-500/10"
         },
         { 
-            href: '#',
-            titleKey: "smartKisan", 
-            descriptionKey: "smartKisanDescription",
-            icon: Sprout,
-            enabled: false,
+            href: '/science-game',
+            titleKey: "scienceGame", 
+            descriptionKey: "scienceGameDescription",
+            icon: Atom,
+            enabled: true,
             color: "hover:border-yellow-500/80 hover:bg-yellow-500/10"
         }
     ];
@@ -64,7 +64,7 @@ export default function LearningGamesPage() {
                                 <div className="flex items-center gap-4">
                                     <game.icon className={cn("h-8 w-8", game.enabled ? "text-primary" : "text-muted-foreground")} />
                                     <div>
-                                        <CardTitle className="text-lg">{t(game.titleKey as any)}</CardTitle>
+                                        <CardTitle className="text-lg">{t(game.titleKey as any) || game.titleKey.replace(/([A-Z])/g, ' $1')}</CardTitle>
                                         <CardDescription className="text-xs">{game.enabled ? t(game.descriptionKey as any) : t('comingSoon')}</CardDescription>
                                     </div>
                                 </div>

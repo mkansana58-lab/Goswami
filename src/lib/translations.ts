@@ -78,8 +78,9 @@ export const translations = {
     shootTheAnswerDesc: "Aim and shoot the balloon with the correct answer!",
     villageMarket: "Village Knowledge Market",
     villageMarketDescription: "Learn GK while shopping in a virtual market.",
-    smartKisan: "Smart Kisan",
-    smartKisanDescription: "Learn science through smart farming.",
+    scienceGame: "Science Game",
+    scienceGameDescription: "Learn science through fun tasks.",
+
 
     // Scholarship Form Translations
     scholarshipInstructionsTitle: "Instructions",
@@ -353,8 +354,9 @@ export const translations = {
     shootTheAnswerDesc: "सही जवाब वाले गुब्बारे पर निशाना लगाएँ!",
     villageMarket: "गांव का ज्ञान बाजार",
     villageMarketDescription: "वर्चुअल बाजार में खरीदारी करते हुए GK सीखें।",
-    smartKisan: "स्मार्ट किसान",
-    smartKisanDescription: "स्मार्ट खेती के माध्यम से विज्ञान सीखें।",
+    scienceGame: "विज्ञान गेम",
+    scienceGameDescription: "मज़ेदार टास्क के ज़रिए विज्ञान सीखें।",
+
 
     // Scholarship Form Translations
     scholarshipInstructionsTitle: "निर्देश",

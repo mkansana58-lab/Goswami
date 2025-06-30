@@ -11,7 +11,7 @@ import { generateFestivalQuestion, type FestivalQuizOutput } from '@/ai/flows/fe
 import { textToSpeech } from '@/ai/flows/tts-flow';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
-import { addQuizWinnings } from '@/lib/firebase';
+import { addQuizWinnings, getAppConfig } from '@/lib/firebase';
 
 type GameState = 'picking_festival' | 'playing' | 'revealed';
 type Festival = 'Diwali' | 'Holi';
@@ -32,11 +32,21 @@ export default function FestivalQuizPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [userAnswer, setUserAnswer] = useState<string | null>(null);
     const [correctStreak, setCorrectStreak] = useState(0);
+    const [backgroundUrl, setBackgroundUrl] = useState('');
+
 
     const [questionAudioUrl, setQuestionAudioUrl] = useState<string | null>(null);
     const [resultAudioUrl, setResultAudioUrl] = useState<string | null>(null);
     const questionAudioRef = useRef<HTMLAudioElement>(null);
     const resultAudioRef = useRef<HTMLAudioElement>(null);
+
+    useEffect(() => {
+        getAppConfig().then(config => {
+            if (config.festivalQuizBgUrl) {
+                setBackgroundUrl(config.festivalQuizBgUrl);
+            }
+        });
+    }, []);
 
      useEffect(() => {
         if (questionAudioUrl && questionAudioRef.current) {
@@ -83,9 +93,10 @@ export default function FestivalQuizPage() {
         
         const isCorrect = answer === questionData.answer;
         let textToSpeak = '';
+        let newStreak = correctStreak;
 
         if (isCorrect) {
-            const newStreak = correctStreak + 1;
+            newStreak = correctStreak + 1;
             setCorrectStreak(newStreak);
             textToSpeak = 'सही जवाब!';
 
@@ -216,10 +227,16 @@ export default function FestivalQuizPage() {
 
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 relative h-full">
             <audio ref={questionAudioRef} src={questionAudioUrl || undefined} />
             <audio ref={resultAudioRef} src={resultAudioUrl || undefined} />
-            <div className="absolute inset-x-0 top-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+            <div 
+                className="absolute inset-x-0 top-0 -z-10 h-full w-full bg-slate-950 bg-cover bg-center"
+                style={{ backgroundImage: backgroundUrl ? `url(${backgroundUrl})` : "linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)" }}
+            >
+                 <div className="absolute inset-0 bg-black/50"></div>
+            </div>
+            
             <div className="text-center">
                 <Rocket className="mx-auto h-12 w-12 text-primary" />
                 <h1 className="text-3xl font-bold text-primary mt-2">{t('festivalQuiz')}</h1>

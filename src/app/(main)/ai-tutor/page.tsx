@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -11,13 +12,19 @@ import { textToSpeech } from '@/ai/flows/tts-flow';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, BookCheck, BrainCircuit, BarChart2, Headphones } from 'lucide-react';
+import { Loader2, Sparkles, BookCheck, BrainCircuit, BarChart2, Headphones, ImagePlus, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { fileToDataUrl } from '@/lib/utils';
+import Image from 'next/image';
 
 const formSchema = z.object({
   question: z.string().min(10, { message: "Please ask a more detailed question." }),
+  image: z.any().optional(),
 });
+
+type FormValues = z.infer<typeof formSchema>;
 
 export default function AiTutorPage() {
   const { t } = useLanguage();
@@ -27,6 +34,8 @@ export default function AiTutorPage() {
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (audioUrl && audioRef.current) {
@@ -34,19 +43,42 @@ export default function AiTutorPage() {
     }
   }, [audioUrl]);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       question: "",
     },
   });
+  
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        try {
+            const dataUrl = await fileToDataUrl(file);
+            setImagePreview(dataUrl);
+            // We store the data URL directly in the form state for submission
+            form.setValue('image', dataUrl);
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Image Error', description: err.message });
+        }
+    }
+  }
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const clearImage = () => {
+    setImagePreview(null);
+    form.setValue('image', undefined);
+    if(fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+
+  async function onSubmit(values: FormValues) {
     setIsLoading(true);
     setTutorResponse(null);
     setAudioUrl(null); // Reset audio on new question
     try {
-      const response = await askTutor({ question: values.question });
+      const response = await askTutor({ question: values.question, imageDataUri: values.image });
       setTutorResponse(response);
     } catch (error) {
       console.error("Error fetching from AI Tutor:", error);
@@ -105,6 +137,22 @@ export default function AiTutorPage() {
                 {form.formState.errors.question.message}
               </p>
             )}
+
+             <div className="space-y-2">
+                <Label htmlFor="image-upload" className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-primary">
+                    <ImagePlus className="h-5 w-5" /> Attach an image (optional)
+                </Label>
+                <Input id="image-upload" type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileSelect} disabled={isLoading}/>
+                {imagePreview && (
+                    <div className="relative w-32 h-32 rounded-lg border-2 border-dashed p-1">
+                        <Image src={imagePreview} alt="Image preview" layout="fill" objectFit="contain" className="rounded"/>
+                        <Button type="button" variant="destructive" size="icon" className="absolute -top-3 -right-3 h-7 w-7 rounded-full z-10" onClick={clearImage}>
+                            <X className="h-4 w-4"/>
+                        </Button>
+                    </div>
+                )}
+             </div>
+
             <Button type="submit" disabled={isLoading} className="w-full">
               {isLoading ? (
                 <>

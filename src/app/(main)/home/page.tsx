@@ -43,7 +43,7 @@ export default function HomePage() {
         {featureGridLinks.map((link, index) => (
           <Link href={link.href} key={link.href} passHref>
             <Card className={cn(
-                "bg-card transition-colors duration-300 cursor-pointer h-full flex flex-col items-center justify-center text-center p-2 md:p-3 aspect-square shadow-md rounded-xl border border-border/10",
+                "bg-card transition-all duration-300 cursor-pointer h-full flex flex-col items-center justify-center text-center p-2 md:p-3 aspect-square shadow-md rounded-xl border border-border/10 hover:scale-105",
                 cardColors[index % cardColors.length]
                 )}>
               <link.icon className="h-7 w-7 md:h-8 md:w-8 mb-2" />

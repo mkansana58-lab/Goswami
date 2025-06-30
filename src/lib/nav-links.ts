@@ -41,7 +41,7 @@ import {
       { href: "/daily-posts", icon: Newspaper, textKey: "dailyPosts" },
       { href: "/quiz-game", icon: Gamepad2, textKey: "quizGame" },
       { href: "/game-zone", icon: Sparkles, textKey: "learningGames" },
-      { href: "/true-false-game", icon: Binary, textKey: "trueFalseGame" },
+      { href: "/story-weaver", icon: BookText, textKey: "readingPractice" },
   ];
   
   export const sidebarLinks = [
@@ -58,6 +58,7 @@ import {
     { href: "/group-chat", icon: MessagesSquare, textKey: "groupChat" },
     { href: "/quiz-game", icon: Gamepad2, textKey: "quizGame" },
     { href: "/game-zone", icon: Sparkles, textKey: "learningGames" },
+    { href: "/story-weaver", icon: BookText, textKey: "readingPractice" },
     { href: "/true-false-game", icon: Binary, textKey: "trueFalseGame" },
     { href: "/shoot-the-answer", icon: Target, textKey: "shootTheAnswer" },
     { href: "/current-affairs", icon: ScrollText, textKey: "currentAffairs" },

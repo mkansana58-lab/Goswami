@@ -104,6 +104,7 @@ export default function OnlineScholarshipTestEntryPage() {
             setVerifiedApplicant(appData);
             setStep('confirm');
         } else {
+            setVerifiedApplicant(appData); // Set applicant data for payment screen
             setStep('payment');
         }
 

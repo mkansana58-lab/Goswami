@@ -1,6 +1,7 @@
+
 'use server';
 /**
- * @fileOverview AI Tutor flow for answering student questions.
+ * @fileOverview AI Tutor flow for answering student questions, with image support.
  *
  * - askTutor - A function that provides an answer, subject, difficulty, and related questions for a student's query.
  * - TutorInput - The input type for the askTutor function.
@@ -12,6 +13,7 @@ import { z } from 'zod';
 
 const TutorInputSchema = z.object({
   question: z.string().describe('The question asked by the student.'),
+  imageDataUri: z.string().optional().describe("An optional image provided by the student, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
 });
 export type TutorInput = z.infer<typeof TutorInputSchema>;
 
@@ -34,9 +36,13 @@ const prompt = ai.definePrompt({
   prompt: `आप एक बहुत ही सहायक और जानकार AI ट्यूटर हैं जो गो स्वामी डिफेंस एकेडमी के छात्रों की मदद करते हैं। आपका काम छात्रों के सवालों का जवाब देना है, जो सैन्य स्कूल, RMS, और JNV जैसी परीक्षाओं की तैयारी कर रहे हैं।
 
 छात्र का प्रश्न: {{{question}}}
+{{#if imageDataUri}}
+छात्र द्वारा प्रदान की गई छवि:
+{{media url=imageDataUri}}
+{{/if}}
 
 कृपया निम्नलिखित कार्य करें:
-1.  प्रश्न का उत्तर सरल और स्पष्ट हिंदी में दें।
+1.  प्रश्न का उत्तर सरल और स्पष्ट हिंदी में दें। यदि कोई छवि प्रदान की गई है, तो अपने उत्तर में उस छवि का विश्लेषण शामिल करें।
 2.  बताएं कि यह प्रश्न किस विषय (subject) का है (जैसे - गणित, विज्ञान, इतिहास, भूगोल, आदि)।
 3.  प्रश्न का कठिनाई स्तर (difficulty) बताएं (आसान, मध्यम, या कठिन)।
 4.  अभ्यास के लिए 3-4 मिलते-जुलते प्रश्न (relatedQuestions) हिंदी में प्रदान करें।
