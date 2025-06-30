@@ -38,13 +38,15 @@ export interface LiveClass {
   id: string;
   title: string;
   scheduledAt: Timestamp;
-  link: string;
+  link?: string;
+  embedCode?: string;
 }
 
 export interface NewLiveClassData {
     title: string;
-    link: string;
     scheduledAt: string; // ISO string from datetime-local input
+    link?: string;
+    embedCode?: string;
 }
 
 export type NotificationCategory = 'general' | 'news' | 'result' | 'scholarship' | 'alert';
@@ -135,6 +137,10 @@ export interface AppConfig {
     resultAnnouncementDate?: Timestamp;
     scholarshipTestId?: string;
     paymentQrCodeUrl?: string;
+    tractorImageUrl?: string;
+    festivalQuizBgUrl?: string;
+    knowledgeBazaarBgUrl?: string;
+    scienceGameBgUrl?: string;
 }
 
 export interface Post {
@@ -155,7 +161,8 @@ export interface CurrentAffair {
 export interface VideoLecture {
     id: string;
     title: string;
-    videoUrl: string;
+    link?: string;
+    embedCode?: string;
     createdAt: Timestamp;
 }
 
@@ -310,14 +317,17 @@ export async function updateAppConfig(data: Partial<AppConfig>): Promise<void> {
     await setDoc(configRef, data, { merge: true });
 }
 
-export async function addLiveClass({ title, link, scheduledAt }: NewLiveClassData): Promise<void> {
+export async function addLiveClass({ title, link, embedCode, scheduledAt }: NewLiveClassData): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
-    await addDoc(collection(db, "liveClasses"), {
+    const data: any = {
         title,
-        link,
         scheduledAt: Timestamp.fromDate(new Date(scheduledAt)),
         createdAt: Timestamp.now(),
-    });
+    };
+    if (link) data.link = link;
+    if (embedCode) data.embedCode = embedCode;
+
+    await addDoc(collection(db, "liveClasses"), data);
 }
 export const deleteLiveClass = (id: string) => deleteDocument("liveClasses", id);
 

@@ -6,8 +6,9 @@ import { useLanguage } from '@/hooks/use-language';
 import { getLiveClasses, type LiveClass, firebaseConfig } from '@/lib/firebase';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RadioTower, Calendar, Clock, ExternalLink, Loader2 } from 'lucide-react';
+import { RadioTower, Calendar, Clock, ExternalLink, Loader2, Video } from 'lucide-react';
 import { format } from 'date-fns';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
 export default function LiveClassesPage() {
     const { t } = useLanguage();
@@ -91,12 +92,33 @@ export default function LiveClassesPage() {
                                 </div>
                             </CardContent>
                             <CardFooter>
-                                <Button asChild className="w-full" disabled={!cls.link}>
-                                    <a href={cls.link} target="_blank" rel="noopener noreferrer">
-                                        <ExternalLink className="mr-2 h-4 w-4" />
-                                        {t('joinClass')}
-                                    </a>
-                                </Button>
+                                {cls.embedCode ? (
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button className="w-full">
+                                                <Video className="mr-2 h-4 w-4" />
+                                                Watch in App
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-3xl w-[90vw] aspect-video p-0 border-0">
+                                            <div
+                                                dangerouslySetInnerHTML={{ __html: cls.embedCode.replace(/width="[^"]*"/g, 'width="100%"').replace(/height="[^"]*"/g, 'height="100%"') }}
+                                                className="w-full h-full [&>iframe]:w-full [&>iframe]:h-full [&>iframe]:rounded-lg"
+                                            />
+                                        </DialogContent>
+                                    </Dialog>
+                                ) : cls.link ? (
+                                    <Button asChild className="w-full">
+                                        <a href={cls.link} target="_blank" rel="noopener noreferrer">
+                                            <ExternalLink className="mr-2 h-4 w-4" />
+                                            {t('joinClass')}
+                                        </a>
+                                    </Button>
+                                ) : (
+                                    <Button className="w-full" disabled>
+                                        Link Not Available
+                                    </Button>
+                                )}
                             </CardFooter>
                         </Card>
                         );

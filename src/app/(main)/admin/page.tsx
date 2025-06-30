@@ -39,7 +39,7 @@ import {
     type ScholarshipTestResult, type Question, type NotificationCategory
 } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star, CheckSquare, Shield, Key, Award, AlertCircle, Trophy, PlusCircle, QrCode, Truck } from 'lucide-react';
+import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star, CheckSquare, Shield, Key, Award, AlertCircle, Trophy, PlusCircle, QrCode, Truck, Gamepad2, Brain, Atom, Paintbrush, Flame } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -65,8 +65,20 @@ const settingsSchema = z.object({
     splashImage: z.any().optional(),
     scholarshipTestId: z.string().optional(),
     paymentQrCode: z.any().optional(),
+    festivalQuizBg: z.any().optional(),
+    knowledgeBazaarBg: z.any().optional(),
+    scienceGameBg: z.any().optional(),
 });
-const liveClassSchema = z.object({ title: z.string().min(3), link: z.string().url(), scheduledAt: z.string().min(1) });
+const liveClassSchema = z.object({ 
+    title: z.string().min(3), 
+    scheduledAt: z.string().min(1),
+    link: z.string().url().optional(), 
+    embedCode: z.string().min(20, "Embed code seems too short.").optional() 
+}).refine(data => data.link || data.embedCode, {
+    message: "Either a valid URL Link or an HTML Embed Code is required.",
+    path: ["link"],
+});
+
 const notificationSchema = z.object({ 
     title: z.string().min(3), 
     content: z.string().min(10),
@@ -75,7 +87,15 @@ const notificationSchema = z.object({
 });
 const postSchema = z.object({ title: z.string().min(3), content: z.string().min(10), imageUrl: z.any().optional() });
 const currentAffairSchema = z.object({ title: z.string().min(3), content: z.string().min(10) });
-const videoLectureSchema = z.object({ title: z.string().min(3), videoUrl: z.string().url() });
+
+const videoLectureSchema = z.object({ 
+    title: z.string().min(3), 
+    link: z.string().url().optional(), 
+    embedCode: z.string().min(20, "Embed code seems too short.").optional() 
+}).refine(data => data.link || data.embedCode, {
+    message: "Either a valid URL Link or an HTML Embed Code is required.",
+    path: ["link"],
+});
 const downloadSchema = z.object({ title: z.string().min(3), pdfUrl: z.string().url() });
 const eBookSchema = z.object({ title: z.string().min(3), pdfUrl: z.string().url(), imageUrl: z.any().optional() });
 const courseSchema = z.object({ title: z.string().min(3), description: z.string().min(10), imageUrl: z.any().optional() });
@@ -202,7 +222,7 @@ export default function AdminPage() {
     }, [admin, fetchData]);
 
     const handleSaveSettings = async (values: z.infer<typeof settingsSchema>) => {
-        const { splashImage, paymentQrCode, ...otherValues } = values;
+        const { splashImage, paymentQrCode, festivalQuizBg, knowledgeBazaarBg, scienceGameBg, ...otherValues } = values;
 
         // Handle "none" value from Select by converting it to an empty string
         const scholarshipTestId = otherValues.scholarshipTestId === 'none' ? '' : otherValues.scholarshipTestId;
@@ -218,15 +238,14 @@ export default function AdminPage() {
         };
 
         try {
-            if (splashImage?.[0]) {
-                configData.splashImageUrl = await fileToDataUrl(splashImage[0]);
-            }
-            if (paymentQrCode?.[0]) {
-                configData.paymentQrCodeUrl = await fileToDataUrl(paymentQrCode[0]);
-            }
+            if (splashImage?.[0]) configData.splashImageUrl = await fileToDataUrl(splashImage[0]);
+            if (paymentQrCode?.[0]) configData.paymentQrCodeUrl = await fileToDataUrl(paymentQrCode[0]);
+            if (festivalQuizBg?.[0]) configData.festivalQuizBgUrl = await fileToDataUrl(festivalQuizBg[0]);
+            if (knowledgeBazaarBg?.[0]) configData.knowledgeBazaarBgUrl = await fileToDataUrl(knowledgeBazaarBg[0]);
+            if (scienceGameBg?.[0]) configData.scienceGameBgUrl = await fileToDataUrl(scienceGameBg[0]);
         } catch (error: any) {
             toast({ variant: "destructive", title: "Image Error", description: error.message });
-            return; // Stop execution if image processing fails
+            return;
         }
 
         await updateAppConfig(configData);
@@ -347,6 +366,13 @@ export default function AdminPage() {
                                      <div><Label>{t('resultAnnouncementDate')}</Label><Input type="datetime-local" {...settingsForm.register('resultAnnouncementDate')} /></div>
                                      <div><Label>Splash Screen Image (for App Start)</Label><Input type="file" accept="image/*" {...settingsForm.register('splashImage')} /></div>
                                      <div><Label className="flex items-center gap-2"><QrCode/> Payment QR Code</Label><Input type="file" accept="image/*" {...settingsForm.register('paymentQrCode')} /></div>
+                                    <Separator />
+                                    <Label className="text-lg font-semibold">Game Backgrounds</Label>
+                                    <div className="space-y-2 pl-2 border-l-2">
+                                         <div><Label className="flex items-center gap-2"><Flame className="h-4 w-4" /> Festival Quiz Background</Label><Input type="file" accept="image/*" {...settingsForm.register('festivalQuizBg')} /></div>
+                                         <div><Label className="flex items-center gap-2"><Gamepad2 className="h-4 w-4" /> Knowledge Bazaar Background</Label><Input type="file" accept="image/*" {...settingsForm.register('knowledgeBazaarBg')} /></div>
+                                         <div><Label className="flex items-center gap-2"><Atom className="h-4 w-4" /> Science Game Background</Label><Input type="file" accept="image/*" {...settingsForm.register('scienceGameBg')} /></div>
+                                    </div>
                                      <Button type="submit">{t('saveSettings')}</Button>
                                 </form>
                             </AdminSection>
@@ -378,8 +404,9 @@ export default function AdminPage() {
                             </AdminSection>
 
                             <AdminSection title={t('manageLiveClasses')} icon={Tv}>
-                                <CrudForm schema={liveClassSchema} onSubmit={addLiveClass} onRefresh={fetchData} fields={{title: 'text', link: 'url', scheduledAt: 'datetime-local'}} />
-                                <DataTable data={data.liveClasses} columns={['title', 'link']} onDelete={deleteLiveClass} onRefresh={fetchData} />
+                                <p className="text-sm text-muted-foreground -mt-2 mb-4">Add a new class using either a direct URL Link or an HTML embed code.</p>
+                                <CrudForm schema={liveClassSchema} onSubmit={addLiveClass} onRefresh={fetchData} fields={{title: 'text', scheduledAt: 'datetime-local', link: 'url', embedCode: 'textarea'}} />
+                                <DataTable data={data.liveClasses} columns={['title']} onDelete={deleteLiveClass} onRefresh={fetchData} />
                             </AdminSection>
 
                             <AdminSection title={t('manageNotifications')} icon={Bell}>
@@ -398,8 +425,9 @@ export default function AdminPage() {
                             </AdminSection>
                             
                             <AdminSection title={t('manageVideoLectures')} icon={Video}>
-                                <CrudForm schema={videoLectureSchema} onSubmit={addVideoLecture} onRefresh={fetchData} fields={{title: 'text', videoUrl: 'url'}} />
-                                <DataTable data={data.videoLectures} columns={['title', 'videoUrl']} onDelete={deleteVideoLecture} onRefresh={fetchData} />
+                                <p className="text-sm text-muted-foreground -mt-2 mb-4">Add a new video using either a direct YouTube URL or an HTML embed code.</p>
+                                <CrudForm schema={videoLectureSchema} onSubmit={addVideoLecture} onRefresh={fetchData} fields={{title: 'text', link: 'url', embedCode: 'textarea'}} />
+                                <DataTable data={data.videoLectures} columns={['title']} onDelete={deleteVideoLecture} onRefresh={fetchData} />
                             </AdminSection>
                             
                             <AdminSection title={t('manageDownloads')} icon={FileDown}>
@@ -655,12 +683,12 @@ const CrudForm = ({ schema, onSubmit, onRefresh, fields }: { schema: z.ZodObject
         <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 mb-6 p-4 border rounded-lg">
             {Object.entries(fields).map(([fieldName, fieldType]) => (
                 <div key={fieldName}>
-                    <Label className="capitalize">{t(fieldName as any) || fieldName.replace(/([A-Z])/g, ' $1')}</Label>
+                    <Label className="capitalize">{t(fieldName as any) || fieldName.replace(/([A-Z])/g, ' $1').replace('embedCode', 'Embed Code')}</Label>
                     {fieldType === 'textarea' ?
-                        <Textarea {...form.register(fieldName)} disabled={isSubmitting} /> :
+                        <Textarea {...form.register(fieldName)} disabled={isSubmitting} placeholder={fieldName === 'embedCode' ? 'Paste <iframe> code here' : ''} /> :
                     fieldType === 'file' ?
                         <Input type="file" accept="image/*, .pdf" {...form.register(fieldName)} disabled={isSubmitting}/> :
-                        <Input type={fieldType} {...form.register(fieldName)} disabled={isSubmitting} />
+                        <Input type={fieldType} {...form.register(fieldName)} disabled={isSubmitting} placeholder={fieldName === 'link' ? 'https://...' : ''} />
                     }
                     <p className="text-destructive text-sm mt-1">{form.formState.errors[fieldName]?.message as string}</p>
                 </div>
