@@ -38,12 +38,12 @@ export default function MathTractorPage() {
     const gameLoopRef = useRef<NodeJS.Timeout>();
     const gameContainerRef = useRef<HTMLDivElement>(null);
 
-    const fetchNewQuestion = useCallback(async () => {
+    const fetchNewQuestion = useCallback(async (level: number) => {
         setIsLoading(true);
         setFork(null);
         setRoadY(-GAME_HEIGHT);
         try {
-            const res = await generateMathQuestion({ level: score });
+            const res = await generateMathQuestion({ level: level });
             setQuestion(res);
             
             // Randomly assign correct answer to left or right fork
@@ -63,12 +63,12 @@ export default function MathTractorPage() {
             setGameState('start');
             setIsLoading(false);
         }
-    }, [score, toast]);
+    }, [toast]);
 
     const startGame = () => {
         setScore(0);
         setGameState('playing');
-        fetchNewQuestion();
+        fetchNewQuestion(0);
         gameContainerRef.current?.focus();
     };
 
@@ -77,7 +77,7 @@ export default function MathTractorPage() {
         if (gameLoopRef.current) clearInterval(gameLoopRef.current);
     };
 
-    const handleCorrectAnswer = useCallback(async () => {
+    const handleCorrectAnswer = useCallback(() => {
         const newScore = score + 1;
         setScore(newScore);
 
@@ -85,11 +85,13 @@ export default function MathTractorPage() {
             const pointsWon = 10000;
             toast({ title: 'Congratulations!', description: `You won ${pointsWon.toLocaleString()} points for 10 correct answers!` });
             if(student) {
-                await addQuizWinnings(student.name, pointsWon);
-                await refreshStudentData(student.name);
+                // Fire-and-forget to avoid blocking the game loop
+                addQuizWinnings(student.name, pointsWon)
+                    .then(() => refreshStudentData(student.name))
+                    .catch(err => console.error("Error updating winnings:", err));
             }
         }
-        fetchNewQuestion();
+        fetchNewQuestion(newScore);
     }, [score, student, toast, fetchNewQuestion, refreshStudentData]);
 
 
@@ -145,6 +147,7 @@ export default function MathTractorPage() {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [gameState]);
 
 
