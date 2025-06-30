@@ -173,14 +173,6 @@ export default function ScholarshipPage() {
         <div className="space-y-6">
             <h1 className="text-3xl font-bold text-primary">{t('scholarshipForm')}</h1>
             
-            <Alert variant="destructive">
-                <Phone className="h-4 w-4" />
-                <AlertTitle>Unique ID प्राप्त करने के लिए निर्देश</AlertTitle>
-                <AlertDescription>
-                    यह केवल ऑनलाइन परीक्षा देने वाले छात्रों के लिए है। यूनिक आईडी पाने के लिए कृपया 9694251069 पर ₹50 का पेमेंट करें। पेमेंट का स्क्रीनशॉट और अपना रजिस्ट्रेशन नंबर हमें इसी WhatsApp नंबर पर भेजें। इसके बाद हम आपको नोटिफिकेशन में आपकी यूनिक आईडी भेज देंगे।
-                </AlertDescription>
-            </Alert>
-
             <Card className="max-w-2xl mx-auto">
                 <CardHeader>
                    <Progress value={((currentStep) / (steps.length - 1)) * 100} className="w-full mb-4" />

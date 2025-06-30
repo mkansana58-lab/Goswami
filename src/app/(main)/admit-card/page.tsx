@@ -18,7 +18,6 @@ export default function AdmitCardPage() {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const [applicationNumber, setApplicationNumber] = useState('');
-  const [uniqueId, setUniqueId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [admitCardData, setAdmitCardData] = useState<ScholarshipApplicationData | null>(null);
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);

@@ -68,7 +68,6 @@ export interface ScholarshipApplicationData {
     id?: string;
     applicationNumber: string;
     rollNumber: string;
-    uniqueId: string;
     fullName: string;
     fatherName: string;
     mobile: string;
@@ -83,7 +82,7 @@ export interface ScholarshipApplicationData {
     photoUrl: string; // as data URI
     signatureUrl: string; // as data URI
     resultStatus?: 'pending' | 'pass' | 'fail';
-    uniqueIdCheckWaived?: boolean;
+    isPaymentVerified?: boolean;
     createdAt: Timestamp;
 }
 
@@ -135,6 +134,7 @@ export interface AppConfig {
     cityIntimationSlipStartDate?: Timestamp;
     resultAnnouncementDate?: Timestamp;
     scholarshipTestId?: string;
+    paymentQrCodeUrl?: string;
 }
 
 export interface Post {
@@ -329,7 +329,7 @@ export async function addNotification({ title, content, category, recipient }: N
 }
 export const deleteNotification = (id: string) => deleteDocument("notifications", id);
 
-export async function addScholarshipApplication(data: Omit<ScholarshipApplicationData, 'createdAt' | 'id' | 'resultStatus' | 'applicationNumber' | 'rollNumber' | 'uniqueId' | 'uniqueIdCheckWaived'>): Promise<{applicationNumber: string, rollNumber: string}> {
+export async function addScholarshipApplication(data: Omit<ScholarshipApplicationData, 'createdAt' | 'id' | 'resultStatus' | 'applicationNumber' | 'rollNumber' | 'isPaymentVerified'>): Promise<{applicationNumber: string, rollNumber: string}> {
     if (!db) throw new Error("Firestore DB not initialized.");
     
     // Check for existing application with the same name and father's name to prevent duplicates
@@ -342,42 +342,16 @@ export async function addScholarshipApplication(data: Omit<ScholarshipApplicatio
     const applicationNumber = `GSA${new Date().getFullYear()}${generateRandomCode(5)}`;
     const rollNumber = `R${generateRandomCode(8)}`;
     
-    let uniqueId = '';
-    
-    // Only generate a uniqueId if the test mode is online
-    if (data.testMode === 'online') {
-        let isCodeUnique = false;
-        let attempts = 0;
-        // This loop ensures the generated ID is truly unique.
-        while (!isCodeUnique && attempts < 10) {
-            uniqueId = generateRandomCode(6);
-            const q = query(collection(db, "scholarshipApplications"), where("uniqueId", "==", uniqueId));
-            const snapshot = await getDocs(q);
-            if (snapshot.empty) {
-                isCodeUnique = true;
-            }
-            attempts++;
-        }
-        if (!isCodeUnique) {
-            throw new Error("Could not generate a unique ID. Please try again later.");
-        }
-    }
-    
     await addDoc(collection(db, "scholarshipApplications"), {
         ...data,
         applicationNumber,
         rollNumber,
-        uniqueId, // This will be an empty string for offline mode
         resultStatus: 'pending',
-        uniqueIdCheckWaived: false,
+        isPaymentVerified: false,
         createdAt: Timestamp.now(),
     });
     
-    if (data.testMode === 'online') {
-        sendStudentNotification('Application Received', `Your application for ${data.fullName} (App No: ${applicationNumber}) has been received. Your secret 6-digit Unique ID is ${uniqueId}. Please save it for the online test.`, 'scholarship', data.fullName);
-    } else {
-         sendStudentNotification('Application Received', `Your application for ${data.fullName} (App No: ${applicationNumber}) has been received.`, 'scholarship', data.fullName);
-    }
+    sendStudentNotification('Application Received', `Your application for ${data.fullName} (App No: ${applicationNumber}) has been received.`, 'scholarship', data.fullName);
 
     return { applicationNumber, rollNumber };
 }
@@ -390,10 +364,10 @@ export async function updateScholarshipApplicationResultStatus(appId: string, st
     await updateDoc(appRef, { resultStatus: status });
 }
 
-export async function updateScholarshipApplicationWaiver(appId: string, isWaived: boolean): Promise<void> {
+export async function updateScholarshipApplicationPaymentStatus(appId: string, isVerified: boolean): Promise<void> {
     if (!db) throw new Error("Firestore DB not initialized.");
     const appRef = doc(db, "scholarshipApplications", appId);
-    await updateDoc(appRef, { uniqueIdCheckWaived: isWaived });
+    await updateDoc(appRef, { isPaymentVerified: isVerified });
 }
 
 export async function getScholarshipApplications(): Promise<ScholarshipApplicationData[]> {

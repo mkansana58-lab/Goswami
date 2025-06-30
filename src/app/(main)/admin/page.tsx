@@ -31,7 +31,7 @@ import {
     getTestSettings, updateTestSetting, getTestEnrollments,
     updateTestEnrollmentWaiver,
     getScholarshipTestResults, deleteScholarshipTestResult, deleteScholarshipApplication, deleteStudent, deleteTestEnrollment, deleteContactInquiry,
-    updateScholarshipApplicationWaiver,
+    updateScholarshipApplicationPaymentStatus,
     type LiveClass, type Notification, type Post, type CurrentAffair,
     type VideoLecture, type Download, type Course, type AppConfig,
     type ScholarshipApplicationData, type StudentData, type Teacher, type GalleryImage,
@@ -39,7 +39,7 @@ import {
     type ScholarshipTestResult, type Question, type NotificationCategory
 } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star, CheckSquare, Shield, Key, Award, AlertCircle, Trophy, PlusCircle } from 'lucide-react';
+import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star, CheckSquare, Shield, Key, Award, AlertCircle, Trophy, PlusCircle, QrCode } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -63,6 +63,7 @@ const settingsSchema = z.object({
     resultAnnouncementDate: z.string().optional(),
     splashImage: z.any().optional(),
     scholarshipTestId: z.string().optional(),
+    paymentQrCode: z.any().optional(),
 });
 const liveClassSchema = z.object({ title: z.string().min(3), link: z.string().url(), scheduledAt: z.string().min(1) });
 const notificationSchema = z.object({ 
@@ -199,7 +200,7 @@ export default function AdminPage() {
     }, [admin, fetchData]);
 
     const handleSaveSettings = async (values: z.infer<typeof settingsSchema>) => {
-        const { splashImage, ...otherValues } = values;
+        const { splashImage, paymentQrCode, ...otherValues } = values;
 
         const configData: Partial<AppConfig> = {
             ...(otherValues.scholarshipDeadline && { scholarshipDeadline: Timestamp.fromDate(new Date(otherValues.scholarshipDeadline)) }),
@@ -211,15 +212,21 @@ export default function AdminPage() {
             scholarshipTestId: otherValues.scholarshipTestId || '',
         };
 
-        if (splashImage?.[0]) {
-            const file = splashImage[0];
-            const dataUrl = await new Promise<string>((resolve, reject) => {
+        const uploadFile = async (file: File) => {
+            return new Promise<string>((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = (e) => resolve(e.target?.result as string);
                 reader.onerror = (error) => reject(error);
                 reader.readAsDataURL(file);
             });
-            configData.splashImageUrl = dataUrl;
+        };
+
+        if (splashImage?.[0]) {
+            configData.splashImageUrl = await uploadFile(splashImage[0]);
+        }
+
+        if (paymentQrCode?.[0]) {
+            configData.paymentQrCodeUrl = await uploadFile(paymentQrCode[0]);
         }
 
         await updateAppConfig(configData);
@@ -242,18 +249,18 @@ export default function AdminPage() {
         }
     };
     
-    const handleIdWaiverToggle = async (appId: string, isWaived: boolean) => {
+    const handlePaymentStatusChange = async (appId: string, isVerified: boolean) => {
          try {
-            await updateScholarshipApplicationWaiver(appId, isWaived);
+            await updateScholarshipApplicationPaymentStatus(appId, isVerified);
             setData(prevData => ({
                 ...prevData,
                 scholarshipApps: prevData.scholarshipApps.map(app => 
-                    app.id === appId ? { ...app, uniqueIdCheckWaived: isWaived } : app
+                    app.id === appId ? { ...app, isPaymentVerified: isVerified } : app
                 )
             }));
-            toast({ title: "Waiver status updated." });
+            toast({ title: "Payment status updated." });
         } catch (error) {
-            toast({ variant: "destructive", title: "Error", description: "Failed to update waiver status." });
+            toast({ variant: "destructive", title: "Error", description: "Failed to update payment status." });
             fetchData();
         }
     }
@@ -324,6 +331,7 @@ export default function AdminPage() {
                                      <div><Label>{t('admitCardStartDate')}</Label><Input type="datetime-local" {...settingsForm.register('admitCardDownloadStartDate')} /></div>
                                      <div><Label>{t('resultAnnouncementDate')}</Label><Input type="datetime-local" {...settingsForm.register('resultAnnouncementDate')} /></div>
                                      <div><Label>Splash Screen Image (for App Start)</Label><Input type="file" accept="image/*" {...settingsForm.register('splashImage')} /></div>
+                                     <div><Label className="flex items-center gap-2"><QrCode/> Payment QR Code</Label><Input type="file" accept="image/*" {...settingsForm.register('paymentQrCode')} /></div>
                                      <Button type="submit">{t('saveSettings')}</Button>
                                 </form>
                             </AdminSection>
@@ -408,22 +416,22 @@ export default function AdminPage() {
                     <TabsContent value="view" className="mt-4">
                          <Accordion type="multiple" className="w-full space-y-4">
                             <AdminSection title="Scholarship Applications" icon={GraduationCap}>
-                                <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Docs</TableHead><TableHead>ID Waiver</TableHead><TableHead>Result</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
+                                <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>App No</TableHead><TableHead>Docs</TableHead><TableHead>Payment Verified</TableHead><TableHead>Result</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
                                     <TableBody>
                                         {data.scholarshipApps.map(app => (
                                             <TableRow key={app.id}>
                                                 <TableCell>{app.fullName}<br/><span className="text-muted-foreground text-xs">{app.fatherName}</span></TableCell>
-                                                <TableCell>App No: <span className="font-mono text-xs">{app.applicationNumber}</span><br/>UID: <span className="font-mono text-xs">{app.uniqueId || 'N/A'}</span></TableCell>
+                                                <TableCell><span className="font-mono text-xs">{app.applicationNumber}</span></TableCell>
                                                 <TableCell className="flex gap-2"><ImagePreview url={app.photoUrl} triggerText="Photo" /><ImagePreview url={app.signatureUrl} triggerText="Sign" /></TableCell>
                                                 <TableCell>
                                                     <div className="flex flex-col items-center gap-1">
                                                         <Switch
                                                             disabled={app.testMode !== 'online'}
-                                                            checked={app.uniqueIdCheckWaived ?? false}
-                                                            onCheckedChange={(isChecked) => handleIdWaiverToggle(app.id!, isChecked)}
-                                                            aria-label="Toggle Unique ID check waiver"
+                                                            checked={app.isPaymentVerified ?? false}
+                                                            onCheckedChange={(isChecked) => handlePaymentStatusChange(app.id!, isChecked)}
+                                                            aria-label="Toggle payment verification"
                                                         />
-                                                         <span className="text-xs text-muted-foreground">{app.uniqueIdCheckWaived ? "ON" : "OFF"}</span>
+                                                         <span className="text-xs text-muted-foreground">{app.isPaymentVerified ? "ON" : "OFF"}</span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>

@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getScholarshipApplicationByAppNumber, getAppConfig, type AppConfig, type ScholarshipApplicationData, getScholarshipTestResultByAppNumber } from '@/lib/firebase';
-import { Loader2, KeyRound, User, ArrowRight } from 'lucide-react';
+import { Loader2, User, ArrowRight, QrCode } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { format } from 'date-fns';
 import Image from 'next/image';
@@ -23,9 +23,8 @@ export default function OnlineScholarshipTestEntryPage() {
   const { student } = useAuth();
   const router = useRouter();
   
-  const [step, setStep] = useState<'entry' | 'confirm'>('entry');
+  const [step, setStep] = useState<'entry' | 'confirm' | 'payment'>('entry');
   const [applicationNumber, setApplicationNumber] = useState('');
-  const [uniqueId, setUniqueId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
   const [verifiedApplicant, setVerifiedApplicant] = useState<ScholarshipApplicationData | null>(null);
@@ -34,9 +33,9 @@ export default function OnlineScholarshipTestEntryPage() {
     getAppConfig().then(setAppConfig);
   }, []);
 
-  const handleVerifyCode = async () => {
-    if (!applicationNumber || !uniqueId) {
-      toast({ variant: "destructive", title: "Error", description: "Application Number and Unique ID are required." });
+  const handleProceed = async () => {
+    if (!applicationNumber) {
+      toast({ variant: "destructive", title: "Error", description: "Application Number is required." });
       return;
     }
     if (!student) {
@@ -76,21 +75,18 @@ export default function OnlineScholarshipTestEntryPage() {
             return;
         }
 
-        const idCheckRequired = !appData.uniqueIdCheckWaived;
-
-        if (idCheckRequired && appData.uniqueId !== uniqueId) {
-             toast({ variant: "destructive", title: "Invalid Unique ID", description: "The Unique ID you entered is incorrect." });
-            return;
-        }
-
         if (appData.fullName !== student.name) {
             toast({ variant: "destructive", title: "Mismatch Error", description: "This application does not belong to the logged-in student. Please check your details." });
             return;
         }
 
-        setVerifiedApplicant(appData);
-        setStep('confirm');
-        toast({ title: "Details Verified", description: "Please confirm your identity to start the test." });
+        if (appData.isPaymentVerified) {
+            setVerifiedApplicant(appData);
+            setStep('confirm');
+            toast({ title: "Details Verified", description: "Please confirm your identity to start the test." });
+        } else {
+            setStep('payment');
+        }
 
     } catch (error) {
         toast({ variant: "destructive", title: "Error", description: "An error occurred while verifying your details." });
@@ -112,7 +108,7 @@ export default function OnlineScholarshipTestEntryPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-center text-center">
-        <KeyRound className="h-12 w-12 text-primary" />
+        <User className="h-12 w-12 text-primary" />
         <h1 className="text-3xl font-bold text-primary mt-2">Online Scholarship Test</h1>
         <p className="text-muted-foreground">Enter your details to begin the test.</p>
       </div>
@@ -128,23 +124,50 @@ export default function OnlineScholarshipTestEntryPage() {
         <Card className="max-w-md mx-auto">
           <CardHeader>
             <CardTitle>Enter Your Details</CardTitle>
-            <CardDescription>Enter your Application Number and secret Unique ID to proceed.</CardDescription>
+            <CardDescription>Enter your Application Number to proceed.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="application-number">{t('applicationNumber')}</Label>
               <Input id="application-number" placeholder="GSA2024..." value={applicationNumber} onChange={(e) => setApplicationNumber(e.target.value)} disabled={isLoading || !appConfig?.scholarshipTestId} />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="unique-id">{t('uniqueId')}</Label>
-              <Input id="unique-id" placeholder="Enter your 6-digit Unique ID" value={uniqueId} onChange={(e) => setUniqueId(e.target.value)} disabled={isLoading || !appConfig?.scholarshipTestId} />
-            </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full" onClick={handleVerifyCode} disabled={isLoading || !appConfig?.scholarshipTestId}>
+            <Button className="w-full" onClick={handleProceed} disabled={isLoading || !appConfig?.scholarshipTestId}>
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Verify Details"}
             </Button>
           </CardFooter>
+        </Card>
+      )}
+
+      {step === 'payment' && (
+        <Card className="max-w-md mx-auto animate-in fade-in-50">
+            <CardHeader>
+                <CardTitle className="text-destructive">Payment Required</CardTitle>
+                <CardDescription>To take the online test, please complete the payment.</CardDescription>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+                {appConfig?.paymentQrCodeUrl ? (
+                    <Image src={appConfig.paymentQrCodeUrl} alt="Payment QR Code" width={250} height={250} className="mx-auto border-4 border-primary rounded-lg p-1" data-ai-hint="payment qr code"/>
+                ) : (
+                    <div className="w-64 h-64 bg-muted flex items-center justify-center rounded-lg mx-auto">
+                        <p className="text-muted-foreground">QR Code not available.</p>
+                    </div>
+                )}
+                <div className="text-lg font-semibold bg-accent text-accent-foreground p-3 rounded-lg">
+                    <p>कृपया इस QR पर **₹20** का पेमेंट करें।</p>
+                    <p className="mt-2">पेमेंट का स्क्रीनशॉट **"हमसे संपर्क करें"** पेज पर भेजें।</p>
+                </div>
+                <p className="text-sm text-muted-foreground">Verification के बाद आप टेस्ट दे पाएंगे।</p>
+            </CardContent>
+            <CardFooter className="flex-col gap-4">
+                <Button onClick={() => router.push('/contact')} className="w-full">
+                    Go to Contact Page <ArrowRight className="ml-2 h-4 w-4"/>
+                </Button>
+                <Button variant="outline" onClick={() => setStep('entry')} className="w-full">
+                    Go Back
+                </Button>
+            </CardFooter>
         </Card>
       )}
 
@@ -164,7 +187,6 @@ export default function OnlineScholarshipTestEntryPage() {
                     </div>
                 </div>
                 <Alert>
-                    <AlertTriangle className="h-4 w-4"/>
                     <AlertTitle>Important Instructions</AlertTitle>
                     <AlertDescription>
                         The test is timed. Once started, you cannot pause it. Do not close the browser window or go back.

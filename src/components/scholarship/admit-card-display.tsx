@@ -54,13 +54,6 @@ export function AdmitCardDisplay({ data, scholarshipTestStartDate, scholarshipTe
                           <p className="font-semibold">Roll Number:</p><p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{data.rollNumber}</p>
                           <p className="font-semibold">{t('applicationNumber')}:</p><p className="font-mono">{data.applicationNumber}</p>
                           
-                          {data.testMode === 'online' && data.uniqueId && (
-                             <>
-                              <p className="font-semibold">{t('uniqueId')}:</p>
-                              <p className="font-mono bg-accent text-accent-foreground px-2 py-1 rounded-md">{data.uniqueId}</p>
-                             </>
-                          )}
-
                           <p className="font-semibold">{t('fullName')}:</p><p>{data.fullName}</p>
                           <p className="font-semibold">{t('fathersName')}:</p><p>{data.fatherName}</p>
                           <p className="font-semibold">{t('selectClass')}:</p><p>{data.class}</p>
@@ -111,8 +104,8 @@ export function AdmitCardDisplay({ data, scholarshipTestStartDate, scholarshipTe
                     <CardHeader><CardTitle className="text-green-300 text-lg">ऑनलाइन परीक्षा के लिए निर्देश</CardTitle></CardHeader>
                     <CardContent className="text-green-400 text-sm space-y-1">
                         <p>1. आपको स्टूडेंट पोर्टल से सीधे ऑनलाइन टेस्ट देना होगा।</p>
-                        <p>2. टेस्ट शुरू करने के लिए आपको अपने एप्लीकेशन नंबर और 6 अंकों की यूनिक आईडी की आवश्यकता होगी।</p>
-                        <p>3. कृपया अपनी यूनिक आईडी किसी के साथ साझा न करें।</p>
+                        <p>2. टेस्ट शुरू करने के लिए आपको अपने एप्लीकेशन नंबर की आवश्यकता होगी।</p>
+                        <p>3. पेमेंट वेरिफिकेशन के बाद ही आप टेस्ट दे पाएंगे।</p>
                     </CardContent>
                 </Card>
               )}
