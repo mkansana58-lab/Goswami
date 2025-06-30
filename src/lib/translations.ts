@@ -68,6 +68,17 @@ export const translations = {
     correct: "Correct!",
     incorrect: "Incorrect!",
 
+    // Game Zone
+    learningGames: "Learning Games",
+    festivalQuiz: "Festival Quiz Adventure",
+    festivalQuizDescription: "Learn about festivals with fun quizzes!",
+    shootTheAnswer: "Shoot The Right Answer",
+    shootTheAnswerDescription: "Fun shooting game to improve focus.",
+    villageMarket: "Village Knowledge Market",
+    villageMarketDescription: "Learn GK while shopping in a virtual market.",
+    smartKisan: "Smart Kisan",
+    smartKisanDescription: "Learn science through smart farming.",
+
     // Scholarship Form Translations
     scholarshipInstructionsTitle: "Instructions",
     scholarshipInstructionsP1: "Welcome to the Go Swami Defence Academy scholarship application. Please read the instructions carefully before proceeding.",
@@ -329,6 +340,17 @@ export const translations = {
     nextQuestion: "अगला प्रश्न",
     correct: "सही!",
     incorrect: "गलत!",
+
+    // Game Zone
+    learningGames: "खेल-खेल में सीखें",
+    festivalQuiz: "त्योहार क्विज़ एडवेंचर",
+    festivalQuizDescription: "मज़ेदार क्विज़ के साथ त्योहारों के बारे में जानें!",
+    shootTheAnswer: "सही जवाब पर निशाना लगाओ",
+    shootTheAnswerDescription: "फोकस बेहतर करने के लिए मजेदार शूटिंग गेम।",
+    villageMarket: "गांव का ज्ञान बाजार",
+    villageMarketDescription: "वर्चुअल बाजार में खरीदारी करते हुए GK सीखें।",
+    smartKisan: "स्मार्ट किसान",
+    smartKisanDescription: "स्मार्ट खेती के माध्यम से विज्ञान सीखें।",
 
     // Scholarship Form Translations
     scholarshipInstructionsTitle: "निर्देश",

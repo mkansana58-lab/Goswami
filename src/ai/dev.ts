@@ -11,6 +11,4 @@ import '@/ai/flows/quiz-game-flow.ts';
 import '@/ai/flows/tts-flow.ts';
 import '@/ai/flows/story-weaver-flow.ts';
 import '@/ai/flows/true-false-flow.ts';
-
-
-
+import '@/ai/flows/festival-quiz-flow.ts';

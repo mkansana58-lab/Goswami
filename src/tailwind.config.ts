@@ -86,6 +86,14 @@ const config = {
           '20%, 80%': { transform: 'translate3d(2px, 0, 0) rotate(2deg)' },
           '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0) rotate(-3deg)' },
           '40%, 60%': { transform: 'translate3d(4px, 0, 0) rotate(3deg)' }
+        },
+        'sparkle': {
+          '0%, 100%': { opacity: '0', transform: 'scale(0.5) rotate(0deg)' },
+          '50%': { opacity: '1', transform: 'scale(1.5) rotate(180deg)' },
+        },
+        'color-splash': {
+            '0%': { transform: 'scale(0)', opacity: '0.5' },
+            '100%': { transform: 'scale(3)', opacity: '0' },
         }
       },
       animation: {
@@ -94,10 +102,10 @@ const config = {
         'marquee': 'marquee 25s linear infinite',
         'marquee2': 'marquee2 25s linear infinite',
         'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+        'sparkle': 'sparkle 0.7s ease-in-out forwards',
+        'color-splash': 'color-splash 0.5s ease-out forwards',
       },
     },
   },
   plugins: [require('tailwindcss-animate')],
 } satisfies Config;
-
-export default config;

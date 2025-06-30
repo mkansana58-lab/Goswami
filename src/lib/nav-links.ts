@@ -27,7 +27,8 @@ import {
     Youtube,
     Gamepad2,
     BookText,
-    Binary
+    Binary,
+    Sparkles
   } from 'lucide-react';
   
   export const featureGridLinks = [
@@ -38,7 +39,7 @@ import {
       { href: "/ai-tutor", icon: GraduationCap, textKey: "aiTutor" },
       { href: "/daily-posts", icon: Newspaper, textKey: "dailyPosts" },
       { href: "/quiz-game", icon: Gamepad2, textKey: "quizGame" },
-      { href: "/story-weaver", icon: BookText, textKey: "readingPractice" },
+      { href: "/learning-games", icon: Sparkles, textKey: "learningGames" },
       { href: "/true-false-game", icon: Binary, textKey: "trueFalseGame" },
   ];
   
@@ -55,7 +56,7 @@ import {
     { href: "/ai-tutor", icon: GraduationCap, textKey: "aiTutor" },
     { href: "/group-chat", icon: MessagesSquare, textKey: "groupChat" },
     { href: "/quiz-game", icon: Gamepad2, textKey: "quizGame" },
-    { href: "/story-weaver", icon: BookText, textKey: "readingPractice" },
+    { href: "/learning-games", icon: Sparkles, textKey: "learningGames" },
     { href: "/true-false-game", icon: Binary, textKey: "trueFalseGame" },
     { href: "/current-affairs", icon: ScrollText, textKey: "currentAffairs" },
     { href: "/cutoff-checker", icon: Scissors, textKey: "cutoffChecker" },
