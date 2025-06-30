@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, BookCheck, BrainCircuit, BarChart2, Headphones, ImagePlus, X } from 'lucide-react';
+import { Loader2, Sparkles, BookCheck, BrainCircuit, BarChart2, Headphones, ImagePlus, X, Volume2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { fileToDataUrl } from '@/lib/utils';
 import Image from 'next/image';
@@ -39,7 +39,7 @@ export default function AiTutorPage() {
 
   useEffect(() => {
     if (audioUrl && audioRef.current) {
-      audioRef.current.play();
+      audioRef.current.play().catch(e => console.log("Audio autoplay prevented by browser."));
     }
   }, [audioUrl]);
 
@@ -56,7 +56,6 @@ export default function AiTutorPage() {
         try {
             const dataUrl = await fileToDataUrl(file);
             setImagePreview(dataUrl);
-            // We store the data URL directly in the form state for submission
             form.setValue('image', dataUrl);
         } catch (err: any) {
             toast({ variant: 'destructive', title: 'Image Error', description: err.message });
@@ -72,14 +71,28 @@ export default function AiTutorPage() {
     }
   };
 
-
   async function onSubmit(values: FormValues) {
     setIsLoading(true);
+    setIsAudioLoading(true);
     setTutorResponse(null);
-    setAudioUrl(null); // Reset audio on new question
+    setAudioUrl(null);
     try {
       const response = await askTutor({ question: values.question, imageDataUri: values.image });
       setTutorResponse(response);
+
+      // Automatically generate and play audio
+      try {
+        const audioResponse = await textToSpeech(response.answer);
+        setAudioUrl(audioResponse.media);
+      } catch (audioError) {
+        console.error("Error generating audio:", audioError);
+        toast({
+            variant: "destructive",
+            title: "Audio Error",
+            description: "Could not generate audio for this answer.",
+        });
+      }
+
     } catch (error) {
       console.error("Error fetching from AI Tutor:", error);
       toast({
@@ -89,28 +102,9 @@ export default function AiTutorPage() {
       });
     } finally {
       setIsLoading(false);
+      setIsAudioLoading(false);
     }
   }
-
-  const handleListen = async () => {
-    if (!tutorResponse?.answer || isAudioLoading) return;
-
-    setIsAudioLoading(true);
-    setAudioUrl(null);
-    try {
-        const response = await textToSpeech(tutorResponse.answer);
-        setAudioUrl(response.media);
-    } catch (error) {
-        console.error("Error generating audio:", error);
-        toast({
-            variant: "destructive",
-            title: "Audio Error",
-            description: "Could not generate audio for this answer.",
-        });
-    } finally {
-        setIsAudioLoading(false);
-    }
-  };
 
   return (
     <div className="space-y-8">
@@ -167,14 +161,16 @@ export default function AiTutorPage() {
         </CardContent>
       </Card>
 
-      {isLoading && (
+      {(isLoading || isAudioLoading) && (
          <Card className="flex flex-col items-center justify-center p-8">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            <p className="mt-4 text-muted-foreground">{t('aiIsThinking')}</p>
+            <p className="mt-4 text-muted-foreground">
+                {isLoading ? t('aiIsThinking') : 'Generating audio...'}
+            </p>
         </Card>
       )}
 
-      {tutorResponse && (
+      {tutorResponse && !isLoading && !isAudioLoading && (
         <div className="space-y-6 animate-in fade-in-50">
           <Card>
             <CardHeader>
@@ -194,14 +190,12 @@ export default function AiTutorPage() {
                         </Badge>
                       </div>
                   </div>
-                   <Button onClick={handleListen} variant="outline" size="sm" disabled={isAudioLoading}>
-                    {isAudioLoading ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                        <Headphones className="h-4 w-4 mr-2" />
-                    )}
-                    Listen
-                </Button>
+                   {audioUrl && (
+                        <Button onClick={() => audioRef.current?.play()} variant="outline" size="sm">
+                            <Volume2 className="h-4 w-4 mr-2" />
+                            Replay
+                        </Button>
+                   )}
               </div>
             </CardHeader>
             <CardContent>

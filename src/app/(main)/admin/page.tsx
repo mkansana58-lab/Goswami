@@ -39,7 +39,7 @@ import {
     type ScholarshipTestResult, type Question, type NotificationCategory
 } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star, CheckSquare, Shield, Key, Award, AlertCircle, Trophy, PlusCircle, QrCode, Truck, Gamepad2, Brain, Atom, Paintbrush, Flame } from 'lucide-react';
+import { Loader2, Settings, Tv, Bell, GraduationCap, Users, Newspaper, ScrollText, Video, FileDown, BookCopy, Trash2, Camera, UserSquare, Mail, Library, FilePlus2, ToggleRight, ListCollapse, BarChart2, Star, CheckSquare, Shield, Key, Award, AlertCircle, Trophy, PlusCircle, QrCode, Truck, Gamepad2, Brain, Atom, Paintbrush, Flame, Youtube } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -68,6 +68,7 @@ const settingsSchema = z.object({
     festivalQuizBg: z.any().optional(),
     knowledgeBazaarBg: z.any().optional(),
     scienceGameBg: z.any().optional(),
+    appTutorialEmbedCode: z.string().optional(),
 });
 const liveClassSchema = z.object({ 
     title: z.string().min(3), 
@@ -200,6 +201,7 @@ export default function AdminPage() {
                 cityIntimationSlipStartDate: toInputDateTimeFormat(config.cityIntimationSlipStartDate),
                 resultAnnouncementDate: toInputDateTimeFormat(config.resultAnnouncementDate),
                 scholarshipTestId: config.scholarshipTestId,
+                appTutorialEmbedCode: config.appTutorialEmbedCode || '',
             });
             setData({
                 liveClasses, notifications, posts, currentAffairs, videoLectures,
@@ -235,6 +237,7 @@ export default function AdminPage() {
             ...(otherValues.cityIntimationSlipStartDate && { cityIntimationSlipStartDate: Timestamp.fromDate(new Date(otherValues.cityIntimationSlipStartDate)) }),
             ...(otherValues.resultAnnouncementDate && { resultAnnouncementDate: Timestamp.fromDate(new Date(otherValues.resultAnnouncementDate)) }),
             scholarshipTestId: scholarshipTestId || '',
+            appTutorialEmbedCode: otherValues.appTutorialEmbedCode || '',
         };
 
         try {
@@ -364,6 +367,8 @@ export default function AdminPage() {
                                      <div><Label>Scholarship Test End Date</Label><Input type="datetime-local" {...settingsForm.register('scholarshipTestEndDate')} /></div>
                                      <div><Label>{t('admitCardStartDate')}</Label><Input type="datetime-local" {...settingsForm.register('admitCardDownloadStartDate')} /></div>
                                      <div><Label>{t('resultAnnouncementDate')}</Label><Input type="datetime-local" {...settingsForm.register('resultAnnouncementDate')} /></div>
+                                     <Separator />
+                                     <div><Label className="flex items-center gap-2"><Youtube/> App Tutorial HTML Embed Code</Label><Textarea placeholder='Paste <iframe> code for the app tutorial video here...' {...settingsForm.register('appTutorialEmbedCode')} /></div>
                                      <div><Label>Splash Screen Image (for App Start)</Label><Input type="file" accept="image/*" {...settingsForm.register('splashImage')} /></div>
                                      <div><Label className="flex items-center gap-2"><QrCode/> Payment QR Code</Label><Input type="file" accept="image/*" {...settingsForm.register('paymentQrCode')} /></div>
                                     <Separator />
@@ -685,7 +690,7 @@ const CrudForm = ({ schema, onSubmit, onRefresh, fields }: { schema: z.ZodObject
                 <div key={fieldName}>
                     <Label className="capitalize">{t(fieldName as any) || fieldName.replace(/([A-Z])/g, ' $1').replace('embedCode', 'Embed Code')}</Label>
                     {fieldType === 'textarea' ?
-                        <Textarea {...form.register(fieldName)} disabled={isSubmitting} placeholder={fieldName === 'embedCode' ? 'Paste <iframe> code here' : ''} /> :
+                        <Textarea {...form.register(fieldName)} disabled={isSubmitting} placeholder={fieldName === 'embedCode' ? 'Paste <iframe> code here. Example: <iframe src="https://www.youtube.com/embed/..."></iframe>' : ''} /> :
                     fieldType === 'file' ?
                         <Input type="file" accept="image/*, .pdf" {...form.register(fieldName)} disabled={isSubmitting}/> :
                         <Input type={fieldType} {...form.register(fieldName)} disabled={isSubmitting} placeholder={fieldName === 'link' ? 'https://...' : ''} />

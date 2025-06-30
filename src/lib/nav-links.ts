@@ -50,7 +50,7 @@ import {
     { href: "/courses", icon: BookOpenCheck, textKey: "ourCourses" },
     { href: "/live-classes", icon: RadioTower, textKey: "liveClasses" },
     { href: "/video-lectures", icon: Video, textKey: "videoLectures" },
-    { href: "/youtube", icon: Youtube, textKey: "youtube" },
+    { href: "/app-tutorial", icon: Youtube, textKey: "appTutorial" },
     { href: "/downloads", icon: Download, textKey: "downloads" },
     { href: "/e-books", icon: Library, textKey: "ebooks" },
     { href: "/tests", icon: CheckSquare, textKey: "aiTest" },

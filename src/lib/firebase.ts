@@ -141,6 +141,7 @@ export interface AppConfig {
     festivalQuizBgUrl?: string;
     knowledgeBazaarBgUrl?: string;
     scienceGameBgUrl?: string;
+    appTutorialEmbedCode?: string;
 }
 
 export interface Post {

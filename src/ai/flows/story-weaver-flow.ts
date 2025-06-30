@@ -25,7 +25,7 @@ const QuestionSchema = z.object({
 
 const PassageGeneratorOutputSchema = z.object({
     passage: z.string().describe('The generated reading passage.'),
-    questions: z.array(QuestionSchema).min(3).max(5).describe('An array of 3 to 5 comprehension questions.'),
+    questions: z.array(QuestionSchema).length(5).describe('An array of exactly 5 questions (3 comprehension, 2 grammar).'),
 });
 export type PassageGeneratorOutput = z.infer<typeof PassageGeneratorOutputSchema>;
 
@@ -38,13 +38,15 @@ const prompt = ai.definePrompt({
   input: { schema: PassageGeneratorInputSchema },
   output: { schema: PassageGeneratorOutputSchema },
   prompt: `You are an expert educator who creates reading comprehension exercises for students.
-Your task is to generate a short, engaging passage in {{{language}}} and 3 to 5 multiple-choice questions based on it.
+Your task is to generate a short, engaging passage in {{{language}}} and exactly 5 multiple-choice questions.
 
 Instructions:
 1.  The passage should be about the topic: {{{topic}}}.
 2.  The passage and all questions must be in the {{{language}}} language.
 3.  The passage should be approximately 150-200 words long.
-4.  Generate between 3 and 5 multiple-choice questions that test the understanding of the passage.
+4.  Generate exactly 5 multiple-choice questions:
+    - The first 3 questions must be based on understanding the content of the passage.
+    - The last 2 questions must be related to grammar (व्याकरण) based on sentences from the passage. For example, ask to identify a noun (संज्ञा), verb (क्रिया), adjective (विशेषण), or find a synonym/antonym (पर्यायवाची/विलोम) for a word from the passage.
 5.  Each question must have exactly 4 options.
 6.  The 'answer' for each question must exactly match one of the strings in its 'options' array.
 

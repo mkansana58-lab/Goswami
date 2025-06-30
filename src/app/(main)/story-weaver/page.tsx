@@ -94,7 +94,11 @@ const ReadingPracticePage = () => {
     };
 
     const handleSubmit = async () => {
-        if (!passageData || !student) return;
+        if (!passageData || !student?.name) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Student not logged in.' });
+            return;
+        }
+
         const newAnswerStates: Record<number, AnswerState> = {};
         let correctCount = 0;
         passageData.questions.forEach((q, index) => {
@@ -119,7 +123,8 @@ const ReadingPracticePage = () => {
                 await refreshStudentData(student.name);
                 toast({ title: `Congratulations! You won ${points} points!` });
             } catch (error) {
-                toast({ variant: 'destructive', title: 'Error saving points' });
+                console.error("Error saving points:", error);
+                toast({ variant: 'destructive', title: 'Error saving points', description: 'Could not update your winnings. Please try again later.' });
             }
         }
 
