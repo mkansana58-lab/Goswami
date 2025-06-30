@@ -11,7 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
-export const PassageGeneratorInputSchema = z.object({
+const PassageGeneratorInputSchema = z.object({
   topic: z.string().describe('The topic for the passage (e.g., "A brave lion", "The solar system").'),
   language: z.string().describe('The language for the passage and questions (e.g., "Hindi", "English").'),
 });
@@ -23,7 +23,7 @@ const QuestionSchema = z.object({
     answer: z.string().describe('The correct answer, which must be one of the strings from the options array.'),
 });
 
-export const PassageGeneratorOutputSchema = z.object({
+const PassageGeneratorOutputSchema = z.object({
     passage: z.string().describe('The generated reading passage.'),
     questions: z.array(QuestionSchema).min(3).max(5).describe('An array of 3 to 5 comprehension questions.'),
 });
