@@ -58,6 +58,14 @@ export const translations = {
     downloadResult: "Download Result",
     onlineTest: "Online Scholarship Test",
     reviewAnswers: "Review Answers",
+    trueFalseGame: "True or False",
+    trueFalseGameDescription: "Test your knowledge with fun facts.",
+    trueText: "True",
+    falseText: "False",
+    selectSubject: "Select a Subject",
+    nextQuestion: "Next Question",
+    correct: "Correct!",
+    incorrect: "Incorrect!",
 
     // Scholarship Form Translations
     scholarshipInstructionsTitle: "Instructions",
@@ -314,6 +322,14 @@ export const translations = {
     downloadResult: "रिजल्ट डाउनलोड करें",
     onlineTest: "ऑनलाइन स्कॉलरशिप टेस्ट",
     reviewAnswers: "उत्तरों की समीक्षा करें",
+    trueFalseGame: "सही या गलत",
+    trueFalseGameDescription: "मजेदार तथ्यों के साथ अपने ज्ञान का परीक्षण करें।",
+    trueText: "सही",
+    falseText: "गलत",
+    selectSubject: "एक विषय चुनें",
+    nextQuestion: "अगला प्रश्न",
+    correct: "सही!",
+    incorrect: "गलत!",
 
     // Scholarship Form Translations
     scholarshipInstructionsTitle: "निर्देश",
