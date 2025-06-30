@@ -18,7 +18,19 @@ import { addQuizWinnings } from '@/lib/firebase';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
 
-const storyThemes = ["bravery", "friendship", "honesty", "a clever animal", "a historical event", "a magical world", "a science experiment gone wrong", "a mysterious discovery"];
+const passageTopics = [
+    "a brave freedom fighter from India", 
+    "the importance of friendship", 
+    "an inspiring act of honesty", 
+    "a clever animal in an Indian jungle", 
+    "an important event from Indian history like the Dandi March", 
+    "a simple science experiment about water", 
+    "a mysterious discovery in an old fort", 
+    "our solar system and its planets", 
+    "the problem of pollution in our cities", 
+    "the life of a great Indian scientist like C.V. Raman",
+    "the importance of trees for the environment"
+];
 
 const ReadingPracticePage = () => {
     const { t, language } = useLanguage();
@@ -60,9 +72,9 @@ const ReadingPracticePage = () => {
         setScore({ correct: 0, total: 0 });
 
         try {
-            const randomTheme = storyThemes[Math.floor(Math.random() * storyThemes.length)];
+            const randomTopic = passageTopics[Math.floor(Math.random() * passageTopics.length)];
             const res = await generatePassageWithQuestions({
-                topic: `A short interesting story about ${randomTheme} for a Class 6 student`,
+                topic: `An unseen passage about ${randomTopic}, suitable for a JNV (Navodaya Vidyalaya) Class 6 entrance exam candidate`,
                 language: language === 'hi' ? 'Hindi' : 'English',
             });
             setPassageData(res);
@@ -126,8 +138,8 @@ const ReadingPracticePage = () => {
             <div className="absolute inset-x-0 top-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
             <div className="text-center">
                 <BookText className="mx-auto h-12 w-12 text-primary" />
-                <h1 className="text-3xl font-bold text-primary mt-2">{t('readingPractice')}</h1>
-                <p className="text-muted-foreground">पढ़ें, समझें, और अपनी तैयारी को परखें।</p>
+                <h1 className="text-3xl font-bold text-primary mt-2">जेएनवी के लिए गद्यांश</h1>
+                <p className="text-muted-foreground">नवोदय विद्यालय प्रवेश परीक्षा की तैयारी के लिए अपठित गद्यांश का अभ्यास करें।</p>
             </div>
 
             {!passageData && !isLoading && (
