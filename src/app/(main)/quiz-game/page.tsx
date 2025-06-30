@@ -364,9 +364,9 @@ const QuizGamePage = () => {
 
   return (
     <div className="space-y-6 relative">
-      <audio ref={introAudioRef} src={introAudioUrl || ''} />
-      <audio ref={questionAudioRef} src={questionAudioUrl || ''} />
-      <audio ref={outroAudioRef} src={outroAudioUrl || ''} />
+      {introAudioUrl && <audio ref={introAudioRef} src={introAudioUrl} />}
+      {questionAudioUrl && <audio ref={questionAudioRef} src={questionAudioUrl} />}
+      {outroAudioUrl && <audio ref={outroAudioRef} src={outroAudioUrl} />}
       <div className="absolute inset-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
        <div className="flex flex-col items-center text-center">
             <Gamepad2 className="h-16 w-16 text-primary animate-pulse" />

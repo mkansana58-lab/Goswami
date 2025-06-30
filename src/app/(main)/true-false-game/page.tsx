@@ -215,8 +215,8 @@ export default function TrueFalseGamePage() {
 
     return (
         <div className="space-y-6">
-            <audio ref={audioRef} src={audioUrl || ''} />
-            <audio ref={resultAudioRef} src={resultAudioUrl || ''} />
+            {audioUrl && <audio ref={audioRef} src={audioUrl} />}
+            {resultAudioUrl && <audio ref={resultAudioRef} src={resultAudioUrl} />}
             <div className="absolute inset-x-0 top-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
             <div className="text-center">
                 <Binary className="mx-auto h-12 w-12 text-primary" />
