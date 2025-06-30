@@ -46,8 +46,11 @@ const QuizGamePage = () => {
   const [hiddenOptions, setHiddenOptions] = useState<string[]>([]);
   const [lifelines, setLifelines] = useState<Record<Lifeline, boolean>>({ fiftyFifty: true });
   const [winningsAdded, setWinningsAdded] = useState(false);
+  
   const [introAudioUrl, setIntroAudioUrl] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const [questionAudioUrl, setQuestionAudioUrl] = useState<string | null>(null);
+  const introAudioRef = useRef<HTMLAudioElement>(null);
+  const questionAudioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     const generateIntro = async () => {
@@ -62,10 +65,17 @@ const QuizGamePage = () => {
   }, []);
 
   useEffect(() => {
-    if (introAudioUrl && audioRef.current) {
-        audioRef.current.play().catch(e => console.log("Browser prevented autoplay of intro audio."));
+    if (introAudioUrl && introAudioRef.current) {
+        introAudioRef.current.play().catch(e => console.log("Browser prevented autoplay of intro audio."));
     }
   }, [introAudioUrl]);
+
+  useEffect(() => {
+    if (questionAudioUrl && questionAudioRef.current) {
+        questionAudioRef.current.play().catch(e => console.log("Browser prevented autoplay of question audio."));
+    }
+  }, [questionAudioUrl]);
+
 
   const getSafePrize = () => {
     let safeAmount = 0;
@@ -113,6 +123,7 @@ const QuizGamePage = () => {
   
   const fetchQuestion = async (currentLevel: number, selectedSubject: string) => {
     setIsLoading(true);
+    setQuestionAudioUrl(null);
     try {
       const res = await generateQuizQuestion({
         subject: selectedSubject,
@@ -122,6 +133,12 @@ const QuizGamePage = () => {
       setHiddenOptions([]);
       setSelectedAnswer(null);
       setGameState('playing');
+      
+      // Speak the question
+      const questionTextToSpeak = `प्रश्न ${prizeLadder[currentLevel].amount.toLocaleString('en-IN')} के लिए, यह रहा आपकी स्क्रीन पर। ${res.question}`;
+      const audioRes = await textToSpeech(questionTextToSpeak);
+      setQuestionAudioUrl(audioRes.media);
+
     } catch (e) {
       toast({ variant: 'destructive', title: 'Error generating question' });
       setGameState('game_over');
@@ -321,7 +338,8 @@ const QuizGamePage = () => {
 
   return (
     <div className="space-y-6 relative">
-      {introAudioUrl && <audio ref={audioRef} src={introAudioUrl} />}
+      {introAudioUrl && <audio ref={introAudioRef} src={introAudioUrl} />}
+      {questionAudioUrl && <audio ref={questionAudioRef} src={questionAudioUrl} />}
       <div className="absolute inset-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
        <div className="flex flex-col items-center text-center">
             <Gamepad2 className="h-16 w-16 text-primary animate-pulse" />

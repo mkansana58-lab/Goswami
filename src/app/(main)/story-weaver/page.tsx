@@ -1,183 +1,157 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+import React, { useState } from 'react';
 import { useLanguage } from '@/hooks/use-language';
-import { db, getStory, addStoryLine, createNewStory, type Story, type StoryLine } from '@/lib/firebase';
-import { continueStory, startStory } from '@/ai/flows/story-weaver-flow';
-import { collection, query, onSnapshot, doc } from 'firebase/firestore';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Loader2, Feather, Sparkles, Send } from 'lucide-react';
+import { Loader2, BookText, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Timestamp } from 'firebase/firestore';
+import { generatePassageWithQuestions, type PassageGeneratorOutput } from '@/ai/flows/story-weaver-flow';
+import { cn } from '@/lib/utils';
 
-export default function StoryWeaverPage() {
-    const { student } = useAuth();
-    const { t } = useLanguage();
+type AnswerState = 'unanswered' | 'correct' | 'incorrect';
+
+const ReadingPracticePage = () => {
+    const { t, language } = useLanguage();
     const { toast } = useToast();
     
-    const [story, setStory] = useState<Story | null>(null);
-    const [nextLine, setNextLine] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const scrollAreaRef = useRef<HTMLDivElement>(null);
+    const [passageData, setPassageData] = useState<PassageGeneratorOutput | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [answers, setAnswers] = useState<Record<number, string>>({});
+    const [answerStates, setAnswerStates] = useState<Record<number, AnswerState>>({});
+    const [isSubmitted, setIsSubmitted] = useState(false);
 
-    useEffect(() => {
-        if (!db) return;
-        const storyRef = doc(db, "stories", "main-story");
-        const unsubscribe = onSnapshot(storyRef, (doc) => {
-            if (doc.exists()) {
-                setStory({ id: doc.id, ...doc.data() } as Story);
+    const handleGenerate = async () => {
+        setIsLoading(true);
+        setPassageData(null);
+        setAnswers({});
+        setAnswerStates({});
+        setIsSubmitted(false);
+
+        try {
+            const res = await generatePassageWithQuestions({
+                topic: "A short interesting story for a Class 6 student",
+                language: language === 'hi' ? 'Hindi' : 'English',
+            });
+            setPassageData(res);
+        } catch (e) {
+            console.error(e);
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to generate a new passage.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    const handleAnswerChange = (questionIndex: number, selectedOption: string) => {
+        setAnswers(prev => ({ ...prev, [questionIndex]: selectedOption }));
+    };
+
+    const handleSubmit = () => {
+        if (!passageData) return;
+        const newAnswerStates: Record<number, AnswerState> = {};
+        passageData.questions.forEach((q, index) => {
+            if (answers[index] === q.answer) {
+                newAnswerStates[index] = 'correct';
             } else {
-                setStory(null); // Story doesn't exist yet
+                newAnswerStates[index] = 'incorrect';
             }
-            setIsLoading(false);
-        }, (error) => {
-            console.error("Error fetching story:", error);
-            toast({ variant: "destructive", title: "Error", description: "Could not load the story." });
-            setIsLoading(false);
         });
-
-        return () => unsubscribe();
-    }, [toast]);
-    
-    useEffect(() => {
-        // Auto-scroll to bottom
-        if (scrollAreaRef.current) {
-            const scrollableView = scrollAreaRef.current.querySelector('div');
-            if (scrollableView) {
-                scrollableView.scrollTop = scrollableView.scrollHeight;
-            }
-        }
-    }, [story]);
-    
-    const handleStartStory = async () => {
-        if (!student) return;
-        setIsSubmitting(true);
-        try {
-            const result = await startStory();
-            const firstLine: StoryLine = {
-                text: result.nextLine,
-                author: 'AI',
-                createdAt: Timestamp.now()
-            };
-            await createNewStory(firstLine);
-        } catch (error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: "Error", description: "AI could not start a new story." });
-        } finally {
-            setIsSubmitting(false);
-        }
+        setAnswerStates(newAnswerStates);
+        setIsSubmitted(true);
     };
-
-    const handleAddLine = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (nextLine.trim() === '' || !student) return;
-
-        setIsSubmitting(true);
-        const newLine: StoryLine = {
-            text: nextLine,
-            author: student.name,
-            createdAt: Timestamp.now(),
-        };
-
-        try {
-            await addStoryLine(newLine);
-            setNextLine('');
-        } catch (error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: "Error", description: "Could not add your line to the story." });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-    
-    const handleAiContinue = async () => {
-        if (!story || !student) return;
-        setIsSubmitting(true);
-        
-        try {
-            const currentStoryText = story.lines.map(l => l.text).join(' ');
-            const result = await continueStory({ currentStory: currentStoryText });
-            
-            const aiLine: StoryLine = {
-                text: result.nextLine,
-                author: 'AI',
-                createdAt: Timestamp.now()
-            };
-            await addStoryLine(aiLine);
-        } catch (error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: "Error", description: "AI could not continue the story." });
-        } finally {
-            setIsSubmitting(false);
-        }
-    }
 
     return (
-        <div className="flex flex-col h-[calc(100vh-8rem)]">
-            <div className="text-center mb-6">
-                <Feather className="mx-auto h-12 w-12 text-primary" />
-                <h1 className="text-3xl font-bold text-primary mt-2">AI कहानी-कार</h1>
-                <p className="text-muted-foreground">मिलकर एक मज़ेदार कहानी बनाएँ!</p>
+        <div className="space-y-6">
+            <div className="absolute inset-x-0 top-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+            <div className="text-center">
+                <BookText className="mx-auto h-12 w-12 text-primary" />
+                <h1 className="text-3xl font-bold text-primary mt-2">{t('readingPractice')}</h1>
+                <p className="text-muted-foreground">पढ़ें, समझें, और अपनी तैयारी को परखें।</p>
             </div>
 
-            <Card className="flex-1 flex flex-col">
-                <CardHeader>
-                    <CardTitle>{story?.title || "कहानी शुरू होने वाली है..."}</CardTitle>
-                </CardHeader>
-                <ScrollArea className="flex-1 px-6" ref={scrollAreaRef}>
-                    <CardContent className="space-y-4">
-                        {isLoading ? (
-                            <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>
-                        ) : story && story.lines.length > 0 ? (
-                            story.lines.map((line, index) => (
-                                <div key={index} className="flex items-start gap-3">
-                                    <Avatar>
-                                        <AvatarFallback>{line.author.substring(0, 2).toUpperCase()}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <p className="font-semibold text-sm">{line.author}</p>
-                                        <p className="text-foreground">{line.text}</p>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="text-center text-muted-foreground py-10 space-y-4">
-                                <p>अभी तक कोई कहानी नहीं है।</p>
-                                <Button onClick={handleStartStory} disabled={isSubmitting}>
-                                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4" />}
-                                    AI से कहानी शुरू कराएँ
-                                </Button>
-                            </div>
-                        )}
-                    </CardContent>
-                </ScrollArea>
-                 {story && (
-                     <div className="p-4 border-t space-y-2">
-                        <form onSubmit={handleAddLine} className="flex gap-2">
-                            <Input
-                                placeholder="कहानी को आगे बढ़ाएँ..."
-                                value={nextLine}
-                                onChange={(e) => setNextLine(e.target.value)}
-                                disabled={isSubmitting}
-                            />
-                            <Button type="submit" size="icon" disabled={isSubmitting || nextLine.trim() === ''}>
-                                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                            </Button>
-                        </form>
-                         <Button variant="outline" className="w-full" onClick={handleAiContinue} disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4" />}
-                            समझ नहीं आ रहा? AI से मदद लें
+            {!passageData && !isLoading && (
+                 <Card className="text-center bg-card/70 backdrop-blur-sm max-w-md mx-auto">
+                    <CardHeader><CardTitle>Start a New Reading Session</CardTitle></CardHeader>
+                    <CardContent>
+                        <p className="text-muted-foreground mb-4">Click the button below to get a new passage and questions.</p>
+                        <Button onClick={handleGenerate} size="lg">
+                            Generate New Passage
                         </Button>
+                    </CardContent>
+                </Card>
+            )}
+
+            {isLoading && (
+                 <div className="flex justify-center items-center h-64"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
+            )}
+            
+            {passageData && (
+                <div className="space-y-6">
+                    <Card className="bg-card/70 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle>Reading Passage</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ScrollArea className="h-48">
+                                <p className="whitespace-pre-wrap leading-relaxed">{passageData.passage}</p>
+                            </ScrollArea>
+                        </CardContent>
+                    </Card>
+
+                    <div className="space-y-4">
+                        {passageData.questions.map((q, index) => (
+                             <Card key={index} className="bg-card/70 backdrop-blur-sm">
+                                <CardHeader>
+                                    <CardDescription>Question {index + 1}</CardDescription>
+                                    <CardTitle className="text-lg">{q.question}</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <RadioGroup
+                                        value={answers[index]}
+                                        onValueChange={(value) => handleAnswerChange(index, value)}
+                                        disabled={isSubmitted}
+                                    >
+                                        {q.options.map((option, optIndex) => {
+                                            const isCorrect = isSubmitted && option === q.answer;
+                                            const isSelected = answers[index] === option;
+                                            const isWrong = isSubmitted && isSelected && option !== q.answer;
+
+                                            return (
+                                                 <div key={optIndex} className={cn(
+                                                    "flex items-center space-x-3 rounded-lg border-2 p-3 transition-colors",
+                                                    isSubmitted ? "cursor-not-allowed" : "cursor-pointer",
+                                                    isCorrect ? "border-green-500 bg-green-500/10" : "border-muted",
+                                                    isWrong ? "border-destructive bg-destructive/10" : "border-muted",
+                                                    !isSubmitted && isSelected ? "border-primary" : ""
+                                                 )}>
+                                                    <RadioGroupItem value={option} id={`q${index}-opt${optIndex}`} />
+                                                    <Label htmlFor={`q${index}-opt${optIndex}`} className="w-full text-base cursor-pointer">{option}</Label>
+                                                    {isCorrect && <Check className="h-5 w-5 text-green-500" />}
+                                                    {isWrong && <X className="h-5 w-5 text-destructive" />}
+                                                </div>
+                                            )
+                                        })}
+                                    </RadioGroup>
+                                </CardContent>
+                            </Card>
+                        ))}
                     </div>
-                 )}
-            </Card>
+                     <div className="flex justify-center gap-4">
+                        {!isSubmitted ? (
+                            <Button onClick={handleSubmit} size="lg">Check Answers</Button>
+                        ) : (
+                            <Button onClick={handleGenerate} size="lg">Generate New Passage</Button>
+                        )}
+                    </div>
+                </div>
+            )}
+
         </div>
     );
-}
+};
+
+export default ReadingPracticePage;

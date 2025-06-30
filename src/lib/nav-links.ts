@@ -25,7 +25,7 @@ import {
     MessagesSquare,
     Youtube,
     Gamepad2,
-    Feather
+    BookText
   } from 'lucide-react';
   
   export const featureGridLinks = [
@@ -37,7 +37,7 @@ import {
       { href: "/tests", icon: CheckSquare, textKey: "aiTest" },
       { href: "/ai-tutor", icon: GraduationCap, textKey: "aiTutor" },
       { href: "/quiz-game", icon: Gamepad2, textKey: "quizGame" },
-      { href: "/story-weaver", icon: Feather, textKey: "storyWeaver" },
+      { href: "/story-weaver", icon: BookText, textKey: "readingPractice" },
   ];
   
   export const sidebarLinks = [
@@ -53,7 +53,7 @@ import {
     { href: "/ai-tutor", icon: GraduationCap, textKey: "aiTutor" },
     { href: "/group-chat", icon: MessagesSquare, textKey: "groupChat" },
     { href: "/quiz-game", icon: Gamepad2, textKey: "quizGame" },
-    { href: "/story-weaver", icon: Feather, textKey: "storyWeaver" },
+    { href: "/story-weaver", icon: BookText, textKey: "readingPractice" },
     { href: "/current-affairs", icon: ScrollText, textKey: "currentAffairs" },
     { href: "/cutoff-checker", icon: Scissors, textKey: "cutoffChecker" },
     { href: "/toppers", icon: Trophy, textKey: "toppers" },

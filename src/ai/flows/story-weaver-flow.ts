@@ -1,66 +1,67 @@
 
 'use server';
 /**
- * @fileOverview An AI flow for collaborative storytelling.
- *
- * - startStory - Begins a new story.
- * - continueStory - Adds the next line to an existing story.
- * - StoryWeaverInput - Input for continueStory.
- * - StoryWeaverOutput - Output for both functions.
+ * @fileOverview An AI flow for generating reading passages and comprehension questions.
+ * 
+ * - generatePassageWithQuestions - Creates a passage and related multiple-choice questions.
+ * - PassageGeneratorInput - The input type for the function.
+ * - PassageGeneratorOutput - The return type for the function.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
-const StoryWeaverInputSchema = z.object({
-  currentStory: z.string().describe('The story so far.'),
+export const PassageGeneratorInputSchema = z.object({
+  topic: z.string().describe('The topic for the passage (e.g., "A brave lion", "The solar system").'),
+  language: z.string().describe('The language for the passage and questions (e.g., "Hindi", "English").'),
 });
-export type StoryWeaverInput = z.infer<typeof StoryWeaverInputSchema>;
+export type PassageGeneratorInput = z.infer<typeof PassageGeneratorInputSchema>;
 
-const StoryWeaverOutputSchema = z.object({
-  nextLine: z.string().describe('The next line of the story.'),
+const QuestionSchema = z.object({
+    question: z.string().describe('The multiple-choice question based on the passage.'),
+    options: z.array(z.string()).length(4).describe('An array of exactly 4 possible answers.'),
+    answer: z.string().describe('The correct answer, which must be one of the strings from the options array.'),
 });
-export type StoryWeaverOutput = z.infer<typeof StoryWeaverOutputSchema>;
 
-// Flow to generate the very first line of a new story
-export async function startStory(): Promise<StoryWeaverOutput> {
-  const prompt = ai.definePrompt({
-    name: 'startStoryPrompt',
-    output: { schema: StoryWeaverOutputSchema },
-    prompt: `You are a master storyteller starting a new, exciting adventure story for kids.
-    Your task is to write only the very first, captivating opening line.
-    The line should be in Hindi and end with an ellipsis (...) to invite others to continue.
-    Example: "एक घने जंगल के बीचों-बीच, एक जादुई झरना बहता था..."
-    
-    Provide your response in the specified JSON format.`,
-  });
+export const PassageGeneratorOutputSchema = z.object({
+    passage: z.string().describe('The generated reading passage.'),
+    questions: z.array(QuestionSchema).min(3).max(5).describe('An array of 3 to 5 comprehension questions.'),
+});
+export type PassageGeneratorOutput = z.infer<typeof PassageGeneratorOutputSchema>;
 
-  const { output } = await prompt({});
-  if (!output) {
-    throw new Error('AI failed to start a story.');
-  }
-  return output;
+export async function generatePassageWithQuestions(input: PassageGeneratorInput): Promise<PassageGeneratorOutput> {
+  return passageGeneratorFlow(input);
 }
 
-// Flow to have the AI continue the story
-export async function continueStory(input: StoryWeaverInput): Promise<StoryWeaverOutput> {
-  const prompt = ai.definePrompt({
-    name: 'continueStoryPrompt',
-    input: { schema: StoryWeaverInputSchema },
-    output: { schema: StoryWeaverOutputSchema },
-    prompt: `You are a collaborative storyteller. Given the story so far, add the next engaging line.
-    The story is in Hindi. Your line must also be in Hindi.
-    Keep it concise and end with an ellipsis (...) to invite the next person to continue.
+const prompt = ai.definePrompt({
+  name: 'passageGeneratorPrompt',
+  input: { schema: PassageGeneratorInputSchema },
+  output: { schema: PassageGeneratorOutputSchema },
+  prompt: `You are an expert educator who creates reading comprehension exercises for students.
+Your task is to generate a short, engaging passage in {{{language}}} and 3 to 5 multiple-choice questions based on it.
 
-    Story so far:
-    {{{currentStory}}}
+Instructions:
+1.  The passage should be about the topic: {{{topic}}}.
+2.  The passage and all questions must be in the {{{language}}} language.
+3.  The passage should be approximately 150-200 words long.
+4.  Generate between 3 and 5 multiple-choice questions that test the understanding of the passage.
+5.  Each question must have exactly 4 options.
+6.  The 'answer' for each question must exactly match one of the strings in its 'options' array.
 
-    Your next line:`,
-  });
+Your response must be in the specified JSON format.`,
+});
 
-  const { output } = await prompt(input);
-  if (!output) {
-    throw new Error('AI failed to continue the story.');
+const passageGeneratorFlow = ai.defineFlow(
+  {
+    name: 'passageGeneratorFlow',
+    inputSchema: PassageGeneratorInputSchema,
+    outputSchema: PassageGeneratorOutputSchema,
+  },
+  async (input) => {
+    const { output } = await prompt(input);
+    if (!output) {
+      throw new Error("AI failed to generate the passage and questions.");
+    }
+    return output;
   }
-  return output;
-}
+);

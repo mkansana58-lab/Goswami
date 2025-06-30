@@ -251,20 +251,6 @@ export interface TestEnrollment {
     allowedAttempts: number;
 }
 
-export interface StoryLine {
-  text: string;
-  author: string; // 'AI' or student name
-  createdAt: Timestamp;
-}
-
-export interface Story {
-  id?: string;
-  title: string;
-  lines: StoryLine[];
-  lastContributionAt: Timestamp;
-}
-
-
 // --- Helper Functions ---
 
 // Generate a random numeric string of a given length
@@ -709,53 +695,5 @@ export async function getTestEnrollments(): Promise<TestEnrollment[]> {
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as TestEnrollment);
 }
-
-// --- Story Weaver ---
-const STORY_ID = "main-story"; // Use a single global story for now
-
-export const getStory = async (): Promise<Story | null> => {
-    if (!db) return null;
-    const storyRef = doc(db, "stories", STORY_ID);
-    const docSnap = await getDoc(storyRef);
-    if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as Story;
-    }
-    return null;
-}
-
-export const addStoryLine = async (line: StoryLine) => {
-    if (!db) throw new Error("Firestore DB not initialized.");
-    const storyRef = doc(db, "stories", STORY_ID);
-    
-    await runTransaction(db, async (transaction) => {
-        const storyDoc = await transaction.get(storyRef);
-        if (!storyDoc.exists()) {
-            // If story doesn't exist, create it with this line
-            transaction.set(storyRef, {
-                title: "The Never-Ending Adventure",
-                lines: [line],
-                lastContributionAt: Timestamp.now()
-            });
-        } else {
-            // Story exists, append the new line
-            const currentLines = storyDoc.data().lines || [];
-            transaction.update(storyRef, {
-                lines: [...currentLines, line],
-                lastContributionAt: Timestamp.now()
-            });
-        }
-    });
-}
-
-export const createNewStory = async (firstLine: StoryLine) => {
-    if (!db) throw new Error("Firestore DB not initialized.");
-    const storyRef = doc(db, "stories", STORY_ID);
-    await setDoc(storyRef, {
-        title: "The Never-Ending Adventure",
-        lines: [firstLine],
-        lastContributionAt: Timestamp.now(),
-    });
-}
-
 
 export { app, db };
