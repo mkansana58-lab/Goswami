@@ -42,7 +42,8 @@ Instructions:
     - Level 4-7: Simple multiplication/division (e.g., 22 * 6, 81 / 3).
     - Level 8-12: Simple percentages (e.g., "150 का 30% कितना है?", "40, 200 का कितना प्रतिशत है?").
     - Level 13-16: Simple profit and loss word problems (e.g., "एक किताब ₹100 में खरीदकर ₹120 में बेची गई। लाभ कितना हुआ?").
-    - Level 17-20: More complex problems combining operations, percentages, or profit/loss.
+    - Level 17-20: Simple interest problems (e.g., "₹5000 पर 5% वार्षिक दर से 2 वर्ष का साधारण ब्याज कितना होगा?").
+    - Level 21+: More complex problems combining operations, percentages, profit/loss, or simple geometry area questions.
 2.  The 'question' should be a string, either as an equation or a short word problem in Hindi.
 3.  The 'answer' must be the correct numeric result as a string (e.g., "20", "300").
 4.  Generate 3 incorrect but plausible options (distractors). The distractors should be numerically close or common mistakes.
