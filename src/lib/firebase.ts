@@ -452,7 +452,6 @@ export async function getScholarshipTestResultByAppNumber(appNumber: string): Pr
     const q = query(
         collection(db, "scholarshipTestResults"),
         where("applicationNumber", "==", appNumber),
-        orderBy("submittedAt", "desc"),
         limit(1)
     );
     const querySnapshot = await getDocs(q);
