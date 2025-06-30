@@ -18,6 +18,8 @@ import { addQuizWinnings } from '@/lib/firebase';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
 
+const storyThemes = ["bravery", "friendship", "honesty", "a clever animal", "a historical event", "a magical world", "a science experiment gone wrong", "a mysterious discovery"];
+
 const ReadingPracticePage = () => {
     const { t, language } = useLanguage();
     const { toast } = useToast();
@@ -28,6 +30,8 @@ const ReadingPracticePage = () => {
     const [answers, setAnswers] = useState<Record<number, string>>({});
     const [answerStates, setAnswerStates] = useState<Record<number, AnswerState>>({});
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [score, setScore] = useState({ correct: 0, total: 0 });
+    
     const [passageAudioUrl, setPassageAudioUrl] = useState<string | null>(null);
     const [resultAudioUrl, setResultAudioUrl] = useState<string | null>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
@@ -53,10 +57,12 @@ const ReadingPracticePage = () => {
         setIsSubmitted(false);
         setPassageAudioUrl(null);
         setResultAudioUrl(null);
+        setScore({ correct: 0, total: 0 });
 
         try {
+            const randomTheme = storyThemes[Math.floor(Math.random() * storyThemes.length)];
             const res = await generatePassageWithQuestions({
-                topic: "A short interesting story for a Class 6 student",
+                topic: `A short interesting story about ${randomTheme} for a Class 6 student`,
                 language: language === 'hi' ? 'Hindi' : 'English',
             });
             setPassageData(res);
@@ -88,6 +94,7 @@ const ReadingPracticePage = () => {
             }
         });
         setAnswerStates(newAnswerStates);
+        setScore({ correct: correctCount, total: passageData.questions.length });
         setIsSubmitted(true);
 
         let textToSpeak = `आपने ${passageData.questions.length} में से ${correctCount} सवालों के सही जवाब दिए हैं।`;
@@ -190,9 +197,22 @@ const ReadingPracticePage = () => {
                             </Card>
                         ))}
                     </div>
+
+                    {isSubmitted && (
+                        <Card className="text-center bg-card/80 backdrop-blur-sm animate-in fade-in-50">
+                             <CardHeader>
+                                <CardTitle>Your Result</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-6xl font-bold text-primary">{score.correct}<span className="text-3xl text-muted-foreground">/{score.total}</span></p>
+                                <p className="text-muted-foreground mt-1">Correct Answers</p>
+                            </CardContent>
+                        </Card>
+                    )}
+
                      <div className="flex justify-center gap-4">
                         {!isSubmitted ? (
-                            <Button onClick={handleSubmit} size="lg">Check Answers</Button>
+                            <Button onClick={handleSubmit} size="lg" disabled={Object.keys(answers).length !== passageData.questions.length}>Check Answers</Button>
                         ) : (
                             <Button onClick={handleGenerate} size="lg">Generate New Passage</Button>
                         )}

@@ -52,8 +52,8 @@ export default function GroupChatPage() {
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            if (file.size > 2 * 1024 * 1024) { // 2MB limit
-                toast({ variant: 'destructive', title: 'Image too large', description: 'Please select an image smaller than 2MB.' });
+            if (file.size > 1 * 1024 * 1024) { // 1MB limit
+                toast({ variant: 'destructive', title: 'Image too large', description: 'Please select an image smaller than 1MB.' });
                 return;
             }
             setImageFile(file);
@@ -137,7 +137,7 @@ export default function GroupChatPage() {
                                 )}
                                 <div className={`flex flex-col max-w-[80%] ${isCurrentUser ? 'items-end' : 'items-start'}`}>
                                     {!isCurrentUser && <p className="text-xs text-muted-foreground px-2">{msg.userName}</p>}
-                                    <div className={`rounded-xl p-2 px-3 shadow-sm ${isCurrentUser ? 'bg-green-800 text-white rounded-br-none' : 'bg-background text-foreground rounded-bl-none'}`}>
+                                    <div className={`rounded-xl p-2 px-3 shadow-sm ${isCurrentUser ? 'bg-primary/90 text-primary-foreground rounded-br-none' : 'bg-background text-foreground rounded-bl-none'}`}>
                                         {msg.imageUrl && (
                                             <div className="max-w-xs mb-1">
                                                 <Image
@@ -200,7 +200,7 @@ export default function GroupChatPage() {
                             accept="image/*"
                         />
                     </div>
-                    <Button type="submit" size="icon" className="rounded-full h-11 w-11 shrink-0 bg-green-600 hover:bg-green-700" disabled={isSending || (newMessage.trim() === '' && !imageFile)}>
+                    <Button type="submit" size="icon" className="rounded-full h-11 w-11 shrink-0" disabled={isSending || (newMessage.trim() === '' && !imageFile)}>
                         {isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
                         <span className="sr-only">{t('sendMessage')}</span>
                     </Button>

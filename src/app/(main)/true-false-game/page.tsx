@@ -5,7 +5,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Binary, Check, X, BrainCircuit, Users, Globe, Brain } from 'lucide-react';
+import { Loader2, Binary, Check, X, BrainCircuit, Users, Globe, Brain, Calculator, SpellCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateTrueFalseQuestion, type TrueFalseOutput } from '@/ai/flows/true-false-flow';
 import { textToSpeech } from '@/ai/flows/tts-flow';
@@ -20,6 +20,8 @@ const subjects = [
   { name: 'इतिहास', key: 'History', icon: Users },
   { name: 'भूगोल', key: 'Geography', icon: Globe },
   { name: 'सामान्य ज्ञान', key: 'General Knowledge', icon: BrainCircuit },
+  { name: 'गणित', key: 'Math', icon: Calculator },
+  { name: 'अंग्रेजी', key: 'English', icon: SpellCheck },
 ];
 
 export default function TrueFalseGamePage() {

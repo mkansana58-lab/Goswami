@@ -486,6 +486,17 @@ export async function getTestResultsForStudentByTest(studentName: string, testId
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as TestResultData);
 }
 
+export async function getTestResultsForStudent(studentName: string): Promise<TestResultData[]> {
+    if (!db) return [];
+    const q = query(
+        collection(db, "testResults"),
+        where("studentName", "==", studentName),
+        orderBy("submittedAt", "desc")
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as TestResultData);
+}
+
 export async function getLiveClasses(): Promise<LiveClass[]> {
   if (!db) return [];
   const q = query(collection(db, "liveClasses"), orderBy("scheduledAt", "desc"));

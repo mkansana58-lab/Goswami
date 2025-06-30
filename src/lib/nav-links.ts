@@ -1,3 +1,4 @@
+
 import {
     Home,
     BookOpenCheck,
@@ -26,20 +27,20 @@ import {
     Youtube,
     Gamepad2,
     BookText,
-    Binary
+    Binary,
+    LineChart
   } from 'lucide-react';
   
   export const featureGridLinks = [
-      { href: "/group-chat", icon: MessagesSquare, textKey: "groupChat" },
       { href: "/student-portal", icon: Briefcase, textKey: "studentPortal" },
       { href: "/courses", icon: BookOpenCheck, textKey: "ourCourses" },
       { href: "/live-classes", icon: RadioTower, textKey: "liveClasses" },
-      { href: "/daily-posts", icon: Newspaper, textKey: "dailyPosts" },
       { href: "/tests", icon: CheckSquare, textKey: "aiTest" },
       { href: "/ai-tutor", icon: GraduationCap, textKey: "aiTutor" },
+      { href: "/daily-posts", icon: Newspaper, textKey: "dailyPosts" },
       { href: "/quiz-game", icon: Gamepad2, textKey: "quizGame" },
       { href: "/story-weaver", icon: BookText, textKey: "readingPractice" },
-      { href: "/true-false-game", icon: Binary, textKey: "trueFalseGame" },
+      { href: "/progress-report", icon: LineChart, textKey: "progressReport" },
   ];
   
   export const sidebarLinks = [
@@ -57,6 +58,7 @@ import {
     { href: "/quiz-game", icon: Gamepad2, textKey: "quizGame" },
     { href: "/story-weaver", icon: BookText, textKey: "readingPractice" },
     { href: "/true-false-game", icon: Binary, textKey: "trueFalseGame" },
+    { href: "/progress-report", icon: LineChart, textKey: "progressReport" },
     { href: "/current-affairs", icon: ScrollText, textKey: "currentAffairs" },
     { href: "/cutoff-checker", icon: Scissors, textKey: "cutoffChecker" },
     { href: "/toppers", icon: Trophy, textKey: "toppers" },

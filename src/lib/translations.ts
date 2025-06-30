@@ -1,3 +1,4 @@
+
 export type Language = 'en' | 'hi';
 
 export const translations = {
@@ -66,6 +67,7 @@ export const translations = {
     nextQuestion: "Next Question",
     correct: "Correct!",
     incorrect: "Incorrect!",
+    progressReport: "Progress Report",
 
     // Scholarship Form Translations
     scholarshipInstructionsTitle: "Instructions",
@@ -330,6 +332,7 @@ export const translations = {
     nextQuestion: "अगला प्रश्न",
     correct: "सही!",
     incorrect: "गलत!",
+    progressReport: "प्रगति रिपोर्ट",
 
     // Scholarship Form Translations
     scholarshipInstructionsTitle: "निर्देश",
