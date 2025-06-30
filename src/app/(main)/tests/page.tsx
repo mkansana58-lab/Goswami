@@ -91,9 +91,7 @@ export default function AiTestPage() {
     const [isEnrolling, setIsEnrolling] = useState(false);
     
     const attemptCount = attemptCounts[test.id] ?? 0;
-    const maxAttempts = 2;
-    const extraAttempts = enrollment?.extraAttempts || 0;
-    const totalAttempts = maxAttempts + extraAttempts;
+    const totalAttempts = enrollment?.allowedAttempts ?? 2;
     const attemptsWaived = enrollment?.attemptsWaived ?? false;
     const hasAttemptsLeft = attemptCount < totalAttempts || attemptsWaived;
 

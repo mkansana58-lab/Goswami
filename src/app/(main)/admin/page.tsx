@@ -29,7 +29,7 @@ import {
     getContactInquiries, addEBook, getEBooks, deleteEBook,
     addCustomTest, getCustomTests, deleteCustomTest,
     getTestSettings, updateTestSetting, getTestEnrollments,
-    updateTestEnrollmentWaiver,
+    updateTestEnrollmentWaiver, updateEnrollmentAllowedAttempts,
     getScholarshipTestResults, deleteScholarshipTestResult, deleteScholarshipApplication, deleteStudent, deleteTestEnrollment, deleteContactInquiry,
     updateScholarshipApplicationPaymentStatus,
     type LiveClass, type Notification, type Post, type CurrentAffair,
@@ -153,6 +153,7 @@ export default function AdminPage() {
         testSettings: {}, testEnrollments: [], scholarshipTestResults: []
     });
     const [isLoading, setIsLoading] = useState(true);
+    const [editableAttempts, setEditableAttempts] = useState<Record<string, number>>({});
 
     const settingsForm = useForm<z.infer<typeof settingsSchema>>({ resolver: zodResolver(settingsSchema) });
 
@@ -277,6 +278,21 @@ export default function AdminPage() {
         }
     };
 
+    const handleAllowedAttemptsUpdate = async (enrollmentId: string) => {
+        const attempts = editableAttempts[enrollmentId];
+        if (typeof attempts !== 'number' || attempts < 0) {
+            toast({ variant: 'destructive', title: 'Invalid attempt count' });
+            return;
+        }
+        try {
+            await updateEnrollmentAllowedAttempts(enrollmentId, attempts);
+            toast({ title: 'Total attempts updated!' });
+            fetchData();
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Failed to update attempts' });
+        }
+    };
+
     const handleDelete = async (deleteFn: (id: string) => Promise<void>, id: string, name: string) => {
         try {
             await deleteFn(id);
@@ -307,12 +323,12 @@ export default function AdminPage() {
                                      <div className="space-y-2">
                                         <Label>Online Scholarship Test</Label>
                                         <Select
-                                            value={settingsForm.watch('scholarshipTestId') || 'none'}
-                                            onValueChange={(value) => settingsForm.setValue('scholarshipTestId', value === 'none' ? '' : value)}
+                                            value={settingsForm.watch('scholarshipTestId') || ''}
+                                            onValueChange={(value) => settingsForm.setValue('scholarshipTestId', value)}
                                         >
                                             <SelectTrigger><SelectValue placeholder="Select the test to use for online scholarships" /></SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="none">None</SelectItem>
+                                                <SelectItem value="">None</SelectItem>
                                                 {data.customTests.map(test => (
                                                     <SelectItem key={test.id} value={test.id}>{test.title} ({test.id})</SelectItem>
                                                 ))}
@@ -506,13 +522,35 @@ export default function AdminPage() {
                             </AdminSection>
 
                             <AdminSection title={t('testEnrollments')} icon={Star}>
-                                <Table><TableHeader><TableRow><TableHead>{t('enrolledStudent')}</TableHead><TableHead>{t('test')}</TableHead><TableHead>{t('enrollmentCode')}</TableHead><TableHead>Attempts Waived</TableHead><TableHead>{t('enrolledAt')}</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>{t('enrolledStudent')}</TableHead>
+                                            <TableHead>{t('test')}</TableHead>
+                                            <TableHead>Total Attempts</TableHead>
+                                            <TableHead>Attempts Waived</TableHead>
+                                            <TableHead>{t('enrolledAt')}</TableHead>
+                                            <TableHead>Action</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
                                     <TableBody>
                                         {data.testEnrollments.map(e => (
                                             <TableRow key={e.id}>
                                                 <TableCell>{e.studentName}</TableCell>
-                                                <TableCell>{e.testName}</TableCell>
-                                                <TableCell><span className="font-mono text-xs bg-muted px-2 py-1 rounded">{e.enrollmentCode}</span></TableCell>
+                                                <TableCell>{e.testName}<br/><span className="font-mono text-xs bg-muted px-2 py-1 rounded">{e.enrollmentCode}</span></TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2">
+                                                        <Input 
+                                                            type="number" 
+                                                            className="w-20 h-9"
+                                                            value={editableAttempts[e.id!] ?? e.allowedAttempts}
+                                                            onChange={(ev) => setEditableAttempts(prev => ({...prev, [e.id!]: parseInt(ev.target.value, 10)}))}
+                                                        />
+                                                        <Button size="sm" onClick={() => handleAllowedAttemptsUpdate(e.id!)} disabled={editableAttempts[e.id!] === undefined || editableAttempts[e.id!] === e.allowedAttempts}>
+                                                            Save
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
                                                 <TableCell>
                                                     <div className="flex flex-col items-center gap-1">
                                                         <Switch

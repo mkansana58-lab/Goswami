@@ -1,13 +1,14 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, BrainCircuit, Users, Brain, Gamepad2, IndianRupee, X, Check, ArrowRight, Globe, Dribbble, Calculator, SpellCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateQuizQuestion, type QuizGameOutput } from '@/ai/flows/quiz-game-flow';
+import { textToSpeech } from '@/ai/flows/tts-flow';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { addQuizWinnings } from '@/lib/firebase';
@@ -45,6 +46,26 @@ const QuizGamePage = () => {
   const [hiddenOptions, setHiddenOptions] = useState<string[]>([]);
   const [lifelines, setLifelines] = useState<Record<Lifeline, boolean>>({ fiftyFifty: true });
   const [winningsAdded, setWinningsAdded] = useState(false);
+  const [introAudioUrl, setIntroAudioUrl] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    const generateIntro = async () => {
+        try {
+            const response = await textToSpeech("ज्ञान-योद्धा क्विज़ में आपका स्वागत है!");
+            setIntroAudioUrl(response.media);
+        } catch (error) {
+            console.error("Failed to generate intro audio:", error);
+        }
+    };
+    generateIntro();
+  }, []);
+
+  useEffect(() => {
+    if (introAudioUrl && audioRef.current) {
+        audioRef.current.play().catch(e => console.log("Browser prevented autoplay of intro audio."));
+    }
+  }, [introAudioUrl]);
 
   const getSafePrize = () => {
     let safeAmount = 0;
@@ -300,6 +321,7 @@ const QuizGamePage = () => {
 
   return (
     <div className="space-y-6 relative">
+      {introAudioUrl && <audio ref={audioRef} src={introAudioUrl} />}
       <div className="absolute inset-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
        <div className="flex flex-col items-center text-center">
             <Gamepad2 className="h-16 w-16 text-primary animate-pulse" />

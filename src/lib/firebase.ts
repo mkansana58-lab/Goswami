@@ -248,7 +248,7 @@ export interface TestEnrollment {
     enrollmentCode: string;
     enrolledAt: Timestamp;
     attemptsWaived?: boolean;
-    extraAttempts?: number;
+    allowedAttempts: number;
 }
 
 
@@ -421,7 +421,7 @@ export async function redeemWinningsForAttempts(studentName: string, enrollmentI
             throw new Error("Insufficient winnings or student not found!");
         }
         transaction.update(studentRef, { quizWinnings: increment(-cost) });
-        transaction.update(enrollmentRef, { extraAttempts: increment(attemptsToAdd) });
+        transaction.update(enrollmentRef, { allowedAttempts: increment(attemptsToAdd) });
     });
 }
 
@@ -655,7 +655,7 @@ export const addTestEnrollment = async (studentName: string, testId: string, tes
         enrollmentCode,
         enrolledAt: Timestamp.now(),
         attemptsWaived: false,
-        extraAttempts: 0,
+        allowedAttempts: 2, // Default allowed attempts
     });
 
     sendStudentNotification(
@@ -675,6 +675,13 @@ export const updateTestEnrollmentWaiver = async (enrollmentId: string, isWaived:
     const enrollmentRef = doc(db, "testEnrollments", enrollmentId);
     await updateDoc(enrollmentRef, { attemptsWaived: isWaived });
 };
+
+export async function updateEnrollmentAllowedAttempts(enrollmentId: string, attempts: number): Promise<void> {
+    if (!db) throw new Error("Firestore DB not initialized.");
+    if (attempts < 0) throw new Error("Attempts cannot be negative.");
+    const enrollmentRef = doc(db, "testEnrollments", enrollmentId);
+    await updateDoc(enrollmentRef, { allowedAttempts: attempts });
+}
 
 export const getEnrollmentsForStudent = async (studentName: string): Promise<TestEnrollment[]> => {
     if (!db) return [];

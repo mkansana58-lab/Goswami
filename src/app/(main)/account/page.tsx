@@ -239,7 +239,7 @@ export default function AccountPage() {
                                 <div key={e.id} className="flex justify-between items-center p-3 border rounded-lg bg-background/50">
                                     <div>
                                         <p className="font-medium">{e.testName}</p>
-                                        <p className="text-xs text-muted-foreground">Extra Attempts: {e.extraAttempts || 0}</p>
+                                        <p className="text-xs text-muted-foreground">Allowed Attempts: {e.allowedAttempts || 0}</p>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Button
