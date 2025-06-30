@@ -20,7 +20,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 export default function OnlineScholarshipTestEntryPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const { student } = useAuth();
+  const { student, admin } = useAuth();
   const router = useRouter();
   
   const [step, setStep] = useState<'entry' | 'confirm' | 'payment'>('entry');
@@ -38,8 +38,9 @@ export default function OnlineScholarshipTestEntryPage() {
       toast({ variant: "destructive", title: "Error", description: "Application Number is required." });
       return;
     }
-    if (!student) {
-        toast({ variant: "destructive", title: "Error", description: "You must be logged in to take the test." });
+    // Check if either student or admin is logged in
+    if (!student && !admin) {
+        toast({ variant: "destructive", title: "Error", description: "You must be logged in to proceed." });
         return;
     }
 
@@ -48,7 +49,7 @@ export default function OnlineScholarshipTestEntryPage() {
         toast({ variant: "destructive", title: "Test Not Started", description: `The test will start on ${format(appConfig.scholarshipTestStartDate.toDate(), 'PPP p')}` });
         return;
     }
-     if (appConfig?.scholarshipTestEndDate && now > appConfig.scholarshipTestEndDate.toDate()) {
+    if (appConfig?.scholarshipTestEndDate && now > appConfig.scholarshipTestEndDate.toDate()) {
         toast({ variant: "destructive", title: "Test Has Ended", description: `The test window has closed.` });
         return;
     }
@@ -62,29 +63,44 @@ export default function OnlineScholarshipTestEntryPage() {
         
         if (!appData) {
             toast({ variant: "destructive", title: "Invalid Application Number", description: "The Application Number you entered is not valid." });
+            setIsLoading(false);
             return;
         }
 
         if (existingResult) {
             toast({ variant: "destructive", title: "Test Already Taken", description: "You have already submitted the test for this application number." });
+            setIsLoading(false);
             return;
         }
 
         if (appData.testMode !== 'online') {
             toast({ variant: "destructive", title: "Incorrect Test Mode", description: "This application is registered for an Offline test." });
+            setIsLoading(false);
             return;
         }
 
-        if (appData.fullName.trim().toLowerCase() !== student.name.trim().toLowerCase()) {
-            toast({
-                variant: "destructive",
-                title: "Name Mismatch",
-                description: `The name on this application (${appData.fullName}) does not match your logged-in name (${student.name}). Please check your details.`,
-            });
-            return;
+        // If the logged-in user is NOT an admin, perform the student name check.
+        if (!admin) {
+            if (!student) {
+                // This case should be covered by the initial login check, but good to have as a fallback.
+                toast({ variant: "destructive", title: "Login Error", description: "You must be logged in as a student to take the test." });
+                setIsLoading(false);
+                return;
+            }
+            if (appData.fullName.trim().toLowerCase() !== student.name.trim().toLowerCase()) {
+                toast({
+                    variant: "destructive",
+                    title: "Name Mismatch",
+                    description: `The name on this application (${appData.fullName}) does not match your logged-in name (${student.name}). Please check your details.`,
+                    duration: 5000,
+                });
+                setIsLoading(false);
+                return;
+            }
         }
-
-        if (appData.isPaymentVerified) {
+        
+        // Admin can bypass payment verification for testing purposes.
+        if (appData.isPaymentVerified || admin) {
             setVerifiedApplicant(appData);
             setStep('confirm');
         } else {
@@ -92,6 +108,7 @@ export default function OnlineScholarshipTestEntryPage() {
         }
 
     } catch (error) {
+        console.error("Verification error:", error);
         toast({ variant: "destructive", title: "Error", description: "An error occurred while verifying your details." });
     } finally {
         setIsLoading(false);
