@@ -7,6 +7,7 @@ import { getStudent, type StudentData } from '@/lib/firebase';
 import { setDoc, doc, Timestamp } from "firebase/firestore";
 import { db } from '@/lib/firebase';
 import { z } from 'zod';
+import { fileToDataUrl } from '@/lib/utils';
 
 interface Admin {
   name: string;
@@ -93,11 +94,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const photoFile = data.photo?.[0];
 
     if (photoFile) {
-        photoUrl = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (e) => resolve(e.target?.result as string);
-            reader.readAsDataURL(photoFile);
-        });
+        try {
+            photoUrl = await fileToDataUrl(photoFile);
+        } catch (e) {
+            console.error("Image processing error:", e);
+            // This will be caught by the calling page and a toast will be shown
+            throw e;
+        }
     }
     
     // We don't store the password, but in a real app, you'd hash and store it.

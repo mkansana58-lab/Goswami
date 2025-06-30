@@ -14,6 +14,7 @@ import { Loader2, Send, MessagesSquare, Paperclip, X } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
+import { fileToDataUrl } from '@/lib/utils';
 
 export default function GroupChatPage() {
     const { student } = useAuth();
@@ -79,11 +80,13 @@ export default function GroupChatPage() {
         let imageUrl: string | undefined = undefined;
 
         if (imageFile) {
-            imageUrl = await new Promise<string>((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target?.result as string);
-                reader.readAsDataURL(imageFile);
-            });
+            try {
+                imageUrl = await fileToDataUrl(imageFile);
+            } catch (error: any) {
+                toast({ variant: "destructive", title: "Image Error", description: error.message });
+                setIsSending(false);
+                return;
+            }
         }
         
         const messageData: Omit<ChatMessage, 'id' | 'createdAt'> = {

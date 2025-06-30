@@ -52,6 +52,7 @@ import { Timestamp } from 'firebase/firestore';
 import { testsData } from '@/lib/tests-data';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { fileToDataUrl } from '@/lib/utils';
 
 // Schemas
 const settingsSchema = z.object({
@@ -212,21 +213,16 @@ export default function AdminPage() {
             scholarshipTestId: otherValues.scholarshipTestId || '',
         };
 
-        const uploadFile = async (file: File) => {
-            return new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target?.result as string);
-                reader.onerror = (error) => reject(error);
-                reader.readAsDataURL(file);
-            });
-        };
-
-        if (splashImage?.[0]) {
-            configData.splashImageUrl = await uploadFile(splashImage[0]);
-        }
-
-        if (paymentQrCode?.[0]) {
-            configData.paymentQrCodeUrl = await uploadFile(paymentQrCode[0]);
+        try {
+            if (splashImage?.[0]) {
+                configData.splashImageUrl = await fileToDataUrl(splashImage[0]);
+            }
+            if (paymentQrCode?.[0]) {
+                configData.paymentQrCodeUrl = await fileToDataUrl(paymentQrCode[0]);
+            }
+        } catch (error: any) {
+            toast({ variant: "destructive", title: "Image Error", description: error.message });
+            return; // Stop execution if image processing fails
         }
 
         await updateAppConfig(configData);
@@ -597,13 +593,7 @@ const CrudForm = ({ schema, onSubmit, onRefresh, fields }: { schema: z.ZodObject
             for (const fieldName in fields) {
                 if (fields[fieldName] === 'file' && values[fieldName]?.[0]) {
                     const file = values[fieldName][0];
-                    const dataUrl = await new Promise<string>((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = (e) => resolve(e.target?.result as string);
-                        reader.onerror = (error) => reject(error);
-                        reader.readAsDataURL(file);
-                    });
-                    dataToSubmit[fieldName] = dataUrl;
+                    dataToSubmit[fieldName] = await fileToDataUrl(file);
                 } else if (fields[fieldName] === 'file') {
                     delete dataToSubmit[fieldName];
                 }

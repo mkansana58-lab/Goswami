@@ -40,18 +40,27 @@ export default function RegisterPage() {
 
     const onSubmit: SubmitHandler<RegisterValues> = async (values) => {
         setIsLoading(true);
-        const success = await registerStudent(values);
-        if (success) {
-            toast({ title: "Registration successful!" });
-            router.push('/home');
-        } else {
-             toast({
+        try {
+            const success = await registerStudent(values);
+            if (success) {
+                toast({ title: "Registration successful!" });
+                router.push('/home');
+            } else {
+                 toast({
+                    variant: "destructive",
+                    title: "Registration Failed",
+                    description: "An unexpected error occurred. Please try again.",
+                });
+            }
+        } catch (error: any) {
+            toast({
                 variant: "destructive",
                 title: "Registration Failed",
-                description: "An unexpected error occurred. Please try again.",
+                description: error.message || "An unexpected error occurred. Please try again.",
             });
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
     return (

@@ -21,6 +21,7 @@ import { addScholarshipApplication, getAppConfig, type AppConfig } from "@/lib/f
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import React from 'react';
+import { fileToDataUrl } from "@/lib/utils";
 
 const formSchema = z.object({
     fullName: z.string().min(3, "Full name is required"),
@@ -91,20 +92,24 @@ export default function ScholarshipPage() {
 
         let photoDataUrl = "";
         if (data.photo?.[0]) {
-            photoDataUrl = await new Promise<string>(resolve => {
-                const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target?.result as string);
-                reader.readAsDataURL(data.photo[0]);
-            });
+            try {
+                photoDataUrl = await fileToDataUrl(data.photo[0]);
+            } catch (error: any) {
+                toast({ variant: "destructive", title: "Photo Error", description: error.message });
+                setIsSubmitting(false);
+                return;
+            }
         }
         
         let signatureDataUrl = "";
         if (data.signature?.[0]) {
-            signatureDataUrl = await new Promise<string>(resolve => {
-                const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target?.result as string);
-                reader.readAsDataURL(data.signature[0]);
-            });
+            try {
+                signatureDataUrl = await fileToDataUrl(data.signature[0]);
+            } catch (error: any) {
+                toast({ variant: "destructive", title: "Signature Error", description: error.message });
+                setIsSubmitting(false);
+                return;
+            }
         }
 
         const dataForFirestore = { ...restOfData, photoUrl: photoDataUrl, signatureUrl: signatureDataUrl };

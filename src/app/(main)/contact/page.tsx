@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -13,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Mail, ImagePlus, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { addContactInquiry } from '@/lib/firebase';
+import { fileToDataUrl } from '@/lib/utils';
 
 const contactSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -41,11 +43,7 @@ export default function ContactPage() {
             const imageFile = image?.[0];
 
             if (imageFile) {
-                imageUrl = await new Promise<string>((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => resolve(e.target?.result as string);
-                    reader.readAsDataURL(imageFile);
-                });
+                imageUrl = await fileToDataUrl(imageFile);
             }
 
             await addContactInquiry({ ...dataToSave, imageUrl });
@@ -54,11 +52,11 @@ export default function ContactPage() {
                 description: "Thank you for contacting us. We will get back to you soon.",
             });
             form.reset();
-        } catch (error) {
+        } catch (error: any) {
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: "Failed to send your inquiry. Please try again later.",
+                description: error.message || "Failed to send your inquiry. Please try again later.",
             });
         } finally {
             setIsSubmitting(false);

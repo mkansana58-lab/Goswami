@@ -17,6 +17,7 @@ import { Loader2, User, Edit, Banknote, IndianRupee, Trash2 } from "lucide-react
 import { useToast } from "@/hooks/use-toast";
 import { Timestamp } from "firebase/firestore";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { fileToDataUrl } from "@/lib/utils";
 
 const profileSchema = z.object({
     fatherName: z.string().min(3, "Father's name is required"),
@@ -81,11 +82,13 @@ export default function AccountPage() {
         const photoFile = values.photo?.[0];
 
         if (photoFile) {
-            photoUrl = await new Promise<string>((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target?.result as string);
-                reader.readAsDataURL(photoFile);
-            });
+            try {
+                photoUrl = await fileToDataUrl(photoFile);
+            } catch (e: any) {
+                toast({ variant: 'destructive', title: 'Image Error', description: e.message });
+                setIsSaving(false);
+                return;
+            }
         }
         
         const { photo, ...dataToSave } = values;
