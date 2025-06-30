@@ -28,7 +28,8 @@ import {
     Gamepad2,
     BookText,
     Binary,
-    Sparkles
+    Sparkles,
+    Target
   } from 'lucide-react';
   
   export const featureGridLinks = [
@@ -58,6 +59,7 @@ import {
     { href: "/quiz-game", icon: Gamepad2, textKey: "quizGame" },
     { href: "/game-zone", icon: Sparkles, textKey: "learningGames" },
     { href: "/true-false-game", icon: Binary, textKey: "trueFalseGame" },
+    { href: "/shoot-the-answer", icon: Target, textKey: "shootTheAnswer" },
     { href: "/current-affairs", icon: ScrollText, textKey: "currentAffairs" },
     { href: "/cutoff-checker", icon: Scissors, textKey: "cutoffChecker" },
     { href: "/toppers", icon: Trophy, textKey: "toppers" },

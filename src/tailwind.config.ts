@@ -94,7 +94,28 @@ const config = {
         'color-splash': {
             '0%': { transform: 'scale(0)', opacity: '0.5' },
             '100%': { transform: 'scale(3)', opacity: '0' },
-        }
+        },
+        'pop': {
+            '0%': { transform: 'scale(1)', opacity: '1' },
+            '50%': { transform: 'scale(1.2)', opacity: '0.5' },
+            '100%': { transform: 'scale(0)', opacity: '0' },
+        },
+        'float-up-1': {
+            '0%': { transform: 'translateY(0) translateX(0)', opacity: '1' },
+            '100%': { transform: 'translateY(-80vh) translateX(20px)', opacity: '1' },
+        },
+        'float-up-2': {
+            '0%': { transform: 'translateY(0) translateX(0)', opacity: '1' },
+            '100%': { transform: 'translateY(-80vh) translateX(-20px)', opacity: '1' },
+        },
+        'float-up-3': {
+            '0%': { transform: 'translateY(0) translateX(0)', opacity: '1' },
+            '100%': { transform: 'translateY(-80vh) translateX(10px)', opacity: '1' },
+        },
+        'float-up-4': {
+            '0%': { transform: 'translateY(0) translateX(0)', opacity: '1' },
+            '100%': { transform: 'translateY(-80vh) translateX(-10px)', opacity: '1' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -104,6 +125,11 @@ const config = {
         'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
         'sparkle': 'sparkle 0.7s ease-in-out forwards',
         'color-splash': 'color-splash 0.5s ease-out forwards',
+        'pop': 'pop 0.3s ease-out forwards',
+        'float-up-1': 'float-up-1 10s linear infinite',
+        'float-up-2': 'float-up-2 12s linear infinite',
+        'float-up-3': 'float-up-3 9s linear infinite',
+        'float-up-4': 'float-up-4 11s linear infinite',
       },
     },
   },

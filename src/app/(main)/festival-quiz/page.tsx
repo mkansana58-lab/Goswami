@@ -1,13 +1,14 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '@/hooks/use-language';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, Check, X, Rocket, Sparkles, Paintbrush, Flame } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateFestivalQuestion, type FestivalQuizOutput } from '@/ai/flows/festival-quiz-flow';
+import { textToSpeech } from '@/ai/flows/tts-flow';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { addQuizWinnings } from '@/lib/firebase';
@@ -30,16 +31,37 @@ export default function FestivalQuizPage() {
     const [questionData, setQuestionData] = useState<FestivalQuizOutput | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [userAnswer, setUserAnswer] = useState<string | null>(null);
-    const [score, setScore] = useState(0);
+    const [correctStreak, setCorrectStreak] = useState(0);
+
+    const [questionAudioUrl, setQuestionAudioUrl] = useState<string | null>(null);
+    const [resultAudioUrl, setResultAudioUrl] = useState<string | null>(null);
+    const questionAudioRef = useRef<HTMLAudioElement>(null);
+    const resultAudioRef = useRef<HTMLAudioElement>(null);
+
+     useEffect(() => {
+        if (questionAudioUrl && questionAudioRef.current) {
+            questionAudioRef.current.play().catch(e => console.log("Browser prevented autoplay of audio."));
+        }
+    }, [questionAudioUrl]);
+
+     useEffect(() => {
+        if (resultAudioUrl && resultAudioRef.current) {
+            resultAudioRef.current.play().catch(e => console.log("Browser prevented autoplay of result audio."));
+        }
+    }, [resultAudioUrl]);
 
     const fetchQuestion = async (selectedFestival: Festival) => {
         setIsLoading(true);
         setQuestionData(null);
         setUserAnswer(null);
+        setQuestionAudioUrl(null);
+        setResultAudioUrl(null);
         setGameState('playing');
         try {
             const res = await generateFestivalQuestion({ festival: selectedFestival });
             setQuestionData(res);
+            const audioRes = await textToSpeech(res.question);
+            setQuestionAudioUrl(audioRes.media);
         } catch (e) {
             console.error(e);
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to generate a new question.' });
@@ -59,16 +81,32 @@ export default function FestivalQuizPage() {
         setUserAnswer(answer);
         setGameState('revealed');
         
-        if (answer === questionData.answer) {
-            const newScore = score + 100;
-            setScore(newScore);
-            try {
-                await addQuizWinnings(student.name, 100);
+        const isCorrect = answer === questionData.answer;
+        let textToSpeak = '';
+
+        if (isCorrect) {
+            const newStreak = correctStreak + 1;
+            setCorrectStreak(newStreak);
+            textToSpeak = 'सही जवाब!';
+
+            if (newStreak > 0 && newStreak % 20 === 0) {
+                const points = 5000;
+                textToSpeak += ` 20 सही जवाब! आपने ${points.toLocaleString('en-IN')} अंक जीते हैं।`;
+                await addQuizWinnings(student.name, points);
                 await refreshStudentData(student.name);
-                toast({ title: "Correct!", description: "+100 points added to your winnings!" });
-            } catch (error) {
-                 toast({ variant: 'destructive', title: 'Error saving points' });
+                toast({ title: "STREAK! You won 5,000 points!" });
+                setCorrectStreak(0); // Reset streak after winning
             }
+        } else {
+            textToSpeak = 'गलत जवाब!';
+            setCorrectStreak(0); // Reset streak on wrong answer
+        }
+
+        try {
+            const audioRes = await textToSpeech(textToSpeak);
+            setResultAudioUrl(audioRes.media);
+        } catch (err) {
+            console.error("Failed to generate result audio", err);
         }
     };
 
@@ -82,7 +120,7 @@ export default function FestivalQuizPage() {
         setFestival(null);
         setQuestionData(null);
         setUserAnswer(null);
-        setScore(0);
+        setCorrectStreak(0);
     }
 
     const renderContent = () => {
@@ -137,7 +175,11 @@ export default function FestivalQuizPage() {
                                         >
                                            {option}
                                         </Button>
-                                         {gameState === 'revealed' && isAnswerCorrect && festival === 'Diwali' && <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><Sparkles className="h-16 w-16 text-yellow-300 animate-sparkle" /></div>}
+                                         {gameState === 'revealed' && isAnswerCorrect && festival === 'Diwali' && <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                            <Sparkles className="h-16 w-16 text-yellow-300 animate-sparkle" />
+                                            <Sparkles className="h-10 w-10 text-orange-400 animate-sparkle" style={{animationDelay: '0.2s'}} />
+                                            <Sparkles className="h-20 w-20 text-yellow-200 animate-sparkle" style={{animationDelay: '0.4s'}} />
+                                         </div>}
                                          {gameState === 'revealed' && isAnswerCorrect && festival === 'Holi' && <div className="absolute inset-0 bg-pink-500 rounded-lg animate-color-splash pointer-events-none"></div>}
                                     </div>
                                 )
@@ -155,6 +197,9 @@ export default function FestivalQuizPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <p className="text-muted-foreground">{questionData.explanation}</p>
+                                <div className="flex justify-center gap-4 font-semibold">
+                                    <p>Current Streak: {correctStreak}</p>
+                                </div>
                                 <div className="flex justify-center gap-4">
                                     <Button onClick={handleNextQuestion} size="lg">{t('nextQuestion')}</Button>
                                     <Button onClick={resetGame} size="lg" variant="outline">Choose Festival</Button>
@@ -172,6 +217,8 @@ export default function FestivalQuizPage() {
 
     return (
         <div className="space-y-6">
+            <audio ref={questionAudioRef} src={questionAudioUrl || undefined} />
+            <audio ref={resultAudioRef} src={resultAudioUrl || undefined} />
             <div className="absolute inset-x-0 top-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
             <div className="text-center">
                 <Rocket className="mx-auto h-12 w-12 text-primary" />

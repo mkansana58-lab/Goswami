@@ -34,6 +34,7 @@ const prompt = ai.definePrompt({
   output: { schema: FestivalQuizOutputSchema },
   prompt: `You are a quiz master creating a fun, festival-themed question for kids in Hindi.
 The question should be about the festival: {{{festival}}}.
+The question should be of a moderate to high difficulty level suitable for competitive exam preparation. Ensure the question is interesting and tests deeper knowledge about the festival.
 Generate one multiple-choice question with 4 options.
 The question and all options must be in Hindi.
 The 'answer' field must exactly match one of the strings in the 'options' array.

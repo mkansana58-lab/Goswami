@@ -20,11 +20,11 @@ export default function LearningGamesPage() {
             color: "hover:border-pink-500/80 hover:bg-pink-500/10"
         },
         { 
-            href: '#',
+            href: '/shoot-the-answer',
             titleKey: "shootTheAnswer", 
             descriptionKey: "shootTheAnswerDescription",
             icon: Target,
-            enabled: false,
+            enabled: true,
             color: "hover:border-blue-500/80 hover:bg-blue-500/10"
         },
         { 
