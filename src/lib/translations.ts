@@ -68,6 +68,7 @@ export const translations = {
     correct: "Correct!",
     incorrect: "Incorrect!",
     progressReport: "Progress Report",
+    mathTractorDrive: "Math Tractor Drive",
 
     // Scholarship Form Translations
     scholarshipInstructionsTitle: "Instructions",
@@ -333,6 +334,7 @@ export const translations = {
     correct: "सही!",
     incorrect: "गलत!",
     progressReport: "प्रगति रिपोर्ट",
+    mathTractorDrive: "मैथ ट्रैक्टर ड्राइव",
 
     // Scholarship Form Translations
     scholarshipInstructionsTitle: "निर्देश",

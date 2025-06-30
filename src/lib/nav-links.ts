@@ -28,7 +28,8 @@ import {
     Gamepad2,
     BookText,
     Binary,
-    LineChart
+    LineChart,
+    Truck
   } from 'lucide-react';
   
   export const featureGridLinks = [
@@ -41,6 +42,7 @@ import {
       { href: "/quiz-game", icon: Gamepad2, textKey: "quizGame" },
       { href: "/story-weaver", icon: BookText, textKey: "readingPractice" },
       { href: "/progress-report", icon: LineChart, textKey: "progressReport" },
+      { href: "/math-tractor-drive", icon: Truck, textKey: "mathTractorDrive" },
   ];
   
   export const sidebarLinks = [
@@ -58,6 +60,7 @@ import {
     { href: "/quiz-game", icon: Gamepad2, textKey: "quizGame" },
     { href: "/story-weaver", icon: BookText, textKey: "readingPractice" },
     { href: "/true-false-game", icon: Binary, textKey: "trueFalseGame" },
+    { href: "/math-tractor-drive", icon: Truck, textKey: "mathTractorDrive" },
     { href: "/progress-report", icon: LineChart, textKey: "progressReport" },
     { href: "/current-affairs", icon: ScrollText, textKey: "currentAffairs" },
     { href: "/cutoff-checker", icon: Scissors, textKey: "cutoffChecker" },
