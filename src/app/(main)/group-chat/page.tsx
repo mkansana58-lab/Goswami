@@ -139,8 +139,15 @@ export default function GroupChatPage() {
                                     {!isCurrentUser && <p className="text-xs text-muted-foreground px-2">{msg.userName}</p>}
                                     <div className={`rounded-xl p-2 px-3 shadow-sm ${isCurrentUser ? 'bg-green-800 text-white rounded-br-none' : 'bg-background text-foreground rounded-bl-none'}`}>
                                         {msg.imageUrl && (
-                                            <div className="relative aspect-video w-full max-w-xs rounded-lg overflow-hidden mb-1 cursor-pointer">
-                                                <Image src={msg.imageUrl} alt="Chat image" layout="fill" objectFit="cover" data-ai-hint="chat message"/>
+                                            <div className="max-w-xs mb-1">
+                                                <Image
+                                                    src={msg.imageUrl}
+                                                    alt="Chat image"
+                                                    width={320}
+                                                    height={240}
+                                                    className="h-auto w-full rounded-lg object-cover"
+                                                    data-ai-hint="chat message"
+                                                />
                                             </div>
                                         )}
                                         {msg.text && <p className="text-sm whitespace-pre-wrap">{msg.text}</p>}
