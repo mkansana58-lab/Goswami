@@ -135,7 +135,6 @@ export interface AppConfig {
     resultAnnouncementDate?: Timestamp;
     scholarshipTestId?: string;
     paymentQrCodeUrl?: string;
-    tractorImageUrl?: string;
 }
 
 export interface Post {

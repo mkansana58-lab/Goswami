@@ -41,8 +41,7 @@ import {
       { href: "/daily-posts", icon: Newspaper, textKey: "dailyPosts" },
       { href: "/quiz-game", icon: Gamepad2, textKey: "quizGame" },
       { href: "/story-weaver", icon: BookText, textKey: "readingPractice" },
-      { href: "/progress-report", icon: LineChart, textKey: "progressReport" },
-      { href: "/math-tractor-drive", icon: Truck, textKey: "mathTractorDrive" },
+      { href: "/game-zone", icon: Gamepad2, textKey: "gameZone" },
   ];
   
   export const sidebarLinks = [
@@ -57,10 +56,10 @@ import {
     { href: "/tests", icon: CheckSquare, textKey: "aiTest" },
     { href: "/ai-tutor", icon: GraduationCap, textKey: "aiTutor" },
     { href: "/group-chat", icon: MessagesSquare, textKey: "groupChat" },
+    { href: "/game-zone", icon: Gamepad2, textKey: "gameZone" },
     { href: "/quiz-game", icon: Gamepad2, textKey: "quizGame" },
     { href: "/story-weaver", icon: BookText, textKey: "readingPractice" },
     { href: "/true-false-game", icon: Binary, textKey: "trueFalseGame" },
-    { href: "/math-tractor-drive", icon: Truck, textKey: "mathTractorDrive" },
     { href: "/progress-report", icon: LineChart, textKey: "progressReport" },
     { href: "/current-affairs", icon: ScrollText, textKey: "currentAffairs" },
     { href: "/cutoff-checker", icon: Scissors, textKey: "cutoffChecker" },

@@ -69,6 +69,19 @@ export const translations = {
     incorrect: "Incorrect!",
     progressReport: "Progress Report",
     mathTractorDrive: "Math Tractor Drive",
+    gameZone: "Game Zone",
+
+    // Game Zone
+    tractorGameTitle: "Math Tractor Drive",
+    tractorGameDesc: "Answer math questions to drive your tractor to the village!",
+    shootingGameTitle: "Shoot The Right Answer",
+    shootingGameDesc: "Pop the balloons with the correct answers.",
+    marketGameTitle: "Village Knowledge Market",
+    marketGameDesc: "Answer GK questions to buy items from the market.",
+    farmerGameTitle: "Smart Farmer",
+    farmerGameDesc: "Use your science knowledge to grow the best crops.",
+    festivalGameTitle: "Festival Quiz Adventure",
+    festivalGameDesc: "Complete fun missions based on Indian festivals.",
 
     // Scholarship Form Translations
     scholarshipInstructionsTitle: "Instructions",
@@ -335,6 +348,19 @@ export const translations = {
     incorrect: "गलत!",
     progressReport: "प्रगति रिपोर्ट",
     mathTractorDrive: "मैथ ट्रैक्टर ड्राइव",
+    gameZone: "गेम ज़ोन",
+
+    // Game Zone
+    tractorGameTitle: "ट्रैक्टर वाला मैथ गेम",
+    tractorGameDesc: "गाँव तक पहुँचने के लिए गणित के सवालों के जवाब दें!",
+    shootingGameTitle: "पढ़ाई वाली शूटिंग",
+    shootingGameDesc: "सही जवाब वाले गुब्बारे पर निशाना लगाओ।",
+    marketGameTitle: "गांव का ज्ञान बाजार",
+    marketGameDesc: "GK के सवालों के जवाब देकर बाजार से सामान खरीदो।",
+    farmerGameTitle: "स्मार्ट किसान",
+    farmerGameDesc: "विज्ञान के ज्ञान से स्मार्ट खेती करो।",
+    festivalGameTitle: "त्योहार क्विज़ एडवेंचर",
+    festivalGameDesc: "त्योहारों पर आधारित मज़ेदार मिशन पूरे करो।",
 
     // Scholarship Form Translations
     scholarshipInstructionsTitle: "निर्देश",

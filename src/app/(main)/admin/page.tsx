@@ -65,7 +65,6 @@ const settingsSchema = z.object({
     splashImage: z.any().optional(),
     scholarshipTestId: z.string().optional(),
     paymentQrCode: z.any().optional(),
-    tractorImageUrl: z.any().optional(),
 });
 const liveClassSchema = z.object({ title: z.string().min(3), link: z.string().url(), scheduledAt: z.string().min(1) });
 const notificationSchema = z.object({ 
@@ -203,7 +202,7 @@ export default function AdminPage() {
     }, [admin, fetchData]);
 
     const handleSaveSettings = async (values: z.infer<typeof settingsSchema>) => {
-        const { splashImage, paymentQrCode, tractorImageUrl, ...otherValues } = values;
+        const { splashImage, paymentQrCode, ...otherValues } = values;
 
         // Handle "none" value from Select by converting it to an empty string
         const scholarshipTestId = otherValues.scholarshipTestId === 'none' ? '' : otherValues.scholarshipTestId;
@@ -224,9 +223,6 @@ export default function AdminPage() {
             }
             if (paymentQrCode?.[0]) {
                 configData.paymentQrCodeUrl = await fileToDataUrl(paymentQrCode[0]);
-            }
-            if (tractorImageUrl?.[0]) {
-                configData.tractorImageUrl = await fileToDataUrl(tractorImageUrl[0]);
             }
         } catch (error: any) {
             toast({ variant: "destructive", title: "Image Error", description: error.message });
@@ -351,7 +347,6 @@ export default function AdminPage() {
                                      <div><Label>{t('resultAnnouncementDate')}</Label><Input type="datetime-local" {...settingsForm.register('resultAnnouncementDate')} /></div>
                                      <div><Label>Splash Screen Image (for App Start)</Label><Input type="file" accept="image/*" {...settingsForm.register('splashImage')} /></div>
                                      <div><Label className="flex items-center gap-2"><QrCode/> Payment QR Code</Label><Input type="file" accept="image/*" {...settingsForm.register('paymentQrCode')} /></div>
-                                     <div><Label className="flex items-center gap-2"><Truck/> Math Tractor - Tractor Image</Label><Input type="file" accept="image/*" {...settingsForm.register('tractorImageUrl')} /></div>
                                      <Button type="submit">{t('saveSettings')}</Button>
                                 </form>
                             </AdminSection>
