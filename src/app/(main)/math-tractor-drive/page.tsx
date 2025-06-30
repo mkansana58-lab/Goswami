@@ -76,6 +76,7 @@ export default function MathTractorPage() {
         setGameState('playing');
         fetchNewQuestion(0);
         if (bgAudioRef.current) {
+            bgAudioRef.current.volume = 0.3;
             bgAudioRef.current.play().catch(e => console.error("Audio autoplay failed:", e));
         }
     };
@@ -92,10 +93,12 @@ export default function MathTractorPage() {
 
         if (newScore > 0 && newScore % 10 === 0) {
             const pointsWon = 10000;
-            toast({ title: 'Congratulations!', description: `You won ${pointsWon.toLocaleString()} points for 10 correct answers!` });
             if(student) {
                 addQuizWinnings(student.name, pointsWon)
-                    .then(() => refreshStudentData(student.name))
+                    .then(() => {
+                        toast({ title: 'Congratulations!', description: `You won ${pointsWon.toLocaleString()} points for 10 correct answers!` });
+                        refreshStudentData(student.name);
+                    })
                     .catch(err => console.error("Error updating winnings:", err));
             }
         }
@@ -260,20 +263,7 @@ export default function MathTractorPage() {
         </div>
     );
 
-    const renderOverlay = () => {
-        if (gameState === 'start') {
-            return (
-                 <div className="absolute inset-0 bg-black/70 flex flex-col justify-center items-center z-20">
-                    <Card className="text-center">
-                        <CardHeader>
-                            <CardTitle>Math Tractor Drive</CardTitle>
-                            <CardDescription>Steer to the correct answer!</CardDescription>
-                        </CardHeader>
-                        <CardContent><Button onClick={startGame} size="lg" disabled={isLoading}>{isLoading ? <Loader2 className="animate-spin mr-2"/> : null} Start Game</Button></CardContent>
-                    </Card>
-                </div>
-            )
-        }
+    const renderPopupOverlay = () => {
         if (gameState === 'gameOver') {
              return (
                  <div className="absolute inset-0 bg-black/70 flex flex-col justify-center items-center z-20">
@@ -302,10 +292,85 @@ export default function MathTractorPage() {
         }
         return null;
     }
+    
+    const renderStartScreen = () => {
+        const handleComingSoon = () => {
+            toast({ title: "Coming Soon!", description: "This feature will be available in a future update." });
+        };
+    
+        return (
+            <div className="w-full h-full relative overflow-hidden bg-[#a5d8f0]">
+                <Image src="https://placehold.co/800x1200.png" layout="fill" objectFit="cover" alt="Farm background" data-ai-hint="cartoon farm landscape green field" />
+    
+                <div className="absolute inset-0 z-10 p-4 flex flex-col items-center justify-between">
+                    {/* Top bar */}
+                    <div className="w-full flex justify-between items-start">
+                        <button onClick={handleComingSoon} className="relative w-20 h-20 bg-contain bg-no-repeat bg-center" style={{backgroundImage: "url('https://placehold.co/100x100.png')"}} data-ai-hint="purple settings gear button icon">
+                            <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-white font-bold text-[10px] tracking-wider drop-shadow-md">SETTINGS</span>
+                        </button>
+                        
+                        <div className="relative w-56 sm:w-64 h-32 -mt-2 bg-contain bg-center bg-no-repeat" style={{backgroundImage: "url('https://placehold.co/400x200.png')"}} data-ai-hint="wooden sign board">
+                             <div className="absolute inset-0 flex flex-col items-center justify-center text-4xl sm:text-5xl font-bold text-[#5C4033] font-headline -space-y-2 sm:-space-y-3">
+                                 <p>MATH</p>
+                                 <p>TRACTOR</p>
+                                 <p>DRIVE</p>
+                             </div>
+                        </div>
+                        
+                        <button onClick={handleComingSoon} className="relative w-20 h-20 bg-contain bg-center bg-no-repeat" style={{backgroundImage: "url('https://placehold.co/100x100.png')"}} data-ai-hint="yellow score bottle cap icon">
+                            <div className="absolute inset-0 flex flex-col items-center justify-center text-black font-bold text-sm">
+                                <span>मेरा</span>
+                                <span>स्कोर</span>
+                            </div>
+                        </button>
+                    </div>
+    
+                    {/* Tractor */}
+                    <div className="relative w-60 h-48 sm:w-72 sm:h-56 -mt-16">
+                        <Image src={appConfig?.tractorImageUrl || "https://placehold.co/400x300.png"} layout="fill" objectFit="contain" alt="Red tractor" data-ai-hint="red tractor cartoon side view" />
+                    </div>
+    
+                    {/* Main Buttons */}
+                    <div className="flex items-end justify-center w-full gap-1 sm:gap-2 -mt-12">
+                         <button onClick={handleComingSoon} className="relative w-28 h-28 sm:w-32 sm:h-32 bg-contain bg-center bg-no-repeat" style={{backgroundImage: "url('https://placehold.co/150x150.png')"}} data-ai-hint="blue tire button icon">
+                            <span className="absolute inset-0 flex items-center justify-center text-white text-xl sm:text-2xl font-bold font-headline drop-shadow-lg">लेवल्स</span>
+                         </button>
+                         
+                         <button onClick={startGame} className="relative w-32 h-32 sm:w-40 sm:h-40 bg-contain bg-center bg-no-repeat" style={{backgroundImage: "url('https://placehold.co/200x200.png')"}} data-ai-hint="green tire button icon">
+                             <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-2xl sm:text-3xl font-bold font-headline drop-shadow-lg">
+                                <span>गेम</span>
+                                <span className="-mt-2">शुरू करें</span>
+                             </div>
+                         </button>
+                         
+                         <button onClick={handleComingSoon} className="relative w-28 h-28 sm:w-32 sm:h-32 bg-contain bg-center bg-no-repeat" style={{backgroundImage: "url('https://placehold.co/150x150.png')"}} data-ai-hint="purple gear button icon">
+                             <span className="absolute inset-0 flex items-center justify-center text-white text-xl sm:text-2xl font-bold font-headline drop-shadow-lg">Settings</span>
+                         </button>
+                    </div>
+    
+                    {/* Bottom Info Cards */}
+                    <div className="w-full max-w-md grid grid-cols-3 gap-2 sm:gap-4">
+                         <div className="bg-[#f8e8c1] p-2 rounded-lg border-2 border-[#d2b48c] text-center text-[#8B4513] shadow-md">
+                            <p className="text-[10px] sm:text-xs font-semibold">⭐ आज का लक्ष्य</p>
+                            <p className="font-bold text-xs sm:text-sm">10 सही जोड़</p>
+                         </div>
+                         <div className="bg-[#f8e8c1] p-2 rounded-lg border-2 border-[#d2b48c] text-center text-[#8B4513] shadow-md">
+                             <p className="text-[10px] sm:text-xs font-semibold">🧠 आज का ब्रेन क्विज़</p>
+                             <p className="font-bold text-xs sm:text-sm">1 बोनस सवाल</p>
+                         </div>
+                         <div className="bg-[#f8e8c1] p-2 rounded-lg border-2 border-[#d2b48c] text-center text-[#8B4513] shadow-md">
+                             <p className="text-[10px] sm:text-xs font-semibold">आपके Coins</p>
+                             <p className="font-bold text-xs sm:text-sm">🪙 {(student?.quizWinnings || 0).toLocaleString()}</p>
+                         </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="w-full h-[calc(100vh-8rem)] bg-black flex items-center justify-center">
-             <style>{`
+            <style>{`
                 @keyframes roadAnimation {
                     from { background-position-y: 0; }
                     to { background-position-y: -80px; }
@@ -315,13 +380,19 @@ export default function MathTractorPage() {
             <audio ref={hornAudioRef} src="https://placehold.co/audio/truck_horn.mp3" data-ai-hint="truck horn"/>
 
             <div className="w-full max-w-md h-full relative" >
-                {renderOverlay()}
-                {gameState === 'playing' || gameState === 'gameOver' || gameState === 'levelComplete' ? (
-                  <>
-                    {renderGameScreen()}
-                    {gameState === 'playing' && renderUI()}
-                  </>
-                ) : null}
+                {isLoading ? (
+                    <div className="absolute inset-0 bg-black/70 flex flex-col justify-center items-center z-20">
+                        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                    </div>
+                ) : gameState === 'start' ? (
+                    renderStartScreen()
+                ) : (
+                    <>
+                        {renderGameScreen()}
+                        {gameState === 'playing' && renderUI()}
+                        {renderPopupOverlay()} 
+                    </>
+                )}
             </div>
         </div>
     );
