@@ -490,11 +490,15 @@ export async function getTestResultsForStudent(studentName: string): Promise<Tes
     if (!db) return [];
     const q = query(
         collection(db, "testResults"),
-        where("studentName", "==", studentName),
-        orderBy("submittedAt", "desc")
+        where("studentName", "==", studentName)
     );
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as TestResultData);
+    const results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as TestResultData);
+
+    // Sort the results by submittedAt timestamp in descending order on the client-side
+    results.sort((a, b) => b.submittedAt.toMillis() - a.submittedAt.toMillis());
+
+    return results;
 }
 
 export async function getLiveClasses(): Promise<LiveClass[]> {
