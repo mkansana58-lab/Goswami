@@ -4,29 +4,32 @@ import type {Config} from 'tailwindcss';
 export default {
   darkMode: ['class'],
   content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
   ],
+  prefix: '',
   theme: {
+    container: {
+      center: true,
+      padding: '2rem',
+      screens: {
+        '2xl': '1400px',
+      },
+    },
     extend: {
       fontFamily: {
-        headline: ['Teko', 'sans-serif'],
-        body: ['Inter', 'sans-serif'],
-        signature: ['Dancing Script', 'cursive'],
-        code: ['monospace'],
+        headline: ['var(--font-teko)', 'sans-serif'],
+        body: ['var(--font-inter)', 'sans-serif'],
+        signature: ['var(--font-dancing-script)', 'cursive'],
       },
       colors: {
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
-        card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
-        },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
-        },
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
@@ -34,6 +37,10 @@ export default {
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))',
+        },
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
         },
         muted: {
           DEFAULT: 'hsl(var(--muted))',
@@ -43,19 +50,13 @@ export default {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',
         },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
         },
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        chart: {
-          '1': 'hsl(var(--chart-1))',
-          '2': 'hsl(var(--chart-2))',
-          '3': 'hsl(var(--chart-3))',
-          '4': 'hsl(var(--chart-4))',
-          '5': 'hsl(var(--chart-5))',
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
         },
       },
       borderRadius: {
@@ -65,20 +66,12 @@ export default {
       },
       keyframes: {
         'accordion-down': {
-          from: {
-            height: '0',
-          },
-          to: {
-            height: 'var(--radix-accordion-content-height)',
-          },
+          from: {height: '0'},
+          to: {height: 'var(--radix-accordion-content-height)'},
         },
         'accordion-up': {
-          from: {
-            height: 'var(--radix-accordion-content-height)',
-          },
-          to: {
-            height: '0',
-          },
+          from: {height: 'var(--radix-accordion-content-height)'},
+          to: {height: '0'},
         },
         'marquee': {
           '0%': { transform: 'translateX(0%)' },
@@ -88,12 +81,55 @@ export default {
           '0%': { transform: 'translateX(100%)' },
           '100%': { transform: 'translateX(0%)' },
         },
+        'shake': {
+          '10%, 90%': { transform: 'translate3d(-1px, 0, 0) rotate(-1deg)' },
+          '20%, 80%': { transform: 'translate3d(2px, 0, 0) rotate(2deg)' },
+          '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0) rotate(-3deg)' },
+          '40%, 60%': { transform: 'translate3d(4px, 0, 0) rotate(3deg)' }
+        },
+        'sparkle': {
+          '0%, 100%': { opacity: '0', transform: 'scale(0.5) rotate(0deg)' },
+          '50%': { opacity: '1', transform: 'scale(1.5) rotate(180deg)' },
+        },
+        'color-splash': {
+            '0%': { transform: 'scale(0)', opacity: '0.5' },
+            '100%': { transform: 'scale(3)', opacity: '0' },
+        },
+        'pop': {
+            '0%': { transform: 'scale(1)', opacity: '1' },
+            '50%': { transform: 'scale(1.2)', opacity: '0.5' },
+            '100%': { transform: 'scale(0)', opacity: '0' },
+        },
+        'float-up-1': {
+            '0%': { transform: 'translateY(0) translateX(0)', opacity: '1' },
+            '100%': { transform: 'translateY(-80vh) translateX(20px)', opacity: '1' },
+        },
+        'float-up-2': {
+            '0%': { transform: 'translateY(0) translateX(0)', opacity: '1' },
+            '100%': { transform: 'translateY(-80vh) translateX(-20px)', opacity: '1' },
+        },
+        'float-up-3': {
+            '0%': { transform: 'translateY(0) translateX(0)', opacity: '1' },
+            '100%': { transform: 'translateY(-80vh) translateX(10px)', opacity: '1' },
+        },
+        'float-up-4': {
+            '0%': { transform: 'translateY(0) translateX(0)', opacity: '1' },
+            '100%': { transform: 'translateY(-80vh) translateX(-10px)', opacity: '1' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'marquee': 'marquee 40s linear infinite',
-        'marquee2': 'marquee2 40s linear infinite',
+        'marquee': 'marquee 25s linear infinite',
+        'marquee2': 'marquee2 25s linear infinite',
+        'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+        'sparkle': 'sparkle 0.7s ease-in-out forwards',
+        'color-splash': 'color-splash 0.5s ease-out forwards',
+        'pop': 'pop 0.3s ease-out forwards',
+        'float-up-1': 'float-up-1 10s linear infinite',
+        'float-up-2': 'float-up-2 12s linear infinite',
+        'float-up-3': 'float-up-3 9s linear infinite',
+        'float-up-4': 'float-up-4 11s linear infinite',
       },
     },
   },

@@ -368,15 +368,15 @@ export default function AdminPage() {
                                      <div><Label>{t('admitCardStartDate')}</Label><Input type="datetime-local" {...settingsForm.register('admitCardDownloadStartDate')} /></div>
                                      <div><Label>{t('resultAnnouncementDate')}</Label><Input type="datetime-local" {...settingsForm.register('resultAnnouncementDate')} /></div>
                                      <Separator />
-                                     <div><Label className="flex items-center gap-2"><Youtube/> App Tutorial HTML Embed Code</Label><Textarea placeholder='Paste <iframe> code for the app tutorial video here...' {...settingsForm.register('appTutorialEmbedCode')} /></div>
-                                     <div><Label>Splash Screen Image (for App Start)</Label><Input type="file" accept="image/*" {...settingsForm.register('splashImage')} /></div>
-                                     <div><Label className="flex items-center gap-2"><QrCode/> Payment QR Code</Label><Input type="file" accept="image/*" {...settingsForm.register('paymentQrCode')} /></div>
+                                     <div><Label className="flex items-center gap-2"><Youtube/> App Tutorial HTML Embed Code</Label><Textarea placeholder='Paste <iframe> code for the app tutorial video here...' {...settingsForm.register('appTutorialEmbedCode')} /><p className="text-xs text-muted-foreground mt-1">Example: &lt;iframe src="https://www.youtube.com/embed/VIDEO_ID"&gt;&lt;/iframe&gt;</p></div>
+                                     <div><Label>Splash Screen Image (for App Start)</Label><Input type="file" accept="image/*" {...settingsForm.register('splashImage')} /><p className="text-xs text-muted-foreground mt-1">Recommended: 1080x1920px portrait</p></div>
+                                     <div><Label className="flex items-center gap-2"><QrCode/> Payment QR Code</Label><Input type="file" accept="image/*" {...settingsForm.register('paymentQrCode')} /><p className="text-xs text-muted-foreground mt-1">Recommended: 512x512px square</p></div>
                                     <Separator />
                                     <Label className="text-lg font-semibold">Game Backgrounds</Label>
                                     <div className="space-y-2 pl-2 border-l-2">
-                                         <div><Label className="flex items-center gap-2"><Flame className="h-4 w-4" /> Festival Quiz Background</Label><Input type="file" accept="image/*" {...settingsForm.register('festivalQuizBg')} /></div>
-                                         <div><Label className="flex items-center gap-2"><Gamepad2 className="h-4 w-4" /> Knowledge Bazaar Background</Label><Input type="file" accept="image/*" {...settingsForm.register('knowledgeBazaarBg')} /></div>
-                                         <div><Label className="flex items-center gap-2"><Atom className="h-4 w-4" /> Science Game Background</Label><Input type="file" accept="image/*" {...settingsForm.register('scienceGameBg')} /></div>
+                                         <div><Label className="flex items-center gap-2"><Flame className="h-4 w-4" /> Festival Quiz Background</Label><Input type="file" accept="image/*" {...settingsForm.register('festivalQuizBg')} /><p className="text-xs text-muted-foreground mt-1">Recommended: 1920x1080px landscape</p></div>
+                                         <div><Label className="flex items-center gap-2"><Gamepad2 className="h-4 w-4" /> Knowledge Bazaar Background</Label><Input type="file" accept="image/*" {...settingsForm.register('knowledgeBazaarBg')} /><p className="text-xs text-muted-foreground mt-1">Recommended: 1920x1080px landscape</p></div>
+                                         <div><Label className="flex items-center gap-2"><Atom className="h-4 w-4" /> Science Game Background</Label><Input type="file" accept="image/*" {...settingsForm.register('scienceGameBg')} /><p className="text-xs text-muted-foreground mt-1">Recommended: 1920x1080px landscape</p></div>
                                     </div>
                                      <Button type="submit">{t('saveSettings')}</Button>
                                 </form>
@@ -420,7 +420,7 @@ export default function AdminPage() {
                             </AdminSection>
                             
                             <AdminSection title={t('manageDailyPosts')} icon={Newspaper}>
-                                <CrudForm schema={postSchema} onSubmit={addPost} onRefresh={fetchData} fields={{title: 'text', content: 'textarea', imageUrl: 'file'}} />
+                                <CrudForm schema={postSchema} onSubmit={addPost} onRefresh={fetchData} fields={{title: 'text', content: 'textarea', imageUrl: 'file'}} hints={{ imageUrl: 'Recommended: 16:9 ratio (e.g., 1280x720px)' }}/>
                                 <DataTable data={data.posts} columns={['title', 'content']} onDelete={deletePost} onRefresh={fetchData} />
                             </AdminSection>
 
@@ -441,22 +441,22 @@ export default function AdminPage() {
                             </AdminSection>
 
                             <AdminSection title="Manage E-Books" icon={Library}>
-                                <CrudForm schema={eBookSchema} onSubmit={addEBook} onRefresh={fetchData} fields={{title: 'text', pdfUrl: 'url', imageUrl: 'file'}} />
+                                <CrudForm schema={eBookSchema} onSubmit={addEBook} onRefresh={fetchData} fields={{title: 'text', pdfUrl: 'url', imageUrl: 'file'}} hints={{ imageUrl: 'Recommended: 3:4 ratio (e.g., 600x800px)' }}/>
                                 <DataTable data={data.ebooks} columns={['title', 'pdfUrl']} onDelete={deleteEBook} onRefresh={fetchData} />
                             </AdminSection>
 
                             <AdminSection title={t('manageCourses')} icon={BookCopy}>
-                                <CrudForm schema={courseSchema} onSubmit={addCourse} onRefresh={fetchData} fields={{title: 'text', description: 'textarea', imageUrl: 'file'}} />
+                                <CrudForm schema={courseSchema} onSubmit={addCourse} onRefresh={fetchData} fields={{title: 'text', description: 'textarea', imageUrl: 'file'}} hints={{ imageUrl: 'Recommended: 16:9 ratio (e.g., 1280x720px)' }}/>
                                 <DataTable data={data.courses} columns={['title', 'description']} onDelete={deleteCourse} onRefresh={fetchData} />
                             </AdminSection>
 
                             <AdminSection title="Manage Teachers" icon={UserSquare}>
-                                <CrudForm schema={teacherSchema} onSubmit={addTeacher} onRefresh={fetchData} fields={{name: 'text', description: 'textarea', imageUrl: 'file'}} />
+                                <CrudForm schema={teacherSchema} onSubmit={addTeacher} onRefresh={fetchData} fields={{name: 'text', description: 'textarea', imageUrl: 'file'}} hints={{ imageUrl: 'Recommended: 1:1 ratio (e.g., 400x400px)' }}/>
                                 <DataTable data={data.teachers} columns={['name', 'description']} onDelete={deleteTeacher} onRefresh={fetchData} />
                             </AdminSection>
 
                             <AdminSection title="Manage Coaching Gallery" icon={Camera}>
-                                <CrudForm schema={galleryImageSchema} onSubmit={addGalleryImage} onRefresh={fetchData} fields={{caption: 'text', imageUrl: 'file'}} />
+                                <CrudForm schema={galleryImageSchema} onSubmit={addGalleryImage} onRefresh={fetchData} fields={{caption: 'text', imageUrl: 'file'}} hints={{ imageUrl: 'Recommended: 1:1 ratio (e.g., 800x800px)' }}/>
                                 <DataTable data={data.galleryImages} columns={['caption']} onDelete={deleteGalleryImage} onRefresh={fetchData} />
                             </AdminSection>
                         </Accordion>
@@ -653,7 +653,7 @@ const AdminSection = ({ icon: Icon, title, children }: { icon: React.ElementType
     </AccordionItem></Card>
 );
 
-const CrudForm = ({ schema, onSubmit, onRefresh, fields }: { schema: z.ZodObject<any>, onSubmit: (data: any) => Promise<any>, onRefresh: () => void, fields: Record<string, 'text' | 'url' | 'textarea' | 'datetime-local' | 'file' | 'number'> }) => {
+const CrudForm = ({ schema, onSubmit, onRefresh, fields, hints }: { schema: z.ZodObject<any>, onSubmit: (data: any) => Promise<any>, onRefresh: () => void, fields: Record<string, 'text' | 'url' | 'textarea' | 'datetime-local' | 'file' | 'number'>, hints?: Record<string, string> }) => {
     const { t } = useLanguage();
     const form = useForm({ resolver: zodResolver(schema) });
     const { toast } = useToast();
@@ -695,6 +695,7 @@ const CrudForm = ({ schema, onSubmit, onRefresh, fields }: { schema: z.ZodObject
                         <Input type="file" accept="image/*, .pdf" {...form.register(fieldName)} disabled={isSubmitting}/> :
                         <Input type={fieldType} {...form.register(fieldName)} disabled={isSubmitting} placeholder={fieldName === 'link' ? 'https://...' : ''} />
                     }
+                    {hints?.[fieldName] && <p className="text-xs text-muted-foreground mt-1">{hints[fieldName]}</p>}
                     <p className="text-destructive text-sm mt-1">{form.formState.errors[fieldName]?.message as string}</p>
                 </div>
             ))}
