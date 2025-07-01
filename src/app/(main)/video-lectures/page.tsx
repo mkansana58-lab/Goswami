@@ -130,20 +130,22 @@ export default function VideoLecturesPage() {
                                         </Button>
                                     </DialogTrigger>
                                      {canPlay && (
-                                        <DialogContent className="max-w-3xl w-[90vw] aspect-video p-0 border-0">
+                                        <DialogContent className="max-w-3xl w-full p-0 border-0 overflow-hidden">
                                             {lecture.embedCode ? (
                                                 <div
                                                     dangerouslySetInnerHTML={{ __html: lecture.embedCode.replace(/width="[^"]*"/g, 'width="100%"').replace(/height="[^"]*"/g, 'height="100%"') }}
-                                                    className="w-full h-full [&>iframe]:w-full [&>iframe]:h-full [&>iframe]:rounded-lg"
+                                                    className="aspect-video w-full [&>iframe]:w-full [&>iframe]:h-full"
                                                 />
                                             ) : (
-                                                <iframe
-                                                    className="w-full h-full rounded-lg"
-                                                    src={embedUrl!}
-                                                    title={lecture.title}
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                                    allowFullScreen
-                                                ></iframe>
+                                                <div className="aspect-video w-full">
+                                                    <iframe
+                                                        className="w-full h-full"
+                                                        src={embedUrl!}
+                                                        title={lecture.title}
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                        allowFullScreen
+                                                    ></iframe>
+                                                </div>
                                             )}
                                         </DialogContent>
                                      )}

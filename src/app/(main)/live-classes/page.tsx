@@ -100,10 +100,10 @@ export default function LiveClassesPage() {
                                                 Watch in App
                                             </Button>
                                         </DialogTrigger>
-                                        <DialogContent className="max-w-3xl w-[90vw] aspect-video p-0 border-0">
+                                        <DialogContent className="max-w-3xl w-full p-0 border-0 overflow-hidden">
                                             <div
                                                 dangerouslySetInnerHTML={{ __html: cls.embedCode.replace(/width="[^"]*"/g, 'width="100%"').replace(/height="[^"]*"/g, 'height="100%"') }}
-                                                className="w-full h-full [&>iframe]:w-full [&>iframe]:h-full [&>iframe]:rounded-lg"
+                                                className="aspect-video w-full [&>iframe]:w-full [&>iframe]:h-full"
                                             />
                                         </DialogContent>
                                     </Dialog>
