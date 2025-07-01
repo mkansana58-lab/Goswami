@@ -80,7 +80,7 @@ export default function AiTutorPage() {
     try {
       const response = await askTutor({ question: values.question, imageDataUri: values.image });
       
-      if (response && response.answer) {
+      if (response && response.answer && response.answer.trim()) {
         setTutorResponse(response);
         
         // Try to generate audio. This is non-critical.

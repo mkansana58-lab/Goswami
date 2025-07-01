@@ -99,8 +99,7 @@ export default function OnlineScholarshipTestEntryPage() {
             }
         }
         
-        // Admin can bypass payment verification for testing purposes.
-        if (appData.isPaymentVerified || admin) {
+        if (appData.isPaymentVerified) {
             setVerifiedApplicant(appData);
             setStep('confirm');
         } else {

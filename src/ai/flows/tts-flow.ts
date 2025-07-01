@@ -31,7 +31,8 @@ const textToSpeechFlow = ai.defineFlow(
     outputSchema: TextToSpeechOutputSchema,
   },
   async (query) => {
-    if (!query) {
+    const trimmedQuery = query ? query.trim() : '';
+    if (!trimmedQuery) {
         throw new Error("Input text cannot be empty.");
     }
 
@@ -46,7 +47,7 @@ const textToSpeechFlow = ai.defineFlow(
           },
         },
       },
-      prompt: query,
+      prompt: trimmedQuery,
     });
 
     if (!media) {

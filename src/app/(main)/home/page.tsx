@@ -1,12 +1,13 @@
 "use client";
 
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import Script from 'next/script';
 import { useLanguage } from '@/hooks/use-language';
 import { featureGridLinks } from '@/lib/nav-links';
 import { cn } from '@/lib/utils';
+import { InspirationalMessages } from '@/components/home/inspirational-messages';
 
 
 const cardColors = [
@@ -31,13 +32,9 @@ export default function HomePage() {
         <h1 className="text-2xl font-bold text-primary">{t('appName')}</h1>
       </div>
 
-      <Card className="w-full max-w-2xl mb-8 bg-card border-primary/20 shadow-lg rounded-xl">
-        <CardContent className="p-4">
-          <p className="font-signature text-primary text-xl">
-            "{t('quote')}"
-          </p>
-        </CardContent>
-      </Card>
+      <div className="w-full max-w-2xl mb-8">
+        <InspirationalMessages />
+      </div>
       
       <div className="grid grid-cols-3 gap-3 md:gap-4 w-full max-w-2xl">
         {featureGridLinks.map((link, index) => (
