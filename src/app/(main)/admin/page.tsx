@@ -537,7 +537,8 @@ export default function AdminPage() {
                                 </Table>
                             </AdminSection>
 
-                            <AdminSection title="Registered Students" icon={Users}>
+                            <AdminSection title="Registered Students (App Users)" icon={Users}>
+                               <p className="text-sm text-muted-foreground -mt-4 mb-4">This list shows everyone who has registered an account on your app. For a web app, this is the equivalent of tracking "downloads".</p>
                                <Table><TableHeader><TableRow><TableHead>Photo</TableHead><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Registered On</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
                                    <TableBody>
                                        {data.students.map(s => (
