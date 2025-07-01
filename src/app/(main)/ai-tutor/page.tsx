@@ -76,30 +76,37 @@ export default function AiTutorPage() {
     setIsAudioLoading(true);
     setTutorResponse(null);
     setAudioUrl(null);
+    
     try {
       const response = await askTutor({ question: values.question, imageDataUri: values.image });
-      setTutorResponse(response);
-
-      // Automatically generate and play audio
-      try {
-        const audioResponse = await textToSpeech(response.answer);
-        setAudioUrl(audioResponse.media);
-      } catch (audioError) {
-        console.error("Error generating audio:", audioError);
-        toast({
-            variant: "destructive",
-            title: "Audio Error",
-            description: "Could not generate audio for this answer.",
-        });
+      
+      if (response && response.answer) {
+        setTutorResponse(response);
+        
+        // Try to generate audio. This is non-critical.
+        try {
+          const audioResponse = await textToSpeech(response.answer);
+          setAudioUrl(audioResponse.media);
+        } catch (audioError) {
+          console.error("Error generating audio:", audioError);
+          toast({
+              variant: "default",
+              title: "Audio Not Available",
+              description: "Could not generate audio for this answer, but you can still read it.",
+          });
+        }
+      } else {
+        throw new Error("The AI tutor did not provide a valid answer. Please try rephrasing your question.");
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching from AI Tutor:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "There was an unexpected error. Please try again.",
+        title: "An Error Occurred",
+        description: error.message || "There was an unexpected error. Please try again.",
       });
+      setTutorResponse(null);
     } finally {
       setIsLoading(false);
       setIsAudioLoading(false);
