@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import Script from 'next/script';
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -92,6 +91,33 @@ export default function AiTestPage() {
     }
     return () => clearTimeout(timerId);
   }, [adDialogState.open, adTimer, handleAdFinished]);
+
+  useEffect(() => {
+    if (adDialogState.open) {
+        const script = document.createElement('script');
+        script.async = true;
+        script.dataset.cfasync = 'false';
+        script.src = '//pl26865579.profitableratecpm.com/3d93a082141e459a57691d1ab6ade6fc/invoke.js';
+        script.id = 'ad-script-instance';
+
+        const container = document.getElementById('container-3d93a082141e459a57691d1ab6ade6fc');
+        if (container) {
+            // Add script to body to ensure it runs
+            document.body.appendChild(script);
+        }
+
+        return () => {
+            const existingScript = document.getElementById('ad-script-instance');
+            if (existingScript) {
+                existingScript.remove();
+            }
+            if (container) {
+                // Clear the container from any elements the ad script may have added
+                container.innerHTML = '';
+            }
+        };
+    }
+  }, [adDialogState.open]);
 
   const handleWatchAdClick = (enrollmentId: string) => {
     setAdTimer(45); // Reset timer
@@ -225,9 +251,6 @@ export default function AiTestPage() {
             </DialogHeader>
             <div className="aspect-video w-full flex items-center justify-center bg-black rounded-lg">
                 <div id="container-3d93a082141e459a57691d1ab6ade6fc"></div>
-                {adDialogState.open && (
-                    <Script key={adDialogState.enrollmentId} strategy="afterInteractive" async={true} data-cfasync="false" src="//pl26865579.profitableratecpm.com/3d93a082141e459a57691d1ab6ade6fc/invoke.js" />
-                )}
             </div>
             <div className="text-center font-mono text-lg p-4 bg-muted rounded-md">
                 {adTimer > 0 ? (
