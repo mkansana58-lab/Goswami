@@ -91,33 +91,36 @@ export default function AiTestPage() {
     }
     return () => clearTimeout(timerId);
   }, [adDialogState.open, adTimer, handleAdFinished]);
-
+  
   useEffect(() => {
     if (adDialogState.open) {
-        const script = document.createElement('script');
-        script.async = true;
-        script.dataset.cfasync = 'false';
-        script.src = '//pl26865579.profitableratecpm.com/3d93a082141e459a57691d1ab6ade6fc/invoke.js';
-        script.id = 'ad-script-instance';
-
+      const timeoutId = setTimeout(() => {
         const container = document.getElementById('container-3d93a082141e459a57691d1ab6ade6fc');
         if (container) {
-            // Add script to body to ensure it runs
-            document.body.appendChild(script);
+          const script = document.createElement('script');
+          script.async = true;
+          script.dataset.cfasync = 'false';
+          script.src = '//pl26865579.profitableratecpm.com/3d93a082141e459a57691d1ab6ade6fc/invoke.js';
+          script.id = 'ad-script-instance';
+          container.innerHTML = ''; // Clear previous content
+          container.appendChild(script);
         }
+      }, 100); // Small delay to ensure the dialog DOM is ready
 
-        return () => {
-            const existingScript = document.getElementById('ad-script-instance');
-            if (existingScript) {
-                existingScript.remove();
-            }
-            if (container) {
-                // Clear the container from any elements the ad script may have added
-                container.innerHTML = '';
-            }
-        };
+      return () => {
+        clearTimeout(timeoutId);
+        const script = document.getElementById('ad-script-instance');
+        if (script) {
+          script.remove();
+        }
+        const container = document.getElementById('container-3d93a082141e459a57691d1ab6ade6fc');
+        if (container) {
+          container.innerHTML = '';
+        }
+      };
     }
   }, [adDialogState.open]);
+
 
   const handleWatchAdClick = (enrollmentId: string) => {
     setAdTimer(45); // Reset timer
