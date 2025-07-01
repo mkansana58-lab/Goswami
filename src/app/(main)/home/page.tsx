@@ -1,9 +1,9 @@
-
 "use client";
 
 import { Card, CardContent } from '@/components/ui/card';
 import { ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+import Script from 'next/script';
 import { useLanguage } from '@/hooks/use-language';
 import { featureGridLinks } from '@/lib/nav-links';
 import { cn } from '@/lib/utils';
@@ -52,6 +52,19 @@ export default function HomePage() {
           </Link>
         ))}
       </div>
+
+      {/* Ad Container */}
+      <div className="mt-8 w-full max-w-2xl">
+        <Script
+          id="profitableratecpm-script"
+          strategy="afterInteractive"
+          async={true}
+          data-cfasync="false"
+          src="//pl26865579.profitableratecpm.com/3d93a082141e459a57691d1ab6ade6fc/invoke.js"
+        />
+        <div id="container-3d93a082141e459a57691d1ab6ade6fc"></div>
+      </div>
+
     </div>
   );
 }
