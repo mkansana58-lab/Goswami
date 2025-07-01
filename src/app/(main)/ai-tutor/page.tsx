@@ -18,6 +18,7 @@ import { Loader2, Sparkles, BookCheck, BrainCircuit, BarChart2, Headphones, Imag
 import { useToast } from '@/hooks/use-toast';
 import { fileToDataUrl } from '@/lib/utils';
 import Image from 'next/image';
+import { Label } from '@/components/ui/label';
 
 const formSchema = z.object({
   question: z.string().min(10, { message: "Please ask a more detailed question." }),
