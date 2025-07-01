@@ -3,15 +3,17 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Script from 'next/script';
 import { useLanguage } from '@/hooks/use-language';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { testsData, type TestDetails } from '@/lib/tests-data';
 import { Clock, FileQuestion, Languages, Lock, Loader2, Star, Key } from 'lucide-react';
-import { getCustomTests, getTestSettings, type CustomTest, type TestSetting, addTestEnrollment, getEnrollmentsForStudent, getTestResultsForStudentByTest, type TestEnrollment, getAppConfig } from '@/lib/firebase';
+import { getCustomTests, getTestSettings, type CustomTest, type TestSetting, addTestEnrollment, getEnrollmentsForStudent, getTestResultsForStudentByTest, type TestEnrollment, getAppConfig, grantExtraAttemptForAd } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function AiTestPage() {
   const { t } = useLanguage();
@@ -22,55 +24,88 @@ export default function AiTestPage() {
   const [enrolledTests, setEnrolledTests] = useState<TestEnrollment[]>([]);
   const [attemptCounts, setAttemptCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [adDialogState, setAdDialogState] = useState<{ open: boolean; enrollmentId: string | null }>({ open: false, enrollmentId: null });
+  const [adTimer, setAdTimer] = useState(45);
+  const [isGrantingAttempt, setIsGrantingAttempt] = useState<string | null>(null);
+
+  const fetchPageData = async () => {
+    setIsLoading(true);
+    try {
+        const [customTests, settings, config] = await Promise.all([
+            getCustomTests(),
+            getTestSettings(),
+            getAppConfig()
+        ]);
+        const staticTests = Object.values(testsData);
+        let allTestsData = [...staticTests, ...customTests];
+
+        if (config.scholarshipTestId) {
+            allTestsData = allTestsData.filter(test => test.id !== config.scholarshipTestId);
+        }
+
+        setAllTests(allTestsData);
+        setTestSettings(settings);
+
+        if (student) {
+            const enrollments = await getEnrollmentsForStudent(student.name);
+            setEnrolledTests(enrollments);
+
+            const counts: Record<string, number> = {};
+            const countPromises = allTestsData.map(async (test) => {
+                const results = await getTestResultsForStudentByTest(student.name, test.id);
+                counts[test.id] = results.length;
+            });
+            await Promise.all(countPromises);
+            setAttemptCounts(counts);
+        }
+    } catch (error) {
+        console.error("Failed to fetch tests data:", error);
+    } finally {
+        setIsLoading(false);
+    }
+};
 
   useEffect(() => {
-    const fetchPageData = async () => {
-        setIsLoading(true);
-        try {
-            const [customTests, settings, config] = await Promise.all([
-                getCustomTests(),
-                getTestSettings(),
-                getAppConfig()
-            ]);
-            const staticTests = Object.values(testsData);
-            let allTestsData = [...staticTests, ...customTests];
-
-            // Filter out the scholarship test if it's set, so it doesn't appear in the general list
-            if (config.scholarshipTestId) {
-                allTestsData = allTestsData.filter(test => test.id !== config.scholarshipTestId);
-            }
-
-            setAllTests(allTestsData);
-            setTestSettings(settings);
-
-            if (student) {
-                const enrollments = await getEnrollmentsForStudent(student.name);
-                setEnrolledTests(enrollments);
-
-                const counts: Record<string, number> = {};
-                const countPromises = allTestsData.map(async (test) => {
-                    const results = await getTestResultsForStudentByTest(student.name, test.id);
-                    counts[test.id] = results.length;
-                });
-                await Promise.all(countPromises);
-                setAttemptCounts(counts);
-            }
-        } catch (error) {
-            console.error("Failed to fetch tests data:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
     fetchPageData();
   }, [student]);
 
+  const handleAdFinished = async () => {
+    if (!adDialogState.enrollmentId || !student) return;
+    setIsGrantingAttempt(adDialogState.enrollmentId);
+    try {
+      await grantExtraAttemptForAd(adDialogState.enrollmentId);
+      await fetchPageData(); // Refetch all data to ensure UI consistency
+      toast({ title: "Success!", description: "1 extra attempt has been added." });
+    } catch (error) {
+      console.error(error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to add attempt. Please try again.' });
+    } finally {
+      setIsGrantingAttempt(null);
+      setAdDialogState({ open: false, enrollmentId: null });
+    }
+  };
+
+  useEffect(() => {
+    let timerId: NodeJS.Timeout;
+    if (adDialogState.open && adTimer > 0) {
+        timerId = setTimeout(() => setAdTimer(prev => prev - 1), 1000);
+    } else if (adDialogState.open && adTimer === 0) {
+        handleAdFinished();
+    }
+    return () => clearTimeout(timerId);
+  }, [adDialogState.open, adTimer]);
+
+  const handleWatchAdClick = (enrollmentId: string) => {
+    setAdTimer(45); // Reset timer
+    setAdDialogState({ open: true, enrollmentId: enrollmentId });
+  };
+  
   const handleEnroll = async (test: TestDetails | CustomTest) => {
     if (!student) return;
     try {
         const testName = t(test.title as any) || test.title;
         const code = await addTestEnrollment(student.name, test.id, testName);
         
-        // Refetch enrollments to get the latest data including the new one
         const updatedEnrollments = await getEnrollmentsForStudent(student.name);
         setEnrolledTests(updatedEnrollments);
 
@@ -83,7 +118,6 @@ export default function AiTestPage() {
         toast({ variant: 'destructive', title: t('enrollError') });
     }
   };
-
 
   if (isLoading) {
     return (
@@ -104,6 +138,7 @@ export default function AiTestPage() {
     const totalAttempts = enrollment?.allowedAttempts ?? 2;
     const attemptsWaived = enrollment?.attemptsWaived ?? false;
     const hasAttemptsLeft = attemptCount < totalAttempts || attemptsWaived;
+    const canWatchAd = isEnrolled && !hasAttemptsLeft && !attemptsWaived;
 
     const onEnrollClick = async () => {
         setIsEnrolling(true);
@@ -163,6 +198,12 @@ export default function AiTestPage() {
                     {!isEnabledByAdmin ? 'Locked' : t('enroll')}
                 </Button>
             )}
+             {canWatchAd && (
+                <Button variant="secondary" className="w-full mt-2" onClick={() => handleWatchAdClick(enrollment!.id!)} disabled={isGrantingAttempt === enrollment?.id}>
+                    {isGrantingAttempt === enrollment?.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Star className="mr-2 h-4 w-4" />}
+                    {t('watchAdForAttempt')}
+                </Button>
+            )}
             {isEnrolled && <p className="text-xs text-muted-foreground text-center mt-2">{attemptsWaived ? "Attempts: Unlimited" : `${t('attemptsLeft')}: ${Math.max(0, totalAttempts - attemptCount)} / ${totalAttempts}`}</p>}
         </CardFooter>
       </Card>
@@ -178,8 +219,32 @@ export default function AiTestPage() {
   const mockTestsToShow = testsToShow.filter(t => t.testType === 'mock' || t.testType === 'custom');
   const practiceTestsToShow = testsToShow.filter(t => t.testType === 'practice');
 
-
   return (
+    <>
+     <Dialog open={adDialogState.open} onOpenChange={(isOpen) => { if (!isOpen) setAdDialogState({ open: false, enrollmentId: null }) }}>
+        <DialogContent className="max-w-md">
+            <DialogHeader>
+                <DialogTitle>{t('watchAdForAttempt')}</DialogTitle>
+            </DialogHeader>
+            <div className="aspect-video w-full flex items-center justify-center bg-black rounded-lg">
+                <div id="container-3d93a082141e459a57691d1ab6ade6fc"></div>
+                {adDialogState.open && (
+                    <Script key={adDialogState.enrollmentId} strategy="afterInteractive" async={true} data-cfasync="false" src="//pl26865579.profitableratecpm.com/3d93a082141e459a57691d1ab6ade6fc/invoke.js" />
+                )}
+            </div>
+            <div className="text-center font-mono text-lg p-4 bg-muted rounded-md">
+                {adTimer > 0 ? (
+                    <p>Your attempt will be added in: {adTimer}s</p>
+                ) : (
+                    <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <p>Granting attempt...</p>
+                    </div>
+                )}
+            </div>
+        </DialogContent>
+    </Dialog>
+
     <div className="space-y-8">
       <div className="text-center">
         <h1 className="text-3xl font-bold text-primary">{t('aiTestTitle')}</h1>
@@ -216,5 +281,6 @@ export default function AiTestPage() {
         )}
       </div>
     </div>
+    </>
   );
 }

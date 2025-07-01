@@ -214,6 +214,7 @@ export const translations = {
     yourEnrollmentCodeIs: "Enrollment Successful! Your code is:",
     attemptsLeft: "Attempts Left",
     testLocked: "Test Locked",
+    watchAdForAttempt: "Watch Ad for 1 Attempt",
 
 
     // Admin Panel
@@ -493,6 +494,7 @@ export const translations = {
     yourEnrollmentCodeIs: "नामांकन सफल! आपका कोड है:",
     attemptsLeft: "शेष प्रयास",
     testLocked: "टेस्ट लॉक है",
+    watchAdForAttempt: "1 प्रयास के लिए विज्ञापन देखें",
 
 
     // Admin Panel
