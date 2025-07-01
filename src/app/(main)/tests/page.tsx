@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Script from 'next/script';
 import { useLanguage } from '@/hooks/use-language';
@@ -28,8 +28,7 @@ export default function AiTestPage() {
   const [adTimer, setAdTimer] = useState(45);
   const [isGrantingAttempt, setIsGrantingAttempt] = useState<string | null>(null);
 
-  const fetchPageData = async () => {
-    setIsLoading(true);
+  const fetchPageData = useCallback(async () => {
     try {
         const [customTests, settings, config] = await Promise.all([
             getCustomTests(),
@@ -60,16 +59,15 @@ export default function AiTestPage() {
         }
     } catch (error) {
         console.error("Failed to fetch tests data:", error);
-    } finally {
-        setIsLoading(false);
     }
-};
-
-  useEffect(() => {
-    fetchPageData();
   }, [student]);
 
-  const handleAdFinished = async () => {
+  useEffect(() => {
+    setIsLoading(true);
+    fetchPageData().finally(() => setIsLoading(false));
+  }, [fetchPageData]);
+
+  const handleAdFinished = useCallback(async () => {
     if (!adDialogState.enrollmentId || !student) return;
     setIsGrantingAttempt(adDialogState.enrollmentId);
     try {
@@ -83,7 +81,7 @@ export default function AiTestPage() {
       setIsGrantingAttempt(null);
       setAdDialogState({ open: false, enrollmentId: null });
     }
-  };
+  }, [adDialogState.enrollmentId, student, fetchPageData, toast]);
 
   useEffect(() => {
     let timerId: NodeJS.Timeout;
@@ -93,7 +91,7 @@ export default function AiTestPage() {
         handleAdFinished();
     }
     return () => clearTimeout(timerId);
-  }, [adDialogState.open, adTimer]);
+  }, [adDialogState.open, adTimer, handleAdFinished]);
 
   const handleWatchAdClick = (enrollmentId: string) => {
     setAdTimer(45); // Reset timer
@@ -106,8 +104,7 @@ export default function AiTestPage() {
         const testName = t(test.title as any) || test.title;
         const code = await addTestEnrollment(student.name, test.id, testName);
         
-        const updatedEnrollments = await getEnrollmentsForStudent(student.name);
-        setEnrolledTests(updatedEnrollments);
+        await fetchPageData();
 
         toast({
             title: t('yourEnrollmentCodeIs'),
