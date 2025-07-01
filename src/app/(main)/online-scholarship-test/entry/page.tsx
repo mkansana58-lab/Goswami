@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -79,19 +78,21 @@ export default function OnlineScholarshipTestEntryPage() {
             return;
         }
 
-        // If the logged-in user is NOT an admin, perform the student name check.
+        // First, check for payment verification for ALL users.
+        if (!appData.isPaymentVerified) {
+            setVerifiedApplicant(appData);
+            setStep('payment');
+            setIsLoading(false);
+            return;
+        }
+
+        // If payment IS verified, now check if the user is the correct student (if not admin).
         if (!admin) {
-            if (!student) {
-                // This case should be covered by the initial login check, but good to have as a fallback.
-                toast({ variant: "destructive", title: "Login Error", description: "You must be logged in as a student to take the test." });
-                setIsLoading(false);
-                return;
-            }
-            if (appData.fullName.trim().toLowerCase() !== student.name.trim().toLowerCase()) {
+            if (!student || appData.fullName.trim().toLowerCase() !== student.name.trim().toLowerCase()) {
                 toast({
                     variant: "destructive",
                     title: "Name Mismatch",
-                    description: `The name on this application (${appData.fullName}) does not match your logged-in name (${student.name}). Please check your details.`,
+                    description: `The name on this application (${appData.fullName}) does not match the logged-in student's name (${student?.name}). Please check your details.`,
                     duration: 5000,
                 });
                 setIsLoading(false);
@@ -99,13 +100,9 @@ export default function OnlineScholarshipTestEntryPage() {
             }
         }
         
-        if (appData.isPaymentVerified) {
-            setVerifiedApplicant(appData);
-            setStep('confirm');
-        } else {
-            setVerifiedApplicant(appData); // Set applicant data for payment screen
-            setStep('payment');
-        }
+        // All checks passed.
+        setVerifiedApplicant(appData);
+        setStep('confirm');
 
     } catch (error) {
         console.error("Verification error:", error);
