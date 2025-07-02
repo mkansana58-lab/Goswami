@@ -67,6 +67,7 @@ export const translations = {
     nextQuestion: "Next Question",
     correct: "Correct!",
     incorrect: "Incorrect!",
+    notifications: "Notifications",
 
     // Game Zone
     learningGames: "Learning Games",
@@ -345,6 +346,7 @@ export const translations = {
     nextQuestion: "अगला प्रश्न",
     correct: "सही!",
     incorrect: "गलत!",
+    notifications: "सूचनाएं",
 
     // Game Zone
     learningGames: "खेल-खेल में सीखें",

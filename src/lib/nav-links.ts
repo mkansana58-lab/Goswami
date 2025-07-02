@@ -29,7 +29,8 @@ import {
     BookText,
     Binary,
     Sparkles,
-    Target
+    Target,
+    Bell
   } from 'lucide-react';
   
   export const featureGridLinks = [

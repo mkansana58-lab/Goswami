@@ -8,10 +8,13 @@ import { useAuth } from '@/hooks/use-auth';
 import { BottomNavigationBar } from '@/components/layout/bottom-navigation';
 import { Header } from '@/components/layout/header';
 import { Loader2 } from 'lucide-react';
+import { setupForegroundMessageListener } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   const { student, isLoading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!isLoading && !student) {
@@ -19,6 +22,17 @@ export default function MainLayout({ children }: { children: ReactNode }) {
       return;
     }
   }, [student, isLoading, router]);
+
+  useEffect(() => {
+    // This function sets up a listener for foreground notifications
+    setupForegroundMessageListener((payload) => {
+        toast({
+            title: payload.notification.title,
+            description: payload.notification.body,
+        });
+    });
+  }, [toast]);
+
 
   if (isLoading || !student) {
     return (

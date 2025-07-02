@@ -39,21 +39,11 @@ const getYouTubeEmbedUrl = (url: string) => {
     return null;
 };
 
-// Helper to get a YouTube thumbnail from either a link or an embed code
-const getYouTubeThumbnail = (link?: string, embedCode?: string): string => {
-    let urlForIdExtraction = link;
-    if (!urlForIdExtraction && embedCode) {
-        const srcMatch = embedCode.match(/src="([^"]+)"/);
-        if (srcMatch && srcMatch[1]) {
-            urlForIdExtraction = srcMatch[1];
-        }
-    }
-
-    if (!urlForIdExtraction) return `https://placehold.co/400x225.png`;
-    
+// Helper to get a YouTube thumbnail
+const getYouTubeThumbnail = (videoUrl: string): string => {
     let videoId: string | null = null;
     try {
-        const urlObj = new URL(urlForIdExtraction);
+        const urlObj = new URL(videoUrl);
         if (urlObj.hostname === 'youtu.be') {
             videoId = urlObj.pathname.slice(1);
         } else if (urlObj.hostname.includes('youtube.com')) {
@@ -107,12 +97,12 @@ export default function VideoLecturesPage() {
             ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {lectures.map(lecture => {
-                        const embedUrl = lecture.link ? getYouTubeEmbedUrl(lecture.link) : null;
-                        const canPlay = lecture.embedCode || embedUrl;
+                        const embedUrl = getYouTubeEmbedUrl(lecture.videoUrl);
+                        const canPlay = !!embedUrl;
                         return (
                          <Card key={lecture.id} className="flex flex-col transition-transform hover:scale-105">
                             <img 
-                                src={getYouTubeThumbnail(lecture.link, lecture.embedCode)} 
+                                src={getYouTubeThumbnail(lecture.videoUrl)} 
                                 alt={lecture.title} 
                                 className="rounded-t-lg object-cover w-full aspect-video"
                             />
@@ -131,22 +121,15 @@ export default function VideoLecturesPage() {
                                     </DialogTrigger>
                                      {canPlay && (
                                         <DialogContent className="max-w-3xl w-full p-0 border-0 overflow-hidden">
-                                            {lecture.embedCode ? (
-                                                <div
-                                                    dangerouslySetInnerHTML={{ __html: lecture.embedCode.replace(/width="[^"]*"/g, 'width="100%"').replace(/height="[^"]*"/g, 'height="100%"') }}
-                                                    className="aspect-video w-full [&>iframe]:w-full [&>iframe]:h-full"
-                                                />
-                                            ) : (
-                                                <div className="aspect-video w-full">
-                                                    <iframe
-                                                        className="w-full h-full"
-                                                        src={embedUrl!}
-                                                        title={lecture.title}
-                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                                        allowFullScreen
-                                                    ></iframe>
-                                                </div>
-                                            )}
+                                            <div className="aspect-video w-full">
+                                                <iframe
+                                                    className="w-full h-full"
+                                                    src={embedUrl!}
+                                                    title={lecture.title}
+                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                    allowFullScreen
+                                                ></iframe>
+                                            </div>
                                         </DialogContent>
                                      )}
                                 </Dialog>

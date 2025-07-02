@@ -170,12 +170,12 @@ export function Header() {
                     <Button variant="ghost" size="icon" className="relative text-primary">
                         {hasNewNotifications && <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-destructive animate-pulse" />}
                         <Bell className="h-6 w-6" />
-                        <span className="sr-only">Notifications</span>
+                        <span className="sr-only">{t('notifications')}</span>
                     </Button>
                 </SheetTrigger>
                 <SheetContent className="flex flex-col">
                     <SheetHeader>
-                        <SheetTitle>Notifications</SheetTitle>
+                        <SheetTitle>{t('notifications')}</SheetTitle>
                     </SheetHeader>
                     <ScrollArea className="flex-grow mt-4 -mx-6">
                       <div className="px-6 space-y-4">
