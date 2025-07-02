@@ -8,11 +8,10 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription }
 import { Button } from '@/components/ui/button';
 import { testsData, type TestDetails } from '@/lib/tests-data';
 import { Clock, FileQuestion, Languages, Lock, Loader2, Star, Key } from 'lucide-react';
-import { getCustomTests, getTestSettings, type CustomTest, type TestSetting, addTestEnrollment, getEnrollmentsForStudent, getTestResultsForStudentByTest, type TestEnrollment, getAppConfig, grantExtraAttemptForAd } from '@/lib/firebase';
+import { getCustomTests, getTestSettings, type CustomTest, type TestSetting, addTestEnrollment, getEnrollmentsForStudent, getTestResultsForStudentByTest, type TestEnrollment, getAppConfig } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function AiTestPage() {
   const { t } = useLanguage();
@@ -23,9 +22,6 @@ export default function AiTestPage() {
   const [enrolledTests, setEnrolledTests] = useState<TestEnrollment[]>([]);
   const [attemptCounts, setAttemptCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [adDialogState, setAdDialogState] = useState<{ open: boolean; enrollmentId: string | null }>({ open: false, enrollmentId: null });
-  const [adTimer, setAdTimer] = useState(45);
-  const [isGrantingAttempt, setIsGrantingAttempt] = useState<string | null>(null);
 
   const fetchPageData = useCallback(async () => {
     try {
@@ -66,67 +62,6 @@ export default function AiTestPage() {
     fetchPageData().finally(() => setIsLoading(false));
   }, [fetchPageData]);
 
-  const handleAdFinished = useCallback(async () => {
-    if (!adDialogState.enrollmentId || !student) return;
-    setIsGrantingAttempt(adDialogState.enrollmentId);
-    try {
-      await grantExtraAttemptForAd(adDialogState.enrollmentId);
-      await fetchPageData(); // Refetch all data to ensure UI consistency
-      toast({ title: "Success!", description: "1 extra attempt has been added." });
-    } catch (error) {
-      console.error(error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to add attempt. Please try again.' });
-    } finally {
-      setIsGrantingAttempt(null);
-      setAdDialogState({ open: false, enrollmentId: null });
-    }
-  }, [adDialogState.enrollmentId, student, fetchPageData, toast]);
-
-  useEffect(() => {
-    let timerId: NodeJS.Timeout;
-    if (adDialogState.open && adTimer > 0) {
-        timerId = setTimeout(() => setAdTimer(prev => prev - 1), 1000);
-    } else if (adDialogState.open && adTimer === 0) {
-        handleAdFinished();
-    }
-    return () => clearTimeout(timerId);
-  }, [adDialogState.open, adTimer, handleAdFinished]);
-  
-  useEffect(() => {
-    if (adDialogState.open) {
-      const timeoutId = setTimeout(() => {
-        const container = document.getElementById('container-3d93a082141e459a57691d1ab6ade6fc');
-        if (container) {
-          const script = document.createElement('script');
-          script.async = true;
-          script.dataset.cfasync = 'false';
-          script.src = '//pl26865579.profitableratecpm.com/3d93a082141e459a57691d1ab6ade6fc/invoke.js';
-          script.id = 'ad-script-instance';
-          container.innerHTML = ''; // Clear previous content
-          container.appendChild(script);
-        }
-      }, 100); // Small delay to ensure the dialog DOM is ready
-
-      return () => {
-        clearTimeout(timeoutId);
-        const script = document.getElementById('ad-script-instance');
-        if (script) {
-          script.remove();
-        }
-        const container = document.getElementById('container-3d93a082141e459a57691d1ab6ade6fc');
-        if (container) {
-          container.innerHTML = '';
-        }
-      };
-    }
-  }, [adDialogState.open]);
-
-
-  const handleWatchAdClick = (enrollmentId: string) => {
-    setAdTimer(45); // Reset timer
-    setAdDialogState({ open: true, enrollmentId: enrollmentId });
-  };
-  
   const handleEnroll = async (test: TestDetails | CustomTest) => {
     if (!student) return;
     try {
@@ -164,8 +99,7 @@ export default function AiTestPage() {
     const totalAttempts = enrollment?.allowedAttempts ?? 2;
     const attemptsWaived = enrollment?.attemptsWaived ?? false;
     const hasAttemptsLeft = attemptCount < totalAttempts || attemptsWaived;
-    const canWatchAd = isEnrolled && !hasAttemptsLeft && !attemptsWaived;
-
+    
     const onEnrollClick = async () => {
         setIsEnrolling(true);
         await handleEnroll(test);
@@ -224,12 +158,6 @@ export default function AiTestPage() {
                     {!isEnabledByAdmin ? 'Locked' : t('enroll')}
                 </Button>
             )}
-             {canWatchAd && (
-                <Button variant="secondary" className="w-full mt-2" onClick={() => handleWatchAdClick(enrollment!.id!)} disabled={isGrantingAttempt === enrollment?.id}>
-                    {isGrantingAttempt === enrollment?.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Star className="mr-2 h-4 w-4" />}
-                    {t('watchAdForAttempt')}
-                </Button>
-            )}
             {isEnrolled && <p className="text-xs text-muted-foreground text-center mt-2">{attemptsWaived ? "Attempts: Unlimited" : `${t('attemptsLeft')}: ${Math.max(0, totalAttempts - attemptCount)} / ${totalAttempts}`}</p>}
         </CardFooter>
       </Card>
@@ -246,28 +174,6 @@ export default function AiTestPage() {
   const practiceTestsToShow = testsToShow.filter(t => t.testType === 'practice');
 
   return (
-    <>
-     <Dialog open={adDialogState.open} onOpenChange={(isOpen) => { if (!isOpen) setAdDialogState({ open: false, enrollmentId: null }) }}>
-        <DialogContent className="max-w-md">
-            <DialogHeader>
-                <DialogTitle>{t('watchAdForAttempt')}</DialogTitle>
-            </DialogHeader>
-            <div className="aspect-video w-full flex items-center justify-center bg-black rounded-lg">
-                <div id="container-3d93a082141e459a57691d1ab6ade6fc"></div>
-            </div>
-            <div className="text-center font-mono text-lg p-4 bg-muted rounded-md">
-                {adTimer > 0 ? (
-                    <p>Your attempt will be added in: {adTimer}s</p>
-                ) : (
-                    <div className="flex items-center justify-center gap-2">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        <p>Granting attempt...</p>
-                    </div>
-                )}
-            </div>
-        </DialogContent>
-    </Dialog>
-
     <div className="space-y-8">
       <div className="text-center">
         <h1 className="text-3xl font-bold text-primary">{t('aiTestTitle')}</h1>
@@ -304,6 +210,5 @@ export default function AiTestPage() {
         )}
       </div>
     </div>
-    </>
   );
 }

@@ -708,14 +708,6 @@ export async function updateEnrollmentAllowedAttempts(enrollmentId: string, atte
     await updateDoc(enrollmentRef, { allowedAttempts: attempts });
 }
 
-export async function grantExtraAttemptForAd(enrollmentId: string): Promise<void> {
-    if (!db) throw new Error("Firestore DB not initialized.");
-    const enrollmentRef = doc(db, "testEnrollments", enrollmentId);
-    await updateDoc(enrollmentRef, {
-        allowedAttempts: increment(1)
-    });
-}
-
 export const getEnrollmentsForStudent = async (studentName: string): Promise<TestEnrollment[]> => {
     if (!db) return [];
     const q = query(collection(db, "testEnrollments"), where("studentName", "==", studentName));

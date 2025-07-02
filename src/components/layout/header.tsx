@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu, Bell, User, ShieldCheck, Loader2, Newspaper, Trophy, GraduationCap, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,9 +51,33 @@ export function Header() {
   const pathname = usePathname();
   const { admin, student, logout } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [hasNewNotifications, setHasNewNotifications] = useState(false);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const isFirebaseConfigured = !!firebaseConfig.projectId;
+
+   useEffect(() => {
+    const checkForNewNotifications = async () => {
+        if (!isFirebaseConfigured || !student) return;
+        
+        const lastCheckString = localStorage.getItem('lastNotificationCheck');
+        const lastCheck = lastCheckString ? new Date(parseInt(lastCheckString, 10)) : new Date(0);
+
+        try {
+            const allNotifications = await getNotifications();
+            const userNotifications = allNotifications.filter(n => !n.recipient || n.recipient === student.name);
+            
+            const hasNew = userNotifications.some(n => n.createdAt && n.createdAt.toDate() > lastCheck);
+            if (hasNew) {
+                setHasNewNotifications(true);
+            }
+        } catch (e) {
+            console.error("Failed to check for new notifications:", e);
+        }
+    };
+
+    checkForNewNotifications();
+  }, [isFirebaseConfigured, student]);
 
   const fetchNotifications = async () => {
     if (!isFirebaseConfigured) {
@@ -135,9 +159,16 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2">
-            <Sheet onOpenChange={(open) => { if (open) fetchNotifications(); }}>
+            <Sheet onOpenChange={(open) => { 
+                if (open) {
+                    fetchNotifications();
+                    localStorage.setItem('lastNotificationCheck', Date.now().toString());
+                    setHasNewNotifications(false);
+                } 
+             }}>
                 <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-primary">
+                    <Button variant="ghost" size="icon" className="relative text-primary">
+                        {hasNewNotifications && <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-destructive animate-pulse" />}
                         <Bell className="h-6 w-6" />
                         <span className="sr-only">Notifications</span>
                     </Button>
