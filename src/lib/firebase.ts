@@ -3,7 +3,6 @@
 // firebase.ts
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getFirestore, collection, getDocs, type Firestore, query, orderBy, Timestamp, addDoc, where, limit, doc, setDoc, getDoc, deleteDoc, updateDoc, increment, runTransaction } from "firebase/firestore";
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 // Firebase configuration from environment variables
 export const firebaseConfig = {
@@ -32,56 +31,6 @@ function initializeFirebase() {
 
 // Ensure Firebase is initialized
 initializeFirebase();
-
-// --- Push Notifications ---
-
-export async function requestNotificationPermission() {
-    if (!db || typeof window === 'undefined' || !('Notification' in window)) {
-        console.error("This browser does not support desktop notification or Firebase is not initialized.");
-        return null;
-    }
-
-    const messaging = getMessaging(app);
-
-    // IMPORTANT: Generate this VAPID key in your Firebase project console:
-    // Project Settings > Cloud Messaging > Web configuration > Web Push certificates
-    const vapidKey = "YOUR_VAPID_KEY_FROM_FIREBASE_CONSOLE"; 
-
-    try {
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-            console.log('Notification permission granted.');
-            const currentToken = await getToken(messaging, { vapidKey: vapidKey });
-            if (currentToken) {
-                console.log('FCM Token:', currentToken);
-                // TODO: Send this token to your server to store it against the current user.
-                // This token is used to send notifications to this specific device from your backend.
-                return currentToken;
-            } else {
-                console.log('No registration token available. Request permission to generate one.');
-                return null;
-            }
-        } else {
-            console.log('Unable to get permission to notify.');
-            return null;
-        }
-    } catch (err) {
-        console.error('An error occurred while retrieving token. ', err);
-        return null;
-    }
-}
-
-// Call this function in your main layout to listen for foreground messages
-export function setupForegroundMessageListener(callback: (payload: any) => void) {
-    if (firebaseConfig.projectId) {
-        const messaging = getMessaging(app);
-        onMessage(messaging, (payload) => {
-            console.log('Foreground message received. ', payload);
-            callback(payload);
-        });
-    }
-}
-
 
 // --- Interfaces ---
 
