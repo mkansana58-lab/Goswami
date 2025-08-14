@@ -2,7 +2,27 @@
 "use client";
 // firebase.ts
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getFirestore, collection, getDocs, type Firestore, query, orderBy, Timestamp, addDoc, where, limit, doc, setDoc, getDoc, deleteDoc, updateDoc, increment, runTransaction } from "firebase/firestore";
+import { 
+    getFirestore, 
+    collection, 
+    getDocs, 
+    type Firestore, 
+    query, 
+    orderBy, 
+    Timestamp, 
+    addDoc, 
+    where, 
+    limit, 
+    doc, 
+    setDoc, 
+    getDoc, 
+    deleteDoc, 
+    updateDoc, 
+    increment, 
+    runTransaction,
+    enableIndexedDbPersistence,
+    onSnapshot
+} from "firebase/firestore";
 
 // Firebase configuration from environment variables
 export const firebaseConfig = {
@@ -17,6 +37,7 @@ export const firebaseConfig = {
 
 let app: FirebaseApp | undefined;
 let db: Firestore | undefined;
+let persistenceEnabled = false;
 
 function getDb(): Firestore {
     if (!firebaseConfig.projectId) {
@@ -27,6 +48,24 @@ function getDb(): Firestore {
     }
     if (!db) {
         db = getFirestore(app);
+        if (typeof window !== 'undefined' && !persistenceEnabled) {
+            try {
+                enableIndexedDbPersistence(db)
+                    .then(() => {
+                        persistenceEnabled = true;
+                        console.log("Firebase persistence enabled.");
+                    })
+                    .catch((err) => {
+                        if (err.code == 'failed-precondition') {
+                            console.warn("Firebase persistence failed: multiple tabs open.");
+                        } else if (err.code == 'unimplemented') {
+                            console.warn("Firebase persistence failed: browser does not support it.");
+                        }
+                    });
+            } catch (error) {
+                console.error("Error enabling persistence:", error);
+            }
+        }
     }
     return db;
 }
@@ -723,3 +762,5 @@ export async function getTestEnrollments(): Promise<TestEnrollment[]> {
 }
 
 export { app, db };
+
+    
