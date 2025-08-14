@@ -44,12 +44,6 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const ADMIN_ACCESS_KEY = 'G$DA_Director_Panel_#2024!_SecureAccessKey';
 const ADMIN_NAME = 'GSDA Director';
 
-const convertTimestamps = (data: any): any => {
-    if (data?.createdAt && typeof data.createdAt === 'number') {
-        return { ...data, createdAt: timestampToDate(data.createdAt) };
-    }
-    return data;
-}
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [student, setStudent] = useState<StudentData | null>(null);
@@ -59,21 +53,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshStudentData = useCallback(async (name: string) => {
     const freshData = await getStudent(name);
     if (freshData) {
-        const convertedData = convertTimestamps(freshData);
-        setStudent(convertedData);
-        localStorage.setItem('student', JSON.stringify(convertedData));
+        setStudent(freshData);
+        localStorage.setItem('student', JSON.stringify(freshData));
     }
   }, []);
 
   useEffect(() => {
     try {
+      setIsLoading(true);
       const storedStudent = localStorage.getItem('student');
       if (storedStudent) {
         const parsedStudent: StudentData = JSON.parse(storedStudent);
-        const convertedData = convertTimestamps(parsedStudent);
-        setStudent(convertedData);
-        refreshStudentData(convertedData.name); // Refresh data on load
+        setStudent(parsedStudent);
+        // Refresh data on load to ensure it's up to date
+        refreshStudentData(parsedStudent.name).finally(() => setIsLoading(false));
+      } else {
+        setIsLoading(false);
       }
+      
       const storedAdmin = localStorage.getItem('admin');
       if (storedAdmin) {
         setAdmin(JSON.parse(storedAdmin));
@@ -82,23 +79,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error("Failed to parse auth data from localStorage", error);
       localStorage.removeItem('student');
       localStorage.removeItem('admin');
-    } finally {
       setIsLoading(false);
     }
   }, [refreshStudentData]);
 
   const loginStudent = useCallback(async (name: string, password?: string): Promise<boolean> => {
-    const studentData = await getStudent(name);
-    if (studentData) {
-        const convertedData = convertTimestamps(studentData);
-        setStudent(convertedData);
-        localStorage.setItem('student', JSON.stringify(convertedData));
-        return true;
+    setIsLoading(true);
+    try {
+        const studentData = await getStudent(name);
+        if (studentData) {
+            setStudent(studentData);
+            localStorage.setItem('student', JSON.stringify(studentData));
+            return true;
+        }
+        return false;
+    } finally {
+        setIsLoading(false);
     }
-    return false;
   }, []);
 
   const registerStudent = useCallback(async (data: RegisterValues): Promise<boolean> => {
+    setIsLoading(true);
     let photoUrl = "";
     const photoFile = data.photo?.[0];
 
@@ -107,35 +108,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             photoUrl = await fileToDataUrl(photoFile);
         } catch (e) {
             console.error("Image processing error:", e);
+            setIsLoading(false);
             throw e;
         }
     }
     
     const { password, username, photo, ...restOfData } = data;
     
-    const newStudentData: Omit<StudentData, 'id'> = {
+    const newStudentData: Omit<StudentData, 'id'|'createdAt'> & {createdAt: object} = {
         name: username,
         ...restOfData,
         photoUrl: photoUrl,
-        createdAt: Date.now() // Use simple timestamp number
+        quizWinnings: 0,
+        createdAt: serverTimestamp() // Use server timestamp
     };
 
     try {
         if (!db) return false;
         await set(ref(db, `students/${username}`), newStudentData);
         
-        const finalStudentData = {
-            ...newStudentData,
-            id: username,
-            createdAt: timestampToDate(newStudentData.createdAt)
-        } as StudentData;
-
-        setStudent(finalStudentData);
-        localStorage.setItem('student', JSON.stringify(finalStudentData));
-        return true;
+        // After writing, fetch the full data to get the server-generated timestamp
+        const savedStudent = await getStudent(username);
+        if (savedStudent) {
+             setStudent(savedStudent);
+             localStorage.setItem('student', JSON.stringify(savedStudent));
+             return true;
+        }
+        return false;
     } catch (error) {
         console.error("Error creating student:", error);
         return false;
+    } finally {
+        setIsLoading(false);
     }
   }, []);
 
@@ -164,3 +168,5 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     </AuthContext.Provider>
   );
 };
+
+    
