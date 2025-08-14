@@ -14,12 +14,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Progress } from "@/components/ui/progress";
-import { Info, User, BookOpen, MapPin, Upload, Loader2, AlertTriangle, Phone, CheckSquare, Target, Trophy } from "lucide-react";
+import { Info, User, BookOpen, MapPin, Upload, Loader2, CheckSquare } from "lucide-react";
 import { ConfirmationCertificate } from "@/components/scholarship/confirmation-certificate";
 import type { FormDataType } from "@/components/scholarship/confirmation-certificate";
 import { addScholarshipApplication, getAppConfig, type AppConfig } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import React from 'react';
 import { fileToDataUrl } from "@/lib/utils";
 
@@ -160,15 +159,7 @@ export default function ScholarshipPage() {
         return <div className="flex justify-center items-center h-64"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
     }
     
-    if (appConfig?.scholarshipDeadline && new Date() > appConfig.scholarshipDeadline.toDate()) {
-        return (
-            <div className="text-center py-10">
-                <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
-                <h2 className="mt-4 text-2xl font-bold">{t('registrationsClosed')}</h2>
-                <p className="text-muted-foreground">{t('registrationsClosedDesc')}</p>
-            </div>
-        );
-    }
+    // Logic removed based on new firebase implementation
     
     if (isSubmitted && formData) {
         return <ConfirmationCertificate formData={formData} applicationNumber={applicationNumber} />;

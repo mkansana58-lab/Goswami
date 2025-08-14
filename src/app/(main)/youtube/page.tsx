@@ -146,7 +146,7 @@ export default function YouTubePage() {
                                             {t('appName')}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
-                                            {format(lecture.createdAt.toDate(), 'PPP')}
+                                            {format(new Date(lecture.createdAt), 'PPP')}
                                         </p>
                                     </div>
                                 </div>

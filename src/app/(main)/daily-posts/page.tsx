@@ -57,7 +57,7 @@ export default function DailyPostsPage() {
                             )}
                             <CardHeader>
                                 <CardTitle>{post.title}</CardTitle>
-                                <p className="text-sm text-muted-foreground pt-1">{format(post.createdAt.toDate(), 'PPP')}</p>
+                                <p className="text-sm text-muted-foreground pt-1">{format(new Date(post.createdAt), 'PPP')}</p>
                             </CardHeader>
                             <CardContent className="flex-grow">
                                 <p>{post.content}</p>

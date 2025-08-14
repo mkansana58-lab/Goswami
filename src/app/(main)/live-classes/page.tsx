@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/hooks/use-language';
-import { getLiveClasses, type LiveClass, firebaseConfig } from '@/lib/firebase';
+import { getLiveClasses, type LiveClass, firebaseConfig, timestampToDate } from '@/lib/firebase';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioTower, Calendar, Clock, ExternalLink, Loader2, Video } from 'lucide-react';
@@ -14,7 +14,7 @@ export default function LiveClassesPage() {
     const { t } = useLanguage();
     const [classes, setClasses] = useState<LiveClass[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const isFirebaseConfigured = !!firebaseConfig.projectId;
+    const isFirebaseConfigured = !!firebaseConfig.databaseURL;
 
     useEffect(() => {
         async function fetchClasses() {
@@ -36,13 +36,13 @@ export default function LiveClassesPage() {
     }, [isFirebaseConfigured]);
 
     const formatScheduledAt = (timestamp: any) => {
-        if (!timestamp || typeof timestamp.toDate !== 'function') {
+        if (!timestamp) {
             return { date: 'N/A', time: 'N/A' };
         }
-        const date = timestamp.toDate();
+        const date = new Date(timestamp);
         return {
-            date: format(date, 'PPP'), // e.g., Jun 21, 2024
-            time: format(date, 'p')    // e.g., 12:00 PM
+            date: format(date, 'PPP'),
+            time: format(date, 'p')
         };
     };
 

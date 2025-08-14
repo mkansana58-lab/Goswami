@@ -54,7 +54,7 @@ export function Header() {
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const isFirebaseConfigured = !!firebaseConfig.projectId;
+  const isFirebaseConfigured = !!firebaseConfig.databaseURL;
 
    useEffect(() => {
     async function checkForNewNotifications() {
@@ -67,7 +67,7 @@ export function Header() {
             const allNotifications = await getNotifications();
             const userNotifications = allNotifications.filter(n => !n.recipient || n.recipient === student.name);
             
-            const hasNew = userNotifications.some(n => n.createdAt && n.createdAt.toDate() > lastCheck);
+            const hasNew = userNotifications.some(n => n.createdAt && new Date(n.createdAt) > lastCheck);
             if (hasNew) {
                 setHasNewNotifications(true);
             }
@@ -89,7 +89,6 @@ export function Header() {
     setIsLoadingNotifications(true);
     try {
         const allNotifications = await getNotifications();
-        // Filter notifications: show public ones (no recipient) or ones addressed to the current user.
         const userNotifications = allNotifications.filter(n => !n.recipient || (student && n.recipient === student.name));
         setNotifications(userNotifications);
     } catch (e) {
@@ -193,7 +192,7 @@ export function Header() {
                                        <p className="font-semibold">{n.title}</p>
                                        <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{n.content}</p>
                                        <p className="text-xs text-muted-foreground text-right mt-2">
-                                           {n.createdAt ? formatDistanceToNow(n.createdAt.toDate(), { addSuffix: true }) : ''}
+                                           {n.createdAt ? formatDistanceToNow(new Date(n.createdAt), { addSuffix: true }) : ''}
                                        </p>
                                    </div>
                                 </div>

@@ -4,8 +4,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useLanguage } from '@/hooks/use-language';
-import { addChatMessage, type ChatMessage } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { addChatMessage, type ChatMessage, db } from '@/lib/firebase';
+import { ref, query, orderByChild, onValue } from 'firebase/database';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -14,7 +14,6 @@ import { format } from 'date-fns';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { fileToDataUrl } from '@/lib/utils';
-import { getFirestore } from "firebase/firestore";
 
 export default function GroupChatPage() {
     const { student } = useAuth();
@@ -31,14 +30,24 @@ export default function GroupChatPage() {
 
     useEffect(() => {
         try {
-            const db = getFirestore();
-            const q = query(collection(db, "chatMessages"), orderBy("createdAt", "asc"));
-            const unsubscribe = onSnapshot(q, (querySnapshot) => {
-                const msgs: ChatMessage[] = [];
-                querySnapshot.forEach((doc) => {
-                    msgs.push({ id: doc.id, ...doc.data() } as ChatMessage);
-                });
-                setMessages(msgs);
+            if (!db) {
+                console.error("Realtime DB not available");
+                setIsLoading(false);
+                return;
+            }
+            const messagesRef = ref(db, "chatMessages");
+            const q = query(messagesRef, orderByChild("createdAt"));
+            const unsubscribe = onValue(q, (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    const msgs: ChatMessage[] = Object.keys(data).map(key => ({
+                        id: key,
+                        ...data[key]
+                    }));
+                    setMessages(msgs);
+                } else {
+                    setMessages([]);
+                }
                 setIsLoading(false);
             }, (error) => {
                 console.error("Error fetching chat messages:", error);
@@ -47,7 +56,7 @@ export default function GroupChatPage() {
 
             return () => unsubscribe();
         } catch(e) {
-            console.error("Firestore not available", e);
+            console.error("Firebase not available", e);
             setIsLoading(false);
         }
     }, []);
@@ -116,7 +125,6 @@ export default function GroupChatPage() {
 
     return (
         <div className="flex flex-col h-[calc(100vh-8rem)] bg-card rounded-xl border">
-             {/* Header Section */}
              <div className="flex items-center gap-3 p-3 border-b bg-card">
                 <MessagesSquare className="h-8 w-8 text-primary" />
                 <div>
@@ -125,7 +133,6 @@ export default function GroupChatPage() {
                 </div>
             </div>
 
-            {/* Chat Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/30">
                  {isLoading ? (
                     <div className="flex justify-center items-center h-full">
@@ -159,7 +166,7 @@ export default function GroupChatPage() {
                                         )}
                                         {msg.text && <p className="text-sm whitespace-pre-wrap">{msg.text}</p>}
                                     </div>
-                                     <p className="text-xs text-muted-foreground px-1 mt-1">{msg.createdAt ? format(msg.createdAt.toDate(), 'p') : ''}</p>
+                                     <p className="text-xs text-muted-foreground px-1 mt-1">{msg.createdAt ? format(new Date(msg.createdAt), 'p') : ''}</p>
                                 </div>
                             </div>
                         );
@@ -168,7 +175,6 @@ export default function GroupChatPage() {
                  <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area */}
             <div className="p-2 border-t bg-card">
                  {imagePreview && (
                     <div className="relative w-24 h-24 p-2 border rounded-md self-start mb-2 bg-background/50">

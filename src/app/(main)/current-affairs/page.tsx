@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLanguage } from "@/hooks/use-language";
-import { getCurrentAffairs, type CurrentAffair } from '@/lib/firebase';
+import { getCurrentAffairs, type CurrentAffair, timestampToDate } from '@/lib/firebase';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Loader2, ScrollText } from 'lucide-react';
 import { format } from 'date-fns';
@@ -44,7 +44,7 @@ export default function CurrentAffairsPage() {
                         <Card key={item.id}>
                             <CardHeader>
                                 <CardTitle>{item.title}</CardTitle>
-                                <p className="text-sm text-muted-foreground">{format(item.createdAt.toDate(), 'PPP')}</p>
+                                <p className="text-sm text-muted-foreground">{format(new Date(item.createdAt), 'PPP')}</p>
                             </CardHeader>
                             <CardContent>
                                 <p className="whitespace-pre-wrap">{item.content}</p>

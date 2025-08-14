@@ -44,8 +44,8 @@ export default function TestResultPage() {
                     setUserAnswers(answers);
                     
                     let totalCorrect = 0;
-                    questions.forEach((q: Question, index: number) => {
-                        if (answers[index] === q.answer) {
+                    questions.forEach((q: Question) => {
+                        if (answers[q.id] === q.answer) {
                             totalCorrect++;
                         }
                     });
@@ -53,29 +53,27 @@ export default function TestResultPage() {
                     let subjectAnalyses: SubjectAnalysis[] = [];
                     if (testDetails.testType !== 'custom' && 'subjects' in testDetails) {
                         let questionCursor = 0;
-                        subjectAnalyses = testDetails.subjects.map((subject: Subject) => {
+                        testDetails.subjects.forEach((subject: Subject) => {
                             let subjectCorrect = 0;
                             const subjectQuestions = questions.slice(questionCursor, questionCursor + subject.questionCount);
                             
-                            subjectQuestions.forEach((q: Question, index: number) => {
-                                const overallIndex = questionCursor + index;
-                                if (answers[overallIndex] === q.answer) {
+                            subjectQuestions.forEach((q: Question) => {
+                                if (answers[q.id] === q.answer) {
                                     subjectCorrect++;
                                 }
                             });
                             
                             questionCursor += subject.questionCount;
 
-                            return {
+                            subjectAnalyses.push({
                                 name: t(subject.name as any),
                                 score: subjectCorrect,
                                 total: subject.questionCount
-                            };
+                            });
                         });
                     } else {
                         subjectAnalyses.push({ name: 'Overall Score', score: totalCorrect, total: testDetails.totalQuestions });
                     }
-
 
                     const timeTaken = (testDetails.timeLimit * 60) - timeLeft;
                     const status = (totalCorrect / testDetails.totalQuestions) >= 0.4 ? 'Pass' : 'Fail';
@@ -139,7 +137,7 @@ export default function TestResultPage() {
                 <CardHeader><CardTitle>{t('reviewAnswers')}</CardTitle></CardHeader>
                 <CardContent className="space-y-6">
                     {allQuestions.map((question, index) => {
-                        const userAnswer = userAnswers[index];
+                        const userAnswer = userAnswers[question.id];
                         const isCorrect = userAnswer === question.answer;
                         return (
                             <div key={index} className="p-4 border rounded-lg">

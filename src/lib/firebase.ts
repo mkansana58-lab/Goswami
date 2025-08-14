@@ -1,30 +1,24 @@
 
 "use client";
-// firebase.ts
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { 
-    getFirestore, 
-    collection, 
-    getDocs, 
-    type Firestore, 
+    getDatabase, 
+    ref, 
+    set, 
+    get, 
+    child, 
+    push, 
+    update, 
+    remove, 
     query, 
-    orderBy, 
-    Timestamp, 
-    addDoc, 
-    where, 
-    limit, 
-    doc, 
-    setDoc, 
-    getDoc, 
-    deleteDoc, 
-    updateDoc, 
-    increment, 
+    orderByChild, 
+    equalTo, 
+    serverTimestamp,
     runTransaction,
-    enableIndexedDbPersistence,
-    onSnapshot
-} from "firebase/firestore";
+    increment as rtIncrement
+} from "firebase/database";
+import { Timestamp } from "firebase/firestore"; // Using for client-side object creation before converting to number
 
-// Firebase configuration from environment variables
 export const firebaseConfig = {
   apiKey: "AIzaSyCVyBoofvGBEpI-HM5Z7iIXVwstOTKnHzQ",
   authDomain: "studio-6ppyt.firebaseapp.com",
@@ -32,40 +26,22 @@ export const firebaseConfig = {
   storageBucket: "studio-6ppyt.firebasestorage.app",
   messagingSenderId: "783387760146",
   appId: "1:783387760146:web:ef987dfc8af6a19354eacb",
-  measurementId: "G-HL4DFRFFHV"
+  measurementId: "G-HL4DFRFFHV",
+  databaseURL: "https://studio-6ppyt-default-rtdb.firebaseio.com"
 };
 
 let app: FirebaseApp | undefined;
-let db: Firestore | undefined;
-let persistenceEnabled = false;
+let db: ReturnType<typeof getDatabase> | undefined;
 
-function getDb(): Firestore {
-    if (!firebaseConfig.projectId) {
-        throw new Error("Firebase project ID is not configured.");
+function getDb() {
+    if (!firebaseConfig.databaseURL) {
+        throw new Error("Firebase Realtime Database URL is not configured.");
     }
     if (!app) {
         app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
     }
     if (!db) {
-        db = getFirestore(app);
-        if (typeof window !== 'undefined' && !persistenceEnabled) {
-            try {
-                enableIndexedDbPersistence(db)
-                    .then(() => {
-                        persistenceEnabled = true;
-                        console.log("Firebase persistence enabled.");
-                    })
-                    .catch((err) => {
-                        if (err.code == 'failed-precondition') {
-                            console.warn("Firebase persistence failed: multiple tabs open.");
-                        } else if (err.code == 'unimplemented') {
-                            console.warn("Firebase persistence failed: browser does not support it.");
-                        }
-                    });
-            } catch (error) {
-                console.error("Error enabling persistence:", error);
-            }
-        }
+        db = getDatabase(app);
     }
     return db;
 }
@@ -76,14 +52,15 @@ function getDb(): Firestore {
 export interface LiveClass {
   id: string;
   title: string;
-  scheduledAt: Timestamp;
+  scheduledAt: number; // Stored as Unix timestamp
   link?: string;
   embedCode?: string;
+  createdAt: number;
 }
 
 export interface NewLiveClassData {
     title: string;
-    scheduledAt: string; // ISO string from datetime-local input
+    scheduledAt: string; // ISO string
     link?: string;
     embedCode?: string;
 }
@@ -94,8 +71,8 @@ export interface Notification {
     title: string;
     content: string;
     category: NotificationCategory;
-    createdAt: Timestamp;
-    recipient?: string; // For user-specific notifications
+    createdAt: number;
+    recipient?: string;
 }
 
 export interface NewNotificationData {
@@ -120,25 +97,24 @@ export interface ScholarshipApplicationData {
     targetExam: string;
     targetTestEnrollmentCode?: string;
     testMode: 'online' | 'offline';
-    photoUrl: string; // as data URI
-    signatureUrl: string; // as data URI
+    photoUrl: string;
+    signatureUrl: string;
     resultStatus?: 'pending' | 'pass' | 'fail';
     isPaymentVerified?: boolean;
-    createdAt: Timestamp;
+    createdAt: number;
 }
 
 export interface StudentData {
-    id?: string;
+    id?: string; // This will be the student's name (the key)
     name: string;
-    password?: string; // Not stored, just for schema type
     fatherName?: string;
     class?: string;
     age?: number;
     address?: string;
     school?: string;
-    photoUrl?: string; // as data URI
+    photoUrl?: string;
     quizWinnings?: number;
-    createdAt: Timestamp;
+    createdAt: number;
 }
 
 export interface TestResultData {
@@ -149,7 +125,7 @@ export interface TestResultData {
     score: number;
     totalQuestions: number;
     percentage: number;
-    submittedAt: Timestamp;
+    submittedAt: number;
 }
 
 export interface ScholarshipTestResult {
@@ -159,24 +135,23 @@ export interface ScholarshipTestResult {
     score: number;
     totalQuestions: number;
     percentage: number;
-    timeTaken: number; // in seconds
+    timeTaken: number;
     answers: Record<number, string>;
     allQuestions: Question[];
     targetTestEnrollmentCode?: string;
-    submittedAt: Timestamp;
+    submittedAt: number;
 }
 
 export interface AppConfig {
-    scholarshipDeadline?: Timestamp;
-    scholarshipTestStartDate?: Timestamp;
-    scholarshipTestEndDate?: Timestamp;
-    admitCardDownloadStartDate?: Timestamp;
+    scholarshipDeadline?: number;
+    scholarshipTestStartDate?: number;
+    scholarshipTestEndDate?: number;
+    admitCardDownloadStartDate?: number;
     splashImageUrl?: string;
-    cityIntimationSlipStartDate?: Timestamp;
-    resultAnnouncementDate?: Timestamp;
+    cityIntimationSlipStartDate?: number;
+    resultAnnouncementDate?: number;
     scholarshipTestId?: string;
     paymentQrCodeUrl?: string;
-    tractorImageUrl?: string;
     festivalQuizBgUrl?: string;
     knowledgeBazaarBgUrl?: string;
     scienceGameBgUrl?: string;
@@ -188,28 +163,28 @@ export interface Post {
     title: string;
     content: string;
     imageUrl?: string;
-    createdAt: Timestamp;
+    createdAt: number;
 }
 
 export interface CurrentAffair {
     id: string;
     title: string;
     content: string;
-    createdAt: Timestamp;
+    createdAt: number;
 }
 
 export interface VideoLecture {
     id: string;
     title: string;
     videoUrl: string;
-    createdAt: Timestamp;
+    createdAt: number;
 }
 
 export interface Download {
     id: string;
     title: string;
     pdfUrl: string;
-    createdAt: Timestamp;
+    createdAt: number;
 }
 
 export interface EBook {
@@ -217,7 +192,7 @@ export interface EBook {
     title: string;
     pdfUrl: string;
     imageUrl?: string;
-    createdAt: Timestamp;
+    createdAt: number;
 }
 
 export interface Course {
@@ -225,7 +200,7 @@ export interface Course {
     title: string;
     description: string;
     imageUrl?: string;
-    createdAt: Timestamp;
+    createdAt: number;
 }
 
 export interface Teacher {
@@ -233,14 +208,14 @@ export interface Teacher {
     name: string;
     description: string;
     imageUrl: string;
-    createdAt: Timestamp;
+    createdAt: number;
 }
 
 export interface GalleryImage {
     id: string;
     caption: string;
     imageUrl: string;
-    createdAt: Timestamp;
+    createdAt: number;
 }
 
 export interface ContactInquiry {
@@ -249,7 +224,7 @@ export interface ContactInquiry {
     mobile: string;
     message: string;
     imageUrl?: string;
-    createdAt: Timestamp;
+    createdAt: number;
 }
 
 export interface ChatMessage {
@@ -258,7 +233,7 @@ export interface ChatMessage {
     userName: string;
     userPhotoUrl?: string;
     imageUrl?: string;
-    createdAt: Timestamp;
+    createdAt: number;
 }
 
 export interface Question {
@@ -278,11 +253,11 @@ export interface CustomTest {
     totalQuestions: number;
     testType: 'custom';
     questions: Question[];
-    createdAt: Timestamp;
+    createdAt: number;
 }
 
 export interface TestSetting {
-    id?: string; // testId
+    id?: string;
     isEnabled: boolean;
 }
 
@@ -292,475 +267,404 @@ export interface TestEnrollment {
     testId: string;
     testName: string;
     enrollmentCode: string;
-    enrolledAt: Timestamp;
+    enrolledAt: number;
     attemptsWaived?: boolean;
     allowedAttempts: number;
 }
 
 // --- Helper Functions ---
+const generateRandomCode = (length: number) => Math.floor(Math.pow(10, length - 1) + Math.random() * (Math.pow(10, length) - Math.pow(10, length - 1) - 1)).toString();
 
-// Generate a random numeric string of a given length
-const generateRandomCode = (length: number) => {
-    return Math.floor(Math.pow(10, length - 1) + Math.random() * (Math.pow(10, length) - Math.pow(10, length - 1) - 1)).toString();
-};
-
-// Notification helper - Only for student actions, not admin ones.
 async function sendStudentNotification(title: string, content: string, category: NotificationCategory = 'alert', recipient?: string): Promise<void> {
-    const db = getDb();
     try {
         const notificationData: any = {
             title,
             content,
             category,
-            createdAt: Timestamp.now(),
+            createdAt: serverTimestamp(),
         };
         if (recipient) {
             notificationData.recipient = recipient;
         }
-        await addDoc(collection(db, "notifications"), notificationData);
+        const db = getDb();
+        const newPostRef = push(ref(db, "notifications"));
+        await set(newPostRef, notificationData);
     } catch (error) {
         console.error("Failed to send notification:", error);
     }
 }
 
-// Generic delete function
-async function deleteDocument(collectionName: string, id: string): Promise<void> {
+async function deleteItem(path: string): Promise<void> {
     const db = getDb();
-    await deleteDoc(doc(db, collectionName, id));
+    await remove(ref(db, path));
 }
 
-// Generic get all function
 async function getAll<T>(collectionName: string): Promise<T[]> {
     const db = getDb();
-    const q = query(collection(db, collectionName), orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as T);
+    const snapshot = await get(ref(db, collectionName));
+    if (snapshot.exists()) {
+        const data = snapshot.val();
+        return Object.keys(data).map(key => ({ id: key, ...data[key] })).sort((a: any, b: any) => b.createdAt - a.createdAt) as T[];
+    }
+    return [];
 }
 
+const timestampToDate = (ts: number) => Timestamp.fromMillis(ts);
 
 // --- App-specific Functions ---
-
 export async function getAppConfig(): Promise<AppConfig> {
     const db = getDb();
-    const configRef = doc(db, "appConfig", "settings");
-    const docSnap = await getDoc(configRef);
-    if (docSnap.exists()) {
-        return docSnap.data() as AppConfig;
+    const snapshot = await get(ref(db, "appConfig/settings"));
+    if (snapshot.exists()) {
+        const data = snapshot.val();
+        // Convert numeric timestamps back to Timestamp objects for compatibility with components
+        const config: AppConfig = {};
+        for (const key in data) {
+            if (key.toLowerCase().includes('date') || key.toLowerCase().includes('deadline')) {
+                (config as any)[key] = timestampToDate(data[key]);
+            } else {
+                (config as any)[key] = data[key];
+            }
+        }
+        return config;
     }
     return {};
 }
 
 export async function updateAppConfig(data: Partial<AppConfig>): Promise<void> {
     const db = getDb();
-    const configRef = doc(db, "appConfig", "settings");
-    await setDoc(configRef, data, { merge: true });
+    const configRef = ref(db, "appConfig/settings");
+    const dataToSave: any = {};
+    for (const key in data) {
+        const value = (data as any)[key];
+        if (value instanceof Timestamp) {
+            dataToSave[key] = value.toMillis();
+        } else {
+            dataToSave[key] = value;
+        }
+    }
+    await update(configRef, dataToSave);
 }
 
 export async function addLiveClass({ title, link, embedCode, scheduledAt }: NewLiveClassData): Promise<void> {
     const db = getDb();
-    const data: any = {
+    const newPostRef = push(ref(db, 'liveClasses'));
+    await set(newPostRef, {
         title,
-        scheduledAt: Timestamp.fromDate(new Date(scheduledAt)),
-        createdAt: Timestamp.now(),
-    };
-    if (link) data.link = link;
-    if (embedCode) data.embedCode = embedCode;
-
-    await addDoc(collection(db, "liveClasses"), data);
+        link: link || null,
+        embedCode: embedCode || null,
+        scheduledAt: new Date(scheduledAt).getTime(),
+        createdAt: serverTimestamp()
+    });
 }
-export const deleteLiveClass = (id: string) => deleteDocument("liveClasses", id);
-
+export const deleteLiveClass = (id: string) => deleteItem(`liveClasses/${id}`);
+export const getLiveClasses = async (): Promise<LiveClass[]> => getAll<LiveClass>("liveClasses");
 
 export async function addNotification({ title, content, category, recipient }: NewNotificationData): Promise<void> {
-     const db = getDb();
-     await addDoc(collection(db, "notifications"), { title, content, category, recipient, createdAt: Timestamp.now() });
+    const db = getDb();
+    const newPostRef = push(ref(db, 'notifications'));
+    await set(newPostRef, { title, content, category, recipient: recipient || null, createdAt: serverTimestamp() });
 }
-export const deleteNotification = (id: string) => deleteDocument("notifications", id);
+export const deleteNotification = (id: string) => deleteItem(`notifications/${id}`);
+export const getNotifications = async (): Promise<Notification[]> => getAll<Notification>("notifications");
 
 export async function addScholarshipApplication(data: Omit<ScholarshipApplicationData, 'createdAt' | 'id' | 'resultStatus' | 'applicationNumber' | 'rollNumber' | 'isPaymentVerified'>): Promise<{applicationNumber: string, rollNumber: string}> {
     const db = getDb();
-    
-    // Check for existing application with the same name and father's name to prevent duplicates
-    const q = query(collection(db, "scholarshipApplications"), where("fullName", "==", data.fullName), where("fatherName", "==", data.fatherName));
-    const existingSnapshot = await getDocs(q);
-    if (!existingSnapshot.empty) {
-        throw new Error("An application for this student already exists.");
+    const q = query(ref(db, "scholarshipApplications"), orderByChild("fullName"), equalTo(data.fullName));
+    const existingSnapshot = await get(q);
+    if (existingSnapshot.exists()) {
+        const apps = existingSnapshot.val();
+        const appExists = Object.values(apps).some((app: any) => app.fatherName === data.fatherName);
+        if (appExists) throw new Error("An application for this student already exists.");
     }
 
     const applicationNumber = `GSA${new Date().getFullYear()}${generateRandomCode(5)}`;
     const rollNumber = `R${generateRandomCode(8)}`;
     
-    await addDoc(collection(db, "scholarshipApplications"), {
+    const newAppRef = push(ref(db, 'scholarshipApplications'));
+    await set(newAppRef, {
         ...data,
         applicationNumber,
         rollNumber,
         resultStatus: 'pending',
         isPaymentVerified: false,
-        createdAt: Timestamp.now(),
+        createdAt: serverTimestamp(),
     });
     
     sendStudentNotification('Application Received', `Your application for ${data.fullName} (App No: ${applicationNumber}) has been received.`, 'scholarship', data.fullName);
-
     return { applicationNumber, rollNumber };
 }
-
-export const deleteScholarshipApplication = (id: string) => deleteDocument("scholarshipApplications", id);
+export const deleteScholarshipApplication = (id: string) => deleteItem(`scholarshipApplications/${id}`);
 
 export async function updateScholarshipApplicationResultStatus(appId: string, status: 'pending' | 'pass' | 'fail'): Promise<void> {
     const db = getDb();
-    const appRef = doc(db, "scholarshipApplications", appId);
-    await updateDoc(appRef, { resultStatus: status });
+    await update(ref(db, `scholarshipApplications/${appId}`), { resultStatus: status });
 }
-
 export async function updateScholarshipApplicationPaymentStatus(appId: string, isVerified: boolean): Promise<void> {
     const db = getDb();
-    const appRef = doc(db, "scholarshipApplications", appId);
-    await updateDoc(appRef, { isPaymentVerified: isVerified });
+    await update(ref(db, `scholarshipApplications/${appId}`), { isPaymentVerified: isVerified });
 }
-
 export async function getScholarshipApplications(): Promise<ScholarshipApplicationData[]> {
     return getAll<ScholarshipApplicationData>("scholarshipApplications");
 }
-
 export async function getScholarshipApplicationByAppNumber(appNumber: string): Promise<ScholarshipApplicationData | null> {
     const db = getDb();
-    const q = query(
-        collection(db, "scholarshipApplications"), 
-        where("applicationNumber", "==", appNumber),
-        limit(1)
-    );
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) return null;
-    return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as ScholarshipApplicationData;
+    const q = query(ref(db, 'scholarshipApplications'), orderByChild('applicationNumber'), equalTo(appNumber));
+    const snapshot = await get(q);
+    if (!snapshot.exists()) return null;
+    const data = snapshot.val();
+    const key = Object.keys(data)[0];
+    return { id: key, ...data[key] };
 }
 
 export async function getStudent(name: string): Promise<StudentData | null> {
     const db = getDb();
-    const studentRef = doc(db, "students", name);
-    const docSnap = await getDoc(studentRef);
-    if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as StudentData;
+    const studentRef = ref(db, `students/${name}`);
+    const snapshot = await get(studentRef);
+    if (snapshot.exists()) {
+        return { id: snapshot.key, name, ...snapshot.val() };
     }
     return null;
 }
-
 export async function updateStudent(name: string, data: Partial<Omit<StudentData, 'id' | 'createdAt'>>): Promise<void> {
     const db = getDb();
-    const studentRef = doc(db, "students", name);
-    await updateDoc(studentRef, data);
+    await update(ref(db, `students/${name}`), data);
 }
-
 export async function addQuizWinnings(studentName: string, amount: number): Promise<void> {
-    const db = getDb();
     if (amount <= 0) return;
-    const studentRef = doc(db, "students", studentName);
-    await updateDoc(studentRef, {
-        quizWinnings: increment(amount)
-    });
+    const db = getDb();
+    const studentRef = ref(db, `students/${studentName}/quizWinnings`);
+    await runTransaction(studentRef, (currentWinnings) => (currentWinnings || 0) + amount);
 }
-
 export async function redeemWinningsForAttempts(studentName: string, enrollmentId: string, cost: number, attemptsToAdd: number): Promise<void> {
     const db = getDb();
-    const studentRef = doc(db, "students", studentName);
-    const enrollmentRef = doc(db, "testEnrollments", enrollmentId);
+    const studentWinningsRef = ref(db, `students/${studentName}/quizWinnings`);
+    const enrollmentAttemptsRef = ref(db, `testEnrollments/${enrollmentId}/allowedAttempts`);
 
-    await runTransaction(db, async (transaction) => {
-        const studentDoc = await transaction.get(studentRef);
-        if (!studentDoc.exists() || (studentDoc.data().quizWinnings || 0) < cost) {
-            throw new Error("Insufficient winnings or student not found!");
-        }
-        transaction.update(studentRef, { quizWinnings: increment(-cost) });
-        transaction.update(enrollmentRef, { allowedAttempts: increment(attemptsToAdd) });
+    return runTransaction(ref(db), () => {
+        return get(studentWinningsRef).then((winningsSnap) => {
+            const currentWinnings = winningsSnap.val() || 0;
+            if (currentWinnings < cost) {
+                throw "Insufficient winnings.";
+            }
+            return get(enrollmentAttemptsRef).then((attemptsSnap) => {
+                const currentAttempts = attemptsSnap.val() || 0;
+                const updates: Record<string, any> = {};
+                updates[`students/${studentName}/quizWinnings`] = currentWinnings - cost;
+                updates[`testEnrollments/${enrollmentId}/allowedAttempts`] = currentAttempts + attemptsToAdd;
+                return update(ref(db), updates);
+            });
+        });
     });
 }
-
 export async function getStudents(): Promise<StudentData[]> {
-    return getAll<StudentData>("students");
+    const db = getDb();
+    const snapshot = await get(ref(db, "students"));
+    if (snapshot.exists()) {
+        const data = snapshot.val();
+        return Object.keys(data).map(key => ({ id: key, name: key, ...data[key] }));
+    }
+    return [];
 }
-
-export const deleteStudent = (id: string) => deleteDocument("students", id);
+export const deleteStudent = (name: string) => deleteItem(`students/${name}`);
 
 export async function addTestResult(data: Omit<TestResultData, 'submittedAt' | 'id'>): Promise<void> {
     const db = getDb();
-    await addDoc(collection(db, "testResults"), {
-        ...data,
-        submittedAt: Timestamp.now(),
-    });
+    const newRef = push(ref(db, 'testResults'));
+    await set(newRef, { ...data, submittedAt: serverTimestamp() });
 }
-
 export async function addScholarshipTestResult(data: Omit<ScholarshipTestResult, 'submittedAt' | 'id'>): Promise<void> {
     const db = getDb();
-    await addDoc(collection(db, "scholarshipTestResults"), {
-        ...data,
-        submittedAt: Timestamp.now(),
-    });
+    const newRef = push(ref(db, 'scholarshipTestResults'));
+    await set(newRef, { ...data, submittedAt: serverTimestamp() });
 }
-
 export async function getScholarshipTestResultByAppNumber(appNumber: string): Promise<ScholarshipTestResult | null> {
     const db = getDb();
-    const q = query(
-        collection(db, "scholarshipTestResults"),
-        where("applicationNumber", "==", appNumber),
-        limit(1)
-    );
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) return null;
-    return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as ScholarshipTestResult;
+    const q = query(ref(db, 'scholarshipTestResults'), orderByChild('applicationNumber'), equalTo(appNumber));
+    const snapshot = await get(q);
+    if (!snapshot.exists()) return null;
+    const data = snapshot.val();
+    const key = Object.keys(data)[0];
+    return { id: key, ...data[key] };
 }
-
 export async function getScholarshipTestResults(): Promise<ScholarshipTestResult[]> {
-    const db = getDb();
-    const q = query(collection(db, "scholarshipTestResults"), orderBy("score", "desc"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as ScholarshipTestResult);
+    return getAll<ScholarshipTestResult>("scholarshipTestResults");
 }
-
-export const deleteScholarshipTestResult = (id: string) => deleteDocument("scholarshipTestResults", id);
-
+export const deleteScholarshipTestResult = (id: string) => deleteItem(`scholarshipTestResults/${id}`);
 
 export async function getTestResults(): Promise<TestResultData[]> {
-    const db = getDb();
-    const q = query(collection(db, "testResults"), orderBy("percentage", "desc"), limit(20));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as TestResultData);
+    return getAll<TestResultData>("testResults");
 }
-
 export async function getTestResultsForStudentByTest(studentName: string, testId: string): Promise<TestResultData[]> {
     const db = getDb();
-    const q = query(
-        collection(db, "testResults"),
-        where("studentName", "==", studentName),
-        where("testId", "==", testId)
-    );
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as TestResultData);
+    const q = query(ref(db, 'testResults'), orderByChild('studentName'), equalTo(studentName));
+    const snapshot = await get(q);
+    if (!snapshot.exists()) return [];
+    const allResults = snapshot.val();
+    return Object.keys(allResults).map(key => ({ id: key, ...allResults[key] })).filter(r => r.testId === testId);
 }
-
 export async function getTestResultsForStudent(studentName: string): Promise<TestResultData[]> {
     const db = getDb();
-    const q = query(
-        collection(db, "testResults"),
-        where("studentName", "==", studentName)
-    );
-    const querySnapshot = await getDocs(q);
-    const results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as TestResultData);
-
-    // Sort the results by submittedAt timestamp in descending order on the client-side
-    results.sort((a, b) => b.submittedAt.toMillis() - a.submittedAt.toMillis());
-
-    return results;
+    const q = query(ref(db, 'testResults'), orderByChild('studentName'), equalTo(studentName));
+    const snapshot = await get(q);
+    if (!snapshot.exists()) return [];
+    const allResults = snapshot.val();
+    return Object.keys(allResults).map(key => ({ id: key, ...allResults[key] })).sort((a,b) => b.submittedAt - a.submittedAt);
 }
 
-export async function getLiveClasses(): Promise<LiveClass[]> {
-  const db = getDb();
-  const q = query(collection(db, "liveClasses"), orderBy("scheduledAt", "desc"));
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as LiveClass[];
-}
-
-export async function getNotifications(): Promise<Notification[]> {
-    return getAll<Notification>("notifications");
-}
-
-// --- Daily Posts ---
 export const addPost = async (data: Omit<Post, 'id' | 'createdAt'>) => {
     const db = getDb();
-    await addDoc(collection(db, "posts"), { ...data, createdAt: Timestamp.now() });
+    await set(push(ref(db, "posts")), { ...data, createdAt: serverTimestamp() });
 };
 export const getPosts = async (): Promise<Post[]> => getAll<Post>("posts");
-export const deletePost = (id: string) => deleteDocument("posts", id);
+export const deletePost = (id: string) => deleteItem(`posts/${id}`);
 
-// --- Current Affairs ---
 export const addCurrentAffair = async (data: Omit<CurrentAffair, 'id' | 'createdAt'>) => {
     const db = getDb();
-    await addDoc(collection(db, "currentAffairs"), { ...data, createdAt: Timestamp.now() });
+    await set(push(ref(db, "currentAffairs")), { ...data, createdAt: serverTimestamp() });
 };
 export const getCurrentAffairs = async (): Promise<CurrentAffair[]> => getAll<CurrentAffair>("currentAffairs");
-export const deleteCurrentAffair = (id: string) => deleteDocument("currentAffairs", id);
+export const deleteCurrentAffair = (id: string) => deleteItem(`currentAffairs/${id}`);
 
-// --- Video Lectures ---
-export const addVideoLecture = async (data: Omit<VideoLecture, 'id' | 'createdAt'>) => {
+export const addVideoLecture = async (data: Omit<VideoLecture, 'id' | 'createdAt' | 'videoUrl'> & { link?: string; embedCode?: string }) => {
     const db = getDb();
-    await addDoc(collection(db, "videoLectures"), { ...data, createdAt: Timestamp.now() });
+    const videoUrl = data.link || data.embedCode?.match(/src="([^"]+)"/)?.[1] || '';
+    await set(push(ref(db, "videoLectures")), { title: data.title, videoUrl, createdAt: serverTimestamp() });
 };
 export const getVideoLectures = async (): Promise<VideoLecture[]> => getAll<VideoLecture>("videoLectures");
-export const deleteVideoLecture = (id: string) => deleteDocument("videoLectures", id);
+export const deleteVideoLecture = (id: string) => deleteItem(`videoLectures/${id}`);
 
-// --- Downloads ---
 export const addDownload = async (data: Omit<Download, 'id' | 'createdAt'>) => {
     const db = getDb();
-    await addDoc(collection(db, "downloads"), { ...data, createdAt: Timestamp.now() });
+    await set(push(ref(db, "downloads")), { ...data, createdAt: serverTimestamp() });
 };
 export const getDownloads = async (): Promise<Download[]> => getAll<Download>("downloads");
-export const deleteDownload = (id: string) => deleteDocument("downloads", id);
+export const deleteDownload = (id: string) => deleteItem(`downloads/${id}`);
 
-// --- E-Books ---
 export const addEBook = async (data: Omit<EBook, 'id' | 'createdAt'>) => {
     const db = getDb();
-    await addDoc(collection(db, "ebooks"), { ...data, createdAt: Timestamp.now() });
+    await set(push(ref(db, "ebooks")), { ...data, createdAt: serverTimestamp() });
 };
 export const getEBooks = async (): Promise<EBook[]> => getAll<EBook>("ebooks");
-export const deleteEBook = (id: string) => deleteDocument("ebooks", id);
+export const deleteEBook = (id: string) => deleteItem(`ebooks/${id}`);
 
-// --- Courses ---
 export const addCourse = async (data: Omit<Course, 'id' | 'createdAt'>) => {
     const db = getDb();
-    await addDoc(collection(db, "courses"), { ...data, createdAt: Timestamp.now() });
+    await set(push(ref(db, "courses")), { ...data, createdAt: serverTimestamp() });
 };
 export const getCourses = async (): Promise<Course[]> => getAll<Course>("courses");
-export const deleteCourse = (id: string) => deleteDocument("courses", id);
+export const deleteCourse = (id: string) => deleteItem(`courses/${id}`);
 
-// --- Teachers ---
 export const addTeacher = async (data: Omit<Teacher, 'id' | 'createdAt'>) => {
     const db = getDb();
-    await addDoc(collection(db, "teachers"), { ...data, createdAt: Timestamp.now() });
+    await set(push(ref(db, "teachers")), { ...data, createdAt: serverTimestamp() });
 };
 export const getTeachers = async (): Promise<Teacher[]> => getAll<Teacher>("teachers");
-export const deleteTeacher = (id: string) => deleteDocument("teachers", id);
+export const deleteTeacher = (id: string) => deleteItem(`teachers/${id}`);
 
-// --- Gallery Images ---
 export const addGalleryImage = async (data: Omit<GalleryImage, 'id' | 'createdAt'>) => {
     const db = getDb();
-    await addDoc(collection(db, "galleryImages"), { ...data, createdAt: Timestamp.now() });
+    await set(push(ref(db, "galleryImages")), { ...data, createdAt: serverTimestamp() });
 };
 export const getGalleryImages = async (): Promise<GalleryImage[]> => getAll<GalleryImage>("galleryImages");
-export const deleteGalleryImage = (id: string) => deleteDocument("galleryImages", id);
+export const deleteGalleryImage = (id: string) => deleteItem(`galleryImages/${id}`);
 
-// --- Contact Inquiries ---
 export const addContactInquiry = async (data: Omit<ContactInquiry, 'id' | 'createdAt'>) => {
     const db = getDb();
-    await addDoc(collection(db, "contactInquiries"), { ...data, createdAt: Timestamp.now() });
+    await set(push(ref(db, "contactInquiries")), { ...data, createdAt: serverTimestamp() });
 };
 export const getContactInquiries = async (): Promise<ContactInquiry[]> => getAll<ContactInquiry>("contactInquiries");
-export const deleteContactInquiry = (id: string) => deleteDocument("contactInquiries", id);
+export const deleteContactInquiry = (id: string) => deleteItem(`contactInquiries/${id}`);
 
-
-// --- Chat Messages ---
 export const addChatMessage = async (data: Omit<ChatMessage, 'id' | 'createdAt'>) => {
     const db = getDb();
-    await addDoc(collection(db, "chatMessages"), { ...data, createdAt: Timestamp.now() });
+    await set(push(ref(db, "chatMessages")), { ...data, createdAt: serverTimestamp() });
 };
 
-// --- Custom Tests ---
 export const addCustomTest = async (data: any) => {
     const db = getDb();
-
     let questions: Question[];
-    // Handle both JSON string and already-parsed array from visual builder
     if (typeof data.questionsJson === 'string') {
         questions = JSON.parse(data.questionsJson);
     } else {
         questions = data.questions.map((q: any, index: number) => ({ ...q, id: index + 1 }));
     }
-
     const testData: Omit<CustomTest, 'id' | 'createdAt'> = {
-        title: data.title,
-        description: data.description,
-        medium: data.medium,
-        languageForAI: data.languageForAI,
-        timeLimit: Number(data.timeLimit),
-        totalQuestions: questions.length,
-        testType: 'custom',
-        questions: questions,
+        title: data.title, description: data.description, medium: data.medium,
+        languageForAI: data.languageForAI, timeLimit: Number(data.timeLimit),
+        totalQuestions: questions.length, testType: 'custom', questions: questions,
     };
-    await setDoc(doc(db, "customTests", data.id), { ...testData, createdAt: Timestamp.now() });
+    await set(ref(db, `customTests/${data.id}`), { ...testData, createdAt: serverTimestamp() });
 };
-
-export const getCustomTests = async (): Promise<CustomTest[]> => getAll<CustomTest>("customTests");
-export const getCustomTest = async (id: string): Promise<CustomTest | null> => {
+export async function getCustomTests(): Promise<CustomTest[]> {
     const db = getDb();
-    const testRef = doc(db, "customTests", id);
-    const docSnap = await getDoc(testRef);
-    if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as CustomTest;
+    const snapshot = await get(ref(db, 'customTests'));
+    if (!snapshot.exists()) return [];
+    const data = snapshot.val();
+    return Object.keys(data).map(key => ({ id: key, ...data[key] }));
+}
+export async function getCustomTest(id: string): Promise<CustomTest | null> {
+    const db = getDb();
+    const snapshot = await get(ref(db, `customTests/${id}`));
+    if (snapshot.exists()) {
+        return { id: snapshot.key, ...snapshot.val() };
     }
     return null;
 }
-export const deleteCustomTest = (id: string) => deleteDocument("customTests", id);
+export const deleteCustomTest = (id: string) => deleteItem(`customTests/${id}`);
 
-
-// --- Test Settings ---
 export const getTestSettings = async (): Promise<Record<string, TestSetting>> => {
     const db = getDb();
-    const settings: Record<string, TestSetting> = {};
-    const querySnapshot = await getDocs(collection(db, "testSettings"));
-    querySnapshot.forEach((doc) => {
-        settings[doc.id] = { id: doc.id, ...doc.data() } as TestSetting;
-    });
-    return settings;
+    const snapshot = await get(ref(db, 'testSettings'));
+    return snapshot.exists() ? snapshot.val() : {};
 };
-
 export const updateTestSetting = async (testId: string, isEnabled: boolean) => {
     const db = getDb();
-    const settingRef = doc(db, "testSettings", testId);
-    await setDoc(settingRef, { isEnabled: isEnabled }, { merge: true });
+    await update(ref(db, 'testSettings'), { [testId]: { isEnabled } });
 };
-
-// --- Test Enrollments ---
-function generateEnrollmentCode(): string {
-  return generateRandomCode(5);
-}
 
 export const addTestEnrollment = async (studentName: string, testId: string, testName: string): Promise<string> => {
     const db = getDb();
-    // Check if already enrolled to prevent duplicates
-    const q = query(collection(db, "testEnrollments"), where("studentName", "==", studentName), where("testId", "==", testId));
-    const existing = await getDocs(q);
-    
-    if (!existing.empty) {
-        return existing.docs[0].data().enrollmentCode;
+    const q = query(ref(db, 'testEnrollments'), orderByChild('studentName'), equalTo(studentName));
+    const snapshot = await get(q);
+    if (snapshot.exists()) {
+        const enrollments = snapshot.val();
+        const existing = Object.values(enrollments).find((e: any) => e.testId === testId);
+        if (existing) return (existing as TestEnrollment).enrollmentCode;
     }
-
-    const enrollmentCode = generateEnrollmentCode();
-    await addDoc(collection(db, "testEnrollments"), {
-        studentName,
-        testId,
-        testName,
-        enrollmentCode,
-        enrolledAt: Timestamp.now(),
-        attemptsWaived: false,
-        allowedAttempts: 2, // Default allowed attempts
+    const enrollmentCode = generateRandomCode(5);
+    const newRef = push(ref(db, 'testEnrollments'));
+    await set(newRef, {
+        studentName, testId, testName, enrollmentCode,
+        enrolledAt: serverTimestamp(), attemptsWaived: false, allowedAttempts: 2
     });
-
     sendStudentNotification(
-        'Test Enrollment Successful', 
-        `You have enrolled in "${testName}". Your unique 5-digit Enrollment Code is: ${enrollmentCode}. Please save this code.`, 
-        'general',
-        studentName // This makes the notification private to the student
+        'Test Enrollment Successful',
+        `You have enrolled in "${testName}". Your unique 5-digit Enrollment Code is: ${enrollmentCode}. Please save this code.`,
+        'general', studentName
     );
     return enrollmentCode;
 };
-
-export const deleteTestEnrollment = (id: string) => deleteDocument("testEnrollments", id);
-
-
+export const deleteTestEnrollment = (id: string) => deleteItem(`testEnrollments/${id}`);
 export const updateTestEnrollmentWaiver = async (enrollmentId: string, isWaived: boolean): Promise<void> => {
     const db = getDb();
-    const enrollmentRef = doc(db, "testEnrollments", enrollmentId);
-    await updateDoc(enrollmentRef, { attemptsWaived: isWaived });
+    await update(ref(db, `testEnrollments/${enrollmentId}`), { attemptsWaived: isWaived });
 };
-
 export async function updateEnrollmentAllowedAttempts(enrollmentId: string, attempts: number): Promise<void> {
     const db = getDb();
     if (attempts < 0) throw new Error("Attempts cannot be negative.");
-    const enrollmentRef = doc(db, "testEnrollments", enrollmentId);
-    await updateDoc(enrollmentRef, { allowedAttempts: attempts });
+    await update(ref(db, `testEnrollments/${enrollmentId}`), { allowedAttempts: attempts });
 }
-
-export const getEnrollmentsForStudent = async (studentName: string): Promise<TestEnrollment[]> => {
+export async function getEnrollmentsForStudent(studentName: string): Promise<TestEnrollment[]> {
     const db = getDb();
-    const q = query(collection(db, "testEnrollments"), where("studentName", "==", studentName));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as TestEnrollment);
-};
-
+    const q = query(ref(db, 'testEnrollments'), orderByChild('studentName'), equalTo(studentName));
+    const snapshot = await get(q);
+    if (!snapshot.exists()) return [];
+    const enrollments = snapshot.val();
+    return Object.keys(enrollments).map(key => ({ id: key, ...enrollments[key] }));
+}
 export async function getTestEnrollments(): Promise<TestEnrollment[]> {
-    const db = getDb();
-    const q = query(collection(db, "testEnrollments"), orderBy("enrolledAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as TestEnrollment);
+    return getAll<TestEnrollment>("testEnrollments");
 }
 
-export { app, db };
-
-    
+export { app, db, timestampToDate };

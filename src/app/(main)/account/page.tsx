@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, User, Edit, Banknote, IndianRupee, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Timestamp } from "firebase/firestore";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { fileToDataUrl } from "@/lib/utils";
 
@@ -64,7 +63,7 @@ export default function AccountPage() {
                         setIsEditing(true);
                     }
                 } else {
-                    setStudentData({ name: student.name, createdAt: Timestamp.now() });
+                    setStudentData({ name: student.name, createdAt: Date.now() });
                     setIsEditing(true);
                 }
             }).finally(() => setIsLoading(false));

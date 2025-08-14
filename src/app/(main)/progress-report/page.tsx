@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useLanguage } from "@/hooks/use-language";
 import { useAuth } from "@/hooks/use-auth";
 import { getTestResultsForStudent, type TestResultData } from "@/lib/firebase";
-import { Loader2, LineChart, BarChart } from "lucide-react";
+import { Loader2, LineChart } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
@@ -99,7 +99,7 @@ export default function ProgressReportPage() {
                                 <TableCell>{result.testName}</TableCell>
                                 <TableCell>{result.score}/{result.totalQuestions}</TableCell>
                                 <TableCell>{result.percentage.toFixed(1)}%</TableCell>
-                                <TableCell>{format(result.submittedAt.toDate(), 'PPP')}</TableCell>
+                                <TableCell>{format(new Date(result.submittedAt), 'PPP')}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>

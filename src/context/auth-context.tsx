@@ -3,11 +3,12 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useState, useEffect, useCallback } from 'react';
-import { getStudent, type StudentData } from '@/lib/firebase';
-import { setDoc, doc, Timestamp } from "firebase/firestore";
-import { db } from '@/lib/firebase';
+import { getStudent, type StudentData, db, timestampToDate } from '@/lib/firebase';
+import { set, ref, serverTimestamp } from "firebase/database";
 import { z } from 'zod';
 import { fileToDataUrl } from '@/lib/utils';
+import { Timestamp } from 'firebase/firestore';
+
 
 interface Admin {
   name: string;
@@ -43,6 +44,13 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const ADMIN_ACCESS_KEY = 'G$DA_Director_Panel_#2024!_SecureAccessKey';
 const ADMIN_NAME = 'GSDA Director';
 
+const convertTimestamps = (data: any): any => {
+    if (data?.createdAt && typeof data.createdAt === 'number') {
+        return { ...data, createdAt: timestampToDate(data.createdAt) };
+    }
+    return data;
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [student, setStudent] = useState<StudentData | null>(null);
   const [admin, setAdmin] = useState<Admin | null>(null);
@@ -51,8 +59,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshStudentData = useCallback(async (name: string) => {
     const freshData = await getStudent(name);
     if (freshData) {
-        setStudent(freshData);
-        localStorage.setItem('student', JSON.stringify(freshData));
+        const convertedData = convertTimestamps(freshData);
+        setStudent(convertedData);
+        localStorage.setItem('student', JSON.stringify(convertedData));
     }
   }, []);
 
@@ -61,8 +70,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const storedStudent = localStorage.getItem('student');
       if (storedStudent) {
         const parsedStudent: StudentData = JSON.parse(storedStudent);
-        setStudent(parsedStudent);
-        refreshStudentData(parsedStudent.name); // Refresh data on load
+        const convertedData = convertTimestamps(parsedStudent);
+        setStudent(convertedData);
+        refreshStudentData(convertedData.name); // Refresh data on load
       }
       const storedAdmin = localStorage.getItem('admin');
       if (storedAdmin) {
@@ -78,18 +88,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [refreshStudentData]);
 
   const loginStudent = useCallback(async (name: string, password?: string): Promise<boolean> => {
-    // This is a mock login. In a real app, you'd verify password against a hash.
     const studentData = await getStudent(name);
     if (studentData) {
-        setStudent(studentData);
-        localStorage.setItem('student', JSON.stringify(studentData));
+        const convertedData = convertTimestamps(studentData);
+        setStudent(convertedData);
+        localStorage.setItem('student', JSON.stringify(convertedData));
         return true;
     }
     return false;
   }, []);
 
   const registerStudent = useCallback(async (data: RegisterValues): Promise<boolean> => {
-    // This allows re-registration with the same username, overwriting old data.
     let photoUrl = "";
     const photoFile = data.photo?.[0];
 
@@ -98,26 +107,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             photoUrl = await fileToDataUrl(photoFile);
         } catch (e) {
             console.error("Image processing error:", e);
-            // This will be caught by the calling page and a toast will be shown
             throw e;
         }
     }
     
-    // We don't store the password, but in a real app, you'd hash and store it.
-    // Destructure 'photo' out to prevent saving the FileList object to Firestore.
     const { password, username, photo, ...restOfData } = data;
     
-    const newStudentData: StudentData = {
+    const newStudentData: Omit<StudentData, 'id'> = {
         name: username,
         ...restOfData,
         photoUrl: photoUrl,
-        createdAt: Timestamp.now()
+        createdAt: Date.now() // Use simple timestamp number
     };
 
     try {
-        await setDoc(doc(db, "students", username), newStudentData, { merge: true });
-        setStudent(newStudentData);
-        localStorage.setItem('student', JSON.stringify(newStudentData));
+        if (!db) return false;
+        await set(ref(db, `students/${username}`), newStudentData);
+        
+        const finalStudentData = {
+            ...newStudentData,
+            id: username,
+            createdAt: timestampToDate(newStudentData.createdAt)
+        } as StudentData;
+
+        setStudent(finalStudentData);
+        localStorage.setItem('student', JSON.stringify(finalStudentData));
         return true;
     } catch (error) {
         console.error("Error creating student:", error);

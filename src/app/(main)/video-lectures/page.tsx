@@ -108,7 +108,7 @@ export default function VideoLecturesPage() {
                             />
                             <CardHeader>
                                 <CardTitle>{lecture.title}</CardTitle>
-                                <p className="text-sm text-muted-foreground pt-1">{format(lecture.createdAt.toDate(), 'PPP')}</p>
+                                <p className="text-sm text-muted-foreground pt-1">{format(new Date(lecture.createdAt), 'PPP')}</p>
                             </CardHeader>
                             <CardContent className="flex-grow"></CardContent>
                             <CardFooter>
