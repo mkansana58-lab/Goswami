@@ -48,7 +48,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
 import { format } from 'date-fns';
-import { Timestamp } from 'firebase/firestore';
 import { testsData } from '@/lib/tests-data';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -121,10 +120,10 @@ const customTestJsonSchema = z.object({
 
 
 // Helper to format timestamp for datetime-local input
-const toInputDateTimeFormat = (timestamp: Timestamp | undefined) => {
+const toInputDateTimeFormat = (timestamp: number | undefined) => {
     if (!timestamp) return "";
     try {
-        const date = timestamp.toDate();
+        const date = new Date(timestamp);
         date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
         return date.toISOString().slice(0, 16);
     } catch (e) {
@@ -230,12 +229,12 @@ export default function AdminPage() {
         const scholarshipTestId = otherValues.scholarshipTestId === 'none' ? '' : otherValues.scholarshipTestId;
 
         const configData: Partial<AppConfig> = {
-            ...(otherValues.scholarshipDeadline && { scholarshipDeadline: Timestamp.fromDate(new Date(otherValues.scholarshipDeadline)) }),
-            ...(otherValues.scholarshipTestStartDate && { scholarshipTestStartDate: Timestamp.fromDate(new Date(otherValues.scholarshipTestStartDate)) }),
-            ...(otherValues.scholarshipTestEndDate && { scholarshipTestEndDate: Timestamp.fromDate(new Date(otherValues.scholarshipTestEndDate)) }),
-            ...(otherValues.admitCardDownloadStartDate && { admitCardDownloadStartDate: Timestamp.fromDate(new Date(otherValues.admitCardDownloadStartDate)) }),
-            ...(otherValues.cityIntimationSlipStartDate && { cityIntimationSlipStartDate: Timestamp.fromDate(new Date(otherValues.cityIntimationSlipStartDate)) }),
-            ...(otherValues.resultAnnouncementDate && { resultAnnouncementDate: Timestamp.fromDate(new Date(otherValues.resultAnnouncementDate)) }),
+            ...(otherValues.scholarshipDeadline && { scholarshipDeadline: new Date(otherValues.scholarshipDeadline).getTime() }),
+            ...(otherValues.scholarshipTestStartDate && { scholarshipTestStartDate: new Date(otherValues.scholarshipTestStartDate).getTime() }),
+            ...(otherValues.scholarshipTestEndDate && { scholarshipTestEndDate: new Date(otherValues.scholarshipTestEndDate).getTime() }),
+            ...(otherValues.admitCardDownloadStartDate && { admitCardDownloadStartDate: new Date(otherValues.admitCardDownloadStartDate).getTime() }),
+            ...(otherValues.cityIntimationSlipStartDate && { cityIntimationSlipStartDate: new Date(otherValues.cityIntimationSlipStartDate).getTime() }),
+            ...(otherValues.resultAnnouncementDate && { resultAnnouncementDate: new Date(otherValues.resultAnnouncementDate).getTime() }),
             scholarshipTestId: scholarshipTestId || '',
             appTutorialEmbedCode: otherValues.appTutorialEmbedCode || '',
         };
@@ -542,7 +541,7 @@ export default function AdminPage() {
                                <Table><TableHeader><TableRow><TableHead>Photo</TableHead><TableHead>Name</TableHead><TableHead>Details</TableHead><TableHead>Registered On</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
                                    <TableBody>
                                        {data.students.map(s => (
-                                           <TableRow key={s.id}><TableCell><ImagePreview url={s.photoUrl} triggerText={<Image src={s.photoUrl || `https://placehold.co/40x40.png?text=${s.name[0]}`} alt="" width={40} height={40} className="rounded-full w-10 h-10 object-cover" data-ai-hint="student photo" />} /></TableCell><TableCell>{s.name}<br/><span className="text-muted-foreground text-xs">{s.fatherName}</span></TableCell><TableCell>Class: {s.class}<br/>School: {s.school}</TableCell><TableCell>{format(s.createdAt.toDate(), 'PPP')}</TableCell>
+                                           <TableRow key={s.id}><TableCell><ImagePreview url={s.photoUrl} triggerText={<Image src={s.photoUrl || `https://placehold.co/40x40.png?text=${s.name[0]}`} alt="" width={40} height={40} className="rounded-full w-10 h-10 object-cover" data-ai-hint="student photo" />} /></TableCell><TableCell>{s.name}<br/><span className="text-muted-foreground text-xs">{s.fatherName}</span></TableCell><TableCell>Class: {s.class}<br/>School: {s.school}</TableCell><TableCell>{format(new Date(s.createdAt), 'PPP')}</TableCell>
                                            <TableCell>
                                                 <AlertDialog>
                                                     <AlertDialogTrigger asChild><Button variant="destructive" size="icon"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
@@ -598,7 +597,7 @@ export default function AdminPage() {
                                                         <span className="text-xs text-muted-foreground">{e.attemptsWaived ? "ON" : "OFF"}</span>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell>{format(e.enrolledAt.toDate(), 'PPP p')}</TableCell>
+                                                <TableCell>{format(new Date(e.enrolledAt), 'PPP p')}</TableCell>
                                                 <TableCell>
                                                     <AlertDialog>
                                                         <AlertDialogTrigger asChild><Button variant="destructive" size="icon"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
@@ -623,7 +622,7 @@ export default function AdminPage() {
                                                 <TableCell>{inquiry.mobile}</TableCell>
                                                 <TableCell className="max-w-xs break-words">{inquiry.message}</TableCell>
                                                 <TableCell><ImagePreview url={inquiry.imageUrl} triggerText="View Image" /></TableCell>
-                                                <TableCell>{format(inquiry.createdAt.toDate(), 'PPP p')}</TableCell>
+                                                <TableCell>{format(new Date(inquiry.createdAt), 'PPP p')}</TableCell>
                                                 <TableCell>
                                                     <AlertDialog>
                                                         <AlertDialogTrigger asChild><Button variant="destructive" size="icon"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
@@ -894,7 +893,7 @@ const CustomTestBuilderForm = ({ onRefresh }: { onRefresh: () => void }) => {
             const questionsWithIds = data.questions.map((q, index) => ({...q, id: index + 1}));
             const dataToSave = {
                 ...data,
-                questionsJson: JSON.stringify(questionsWithIds),
+                questionsJson: JSON.stringify(questionsWithIds, null, 2),
             };
             
             await addCustomTest(dataToSave);
