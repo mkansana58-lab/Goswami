@@ -32,11 +32,11 @@ export default function ResultPage() {
       return;
     }
     
-    if (appConfig?.resultAnnouncementDate && new Date() < appConfig.resultAnnouncementDate.toDate()) {
+    if (appConfig?.resultAnnouncementDate && new Date() < new Date(appConfig.resultAnnouncementDate)) {
         toast({
             variant: "destructive",
             title: "Result Not Announced",
-            description: `Results will be announced after ${format(appConfig.resultAnnouncementDate.toDate(), 'PPP, p')}`,
+            description: `Results will be announced after ${format(new Date(appConfig.resultAnnouncementDate), 'PPP, p')}`,
         });
         return;
     }
@@ -81,11 +81,11 @@ export default function ResultPage() {
         <p className="text-muted-foreground">Enter your application number to view your result.</p>
       </div>
       
-      {appConfig?.resultAnnouncementDate && new Date() < appConfig.resultAnnouncementDate.toDate() && (
+      {appConfig?.resultAnnouncementDate && new Date() < new Date(appConfig.resultAnnouncementDate) && (
          <Alert>
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-                Results will be announced after <strong>{format(appConfig.resultAnnouncementDate.toDate(), 'PPP, p')}</strong>.
+                Results will be announced after <strong>{format(new Date(appConfig.resultAnnouncementDate), 'PPP, p')}</strong>.
             </AlertDescription>
         </Alert>
       )}
@@ -111,3 +111,5 @@ export default function ResultPage() {
     </div>
   );
 }
+
+    

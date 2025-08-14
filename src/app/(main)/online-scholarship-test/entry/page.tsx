@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -44,11 +45,11 @@ export default function OnlineScholarshipTestEntryPage() {
     }
 
     const now = new Date();
-    if (appConfig?.scholarshipTestStartDate && now < appConfig.scholarshipTestStartDate.toDate()) {
-        toast({ variant: "destructive", title: "Test Not Started", description: `The test will start on ${format(appConfig.scholarshipTestStartDate.toDate(), 'PPP p')}` });
+    if (appConfig?.scholarshipTestStartDate && now < new Date(appConfig.scholarshipTestStartDate)) {
+        toast({ variant: "destructive", title: "Test Not Started", description: `The test will start on ${format(new Date(appConfig.scholarshipTestStartDate), 'PPP p')}` });
         return;
     }
-    if (appConfig?.scholarshipTestEndDate && now > appConfig.scholarshipTestEndDate.toDate()) {
+    if (appConfig?.scholarshipTestEndDate && now > new Date(appConfig.scholarshipTestEndDate)) {
         toast({ variant: "destructive", title: "Test Has Ended", description: `The test window has closed.` });
         return;
     }
@@ -222,3 +223,5 @@ export default function OnlineScholarshipTestEntryPage() {
     </div>
   );
 }
+
+    

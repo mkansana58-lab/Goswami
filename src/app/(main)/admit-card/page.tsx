@@ -32,11 +32,11 @@ export default function AdmitCardPage() {
       return;
     }
     
-    if (appConfig?.admitCardDownloadStartDate && new Date() < appConfig.admitCardDownloadStartDate.toDate()) {
+    if (appConfig?.admitCardDownloadStartDate && new Date() < new Date(appConfig.admitCardDownloadStartDate)) {
         toast({
             variant: "destructive",
             title: t('admitCardNotAvailable'),
-            description: `${t('admitCardNotAvailableDesc')} ${format(appConfig.admitCardDownloadStartDate.toDate(), 'PPP, p')}`,
+            description: `${t('admitCardNotAvailableDesc')} ${format(new Date(appConfig.admitCardDownloadStartDate), 'PPP, p')}`,
         });
         return;
     }
@@ -74,8 +74,8 @@ export default function AdmitCardPage() {
       return (
         <AdmitCardDisplay 
             data={admitCardData} 
-            scholarshipTestStartDate={appConfig.scholarshipTestStartDate?.toDate()}
-            scholarshipTestEndDate={appConfig.scholarshipTestEndDate?.toDate()}
+            scholarshipTestStartDate={appConfig.scholarshipTestStartDate ? new Date(appConfig.scholarshipTestStartDate) : undefined}
+            scholarshipTestEndDate={appConfig.scholarshipTestEndDate ? new Date(appConfig.scholarshipTestEndDate) : undefined}
             onBack={() => setAdmitCardData(null)}
         />
       );
@@ -91,11 +91,11 @@ export default function AdmitCardPage() {
             </AlertDescription>
         </Alert>
       
-      {appConfig?.admitCardDownloadStartDate && new Date() < appConfig.admitCardDownloadStartDate.toDate() && (
+      {appConfig?.admitCardDownloadStartDate && new Date() < new Date(appConfig.admitCardDownloadStartDate) && (
          <Alert>
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-                {t('admitCardNotAvailable')} {t('admitCardNotAvailableDesc')} <strong>{format(appConfig.admitCardDownloadStartDate.toDate(), 'PPP, p')}</strong>.
+                {t('admitCardNotAvailable')} {t('admitCardNotAvailableDesc')} <strong>{format(new Date(appConfig.admitCardDownloadStartDate), 'PPP, p')}</strong>.
             </AlertDescription>
         </Alert>
       )}
@@ -121,3 +121,5 @@ export default function AdmitCardPage() {
     </div>
   );
 }
+
+    
