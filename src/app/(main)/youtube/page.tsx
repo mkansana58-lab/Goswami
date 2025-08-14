@@ -18,20 +18,13 @@ const getYouTubeEmbedUrl = (url: string) => {
     try {
         const urlObj = new URL(url);
         if (urlObj.hostname === 'youtu.be') {
-            // Short URL: https://youtu.be/VIDEO_ID
             videoId = urlObj.pathname.slice(1);
         } else if (urlObj.hostname.includes('youtube.com')) {
-            // Standard URL: https://www.youtube.com/watch?v=VIDEO_ID
             videoId = urlObj.searchParams.get('v');
             if (!videoId) {
                 const pathParts = urlObj.pathname.split('/');
-                if (pathParts[1] === 'shorts') {
-                    // Shorts URL: https://www.youtube.com/shorts/VIDEO_ID
-                    videoId = pathParts[2];
-                } else if (pathParts[1] === 'embed') {
-                    // Embed URL: https://www.youtube.com/embed/VIDEO_ID
-                    videoId = pathParts[2];
-                }
+                if (pathParts[1] === 'shorts') videoId = pathParts[2];
+                else if (pathParts[1] === 'embed') videoId = pathParts[2];
             }
         }
     } catch (e) {
@@ -40,7 +33,6 @@ const getYouTubeEmbedUrl = (url: string) => {
     }
 
     if (videoId) {
-        // Remove any extra query params from the videoId, e.g., from shorts URLs
         const finalVideoId = videoId.split('?')[0];
         return `https://www.youtube.com/embed/${finalVideoId}?autoplay=1`;
     }
@@ -48,6 +40,29 @@ const getYouTubeEmbedUrl = (url: string) => {
     return null;
 };
 
+// Helper to get a YouTube thumbnail
+const getYouTubeThumbnail = (videoUrl: string): string => {
+    let videoId: string | null = null;
+    try {
+        const urlObj = new URL(videoUrl);
+        if (urlObj.hostname === 'youtu.be') {
+            videoId = urlObj.pathname.slice(1);
+        } else if (urlObj.hostname.includes('youtube.com')) {
+            videoId = urlObj.searchParams.get('v');
+            if (!videoId) {
+                const pathParts = urlObj.pathname.split('/');
+                if (pathParts[1] === 'shorts') videoId = pathParts[2];
+                else if (pathParts[1] === 'embed') videoId = pathParts[2];
+            }
+        }
+    } catch (e) { /* Invalid URL */ }
+
+    if (videoId) {
+        const finalVideoId = videoId.split('?')[0];
+        return `https://img.youtube.com/vi/${finalVideoId}/hqdefault.jpg`;
+    }
+    return `https://placehold.co/400x225.png`;
+};
 
 export default function YouTubePage() {
     const { t } = useLanguage();
@@ -60,29 +75,6 @@ export default function YouTubePage() {
             .catch(err => console.error("Failed to fetch video lectures:", err))
             .finally(() => setIsLoading(false));
     }, []);
-
-    const getYouTubeThumbnail = (url: string) => {
-        let videoId: string | null = null;
-        try {
-            const urlObj = new URL(url);
-             if (urlObj.hostname === 'youtu.be') {
-                videoId = urlObj.pathname.slice(1);
-            } else if (urlObj.hostname.includes('youtube.com')) {
-                videoId = urlObj.searchParams.get('v');
-                 if (!videoId) {
-                    const pathParts = urlObj.pathname.split('/');
-                    if (pathParts[1] === 'shorts') videoId = pathParts[2];
-                    else if (pathParts[1] === 'embed') videoId = pathParts[2];
-                }
-            }
-        } catch (e) { /* Invalid URL */ }
-
-        if (videoId) {
-             const finalVideoId = videoId.split('?')[0];
-            return `https://img.youtube.com/vi/${finalVideoId}/hqdefault.jpg`;
-        }
-        return `https://placehold.co/400x225.png`;
-    };
 
     return (
         <div className="space-y-6">
@@ -104,14 +96,14 @@ export default function YouTubePage() {
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
                     {lectures.map(lecture => {
-                        const embedUrl = getYouTubeEmbedUrl(lecture.videoUrl);
+                        const embedUrl = lecture.videoUrl ? getYouTubeEmbedUrl(lecture.videoUrl) : null;
                         return (
                            <div key={lecture.id} className="group flex flex-col space-y-2">
                                 <Dialog>
                                     <DialogTrigger asChild>
                                        <div className="aspect-video w-full overflow-hidden rounded-lg bg-muted cursor-pointer">
                                             <Image 
-                                                src={getYouTubeThumbnail(lecture.videoUrl)} 
+                                                src={lecture.videoUrl ? getYouTubeThumbnail(lecture.videoUrl) : 'https://placehold.co/400x225.png'} 
                                                 alt={lecture.title}
                                                 width={500}
                                                 height={280}
@@ -146,7 +138,7 @@ export default function YouTubePage() {
                                             {t('appName')}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
-                                            {format(new Date(lecture.createdAt), 'PPP')}
+                                            {lecture.createdAt ? format(new Date(lecture.createdAt), 'PPP') : ''}
                                         </p>
                                     </div>
                                 </div>
