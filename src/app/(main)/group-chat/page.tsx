@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useLanguage } from '@/hooks/use-language';
-import { db, addChatMessage, type ChatMessage } from '@/lib/firebase';
+import { addChatMessage, type ChatMessage } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { fileToDataUrl } from '@/lib/utils';
+import { getFirestore } from "firebase/firestore";
 
 export default function GroupChatPage() {
     const { student } = useAuth();
@@ -29,20 +30,26 @@ export default function GroupChatPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        const q = query(collection(db, "chatMessages"), orderBy("createdAt", "asc"));
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            const msgs: ChatMessage[] = [];
-            querySnapshot.forEach((doc) => {
-                msgs.push({ id: doc.id, ...doc.data() } as ChatMessage);
+        try {
+            const db = getFirestore();
+            const q = query(collection(db, "chatMessages"), orderBy("createdAt", "asc"));
+            const unsubscribe = onSnapshot(q, (querySnapshot) => {
+                const msgs: ChatMessage[] = [];
+                querySnapshot.forEach((doc) => {
+                    msgs.push({ id: doc.id, ...doc.data() } as ChatMessage);
+                });
+                setMessages(msgs);
+                setIsLoading(false);
+            }, (error) => {
+                console.error("Error fetching chat messages:", error);
+                setIsLoading(false);
             });
-            setMessages(msgs);
-            setIsLoading(false);
-        }, (error) => {
-            console.error("Error fetching chat messages:", error);
-            setIsLoading(false);
-        });
 
-        return () => unsubscribe();
+            return () => unsubscribe();
+        } catch(e) {
+            console.error("Firestore not available", e);
+            setIsLoading(false);
+        }
     }, []);
 
     useEffect(() => {

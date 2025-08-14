@@ -57,7 +57,7 @@ export function Header() {
   const isFirebaseConfigured = !!firebaseConfig.projectId;
 
    useEffect(() => {
-    const checkForNewNotifications = async () => {
+    async function checkForNewNotifications() {
         if (!isFirebaseConfigured || !student) return;
         
         const lastCheckString = localStorage.getItem('lastNotificationCheck');
@@ -76,7 +76,9 @@ export function Header() {
         }
     };
 
-    checkForNewNotifications();
+    if (isFirebaseConfigured && student) {
+        checkForNewNotifications();
+    }
   }, [isFirebaseConfigured, student]);
 
   const fetchNotifications = async () => {
