@@ -3,22 +3,30 @@
 
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { BottomNavigationBar } from '@/components/layout/bottom-navigation';
 import { Header } from '@/components/layout/header';
 import { Loader2 } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   const { student, isLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    if (!isLoading && !student) {
-      router.replace('/student-login');
+    // If auth is still loading, do nothing.
+    if (isLoading) {
       return;
     }
-  }, [student, isLoading, router]);
+
+    // If auth has loaded and there's no student, redirect to login.
+    // Allow access to admin login if they are trying to go there.
+    if (!student && pathname !== '/admin-login') {
+      router.replace('/student-login');
+    }
+  }, [student, isLoading, router, pathname]);
 
   if (isLoading || !student) {
     return (

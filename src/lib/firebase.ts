@@ -34,7 +34,7 @@ let db: ReturnType<typeof getDatabase> | undefined;
 function getDb() {
     if (!firebaseConfig.databaseURL) {
         console.error("Firebase Realtime Database URL is not configured.");
-        return;
+        return undefined;
     }
     if (!app) {
         app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
@@ -300,7 +300,7 @@ async function sendStudentNotification(title: string, content: string, category:
 
 async function deleteItem(path: string): Promise<void> {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     await remove(ref(db, path));
 }
 
@@ -327,23 +327,21 @@ export async function getAppConfig(): Promise<AppConfig> {
     if (!db) return {};
     const snapshot = await get(ref(db, "appConfig/settings"));
     if (snapshot.exists()) {
-        const config = snapshot.val();
-        // Timestamps in RTDB are numbers, no need for .toDate()
-        return config;
+        return snapshot.val() || {};
     }
     return {};
 }
 
 export async function updateAppConfig(data: Partial<AppConfig>): Promise<void> {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     const configRef = ref(db, "appConfig/settings");
     await update(configRef, data);
 }
 
 export async function addLiveClass({ title, link, embedCode, scheduledAt }: NewLiveClassData): Promise<void> {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     const newPostRef = push(ref(db, 'liveClasses'));
     await set(newPostRef, {
         title,
@@ -358,7 +356,7 @@ export const getLiveClasses = async (): Promise<LiveClass[]> => getAll<LiveClass
 
 export async function addNotification({ title, content, category, recipient }: NewNotificationData): Promise<void> {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     const newPostRef = push(ref(db, 'notifications'));
     await set(newPostRef, { title, content, category, recipient: recipient || null, createdAt: serverTimestamp() });
 }
@@ -396,12 +394,12 @@ export const deleteScholarshipApplication = (id: string) => deleteItem(`scholars
 
 export async function updateScholarshipApplicationResultStatus(appId: string, status: 'pending' | 'pass' | 'fail'): Promise<void> {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     await update(ref(db, `scholarshipApplications/${appId}`), { resultStatus: status });
 }
 export async function updateScholarshipApplicationPaymentStatus(appId: string, isVerified: boolean): Promise<void> {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     await update(ref(db, `scholarshipApplications/${appId}`), { isPaymentVerified: isVerified });
 }
 export async function getScholarshipApplications(): Promise<ScholarshipApplicationData[]> {
@@ -421,16 +419,21 @@ export async function getScholarshipApplicationByAppNumber(appNumber: string): P
 export async function getStudent(name: string): Promise<StudentData | null> {
     const db = getDb();
     if (!db) return null;
-    const studentRef = ref(db, `students/${name}`);
-    const snapshot = await get(studentRef);
-    if (snapshot.exists()) {
-        return { id: snapshot.key, name, ...snapshot.val() };
+    try {
+        const studentRef = ref(db, `students/${name}`);
+        const snapshot = await get(studentRef);
+        if (snapshot.exists()) {
+            return { id: snapshot.key, name, ...snapshot.val() };
+        }
+        return null;
+    } catch (e) {
+        console.error("getStudent failed:", e);
+        return null;
     }
-    return null;
 }
 export async function updateStudent(name: string, data: Partial<Omit<StudentData, 'id' | 'createdAt'>>): Promise<void> {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     await update(ref(db, `students/${name}`), data);
 }
 export async function addQuizWinnings(studentName: string, amount: number): Promise<void> {
@@ -473,13 +476,13 @@ export const deleteStudent = (name: string) => deleteItem(`students/${name}`);
 
 export async function addTestResult(data: Omit<TestResultData, 'submittedAt' | 'id'>): Promise<void> {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     const newRef = push(ref(db, 'testResults'));
     await set(newRef, { ...data, submittedAt: serverTimestamp() });
 }
 export async function addScholarshipTestResult(data: Omit<ScholarshipTestResult, 'submittedAt' | 'id'>): Promise<void> {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     const newRef = push(ref(db, 'scholarshipTestResults'));
     await set(newRef, { ...data, submittedAt: serverTimestamp() });
 }
@@ -522,7 +525,7 @@ export async function getTestResultsForStudent(studentName: string): Promise<Tes
 
 export const addPost = async (data: Omit<Post, 'id' | 'createdAt'>) => {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     await set(push(ref(db, "posts")), { ...data, createdAt: serverTimestamp() });
 };
 export const getPosts = async (): Promise<Post[]> => getAll<Post>("posts");
@@ -530,7 +533,7 @@ export const deletePost = (id: string) => deleteItem(`posts/${id}`);
 
 export const addCurrentAffair = async (data: Omit<CurrentAffair, 'id' | 'createdAt'>) => {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     await set(push(ref(db, "currentAffairs")), { ...data, createdAt: serverTimestamp() });
 };
 export const getCurrentAffairs = async (): Promise<CurrentAffair[]> => getAll<CurrentAffair>("currentAffairs");
@@ -538,7 +541,7 @@ export const deleteCurrentAffair = (id: string) => deleteItem(`currentAffairs/${
 
 export const addVideoLecture = async (data: Omit<VideoLecture, 'id' | 'createdAt' | 'videoUrl'> & { link?: string; embedCode?: string }) => {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     let videoUrl = '';
     if (data.link) {
         videoUrl = data.link;
@@ -553,7 +556,7 @@ export const deleteVideoLecture = (id: string) => deleteItem(`videoLectures/${id
 
 export const addDownload = async (data: Omit<Download, 'id' | 'createdAt'>) => {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     await set(push(ref(db, "downloads")), { ...data, createdAt: serverTimestamp() });
 };
 export const getDownloads = async (): Promise<Download[]> => getAll<Download>("downloads");
@@ -561,7 +564,7 @@ export const deleteDownload = (id: string) => deleteItem(`downloads/${id}`);
 
 export const addEBook = async (data: Omit<EBook, 'id' | 'createdAt'>) => {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     await set(push(ref(db, "ebooks")), { ...data, createdAt: serverTimestamp() });
 };
 export const getEBooks = async (): Promise<EBook[]> => getAll<EBook>("ebooks");
@@ -569,7 +572,7 @@ export const deleteEBook = (id: string) => deleteItem(`ebooks/${id}`);
 
 export const addCourse = async (data: Omit<Course, 'id' | 'createdAt'>) => {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     await set(push(ref(db, "courses")), { ...data, createdAt: serverTimestamp() });
 };
 export const getCourses = async (): Promise<Course[]> => getAll<Course>("courses");
@@ -577,7 +580,7 @@ export const deleteCourse = (id: string) => deleteItem(`courses/${id}`);
 
 export const addTeacher = async (data: Omit<Teacher, 'id' | 'createdAt'>) => {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     await set(push(ref(db, "teachers")), { ...data, createdAt: serverTimestamp() });
 };
 export const getTeachers = async (): Promise<Teacher[]> => getAll<Teacher>("teachers");
@@ -585,7 +588,7 @@ export const deleteTeacher = (id: string) => deleteItem(`teachers/${id}`);
 
 export const addGalleryImage = async (data: Omit<GalleryImage, 'id' | 'createdAt'>) => {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     await set(push(ref(db, "galleryImages")), { ...data, createdAt: serverTimestamp() });
 };
 export const getGalleryImages = async (): Promise<GalleryImage[]> => getAll<GalleryImage>("galleryImages");
@@ -593,7 +596,7 @@ export const deleteGalleryImage = (id: string) => deleteItem(`galleryImages/${id
 
 export const addContactInquiry = async (data: Omit<ContactInquiry, 'id' | 'createdAt'>) => {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     await set(push(ref(db, "contactInquiries")), { ...data, createdAt: serverTimestamp() });
 };
 export const getContactInquiries = async (): Promise<ContactInquiry[]> => getAll<ContactInquiry>("contactInquiries");
@@ -601,13 +604,13 @@ export const deleteContactInquiry = (id: string) => deleteItem(`contactInquiries
 
 export const addChatMessage = async (data: Omit<ChatMessage, 'id' | 'createdAt'>) => {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     await set(push(ref(db, "chatMessages")), { ...data, createdAt: serverTimestamp() });
 };
 
 export const addCustomTest = async (data: any) => {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     let questions: Question[];
     if (typeof data.questionsJson === 'string') {
         questions = JSON.parse(data.questionsJson);
@@ -648,7 +651,7 @@ export const getTestSettings = async (): Promise<Record<string, TestSetting>> =>
 };
 export const updateTestSetting = async (testId: string, isEnabled: boolean) => {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     await update(ref(db, 'testSettings'), { [testId]: { isEnabled } });
 };
 
@@ -678,12 +681,12 @@ export const addTestEnrollment = async (studentName: string, testId: string, tes
 export const deleteTestEnrollment = (id: string) => deleteItem(`testEnrollments/${id}`);
 export const updateTestEnrollmentWaiver = async (enrollmentId: string, isWaived: boolean): Promise<void> => {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     await update(ref(db, `testEnrollments/${enrollmentId}`), { attemptsWaived: isWaived });
 };
 export async function updateEnrollmentAllowedAttempts(enrollmentId: string, attempts: number): Promise<void> {
     const db = getDb();
-    if (!db) return;
+    if (!db) throw new Error("Database not connected");
     if (attempts < 0) throw new Error("Attempts cannot be negative.");
     await update(ref(db, `testEnrollments/${enrollmentId}`), { allowedAttempts: attempts });
 }
@@ -701,5 +704,3 @@ export async function getTestEnrollments(): Promise<TestEnrollment[]> {
 }
 
 export { db };
-
-    
